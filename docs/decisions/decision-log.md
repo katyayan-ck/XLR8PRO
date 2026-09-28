@@ -1004,3 +1004,40 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   5. OEM Model / OEM Variant cells are not imported (they are OEM facts from the price lists).
   6. Status ACTIVE on an incomplete vehicle leaves it INCOMPLETE and lists the missing fields.
 - **Approved-by:** auto (implements the approved DEC-073 step 3) · **Risk:** LOW · **Reversal:** revert the Phase 3 commit.
+
+### DEC-076 | 28-09-2026 | A (Vehicle pricing) | Price import (DEC-073 step 4): which columns are the price, and the write rules
+- **User decisions (28-09):**
+  - **Ex-showroom per list:**
+    - PV / CV / BEV: "Ex-Showroom Price ORG".
+    - LMM: **"Ex Showroom Price(Org)"**. Not "Ex Showroom Price", which is lower by ₹3,000–13,375 on 48 of 79 rows.
+    - LMM TZU: **"Final Transaction Price"** (post-subsidy price minus the scheme). TZU has no separate scheme discount:
+      its Scheme and scheme columns are not imported.
+    - CSD: **"CSD Final Price"** (before the 50% GST concession).
+- **Found:** BUG-200. Registry labels were only lower-cased while sheet headers also turned `-` `.` `_` into spaces, so
+  every label with a hyphen never matched. That covers "Ex-Showroom Price ORG" and all CV- / OV- scheme columns. The old
+  importer therefore never read ex-showroom: it used MM Invoice (PV Scorpio-N: ₹21,80,958 instead of ₹22,76,500) and
+  imported no schemes.
+- **Technical calls:**
+  1. Both sides are normalised the same way. When several columns match one field, the registry's primary label beats
+     its aliases, so "OEM Scheme with GST" is used over "@ BNDP".
+  2. The removed hard alias "ex showroom pre subsidy → ex_showroom" had been winning on TZU.
+  3. **NV / OV:** only PV / CV / BEV carry an OV block. CV / BEV label it (CV- / OV-). On PV the OV block repeats the NV
+     labels, so the second occurrence is OV. LMM / TZU / CSD store OV = 0 (the snapshot uses NV).
+  4. **LMM:**
+     - assessable with freight = "Assesable Value" + "Freight New".
+     - OEM scheme with GST = "VIN Scheme" ("OEM Scheme @ BNDP" × 1.05).
+     - dealer margin = "New Dealer Margin" + "Extra Handling".
+  5. **Dealer margin** stored = Dealer Margin + Dealer Handling (CV carries its margin in Handling). Only the BH RTO base
+     uses it.
+  6. **Accessory / Shield discount eligibility** ("Acc Dsc Elg", "Sheld Disc Elg", NV and OV) is stored as a ratio in
+     new columns, for the quotation discount gate.
+  7. **WEF (DEC-058):**
+     - Same WEF → update the live row.
+     - New WEF with a material change → expire the previous row, then insert.
+     - No material change → keep the previous row. Before this, it also inserted a second active row.
+  8. **History:** every imported row is written to `xlr8_vehicle_pricing_history` (action insert / update / unchanged,
+     parsed payload).
+  9. **Rows rejected or skipped:** conflicting duplicate codes in one sheet are rejected (identical duplicates count
+     once); incomplete vehicles are skipped; CSD codes not in the master are skipped.
+- **Approved-by:** user (column choices), auto (technical calls) · **Risk:** HIGH (customer prices) · **Reversal:** revert;
+  the migration rolls back.

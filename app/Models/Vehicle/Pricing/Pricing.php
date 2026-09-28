@@ -5,7 +5,39 @@ namespace App\Models\Vehicle\Pricing;
 use App\Models\BaseModel;
 use App\Services\Vehicle\Pricing\Prices\PriceService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 
+/**
+ * One price-list price per OEM code, channel and WEF (DEC-058 / DEC-076).
+ *
+ * @property int $id
+ * @property int|null $import_session_id
+ * @property string $model_code
+ * @property string $channel
+ * @property Carbon|null $wef_date
+ * @property Carbon|null $expired_on
+ * @property bool $is_active
+ * @property string $ex_showroom_price
+ * @property string $assessable_value_with_freight
+ * @property string $gst_percent
+ * @property string $gst_amount
+ * @property string $mm_invoice_amount
+ * @property string $dealer_margin
+ * @property string $curr_oem_scheme
+ * @property string $curr_dealer_cont
+ * @property string $curr_cash_discount
+ * @property string $curr_acc_discount
+ * @property string $curr_shield_discount
+ * @property string $old_oem_scheme
+ * @property string $old_dealer_cont
+ * @property string $old_cash_discount
+ * @property string $old_acc_discount
+ * @property string $old_shield_discount
+ * @property string $curr_acc_elg
+ * @property string $curr_shield_elg
+ * @property string $old_acc_elg
+ * @property string $old_shield_elg
+ */
 class Pricing extends BaseModel
 {
     protected $table = 'xlr8_vehicle_pricing';
@@ -36,6 +68,10 @@ class Pricing extends BaseModel
         'old_cash_discount',
         'old_acc_discount',
         'old_shield_discount',
+        'curr_acc_elg',
+        'curr_shield_elg',
+        'old_acc_elg',
+        'old_shield_elg',
     ];
 
     protected function casts(): array

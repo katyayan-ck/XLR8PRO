@@ -8,7 +8,6 @@ namespace App\Http\Controllers\Admin\Pricing;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\Vehicle\Pricing\CalculatePricingSessionJob;
-use App\Jobs\Vehicle\Pricing\ImportPriceListsJob;
 use App\Models\Vehicle\Pricing\Affected;
 use App\Models\Vehicle\Pricing\ChangeFlag;
 use App\Models\Vehicle\Pricing\ImportSession;
@@ -31,101 +30,6 @@ class PricingWorkflowController extends Controller
         protected AddonDiscountExportService $addonsExport,
         protected RulesWorkbookService $rules
     ) {}
-
-    public function progress(int $sessionId)
-    {
-        if (! backpack_user()->can('PRC_WKFL_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view the pricing workflow.');
-        }
-
-        $data = Cache::get('pricing_progress_'.$sessionId, [
-            'phase' => 'unknown',
-            'message' => 'No progress data yet — is queue:work running?',
-            'percent' => 0,
-            'done' => false,
-            'failed' => false,
-            'logs' => [],
-        ]);
-
-        $session = ImportSession::find($sessionId);
-        $data['session_stage'] = $session?->current_stage;
-        $data['session_status'] = $session?->status;
-        $data['stats'] = $session?->stats;
-
-        if (! empty($data['done']) && empty($data['failed']) && $session) {
-            $data['export_url'] = route('pricing.workflow.vehicle-info-export', $sessionId);
-            $data['vehicle_info_form'] = route('pricing.workflow.vehicle-info-form');
-            $data['prices_form'] = route('pricing.workflow.prices-form');
-        }
-
-        return response()->json($data);
-    }
-
-    public function pricesForm()
-    {
-        if (! backpack_user()->can('PRC_WKFL_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view the pricing workflow.');
-        }
-
-        $session = $this->sessions->activeSession();
-        if (! $session) {
-            return redirect()->route('pricing.workflow.index')
-                ->with('warning', 'No active pricing session.');
-        }
-
-        return view('admin.pricing.workflow.prices', [
-            'title' => 'Import Price Lists',
-            'session' => $session,
-            'sheetOptions' => $this->sheetOptions(),
-        ]);
-    }
-
-    public function pricesImport(Request $request)
-    {
-        if (! backpack_user()->can('PRC_WKFL_MANAGE')) {
-            abort(403, 'Unauthorized. You do not have permission to run the pricing workflow.');
-        }
-
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls',
-            'sheet_types' => 'required|array|min:1',
-            'sheet_types.*' => 'string',
-            'wef_date' => 'nullable|date',
-        ]);
-
-        $session = $this->sessions->activeSession();
-        if (! $session) {
-            return response()->json(['success' => false, 'message' => 'No active session.'], 409);
-        }
-
-        $path = $request->file('file')->store('pricing-uploads');
-        $absolute = Storage::path($path);
-        $sheets = array_map('strtoupper', $request->input('sheet_types', $session->selected_sheets ?? []));
-        $wef = $request->input('wef_date', $session->wef_date?->format('Y-m-d') ?? now()->toDateString());
-        $userId = $request->user()?->id;
-
-        $this->sessions->advance($session, ImportSession::STAGE_IMPORTING_PRICES);
-        $this->sessions->updateStats($session, ['price_workbook_path' => $absolute]);
-
-        Cache::put('pricing_progress_'.$session->id, [
-            'phase' => 'queued',
-            'message' => 'Queued price import — waiting for worker…',
-            'percent' => 1,
-            'done' => false,
-            'failed' => false,
-            'logs' => ['['.now()->format('H:i:s').'] ImportPriceListsJob queued'],
-        ], now()->addHours(6));
-
-        ImportPriceListsJob::dispatch($session->id, $absolute, $sheets, $wef, $userId);
-
-        return response()->json([
-            'success' => true,
-            'session_id' => $session->id,
-            'queued' => true,
-            'message' => 'Price import queued. Keep this page open — progress updates live.',
-            'progress_url' => route('pricing.workflow.progress', $session->id),
-        ]);
-    }
 
     public function impactSummary(int $sessionId)
     {
@@ -210,7 +114,7 @@ class PricingWorkflowController extends Controller
             'session_id' => $session->id,
             'queued' => true,
             'message' => 'Calculate & Publish queued. Watch progress.',
-            'progress_url' => route('pricing.workflow.progress', $session->id),
+            'progress_url' => route('pricing.workflow.session-status', $session->id),
         ]);
     }
 
@@ -444,17 +348,5 @@ class PricingWorkflowController extends Controller
 
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
-    }
-
-    protected function sheetOptions(): array
-    {
-        return [
-            'PRICE_LIST_PV' => 'Price List PV',
-            'PRICE_LIST_CV' => 'Price List CV',
-            'PRICE_LIST_BEV' => 'Price List BEV',
-            'PRICE_LIST_LMM' => 'Price List LMM',
-            'PRICE_LIST_LMM_TZU' => 'Price List LMM TZU',
-            'PRICE_LIST_CSD' => 'Price List CSD',
-        ];
     }
 }

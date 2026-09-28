@@ -13,6 +13,7 @@ return [
         'hold_lists' => 'Hold lists',
         'hold_lists.*' => 'Hold list',
         'vehicle_info_file' => 'Vehicle Info workbook',
+        'source' => 'Workbook',
     ],
 
     'lists' => [

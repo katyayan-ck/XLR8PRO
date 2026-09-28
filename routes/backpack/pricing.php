@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\Pricing\HoldController;
 use App\Http\Controllers\Admin\Pricing\InsuranceController;
 use App\Http\Controllers\Admin\Pricing\PricingResetController;
 use App\Http\Controllers\Admin\Pricing\PricingWorkflowController;
+use App\Http\Controllers\Admin\Pricing\Process\PricesController;
 use App\Http\Controllers\Admin\Pricing\Process\PricingProcessController;
 use App\Http\Controllers\Admin\Pricing\Process\VehicleInfoController;
 use App\Http\Controllers\Admin\Pricing\RtoRuleController;
@@ -42,7 +43,6 @@ Route::group([
     Route::get('workflow/start', [PricingProcessController::class, 'startForm'])->name('pricing.workflow.start-form');
     Route::post('workflow/start', [PricingProcessController::class, 'start'])->name('pricing.workflow.start');
     Route::get('workflow/status/{sessionId}', [PricingProcessController::class, 'status'])->whereNumber('sessionId')->name('pricing.workflow.status');
-    Route::get('workflow/progress/{sessionId}', [PricingWorkflowController::class, 'progress'])->name('pricing.workflow.progress');
 
     Route::get('workflow/vehicle-info', [VehicleInfoController::class, 'show'])->name('pricing.workflow.vehicle-info-form');
     Route::get('workflow/vehicle-info-export/{sessionId}', [VehicleInfoController::class, 'export'])->whereNumber('sessionId')->name('pricing.workflow.vehicle-info-export');
@@ -50,8 +50,10 @@ Route::group([
     Route::get('workflow/vehicle-info-issues/{sessionId}', [VehicleInfoController::class, 'issues'])->whereNumber('sessionId')->name('pricing.workflow.vehicle-info-issues');
     Route::post('workflow/vehicle-info-continue', [VehicleInfoController::class, 'continue'])->name('pricing.workflow.vehicle-info-continue');
 
-    Route::get('workflow/prices', [PricingWorkflowController::class, 'pricesForm'])->name('pricing.workflow.prices-form');
-    Route::post('workflow/prices', [PricingWorkflowController::class, 'pricesImport'])->name('pricing.workflow.prices');
+    Route::get('workflow/prices', [PricesController::class, 'show'])->name('pricing.workflow.prices-form');
+    Route::post('workflow/prices', [PricesController::class, 'import'])->name('pricing.workflow.prices');
+    Route::get('workflow/prices-issues/{sessionId}', [PricesController::class, 'issues'])->whereNumber('sessionId')->name('pricing.workflow.prices-issues');
+    Route::post('workflow/prices-continue', [PricesController::class, 'continue'])->name('pricing.workflow.prices-continue');
 
     Route::get('workflow/addons', [PricingWorkflowController::class, 'addonsForm'])->name('pricing.workflow.addons-form');
     Route::get('workflow/addons-export/{sessionId}', [PricingWorkflowController::class, 'addonsExport'])->name('pricing.workflow.addons-export');

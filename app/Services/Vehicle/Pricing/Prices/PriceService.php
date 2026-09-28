@@ -24,6 +24,9 @@ final class PriceService extends EntityService
         'old_oem_scheme', 'old_dealer_cont', 'old_cash_discount', 'old_acc_discount', 'old_shield_discount',
     ];
 
+    /** discount eligibility ratios per VIN type (DEC-076) */
+    public const ELIGIBILITY = ['curr_acc_elg', 'curr_shield_elg', 'old_acc_elg', 'old_shield_elg'];
+
     protected function model(): string
     {
         return Pricing::class;
@@ -46,6 +49,12 @@ final class PriceService extends EntityService
             Field::flag('is_active', true),
             Field::percent('gst_percent')->label('GST %')->rules('max:100')->default(0),
         ];
+        // accessory / shield discount eligibility as a ratio (0.7 = 70%; 70 is read as 70%) — DEC-076
+        foreach (self::ELIGIBILITY as $column) {
+            $fields[] = Field::number($column)->label(ucwords(str_replace('_', ' ', $column)))->default(0)
+                ->transform(fn (string $v) => is_numeric($v) && (float) $v > 1 ? (string) round((float) $v / 100, 4) : $v)
+                ->rules('min:0', 'max:1');
+        }
         foreach (self::AMOUNTS as $column) {
             $fields[] = Field::number($column)->label(ucwords(str_replace('_', ' ', $column)))->default(0);
         }

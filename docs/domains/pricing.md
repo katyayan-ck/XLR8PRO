@@ -78,6 +78,9 @@ API v1: `Api\V1\Vehicle\Pricing\PricingController::getPricing()` wraps this for 
 | `Import\VehicleInfoWorkbookService` | step 3. `COLUMNS` (reference Vehicle Info layout + `Missing Fields`) · `export($path)` → `['rows', 'incomplete']`: every variant (all statuses), sorted Segment → OEM Model → code; Fuel / Permit / Body Make / Body Type / Status written as key-value codes; incomplete rows highlighted · `import($path, ?$onProgress)` → `rows, completed, newly_completed, incomplete, rejected, unknown, issues[] {row, code, result incomplete/rejected, reason}` (issues capped at 5,000): each row through `VehicleService::applyVehicleInfo()`; blank cells keep the stored value; OEM Model / Variant are not imported; unknown codes are rejected (vehicles come only from Detect); unknown lookup values reject the row. Run inside `record()` |
 | `Jobs\Vehicle\Pricing\Process\ImportVehicleInfoJob($sessionId, $uploadPath)` | timeout 1800, tries 1. Import inside `record()`; `putStats('vehicle_info', ['round', 'at'] + result)`; progress `step vehicle_info`. The session stays at Vehicle Info (export → fix → re-import loop) |
 | screens (`Admin\Pricing\Process\VehicleInfoController`) | `pricing.workflow.vehicle-info-form` (status counts, download, upload, this round's summary + first 200 issues) · `vehicle-info-export/{id}` (download) · `vehicle-info-import` (POST `file`; queues the job; after a later step it sends the process back to Vehicle Info; refused after publish or while a step runs) · `vehicle-info-issues/{id}` (issues workbook) · `vehicle-info-continue` (POST → stage Prices). VIEW / MANAGE as above |
+| `Import\PriceListImportService` | step 4. `import($path, $sheetTitles, $wef, ?$onProgress)` → `sheets[title] {rows, inserted, updated, unchanged, skipped_incomplete, skipped_unknown, no_price, duplicates, conflicts, rejected}`, `totals`, `issues[] {sheet, code, reason}` (≤ 2,000). Columns from the registry (DEC-076: ex-showroom PV/CV/BEV "Ex-Showroom Price ORG", LMM "Ex Showroom Price(Org)", TZU "Final Transaction Price", CSD "CSD Final Price"; schemes "with GST"; LMM assessable + freight, VIN Scheme; dealer margin + handling; GST% derived from amount / assessable when absent). `OV_LISTS` PV / CV / BEV (PV: the repeated label block is OV). WEF: same → update; newer + material change → expire + insert; unchanged → keep; older than the live WEF → rejected. Skips incomplete / unknown codes (CSD never creates); conflicting duplicate codes rejected. One `PricingHistory` row per code. Run inside `record()` |
+| `Jobs\Vehicle\Pricing\Process\ImportPricesJob($sessionId, $uploadPath, $sheets, $wef)` | timeout 1800, tries 1. Import inside `record()`; `putStats('prices', [run, at, wef, upload] + result)`; progress `step prices` |
+| screens (`Admin\Pricing\Process\PricesController`) | `pricing.workflow.prices-form` (the Start workbook or an updated one, lists, WEF; per-list result + issues) · `prices` (POST `source` session/upload, `file`, `lists[]`, `wef_date`; each list must be in the workbook; queued) · `prices-issues/{id}` · `prices-continue` (needs a run → stage Add-ons) |
 
 ## The import workflow (legacy flow — replaced step by step by the DEC-073 engine above)
 `ImportSession` stages: `idle → detecting → awaiting_vehicle → importing_prices → awaiting_addons → importing_addons →
@@ -88,7 +91,7 @@ awaiting_rules → calculating → summary → completed` (or `cancelled`). Stat
 | start | **replaced** by `Session\PricingSessionService::start()` + `DetectPriceListsJob` (above) | |
 | detect vehicles from price lists | **replaced** by `Import\PriceListDetectService` (above); `PriceListVehicleDetector` remains only for the legacy price importer until Phase 4 | |
 | Vehicle Info (specs) | **replaced** by `Import\VehicleInfoWorkbookService` + `ImportVehicleInfoJob` (above) | |
-| prices | `PriceListPricingImporter::importFile($path, $session, $sheetCodes, $wefDate, $channel, $userId, $onProgress)` | `prices_written`, `price_changes`, `skipped_incomplete`, `skipped_no_price`; writes `ChangeFlag` rows |
+| prices | **replaced** by `Import\PriceListImportService` + `ImportPricesJob` (above) | |
 | add-ons & discounts | `AddonDiscountImportService::importFile($path, $session, $selectedSheets, $wefDate, $userId)`; template `AddonDiscountExportService::exportForSession($session)` | per sheet (`DEALER_CHARGES`, `SHIELD`, `RSA`, `EXCHANGE`, `CORPORATE`): `written`, `skipped`, `errors` |
 | insurance & RTO rules (keep or import) | `RulesWorkbookService::presence()` (what exists), `exportCurrent($session)`, `importFile($path, $session, $kinds, $wefDate, $userId)` | `rto_count`, `insurance_count`, `written`, `skipped`, `errors` |
 | hold (optional) | `PricingSessionService::setHoldScopes($session, $scopes)`; `Hold::putOnHold($scope, $reason, $userId)`, `Hold::reopen(...)`, `Hold::isHeld($scope = 'ALL')` | |
@@ -101,7 +104,7 @@ Sheet recognition: `PriceListVehicleDetector::sheetCodeFromTitle($title)` (stati
 `RulesWorkbookService::kindFromTitle($title)` → `rto` / `insurance` / null; its statics `percentOrNum($v)` ("18%" → 18.0) and
 `num($v)` parse sheet numbers (null when blank).
 
-Header mapping for every sheet goes through `SheetHeaderService` (labels / aliases → stable `field_code`):
+Header mapping for every sheet goes through `SheetHeaderService` (labels / aliases → stable `field_code`; registry labels and sheet cells are normalised the same way by the public `normalizeLabel()` — `-` `.` `_` → space, lower case; when several columns match one field the primary label beats its aliases, then the first column wins — BUG-200):
 `labelMap($sheet)`, `mapHeaderRow($sheet, $cells)`, `findHeaderRow($sheet, $rows, $maxScan = 25)` (→ `[rowIndex,
 fieldMap]`), `val($row, $map, $field, $default)`, `requiredFieldCodes($sheet)`, `headersForExport($sheet)`,
 `forgetCache($sheet)`. Rows live in `SheetHeader` (`allLabels()`).
@@ -121,7 +124,7 @@ All support `create / update / upsert / validate` (see [core.md](core.md)); the 
 
 | Service | Table | Notes |
 |---|---|---|
-| `Prices\PriceService` | `xlr8_vehicle_pricing` | one row per (OEM code, channel, WEF), key fixed once created; `expire($price, $wef)` closes a live price |
+| `Prices\PriceService` | `xlr8_vehicle_pricing` | one row per (OEM code, channel, WEF), key fixed once created; `expire($price, $wef)` closes a live price; `AMOUNTS`, `ELIGIBILITY` (`curr_acc_elg`, `curr_shield_elg`, `old_acc_elg`, `old_shield_elg` — ratios 0–1, 70 read as 70%, DEC-076) |
 | `Addons\AddonService` | `xlr8_vehicle_pricing_addons` | RSA / Shield; scope columns `segment`, `model_code` (ANY = all), `variant_code`, `permit`, `shield_pack`, `transmission`, `fuel`; `tenure_years`, `amount`, `oem_share`, `dealer_share`, `is_default` |
 | `Addons\DealerChargeService` | `xlr8_vehicle_pricing_dealer_charges` | `segment` (ANY), `permit`, `model_code`; `incidental`, `fastag`, `trc`, `rto_tape`, `cod`, `kazam`, extra json — note BUG-178 (engine ignores WIDE charges / model scope) |
 | `Addons\DiscountService` | `xlr8_vehicle_pricing_discounts` | Exchange, Corporate …; total = sheet Total or OEM + dealer share |
@@ -144,7 +147,7 @@ DB::transaction(function () use ($svc, $rows, $wef) {
 | Model | Holds | Helpers |
 |---|---|---|
 | `ImportSession` | workflow state, `selected_sheets`, `wef_date`, `hold_scopes`, `stats` | `STAGE_*`, `STATUS_*`; scope `active()`; `isTerminal()`, `isActiveProcess()`; `notes` is mirrored into `remarks` when that column exists (`setNotesAttribute` / `getNotesAttribute`) |
-| `Pricing` / `PricingHistory` | live price rows / history | `active()`, `forModel($code)`, `history()`; `static getActive($code, $channel)` |
+| `Pricing` / `PricingHistory` | live price rows / history | `Pricing`: `active()`, `forModel($code)`, `history()`; `static getActive($code, $channel)`. `PricingHistory` (BUG-201 fixed): `pricing_id, model_code, channel, wef_date, payload` (parsed sheet row), `action` = `ACTION_INSERT` / `ACTION_UPDATE` / `ACTION_UNCHANGED` — one row per imported code |
 | `Profile` | per-variant readiness flags (`is_vehicle_master_complete`, `is_pricing_template_complete`, …) | `forModel()`, `publishable()`, `incomplete()`, `ofSegment()`; `canBeMarkedActive()` |
 | `Snapshot` | published pricing JSON (`payload`) per code / channel / VIN type / WEF | `active()`, `forCode($oem)` |
 | `Draft` | calculated but unpublished payloads | `forModel()` |

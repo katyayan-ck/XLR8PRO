@@ -673,3 +673,47 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   - view-only user;
   - queued import + continue.
 - **Guides:** `docs/domains/pricing.md`, `docs/domains/vehicle.md`.
+
+## Pricing redesign — Phase 4: price import (DEC-073, DEC-076; BUG-200, BUG-201 fixed)
+- **Column choices (user, DEC-076):** ex-showroom per list is:
+  - PV / CV / BEV: "Ex-Showroom Price ORG";
+  - LMM: "Ex Showroom Price(Org)";
+  - LMM TZU: "Final Transaction Price" (no scheme discount);
+  - CSD: "CSD Final Price".
+- **BUG-200 fixed (Critical):** header labels with `-` `.` `_` never matched the registry, so the old importer stored
+  MM Invoice as ex-showroom and imported no schemes. `SheetHeaderService` now normalises both sides the same way,
+  prefers the primary label over aliases, and drops the pre-subsidy hard alias. `normalizeLabel()` is now public.
+- **Migration** `2026_09_28_223347_pricing_price_list_columns_dec076` (backup
+  `storage/app/backups/xlrm-pricing-headers-pre-DEC076-28-09-2026.sql`; run on xlrm + xlrm_testing; rollback verified):
+  - Per-list registry labels and aliases: PV unprefixed schemes; LMM freight, VIN Scheme, margin and handling; TZU
+    final price, scheme columns off; CSD final price.
+  - Four eligibility columns on `xlr8_vehicle_pricing` (`curr/old_acc_elg`, `curr/old_shield_elg`).
+- **New `Import\PriceListImportService` + `ImportPricesJob` + `PricesController`:**
+  - Reuses the Start workbook or takes an updated one; lists and WEF; the run is queued and recorded for Discard.
+  - The screen shows a per-list summary and the issues, with a download.
+  - Before → after:
+    - WEF: a new WEF with no material change used to insert a second active row. It now keeps the live row.
+    - Older WEF than the live row: it is now rejected.
+    - History: now written, one row per code (BUG-201: the `PricingHistory` model now matches its table).
+    - Duplicate codes: conflicting duplicates are rejected.
+    - PV's repeated OV block is read as OV.
+    - Dealer margin = margin + handling.
+    - GST% is derived when the sheet has none (TZU).
+- **Removed:**
+  - `PriceListPricingImporter`, `PriceListVehicleDetector` (its BUG-131 test moved to `PriceListDetectServiceTest`) and
+    `ImportPriceListsJob`.
+  - The legacy prices actions and view, the legacy `progress` route and the unused `sheetOptions()`.
+- **End-to-end (xlrm_testing, real files):**
+  - Import of all 6 lists at 3 WEFs: 41 s, 30 s and 19 s (122 MB peak). The runs gave 3,757 inserts, then 3,757
+    same-WEF updates, then 3,757 unchanged at a later WEF.
+  - No duplicate active rows. Discard undid all 22,164 changes.
+  - Spot checks: PV Scorpio-N ₹22,76,500 (scheme 75,000 / 25,000 with GST, elg 0.7 / 1); CV Veero 8,24,500 (margin
+    28,820 from Handling); BEV XEV 9S 25,95,001; LMM E-Alfa 1,77,219 (Org; assessable + freight 1,55,597; VIN scheme
+    10,876); TZU Final Transaction Price; CSD channel with CSD Final Price.
+  - Found and fixed during the run: the per-sheet counters were lost (an arrow function passed them by value).
+- **Tests:** `PricingPriceImportTest` (4):
+  - PV columns + NV/OV + skips/conflicts;
+  - WEF update / keep / expire / reject + history;
+  - LMM / TZU / CSD column choices;
+  - queued screen + continue.
+  `PriceListDetectServiceTest` (8). Pricing suites: 53 passed.

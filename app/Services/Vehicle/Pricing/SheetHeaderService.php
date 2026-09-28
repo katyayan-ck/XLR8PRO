@@ -15,18 +15,31 @@ class SheetHeaderService
 {
     protected const CACHE_TTL = 3600; // seconds; invalidated on header admin change
 
+    protected const CACHE_PREFIX = 'pricing.sheet_headers.v2.';
+
     /**
      * Map of normalized label → field_code for a sheet.
      *
-     * @return array<string, string>  lowercase label => field_code
+     * @return array<string, string> lowercase label => field_code
      */
     public function labelMap(string $sheetCode): array
     {
-        $sheetCode = strtoupper(trim($sheetCode));
-        $cacheKey  = "pricing.sheet_headers.{$sheetCode}";
+        return $this->registry($sheetCode)['map'];
+    }
 
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($sheetCode) {
+    /**
+     * Normalised label => [field_code, rank] (rank 0 = the field's primary label, 1… = its aliases in order). Registry
+     * labels are normalised exactly like sheet cells (BUG-200: "Ex-Showroom Price ORG" never matched before).
+     *
+     * @return array{map: array<string, string>, rank: array<string, int>}
+     */
+    protected function registry(string $sheetCode): array
+    {
+        $sheetCode = strtoupper(trim($sheetCode));
+
+        return Cache::remember(self::CACHE_PREFIX.$sheetCode, self::CACHE_TTL, function () use ($sheetCode): array {
             $map = [];
+            $rank = [];
             $headers = SheetHeader::query()
                 ->active()
                 ->forSheet($sheetCode)
@@ -34,49 +47,47 @@ class SheetHeaderService
                 ->get();
 
             foreach ($headers as $header) {
-                foreach ($header->allLabels() as $label) {
+                foreach ($header->allLabels() as $i => $label) {
+                    $label = $this->normalizeLabel($label);
                     // First registration wins if two field_codes share a label (avoid silent overwrite of required)
-                    if (!isset($map[$label])) {
+                    if ($label !== '' && ! isset($map[$label])) {
                         $map[$label] = $header->field_code;
+                        $rank[$label] = $i;
                     }
                 }
             }
 
-            return $map;
+            return ['map' => $map, 'rank' => $rank];
         });
     }
 
-    /**
-     * Given a row of Excel header cells (row values), return field_code => column index (0-based).
-     *
-     * @param  array<int, mixed>  $headerCells
-     * @return array<string, int>  field_code => col index
-     */
     public function mapHeaderRow(string $sheetCode, array $headerCells): array
     {
-        $labelMap = $this->labelMap($sheetCode);
-        $result   = [];
+        $registry = $this->registry($sheetCode);
+        $result = [];
+        $bestRank = [];
 
         foreach ($headerCells as $colIndex => $raw) {
             $label = $this->normalizeLabel($raw);
             if ($label === '') {
                 continue;
             }
-            // Built-in hard aliases (LMM TZU etc.)
+            // Built-in hard aliases (LMM TZU material code)
             $hard = [
                 'm code' => 'model_code',
-                'm.code' => 'model_code',
                 'mcode' => 'model_code',
                 'material code' => 'model_code',
                 'vehicle code' => 'model_code',
-                'ex showroom pre subsidy' => 'ex_showroom',
             ];
-            $fieldCode = $labelMap[$label] ?? $hard[$label] ?? null;
+            $fieldCode = $registry['map'][$label] ?? $hard[$label] ?? null;
             if ($fieldCode === null) {
                 continue;
             }
-            if (!isset($result[$fieldCode])) {
+            // the primary label beats an alias; between equals the first column wins (BUG-200)
+            $rank = $registry['rank'][$label] ?? 99;
+            if (! isset($result[$fieldCode]) || $rank < $bestRank[$fieldCode]) {
                 $result[$fieldCode] = (int) $colIndex;
+                $bestRank[$fieldCode] = $rank;
             }
         }
 
@@ -94,7 +105,7 @@ class SheetHeaderService
     {
         $required = $this->requiredFieldCodes($sheetCode);
         $bestIndex = null;
-        $bestMap   = [];
+        $bestMap = [];
         $bestScore = -1;
 
         $limit = min(count($rows), $maxScan);
@@ -107,7 +118,7 @@ class SheetHeaderService
             // Bonus if all required field_codes present
             $hasRequired = true;
             foreach ($required as $code) {
-                if (!isset($map[$code])) {
+                if (! isset($map[$code])) {
                     $hasRequired = false;
                     break;
                 }
@@ -118,23 +129,23 @@ class SheetHeaderService
             if ($score > $bestScore) {
                 $bestScore = $score;
                 $bestIndex = $i;
-                $bestMap   = $map;
+                $bestMap = $map;
             }
         }
 
         if ($bestIndex === null) {
             Log::warning('[SheetHeaderService] No header row found', [
                 'sheet_code' => $sheetCode,
-                'scanned'    => $limit,
-                'required'   => $required,
+                'scanned' => $limit,
+                'required' => $required,
                 'label_map_sample' => array_slice($this->labelMap($sheetCode), 0, 15, true),
             ]);
         } else {
             Log::info('[SheetHeaderService] Header row found', [
-                'sheet_code'   => $sheetCode,
-                'header_row'   => $bestIndex,
-                'fields'       => array_keys($bestMap),
-                'score'        => $bestScore,
+                'sheet_code' => $sheetCode,
+                'header_row' => $bestIndex,
+                'fields' => array_keys($bestMap),
+                'score' => $bestScore,
             ]);
         }
 
@@ -144,16 +155,16 @@ class SheetHeaderService
     /**
      * Read a value from a data row using field_code map.
      *
-     * @param  array<int, mixed>   $row
+     * @param  array<int, mixed>  $row
      * @param  array<string, int>  $fieldMap  field_code => col index
      */
     public function val(array $row, array $fieldMap, string $fieldCode, mixed $default = null): mixed
     {
-        if (!isset($fieldMap[$fieldCode])) {
+        if (! isset($fieldMap[$fieldCode])) {
             return $default;
         }
         $idx = $fieldMap[$fieldCode];
-        if (!array_key_exists($idx, $row)) {
+        if (! array_key_exists($idx, $row)) {
             return $default;
         }
         $v = $row[$idx];
@@ -192,17 +203,18 @@ class SheetHeaderService
     public function forgetCache(?string $sheetCode = null): void
     {
         if ($sheetCode) {
-            Cache::forget('pricing.sheet_headers.' . strtoupper(trim($sheetCode)));
+            Cache::forget(self::CACHE_PREFIX.strtoupper(trim($sheetCode)));
+
             return;
         }
 
         $codes = SheetHeader::query()->distinct()->pluck('sheet_code');
         foreach ($codes as $code) {
-            Cache::forget('pricing.sheet_headers.' . $code);
+            Cache::forget(self::CACHE_PREFIX.$code);
         }
     }
 
-    protected function normalizeLabel(mixed $raw): string
+    public function normalizeLabel(mixed $raw): string
     {
         if ($raw === null) {
             return '';

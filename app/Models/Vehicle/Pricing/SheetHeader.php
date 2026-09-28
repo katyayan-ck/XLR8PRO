@@ -6,6 +6,17 @@ use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property int $id
+ * @property string $sheet_code
+ * @property string $field_code
+ * @property string $label
+ * @property list<string>|null $aliases
+ * @property string|null $data_type
+ * @property bool $is_required
+ * @property int $sort_order
+ * @property bool $is_active
+ */
 class SheetHeader extends BaseModel
 {
     use SoftDeletes;
@@ -27,13 +38,13 @@ class SheetHeader extends BaseModel
     ];
 
     protected $casts = [
-        'aliases'     => 'array',
+        'aliases' => 'array',
         'is_required' => 'boolean',
-        'is_active'   => 'boolean',
-        'sort_order'  => 'integer',
-        'created_at'  => 'datetime',
-        'updated_at'  => 'datetime',
-        'deleted_at'  => 'datetime',
+        'is_active' => 'boolean',
+        'sort_order' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     // ── Scopes ───────────────────────────────────────────────────
