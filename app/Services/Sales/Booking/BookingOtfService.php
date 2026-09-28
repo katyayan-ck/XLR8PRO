@@ -237,24 +237,66 @@ class BookingOtfService
         ];
         $registration_type_map = ['0' => 'Tax Only', '1' => 'TRC + Tax', '2' => 'TRC Only', '3' => 'Exempted'];
         $customer_categories = OrgService::keywordValueByCode('CUSTOMER_TYPE');
-        $deliveryOptions = [1 => 'Payment', 2 => 'DO', 3 => 'Sanction Letter', 4 => 'Mail', 5 => 'Whatsapp'];
+        $deliveryOptions = [
+            1 => 'Financier Payment',
+            2 => 'Delivery Order',
+            3 => 'Sanction Letter',
+            4 => 'Mail Communication',
+            5 => 'Whatsapp Communication',
+            6 => 'Banker Cheque',
+            7 => 'Demand Graph',
+            8 => 'Customer Cheque',
+        ];
 
         $financierName = XlFinancier::find($booking->financier)?->name ?? 'N/A';
 
         $receiptLogs = Bookingamount::where('bid', $booking->id)
+            ->where('type', 1) // Receipt only
             ->whereNull('deleted_at')
             ->orderBy('date')
+            ->orderBy('id')
             ->get();
-        $receiptTotal = $receiptLogs->sum(fn ($receipt) => (float) $receipt->amount);
+
+        $receiptLogs->each(function ($receipt) {
+            // Actual receipt number is stored in type_number
+            $receipt->receipt_no = $receipt->type_number;
+
+            // Convert payment mode ID/code into display value
+            if (empty($receipt->mode)) {
+                $receipt->mode_name = '';
+            } elseif (is_numeric($receipt->mode)) {
+                $receipt->mode_name =
+                    OrgService::getKeyValueById((int) $receipt->mode)?->value
+                    ?? (string) $receipt->mode;
+            } else {
+                $receipt->mode_name =
+                    OrgService::getKeyValueByCode((string) $receipt->mode)?->value
+                    ?? (string) $receipt->mode;
+            }
+        });
+
+        $receiptTotal = $receiptLogs->sum(
+            fn ($receipt) => (float) $receipt->amount
+        );
+
+        $jvAmount = Bookingamount::where('bid', $booking->id)
+            ->where('type', 2)
+            ->whereNull('deleted_at')
+            ->sum('amount');
 
         $chassisImage = $booking->getFirstMediaUrl('chassis_image') ?: '';
 
         $enquiry = ! empty($booking->enq_no) ? Enquiry::find($booking->enq_no) : null;
 
         $taStatement = null;
-        if ($finance && $finance->instrument_type == 2 && ! empty($finance->instrument_ref_no)) {
+
+        $financeDoNumber = trim((string) ($finance?->instrument_ref_no ?? ''));
+
+        if ($financeDoNumber !== '') {
             $taStatement = DB::table('xlr8_financer_statement')
-                ->where('do_no', trim($finance->instrument_ref_no))
+                ->where('do_no', $financeDoNumber)
+                ->whereNull('deleted_at')
+                ->orderByDesc('created_at')
                 ->first();
         }
 
@@ -318,7 +360,7 @@ class BookingOtfService
 
         return compact(
             'booking', 'finance', 'salesconsultants','selectedSc', 'selectedScMileId', 'selectedScBranch', 'selectedScLocation', 'branches', 'taStatement', 'enquiry',
-            'quotationData', 'finalData', 'otfData', 'insurance', 'rto', 'dsa',
+            'quotationData', 'finalData', 'otfData', 'insurance', 'rto', 'dsa','jvAmount',
             'segment', 'model', 'variant', 'color', 'accessories', 'permit_map',
             'sale_type_map', 'reg_no_type_map', 'registration_category_map',
             'registration_type_map', 'customer_category_map', 'customer_categories', 'body_type_map',
@@ -457,8 +499,7 @@ class BookingOtfService
         $finance->file_charge = $formData['file_charge'] ?? $finance->file_charge;
         $finance->margin = $formData['margin_money'] ?? $finance->margin;
         $finance->subvention_amount = $formData['financier_subvention'] ?? $finance->subvention_amount;
-        $finance->instrument_type = $formData['vehicle_delivery_on'] ?? $finance->instrument_type;
-        $finance->instrument_ref_no = $formData['do_number'] ?? $finance->instrument_ref_no;
+        
 
         if (! $finance->exists) {
             $finance->verification_status = 0;

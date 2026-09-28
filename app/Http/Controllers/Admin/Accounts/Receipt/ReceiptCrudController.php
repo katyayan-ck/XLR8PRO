@@ -315,9 +315,16 @@ $receipt->bid = is_numeric($bookingNo) ? (int) $bookingNo : null;
             abort(403, 'Unauthorized. You do not have permission to look up receipt customer details.');
         }
 
+        // Convert XB-123 -> 123 before sending to OrgService
+        $bookingNo = trim((string) $request->booking_no);
+
+        if ($bookingNo !== '') {
+            $bookingNo = preg_replace('/^XB-/i', '', $bookingNo);
+        }
+
         $data = OrgService::getCustomerByTransactionIds(
             $request->enq_no,
-            $request->booking_no,
+            $bookingNo,
             $request->votf_no
         );
 

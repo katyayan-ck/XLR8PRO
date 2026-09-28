@@ -1296,7 +1296,7 @@ use App\Services\OrgService;
                                     </td>
                                 </tr>
 
-                                {{-- Chassis No. --}}
+                                {{-- 1. Chassis No. --}}
                                 <tr>
                                     <td class="title">Chassis No.</td>
                                     <td>
@@ -1304,17 +1304,18 @@ use App\Services\OrgService;
                                             name="chassis"
                                             id="chassis_no_display"
                                             value="{{ old('chassis', $booking->chassis_no ?? '') }}"
-                                            maxlength="30"
+                                            maxlength="18"
+                                            autocomplete="off"
                                             style="text-transform:uppercase"
                                             oninput="this.value = this.value.toUpperCase();">
-                                        
+
                                         <small id="chassis_validation_message"
                                             style="display:none; font-size:9px; font-weight:600;">
                                         </small>
                                     </td>
                                 </tr>
 
-                                {{-- Engine No. --}}
+                                {{-- 2. Engine No. --}}
                                 <tr>
                                     <td class="title">Engine No.</td>
                                     <td>
@@ -1323,12 +1324,13 @@ use App\Services\OrgService;
                                             id="engine_no"
                                             value="{{ old('engine_no', $otfData['engine_no'] ?? '') }}"
                                             maxlength="50"
+                                            autocomplete="off"
                                             style="text-transform:uppercase"
                                             oninput="this.value = this.value.toUpperCase();">
                                     </td>
                                 </tr>
 
-                                {{-- Chassis Image --}}
+                                {{-- 3. Chassis Image --}}
                                 <tr>
                                     <td class="title">Chassis Image</td>
                                     <td>
@@ -1337,13 +1339,10 @@ use App\Services\OrgService;
                                             name="chassis_image"
                                             accept="image/*">
 
-                                        <small style="display:block; margin-top:3px; font-size:9px;">
-                                            Upload chassis image
-                                        </small>
                                     </td>
                                 </tr>
 
-                                {{-- OEM Model Code --}}
+                                {{-- 4. OEM Model Code --}}
                                 <tr>
                                     <td class="title">OEM Model Code</td>
                                     <td>
@@ -1358,7 +1357,7 @@ use App\Services\OrgService;
                                     </td>
                                 </tr>
 
-                                {{-- GST Slab - MANUAL --}}
+                                {{-- 5. GST Slab --}}
                                 <tr>
                                     <td class="title">GST Slab</td>
                                     <td>
@@ -1369,11 +1368,11 @@ use App\Services\OrgService;
                                                 'gst_slab',
                                                 $otfData['gst_slab'] ?? $variant?->gst_slab ?? ''
                                             ) }}"
-                                            placeholder="Enter GST Slab">
+                                            autocomplete="off">
                                     </td>
                                 </tr>
 
-                                {{-- Invoice No. - MANUAL --}}
+                                {{-- 6. Invoice No. --}}
                                 <tr>
                                     <td class="title">Invoice No.</td>
                                     <td>
@@ -1381,13 +1380,14 @@ use App\Services\OrgService;
                                             name="inv_no"
                                             id="inv_no"
                                             value="{{ old('inv_no', $booking->inv_no ?? '') }}"
-                                            placeholder="Enter Invoice No."
+                                            maxlength="15"
+                                            autocomplete="off"
                                             style="text-transform:uppercase"
                                             oninput="this.value = this.value.toUpperCase();">
                                     </td>
                                 </tr>
 
-                                {{-- Invoice Date - MANUAL --}}
+                                {{-- 7. Invoice Date --}}
                                 <tr>
                                     <td class="title">Invoice Date</td>
                                     <td>
@@ -1396,6 +1396,7 @@ use App\Services\OrgService;
                                             id="invoice_date"
                                             class="flatpickr"
                                             placeholder="dd-MMM-yyyy"
+                                            autocomplete="off"
                                             value="{{ old(
                                                 'invoice_date_display',
                                                 site_date($booking->inv_date, '')
@@ -1416,9 +1417,15 @@ use App\Services\OrgService;
                     <div class="row g-2">
                         <div class="col-md-6">
                             {{-- ================ PRICE DETAILS ================ --}}
-                            <div class="quotation-half mt-5">
+                            <div class="quotation-half mt-1">
                                 <table class="quotation-stacked-table">
                                     <thead>
+                                        <tr>
+                                            <td colspan="2"
+                                                style="background:#d9d9d9; font-weight:bold; text-align:center; border:1px solid #000;">
+                                                Quotation
+                                            </td>
+                                        </tr>
                                         <tr>
                                             <td colspan="2"
                                                 style="background:#d9d9d9; font-weight:bold; text-align:center; border:1px solid #000;">
@@ -2386,7 +2393,7 @@ use App\Services\OrgService;
                         </div>
                         <div class="col-md-6">
                             {{-- Financier Details --}}
-                            <table class="bill-table mt-5">
+                            <table class="bill-table mt-1">
                                 <tr>
                                     <td colspan="2" class="section-title">Financier Details</td>
                                 </tr>
@@ -2443,7 +2450,7 @@ use App\Services\OrgService;
                                     <td class="title">Receipt Amount</td>
                                     <td>
                                         <input type="text" id="receipt_amount" readonly
-                                            value="{{ number_format($receiptLogs->sum('amount'), 2, '.', '') }}">
+                                            value="{{ number_format($receiptTotal ?? 0, 2, '.', '') }}">
                                     </td>
                                 </tr>
 
@@ -2464,8 +2471,11 @@ use App\Services\OrgService;
                                 <tr>
                                     <td class="title" width="33%">Discount through JV</td>
                                     <td width="67%">
-                                        <input id="discount_through_jv" name="discount_through_jv" class="numeric-only"
-                                            value="{{ old('discount_through_jv', $otfData['discount_through_jv'] ?? '') }}">
+                                        <input id="discount_through_jv"
+                                            name="discount_through_jv"
+                                            class="numeric-only"
+                                            readonly
+                                            value="{{ number_format($jvAmount ?? 0, 2, '.', '') }}">
                                     </td>
                                 </tr>
 
@@ -2483,50 +2493,83 @@ use App\Services\OrgService;
                             {{-- Financier Verified, Delivery, DO Details --}}
                             <table class="bill-table mt-2">
 
+                                @php
+                                    $instrumentType = $finance?->instrument_type ?? $otfData['vehicle_delivery_on'] ?? '';
+                                @endphp
+
                                 <tr>
-                                    <td class="title" style="white-space:nowrap;">Vehicle To Be Delivered On</td>
+                                    <td class="title" style="white-space:nowrap;">
+                                        Vehicle To Be Delivered On
+                                    </td>
                                     <td>
-                                        <input type="text" id="vehicle_delivery_on_display"
-                                            name="vehicle_delivery_on_display"
-                                            value="{{ $deliveryOptions[$otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? ''] ?? '' }}"
-                                            readonly style="background:transparent; border:none; width:100%;">
-                                        <input type="hidden" name="vehicle_delivery_on"
-                                            value="{{ old('vehicle_delivery_on', $otfData['vehicle_delivery_on'] ?? $finance?->instrument_type ?? '') }}">
+                                        <input
+                                            type="text"
+                                            id="vehicle_delivery_on_display"
+                                            value="{{ $deliveryOptions[$instrumentType] ?? '' }}"
+                                            readonly
+                                            style="background:transparent;border:none;width:100%;"
+                                        >
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">DO Number (Delivery Time)</td>
                                     <td>
-                                        <input type="text" id="do_number" name="do_number" value="{{ old('do_number',
-                                    $otfData['do_number']
-                                    ?? $finance?->instrument_ref_no
-                                    ?? ''
-                                ) }}">
+                                        <input
+                                            type="text"
+                                            id="do_number"
+                                            value="{{ $finance?->instrument_ref_no ?? $otfData['do_number'] ?? '' }}"
+                                            readonly
+                                            style="background:transparent;border:none;width:100%;"
+                                        >
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">DO Number (TA Statement)</td>
                                     <td>
-                                        <input type="text" id="do_number_ta" name="do_number_ta" style="width:100%;"
-                                            placeholder="Enter DO Number to fetch details">
+                                        <input
+                                            type="text"
+                                            id="do_number_ta"
+                                            value="{{ $taStatement?->do_no ?? '' }}"
+                                            readonly
+                                            style="background:transparent;border:none;width:100%;"
+                                        >
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">DO Amount (TA Statement)</td>
                                     <td>
-                                        <input id="do_amount_ta" name="do_amount_ta" style="width:100%;" readonly>
+                                        <input
+                                            type="text"
+                                            id="do_amount_ta"
+                                            name="do_amount_ta"
+                                            value="{{ $taStatement?->credit_amount !== null
+                                                ? number_format((float) $taStatement->credit_amount, 2, '.', '')
+                                                : '' }}"
+                                            readonly
+                                            style="background:transparent;border:none;width:100%;"
+                                        >
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="title">DO Voucher Date</td>
                                     <td>
-                                        <input type="date" id="do_voucher_date" name="do_voucher_date"
-                                            style="width:100%;" readonly>
+                                        <input
+                                            type="date"
+                                            id="do_voucher_date"
+                                            name="do_voucher_date"
+                                            value="{{ $taStatement?->created_at
+                                                ? \Carbon\Carbon::parse($taStatement->created_at)->format('Y-m-d')
+                                                : '' }}"
+                                            readonly
+                                            style="background:transparent;border:none;width:100%;"
+                                        >
                                     </td>
                                 </tr>
                             </table>
 
+                            
                             {{-- Brokerage & Other Discount Receivable --}}
+                            {{--
                             <table class="bill-table mt-2">
                                 <tr>
                                     <td class="title" style="white-space:nowrap;">Brokerage Amount</td>
@@ -2563,7 +2606,9 @@ use App\Services\OrgService;
                                     </td>
                                 </tr>
                             </table>
+                            --}}
                             {{-- Registration Service Charge --}}
+                            {{--
                             <table class="bill-table mt-2">
                                 <tr>
                                     <td class="title" style="white-space:nowrap;">Registration Service Charge -
@@ -2584,6 +2629,8 @@ use App\Services\OrgService;
                                     </td>
                                 </tr>
                             </table>
+                            --}}
+                            
                             {{-- Receipt Table --}}
                                 <div class="col-12 mt-1">
                                     <div class="form-section">
@@ -2613,71 +2660,129 @@ use App\Services\OrgService;
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    @forelse($receiptLogs ?? [] as $receipt)
-                                                    <tr style="transition: background 0.2s ease;">
-                                                        <td style="padding: 5px 8px; vertical-align: middle;">
-                                                            <span class="badge bg-light text-dark"
-                                                                style="font-size: 10px; font-weight: 600; padding: 4px 10px; border: 1px solid #dee2e6;">
-                                                                {{ $receipt->reciept }}
-                                                            </span>
-                                                        </td>
-                                                        <td
-                                                            style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: var(--tblr-body-color);">
-                                                            @sitedate($receipt->date)
-                                                        </td>
-                                                        <td style="padding: 5px 8px; vertical-align: middle; font-size: 10px; color: var(--tblr-body-color);">
-                                                            {{ $receipt->mode ?? '' }}
-                                                        </td>
-                                                        <td
-                                                            style="padding: 5px 8px; vertical-align: middle; font-size: 10px; font-weight: 600; color: #28a745;">
-                                                            ₹ {{ number_format($receipt->amount, 2) }}
-                                                        </td>
-                                                        <td
-                                                            style="padding: 5px 8px; vertical-align: middle; text-align: center;">
-                                                            @php
-                                                            $receiptImage = $receipt->getFirstMediaUrl('amount-proof');
-                                                            @endphp
-                                                            @if($receiptImage)
-                                                            <a href="{{ $receiptImage }}" data-lightbox="receipt-images"
-                                                                data-title="Receipt {{ $receipt->reciept }}"
-                                                                class="btn btn-sm btn-outline-primary"
-                                                                style="padding: 2px 8px; font-size: 9px; border-radius: 4px;">
-                                                                <i class="la la-eye" style="font-size: 14px;"></i>
-                                                            </a>
-                                                            @else
-                                                            <span class="text-muted" style="font-size: 9px;">
-                                                                <i class="la la-eye-slash"></i> No File
-                                                            </span>
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                    @empty
-                                                    <tr>
-                                                        <td colspan="4" class="text-center py-3"
-                                                            style="font-size: 11px; color: var(--tblr-muted);">
-                                                            <i class="la la-inbox"
-                                                                style="font-size: 24px; display: block; margin-bottom: 5px;"></i>
-                                                            No Receipts Found
-                                                        </td>
-                                                    </tr>
-                                                    @endforelse
-                                                </tbody>
-                                                @if($receiptLogs->count() > 0)
-                                                <tfoot>
-                                                    <tr>
-                                                        <td colspan="2"
-                                                            style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: var(--tblr-body-color); text-align: right;">
-                                                            TOTAL:
-                                                        </td>
-                                                        <td
-                                                            style="padding: 5px 8px; font-size: 10px; font-weight: 700; color: #28a745;">
-                                                            ₹ {{ number_format($receiptLogs->sum('amount') ?? 0, 2) }}
-                                                        </td>
-                                                        <td style="padding: 5px 8px;"></td>
-                                                        <td style="padding: 5px 8px;"></td>
-                                                    </tr>
-                                                </tfoot>
-                                                @endif
+    @forelse($receiptLogs ?? [] as $receipt)
+
+        <tr style="transition: background 0.2s ease;">
+
+            {{-- Receipt No --}}
+            <td style="padding: 5px 8px; vertical-align: middle;">
+                <span class="badge bg-light text-dark"
+                    style="font-size: 10px;
+                           font-weight: 600;
+                           padding: 4px 10px;
+                           border: 1px solid #dee2e6;">
+
+                    {{ $receipt->receipt_no ?? $receipt->type_number ?? '' }}
+
+                </span>
+            </td>
+
+            {{-- Date --}}
+            <td style="padding: 5px 8px;
+                       vertical-align: middle;
+                       font-size: 10px;
+                       color: var(--tblr-body-color);">
+
+                @sitedate($receipt->date)
+
+            </td>
+
+            {{-- Receipt Mode --}}
+            <td style="padding: 5px 8px;
+                       vertical-align: middle;
+                       font-size: 10px;
+                       color: var(--tblr-body-color);">
+
+                {{ $receipt->mode_name ?? '' }}
+
+            </td>
+
+            {{-- Amount --}}
+            <td style="padding: 5px 8px;
+                       vertical-align: middle;
+                       font-size: 10px;
+                       font-weight: 600;
+                       color: #28a745;">
+
+                ₹ {{ number_format((float) $receipt->amount, 2) }}
+
+            </td>
+
+            {{-- View --}}
+            <td style="padding: 5px 8px;
+                       vertical-align: middle;
+                       text-align: center;">
+
+                <a href="{{ backpack_url('accounts/receipt/'.$receipt->id.'/browser-print') }}"
+                   target="_blank"
+                   class="btn btn-sm btn-outline-primary"
+                   title="View Receipt"
+                   style="padding: 2px 8px;
+                          font-size: 9px;
+                          border-radius: 4px;">
+
+                    <i class="la la-eye" style="font-size: 14px;"></i>
+
+                </a>
+
+            </td>
+
+        </tr>
+
+    @empty
+
+        <tr>
+            <td colspan="5"
+                class="text-center py-3"
+                style="font-size: 11px;
+                       color: var(--tblr-muted);">
+
+                <i class="la la-inbox"
+                   style="font-size: 24px;
+                          display: block;
+                          margin-bottom: 5px;"></i>
+
+                No Receipts Found
+
+            </td>
+        </tr>
+
+    @endforelse
+</tbody>
+
+@if(($receiptLogs ?? collect())->count() > 0)
+
+<tfoot>
+    <tr>
+
+        <td colspan="2"
+            style="padding: 5px 8px;
+                   font-size: 10px;
+                   font-weight: 700;
+                   color: var(--tblr-body-color);
+                   text-align: right;">
+
+            TOTAL:
+
+        </td>
+
+        <td></td>
+
+        <td style="padding: 5px 8px;
+                   font-size: 10px;
+                   font-weight: 700;
+                   color: #28a745;">
+
+            ₹ {{ number_format($receiptLogs->sum('amount'), 2) }}
+
+        </td>
+
+        <td></td>
+
+    </tr>
+</tfoot>
+
+@endif
                                             </table>
                                         </div>
 
@@ -2828,17 +2933,25 @@ use App\Services\OrgService;
                                 Chassis Verification
                             </div>
 
-                            {{-- Image --}}
-                            <img id="chassis_preview"
-                                src="{{ $chassisImage ?? '' }}"
-                                style="
-                                    display:{{ !empty($chassisImage) ? 'block' : 'none' }};
-                                    max-width:145px;
-                                    max-height:80px;
-                                    width:auto;
-                                    height:auto;
-                                    object-fit:contain;
-                                ">
+                            <a id="chassis_lightbox_link"
+                                href="{{ !empty($chassisImage) ? $chassisImage : '#' }}"
+                                data-lightbox="chassis-image"
+                                data-title="Chassis Verification"
+                                style="{{ !empty($chassisImage) ? '' : 'display:none;' }}">
+
+                                <img id="chassis_preview"
+                                    src="{{ $chassisImage ?? '' }}"
+                                    alt="Chassis Verification"
+                                    style="
+                                        display:{{ !empty($chassisImage) ? 'block' : 'none' }};
+                                        max-width:145px;
+                                        max-height:80px;
+                                        width:auto;
+                                        height:auto;
+                                        object-fit:contain;
+                                        cursor:zoom-in;
+                                    ">
+                            </a>
                         </div>
                     </td>
 
@@ -2892,6 +3005,49 @@ use App\Services\OrgService;
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
+// ==========================================================
+// LOCK ALL AMOUNT FIELDS IN PRICE DETAILS & DISCOUNT DETAILS
+// ==========================================================
+$(document).ready(function () {
+
+    function lockQuotationAmounts() {
+
+        // Price Details
+        $('#price-details-body td.ql-amount input')
+            .not('[type="hidden"]')
+            .prop('readonly', true);
+
+        // Discount Details
+        $('#discount-details-body td.ql-amount input')
+            .not('[type="hidden"]')
+            .prop('readonly', true);
+    }
+
+    // Initial load
+    lockQuotationAmounts();
+
+    // In case any JS changes/rebuilds the rows later
+    const observer = new MutationObserver(function () {
+        lockQuotationAmounts();
+    });
+
+    const priceBody = document.getElementById('price-details-body');
+    const discountBody = document.getElementById('discount-details-body');
+
+    if (priceBody) {
+        observer.observe(priceBody, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    if (discountBody) {
+        observer.observe(discountBody, {
+            childList: true,
+            subtree: true
+        });
+    }
+});
     // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
     // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.
     const SITE_DATE_FORMAT = '@php echo app(\App\Services\DateFormatService::class)->phpFormat(); @endphp';
@@ -3457,97 +3613,70 @@ $(document).ready(function () {
     $('#rsa').trigger('change');
     $('#charger_swapping').trigger('change');
 
-    // Chassis image preview
-    $('#chassis_image').on('change', function () {
-        const file = this.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e){
-            $('#chassis_preview').attr('src', e.target.result).show();
-        };
-        reader.readAsDataURL(file);
+    $(document).ready(function () {
+
+        $('#chassis_image').on('change', function () {
+
+            const file = this.files && this.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            if (!file.type.startsWith('image/')) {
+                alert('Please select a valid image file.');
+                this.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+
+                const imageUrl = e.target.result;
+
+                // Show preview
+                $('#chassis_preview')
+                    .attr('src', imageUrl)
+                    .css('display', 'block');
+
+                // Update Lightbox anchor
+                $('#chassis_lightbox_link')
+                    .attr('href', imageUrl)
+                    .css('display', 'inline-block');
+
+            };
+
+            reader.readAsDataURL(file);
+        });
+
     });
 });
 
     $(document).ready(function () {
-        function toggleDONumber() {
-        var deliveryValue = $('#vehicle_delivery_on_display').val();
-        var isDO = (deliveryValue === 'DO');
-        
-        if (isDO) {
-            var doNumber = "{{ old('do_number', $otfData['do_number'] ?? $finance?->instrument_ref_no ?? '') }}";
-            if (doNumber) {
-                $('#do_number').val(doNumber);
-            }
-            $('#do_number').prop('disabled', false);
-            $('#do_number_ta').prop('disabled', false);
-        } else {
-            $('#do_number').val('').prop('disabled', true);
-            $('#do_number_ta').val('').prop('disabled', true);
-            $('#do_amount_ta').val('');
-            $('#do_voucher_date').val('');
-        }
-    }
 
-    toggleDONumber();
+        const financeDoNumber = @json(
+            $finance?->instrument_ref_no ?? ''
+        );
 
-    $('#do_number_ta').on('blur', function () {
-        let doNo = $(this).val().trim();
-        if (doNo == '') {
-            $('#do_amount_ta').val('');
-            $('#do_voucher_date').val('');
-            return;
-        }
-        $.ajax({
-            url: "{{ backpack_url('sales/booking/get-do-amount') }}",
-            type: "GET",
-            data: { do_no: doNo },
-            success: function (res) {
-                // ✅ If match found, populate amount and date
-                if (res.amount && parseFloat(res.amount) > 0) {
-                    $('#do_amount_ta').val(res.amount);
-                    $('#do_voucher_date').val(res.date);
-                } else {
-                    // No match found - keep empty
-                    $('#do_amount_ta').val('');
-                    $('#do_voucher_date').val('');
-                }
-                
-                // Also update DO Number (Delivery Time) if empty
-                var deliveryValue = $('#vehicle_delivery_on_display').val();
-                if (deliveryValue === 'DO' && !$('#do_number').val() && doNo) {
-                    $('#do_number').val(doNo);
-                }
-            },
-            error: function(xhr) {
-                console.log('Error fetching DO details:', xhr);
-                $('#do_amount_ta').val('');
-                $('#do_voucher_date').val('');
-            }
-        });
+        $('#do_number')
+            .val(financeDoNumber)
+            .prop('readonly', true);
+
+        $('#do_number_ta')
+            .val(@json($taStatement?->do_no ?? ''))
+            .prop('readonly', true);
+
+        $('#do_amount_ta')
+            .prop('readonly', true);
+
+        $('#do_voucher_date')
+            .prop('readonly', true);
+
     });
 
-    // Sync: TA Statement changes → update Delivery Time if empty
-    $('#do_number_ta').on('input', function() {
-        var doNo = $(this).val().trim();
-        var deliveryValue = $('#vehicle_delivery_on_display').val();
-        
-        if (deliveryValue === 'DO' && doNo && !$('#do_number').val()) {
-            $('#do_number').val(doNo);
-        }
-    });
 
-    // Sync: Delivery Time changes → update TA Statement if empty
-    $('#do_number').on('change input', function() {
-        var doNo = $(this).val().trim();
-        var deliveryValue = $('#vehicle_delivery_on_display').val();
-        
-        if (deliveryValue === 'DO' && doNo && !$('#do_number_ta').val()) {
-            $('#do_number_ta').val(doNo);
-            $('#do_number_ta').trigger('blur');
-        }
-    });
-});
+    
 
 
 function updateDsaLocation() {
@@ -3595,14 +3724,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
     
-    // Handle DO Voucher Date
-    flatpickr("#do_voucher_date", {
-        dateFormat: SITE_DATE_FORMAT,
-        allowInput: false,
-        clickOpens: true,
-        altInput: true,
-        altFormat: "d-M-Y"
-    });
+    
 });
 // ==========================================================
 // MARITAL STATUS → MARRIAGE DATE
@@ -3661,93 +3783,152 @@ document.addEventListener('DOMContentLoaded', function () {
     toggleMarriageDate();
 });
 
-document.getElementById('marital_status').addEventListener('change', toggleAnniversaryRow);
-toggleAnniversaryRow();
 
 // ================= NET SETTLEMENT CALCULATION =================
+
 function calculateNetSettlement() {
-    const loanAmount   = parseFloat($('#loan_amount').val()) || 0;
-    const marginMoney  = parseFloat($('#margin_money').val()) || 0;
-    const fileCharge   = parseFloat($('#file_charge').val()) || 0;
-    const financierSubvention = parseFloat($('#financier_subvention').val()) || 0;
 
-    // Formula: Loan Amount - File Charge + Margin Money - Financier Subvention
-    const netSettlement = loanAmount - fileCharge + marginMoney - financierSubvention;
+    const loanAmount =
+        parseFloat($('#loan_amount').val()) || 0;
 
-    $('#net_settlement_amount').val(netSettlement.toFixed(2));
+    const marginMoney =
+        parseFloat($('#margin_money').val()) || 0;
+
+    const fileCharge =
+        parseFloat($('#file_charge').val()) || 0;
+
+    const financierSubvention =
+        parseFloat($('#financier_subvention').val()) || 0;
+
+    /*
+     * DO Amount
+     *
+     * Loan Amount
+     * - File Charge
+     * + Margin Money
+     * - Financier Subvention
+     */
+    const netSettlement =
+        loanAmount
+        - fileCharge
+        + marginMoney
+        - financierSubvention;
+
+    $('#net_settlement_amount').val(
+        netSettlement.toFixed(2)
+    );
+
+    return netSettlement;
 }
 
-// Auto-calculate on any change
-$('#loan_amount, #margin_money, #file_charge, #financier_subvention').on('input change', function () {
-    calculateNetSettlement();
-});
 
-// Initialize on page load
-calculateNetSettlement();
+$(document).on(
+    'input change',
+    '#loan_amount, #margin_money, #file_charge, #financier_subvention',
+    function () {
+
+        calculateFinancierDetails();
+    }
+);
+
+$(document).ready(function () {
+
+    calculateFinancierDetails();
+
+});
 
 function calculateExpectedBalance() {
-    const netReceivable = parseFloat($('#net_receivable_summary').val()) || 0;
-    const doAmount = parseFloat($('#net_settlement_amount').val()) || 0;
-    const receiptTotal = parseFloat($('#receipt_total').val()) || 0;
-    const settlementDiff = parseFloat($('#do_settlement_difference').val()) || 0;
 
-    // Expected Balance = Net Receivable - DO Amount - Receipts + DO Settlement Difference
+    const netReceivable =
+        parseFloat($('#net_receivable_summary').val()) || 0;
+
+    const doAmount =
+        parseFloat($('#net_settlement_amount').val()) || 0;
+
+    const receiptAmount =
+        parseFloat($('#receipt_amount').val()) || 0;
+
+    const settlementDifference =
+        parseFloat($('#do_settlement_difference').val()) || 0;
+
     const expectedBalance =
-        netReceivable - doAmount - receiptTotal + settlementDiff;
+        netReceivable
+        - doAmount
+        - receiptAmount
+        + settlementDifference;
 
-    $('#expected_balance').val(expectedBalance.toFixed(2));
+    $('#expected_balance').val(
+        expectedBalance.toFixed(2)
+    );
+
+    return expectedBalance;
 }
+
 
 function calculateFinalBalance() {
-    const expectedBalance = parseFloat($('#expected_balance').val()) || 0;
-    const discountJV      = parseFloat($('#discount_through_jv').val()) || 0;
 
-    // Final Balance = Expected Balance - Discount through JV
-    const finalBalance = expectedBalance - discountJV;
+    const expectedBalance =
+        parseFloat($('#expected_balance').val()) || 0;
 
-    $('#final_balance').val(finalBalance.toFixed(2));
+    const discountJV =
+        parseFloat($('#discount_through_jv').val()) || 0;
+
+    /*
+     * Final Balance
+     *
+     * Expected Balance
+     * - Discount through JV
+     */
+    const finalBalance =
+        expectedBalance - discountJV;
+
+    $('#final_balance').val(
+        finalBalance.toFixed(2)
+    );
+
+    return finalBalance;
 }
 
-// Recalculate Receipt Total from receipt table
-function calculateReceiptTotal() {
-    let total = 0;
-    $('.receipt-table tbody tr').each(function() {
-        const amountText = $(this).find('td:eq(3)').text().trim();
-        const amount = parseFloat(amountText.replace(/[^0-9.]/g, '')) || 0;
-        total += amount;
-    });
-    $('#receipt_total').val(total.toFixed(2));
-    return total;
+function calculateFinancierDetails() {
+
+    calculateNetSettlement();
+
+    calculateExpectedBalance();
+
+
+    calculateFinalBalance();
 }
+
+
 
 // Trigger on all relevant fields
-$('#net_receivable_summary, #net_settlement_amount, #do_settlement_difference, #discount_through_jv').on('input', function () {
+$('#net_receivable_summary, #net_settlement_amount, #do_settlement_difference, #discount_through_jv')
+    .on('input change', function () {
+        calculateExpectedBalance();
+        calculateFinalBalance();
+    });
+
+// Recalculate balance when receipt amount changes
+$('.receipt_amount').on('input change', function () {
     calculateExpectedBalance();
     calculateFinalBalance();
 });
 
-// Recalculate when receipt total changes
-$('.receipt_amount').on('input', function () {
-    calculateReceiptTotal();
-    calculateExpectedBalance();
-    calculateFinalBalance();
-});
+// Initialize balance calculations and print text
+$(document).ready(function () {
 
-// Initialize on page load
-$(document).ready(function() {
-    calculateReceiptTotal();
     calculateExpectedBalance();
     calculateFinalBalance();
-        
+
     var insuranceText = buildInsuranceTextFromData();
+
     if (insuranceText) {
         $('#insurance_print').text(insuranceText);
     }
-    
-    var accessoriesText = buildAccessoriesTextFromData();
-    if (accessoriesText) {
-        $('#accessories_print').text(accessoriesText);
-    }
+
+    // Accessories print text is already handled by
+    // updateAccessoriesPrintText()
+    updateAccessoriesPrintText();
 });
 function buildInsuranceTextFromData() {
     var insuranceData = $('#insurance_print_data').val();

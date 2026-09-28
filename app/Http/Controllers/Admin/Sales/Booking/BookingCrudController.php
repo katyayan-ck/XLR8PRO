@@ -955,7 +955,7 @@ class BookingCrudController extends CrudController
                 'bookings.created_by',
                 'bookings.updated_at',
                 'bookings.updated_by',
-
+                'bookings.final_data',
                 // 2. Joined Fields from Enquiry Table
                 'enq.dealer_branch as branch_code',
                 'enq.dealer_location as location_code',
@@ -10220,9 +10220,20 @@ class BookingCrudController extends CrudController
         $this->data['crud'] = $this->crud;
         $this->data['title'] = 'Transaction / OTF Listings';
 
-        $query = $this->getBaseQuery();
-        $query->whereIn('bookings.status', [1, 8]);
-        $query->orderBy('bookings.id', 'desc');
+        $query = $this->getBaseQuery()
+            ->whereIn('bookings.status', [1, 8])
+            ->whereRaw("
+                JSON_VALID(bookings.final_data)
+                AND NULLIF(
+                    TRIM(
+                        JSON_UNQUOTE(
+                            JSON_EXTRACT(bookings.final_data, '$.votf_no')
+                        )
+                    ),
+                    ''
+                ) IS NOT NULL
+            ")
+            ->orderBy('bookings.id', 'desc');
 
         $paginatedBookings = $query->paginate(50);
         $gridLookups = $this->preloadGridLookups($paginatedBookings->getCollection());
@@ -10488,30 +10499,42 @@ class BookingCrudController extends CrudController
 
     public function getDoAmount(Request $request)
     {
-        if (! backpack_user()->can('SLS_BKNG_DO')) {
+        if (!backpack_user()->can('SLS_BKNG_DO')) {
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
         }
 
-        $doNo = $request->input('do_no');
+        $doNo = trim((string) $request->input('do_no'));
 
-        if (empty($doNo)) {
-            return response()->json(['amount' => '', 'date' => '']);
-        }
-
-        // Search for exact match in do_no column
-        $statement = DB::table('xlr8_financer_statement')
-            ->where('do_no', $doNo)
-            ->where('trans_type', 'C') // Credit transactions only
-            ->first();
-
-        if ($statement) {
+        if ($doNo === '') {
             return response()->json([
-                'amount' => number_format($statement->credit_amount ?? 0, 2),
-                'date' => site_date($statement->trans_date, ''),
+                'amount' => '',
+                'date' => '',
             ]);
         }
 
-        return response()->json(['amount' => '', 'date' => '']);
+        // Find exact DO Number in Financer Statement
+        $statement = DB::table('xlr8_financer_statement')
+            ->where('do_no', $doNo)
+            ->whereNull('deleted_at')
+            ->orderByDesc('created_at')
+            ->first();
+
+        if (!$statement) {
+            return response()->json([
+                'amount' => '',
+                'date' => '',
+            ]);
+        }
+
+        return response()->json([
+            'amount' => $statement->credit_amount !== null
+                ? number_format((float) $statement->credit_amount, 2, '.', '')
+                : '',
+
+            'date' => !empty($statement->created_at)
+                ? \Carbon\Carbon::parse($statement->created_at)->format('Y-m-d')
+                : '',
+        ]);
     }
 
     public function getTAStatement(Request $request)
@@ -10670,6 +10693,10 @@ class BookingCrudController extends CrudController
         $variant = Variant::with(['permit', 'fuelType', 'bodyType', 'bodyMake'])
             ->where('code', $booking->variant_code)->first();
         $color = Color::where('code', $booking->color_code)->first();
+        $enquiry = null;
+            if (!empty($booking->enq_no)) {
+                $enquiry = \App\Models\CRM\Enquiry::resolveByAnyReference($booking->enq_no);
+            }
 
         $consultants = OrgService::getUsers(desigCode: 'SLS_CONS');
 
@@ -10749,7 +10776,8 @@ class BookingCrudController extends CrudController
             'body_type_map',
             'sale_type_map',
             'deliveryOptions',
-            'financierName'
+            'financierName',
+            'enquiry'
         );
     }
 }
