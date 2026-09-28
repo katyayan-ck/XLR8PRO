@@ -5,7 +5,38 @@ namespace App\Models\Vehicle\Pricing;
 use App\Models\BaseModel;
 use App\Services\Vehicle\Pricing\Rules\RtoRuleService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int|null $import_session_id
+ * @property string|null $code
+ * @property string $permit
+ * @property int|null $wheels
+ * @property string|null $reg_type
+ * @property string|null $body_type
+ * @property string|null $gvw_range
+ * @property string|null $seater
+ * @property string|null $fuel_type
+ * @property string|null $cc_range
+ * @property string|null $assessable_range
+ * @property string $tax_factor
+ * @property string|null $tax_basis
+ * @property string|null $tax_slab
+ * @property string $surcharge
+ * @property string|null $surcharge_formula
+ * @property string $hypothecation
+ * @property string $green_tax
+ * @property string $registration_fee
+ * @property string $duplicate_tax_card
+ * @property string $fitness
+ * @property string $penalty
+ * @property string $rto_tape
+ * @property array<string, mixed>|null $extra_json
+ * @property Carbon|null $wef_date
+ * @property Carbon|null $expired_on
+ * @property bool $is_active
+ */
 class RtoRule extends BaseModel
 {
     protected $table = 'xlr8_vehicle_pricing_rto_rules';
@@ -21,8 +52,10 @@ class RtoRule extends BaseModel
         'reg_type',
         'body_type',
         'gvw_range',
+        'seater',
         'fuel_type',
         'cc_range',
+        'assessable_range',
         'tax_factor',
         'tax_basis',
         'tax_slab',

@@ -6,6 +6,16 @@ use App\Models\BaseModel;
 use App\Services\Vehicle\Pricing\Rules\InsDefaultService;
 use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * @property int $id
+ * @property int|null $import_session_id
+ * @property string $model_code
+ * @property string|null $permit
+ * @property string $insurance_company
+ * @property int $priority
+ * @property bool $is_default
+ * @property bool $is_active
+ */
 class InsDefault extends BaseModel
 {
     protected $table = 'xlr8_vehicle_pricing_ins_defaults';
@@ -33,33 +43,28 @@ class InsDefault extends BaseModel
 
     public function scopeActive(Builder $query): Builder
     {
-        return $query->where('is_active', true)
-            ->where(function ($q) {
-                $q->whereNull('wef_date')
-                    ->orWhere('wef_date', '<=', now()->toDateString());
-            });
+        return $query->where('is_active', true);   // the table has no WEF (BUG-202)
     }
 
     /**
-     * Ordered list of company codes for a model + permit
+     * Ordered list of company codes for a model + permit ([] when none is set).
+     *
+     * @return list<string>
      */
     public static function getCompanies(string $modelCode, string $permit = 'Private'): array
     {
-        $row = self::query()
-            ->active()
-            ->where('model_code', $modelCode)
-            ->where('permit', $permit)
-            ->orderByDesc('wef_date')
-            ->first();
-
-        if (! $row) {
-            return ['USGI'];
+        // the model's own rows win over ANY; within them, by priority (Co. 1 = the default) — BUG-202
+        $rows = self::query()->active()
+            ->whereIn('model_code', [strtoupper($modelCode), 'ANY'])
+            ->where(fn ($q) => $q->where('permit', $permit)->orWhereNull('permit'))
+            ->orderByRaw("CASE WHEN model_code = 'ANY' THEN 1 ELSE 0 END")
+            ->orderBy('priority')
+            ->get(['model_code', 'insurance_company']);
+        if ($rows->isEmpty()) {
+            return [];
         }
+        $own = $rows->where('model_code', '!=', 'ANY');
 
-        return array_values(array_filter([
-            $row->default_company,
-            $row->company_priority_2,
-            $row->company_priority_3,
-        ]));
+        return ($own->isNotEmpty() ? $own : $rows)->pluck('insurance_company')->unique()->values()->all();
     }
 }

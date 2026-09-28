@@ -6,6 +6,13 @@ use App\Models\BaseModel;
 use App\Services\Vehicle\Pricing\Rules\InsIdvSlotService;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $base_rule_id
+ * @property int $year_no
+ * @property string|null $idv_basis
+ * @property string|null $idv_pct
+ */
 class InsIdvSlot extends BaseModel
 {
     protected $table = 'xlr8_vehicle_pricing_ins_idv_slots';

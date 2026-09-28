@@ -6,7 +6,35 @@ use App\Models\BaseModel;
 use App\Services\Vehicle\Pricing\Rules\InsBaseRuleService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int|null $import_session_id
+ * @property string|null $company
+ * @property string|null $plan
+ * @property int|null $od_years
+ * @property int|null $tp_years
+ * @property string $permit
+ * @property string|null $fuel_type
+ * @property int|null $wheels
+ * @property string|null $seating
+ * @property string|null $cc_range
+ * @property string|null $gvw_range
+ * @property string $od_factor
+ * @property string $od_surcharge
+ * @property string $od_discount_rate
+ * @property string $tp_basic
+ * @property string $tp_per_passenger
+ * @property string $tp_legal_driver
+ * @property string $tp_non_fare_passenger
+ * @property string $tp_bi_fuel_kit
+ * @property string $tp_pa_owner
+ * @property array<string, float|string>|null $heads
+ * @property Carbon|null $wef_date
+ * @property Carbon|null $expired_on
+ * @property bool $is_active
+ */
 class InsBaseRule extends BaseModel
 {
     protected $table = 'xlr8_vehicle_pricing_ins_base_rules';
@@ -34,6 +62,8 @@ class InsBaseRule extends BaseModel
         'tp_legal_driver',
         'tp_non_fare_passenger',
         'tp_bi_fuel_kit',
+        'tp_pa_owner',
+        'heads',
         'is_active',
         'wef_date',
         'expired_on',
@@ -54,6 +84,8 @@ class InsBaseRule extends BaseModel
             'tp_legal_driver' => 'decimal:2',
             'tp_non_fare_passenger' => 'decimal:2',
             'tp_bi_fuel_kit' => 'decimal:2',
+            'tp_pa_owner' => 'decimal:2',
+            'heads' => 'array',
             'is_active' => 'boolean',
             'wef_date' => 'date',
             'expired_on' => 'date',

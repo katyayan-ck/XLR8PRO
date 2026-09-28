@@ -14,6 +14,7 @@
 
 namespace App\Services\Vehicle\Pricing;
 
+use App\Services\Vehicle\Pricing\Rules\RuleFormula;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -172,11 +173,10 @@ class RtoService
             return (float) ($rule->surcharge ?? 0);
         }
 
-        if (str_contains($formula, '% of tax')) {
-            $pct = RulesWorkbookService::percentOrNum($rule->surcharge_formula);
-            if ($pct !== null) {
-                return round($tax * $pct / 100, 2);
-            }
+        try {
+            return round(RuleFormula::evaluate($rule->surcharge_formula, ['TAX' => $tax]), 2);   // "12.5% of Tax" (DEC-078)
+        } catch (\InvalidArgumentException) {
+            // unrecognised: logged below
         }
 
         Log::warning('RtoService: unrecognized surcharge_formula, surcharge set to 0', [

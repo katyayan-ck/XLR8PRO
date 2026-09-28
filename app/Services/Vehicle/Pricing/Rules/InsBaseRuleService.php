@@ -47,6 +47,9 @@ final class InsBaseRuleService extends EntityService
             Field::number('tp_legal_driver')->label('TP Legal Driver')->default(0),
             Field::number('tp_non_fare_passenger')->label('TP Non-fare Passenger')->default(0),
             Field::number('tp_bi_fuel_kit')->label('TP Bi-fuel Kit')->default(0),
+            Field::number('tp_pa_owner')->label('TP Compulsory PA Owner Driver')->default(0),
+            // every OD / TP head exactly as the sheet wrote it (numbers or formulas such as "1162 x (Seat -1)"), DEC-078
+            Field::json('heads'),
             Field::date('wef_date')->label('WEF'),
             Field::date('expired_on')->label('Expired On')->rules('after_or_equal:wef_date'),
             Field::flag('is_active', true),

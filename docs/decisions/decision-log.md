@@ -1066,3 +1066,40 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   DiscountHistory models did not match their tables.
 - **BUG-178** (engine: dealer charges and scope) is fixed with the builder in Phase 8, where the engine is rewritten.
 - **Approved-by:** auto (implements the approved DEC-073 step 5) · **Risk:** MED · **Reversal:** revert; the migration rolls back.
+
+### DEC-078 | 28-09-2026 | A (Vehicle pricing) | Insurance & RTO (DEC-073 step 6): standalone workbooks, lossless storage
+- **Facts:**
+  - The reference `Insurance.xlsx` and `RTO-Rules.xlsx` write rules as text: "(10% * 1.25 * 2) / 15",
+    "12.5% of Tax", "5% x OD", "1162 x (Seat -1)", "150 Per Seat".
+  - Ranges are written many ways: "0-3000", ">1500", "< 30KW", "1 to 7", "Above 2000000".
+  - Insurance add-on rates differ per CC / power band. The old tables could not hold them: no seater or assessable
+    band, no text heads, add-on rates only per company.
+  - No rules are stored in any database yet.
+- **Decision (technical):**
+  1. **Shared parsers:** `Rules\RuleRange` (parse / contains) and `Rules\RuleFormula` (safe arithmetic with %, of, per,
+     variables OD LPG SEAT IDV INVOICE TAX ESR TP). The engine (Phase 8) uses the same two classes. The import rejects
+     a row whose range or formula does not parse, and warns on an inverted range (the reference BH band
+     "1000000 - 200000" can never match; it is reported).
+  2. **Schema** (migration, reversible):
+     - RTO rules gain `seater` and `assessable_range`.
+     - Insurance base rules gain `heads` (JSON: every OD / TP head exactly as written) and `tp_pa_owner`.
+     - Insurance add-on rates gain `base_rule_id` (rates belong to one company / permit / band / plan row) and
+       `rate_text`.
+     - A `PermitMap` model and entity service for the existing permit map table.
+  3. **Workbooks:**
+     - **RTO:** one "RTO" sheet in the reference columns.
+     - **Insurance:** "Insurance Co." (model + permit → up to 3 companies; Co. 1 is the default), "Insu Premium"
+       (scope, plan, IDV 1–3 basis, every OD / TP head, 17 add-ons) and "Permit Map" (vehicle permit + wheels → RTO
+       permit, insurance permit).
+     - The reference "Rules" sheet (RTO-label → insurance permit) is not imported. Its content is already in the
+       permit map (DEC-073), which the new "Permit Map" sheet edits.
+     - Reference layouts import directly: typo labels are aliased, and the calculator columns A–D / AR+ are ignored.
+       Where "IDV n" appears twice, the rightmost column is used.
+  4. **Import:** queued, recorded for Discard. The RTO workbook replaces all RTO rules. The Insurance workbook replaces
+     the companies, premium rules (with their IDV slots and add-on rates) and the permit map, each in one transaction.
+     Blank = not set; numbers and formulas are stored exactly as written, so the round trip is lossless.
+  5. **The step:**
+     - No rules of a kind stored → an import is required.
+     - Otherwise Keep, or download the current rules → edit → re-import.
+     - Continue needs both kinds present.
+- **Approved-by:** auto (implements the approved DEC-073 step 6) · **Risk:** MED · **Reversal:** revert; the migration rolls back.

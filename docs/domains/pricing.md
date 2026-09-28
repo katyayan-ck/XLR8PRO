@@ -70,7 +70,7 @@ API v1: `Api\V1\Vehicle\Pricing\PricingController::getPricing()` wraps this for 
 | `Session\PricingChangeObserver` | model observer on the pricing, rule, add-on, snapshot, hold, profile and vehicle master models (records only inside `within()`) |
 | `PricingHoldService` | `LISTS` (ALL, PV, CV, BEV, LMM, LMM_TZU, CSD, TAXI) · `hold($lists, ?$session, ?$reason, ?$userId)` · `reopen($lists, …)` · `heldLists()` · `isHeld($list, $channel = 'normal', ?$permit, $taxi = false)` (CSD channel and taxi Passenger snapshots included) |
 | `Import\PricingWorkbookReader` | `sheetNames($path)` (no cells loaded) · `rows($path, $sheet, $fromRow = 1, ?$maxCol)` (generator `rowNo => cells`, one sheet, columns ≤ BJ, 250-row chunks, formulas → saved value) · `header($path, $sheet, $sheetCode)` → `['row', 'map', 'cells']` · statics `number()` ("3,00,752", "-"), `percent()` (0.4 → 40), `yesNo()` (Y/N/YES/NO), `text()`, `code()` |
-| permit map | table `xlr8_vehicle_pricing_permit_map` (vehicle permit + wheels → RTO rule permit, insurance permit): 4W Passenger (taxi) → RTO "Taxi" / insurance "Passenger"; MISC → "Ambulance" / "Misc" |
+| permit map | `PermitMap` / `Rules\PermitMapService::resolve($permit, $wheels)` (vehicle permit + wheels → RTO rule permit, insurance permit): 4W Passenger (taxi) → RTO "Taxi" / insurance "Passenger"; MISC → "Ambulance" / "Misc"; edited through the Insurance workbook's "Permit Map" sheet |
 | snapshots | unique key `(model_code, channel, vin_type, permit, wef_date)` + `rto_permit`, `insu_permit` |
 | `Import\PriceListDetectService` | step 2. `detect($path, $sheetTitles, ?$onProgress)` → per sheet `rows, known, created, csd_unknown, duplicates, blank_code, errors[], new_codes[], csd_unknown_codes[]` (lists capped at 500). Known = a variant with the full OEM code; new → `VehicleService::createStubFromPriceList()` (INCOMPLETE; LMM TZU colour `NA`); CSD never creates vehicles; a blank OEM Model is an error, not a stub. Statics `sheetCode($title)` ("Price List LMM TZU" → `PRICE_LIST_LMM_TZU`), `matchSheets($titles, $lists)` → `['found' => [list => title], 'missing' => [list]]`. `legacyCodeCount()` → variant rows whose `code` lacks the colour suffix (BUG-199; the Start screen warns — purge and re-import first, DEC-074). Run inside `record()` |
 | `Jobs\Vehicle\Pricing\Process\DetectPriceListsJob($sessionId)` | timeout 1800, tries 1. Runs detect inside `record()`, writes `progress` (`step, state running/done/failed, message, error`), then `advance(VehicleInfo, ['detect' => ['sheets' => …, 'totals' => [created, known, csd_unknown, duplicates, errors]]])`. Real Pricing.xlsx (6 lists, 4,862 codes): 3,414 stubs in ~5 min, 98 MB |
@@ -85,6 +85,12 @@ API v1: `Api\V1\Vehicle\Pricing\PricingController::getPricing()` wraps this for 
 | `Jobs\Vehicle\Pricing\Process\ImportAddonsJob($sessionId, $uploadPath, $groups, $wef)` | timeout 1800, tries 1. Import inside `record()`; `putStats('addons', [run, at, wef, groups] + result)`; progress `step addons` |
 | screens (`Admin\Pricing\Process\AddonsController`) | `pricing.workflow.addons-form` (live rows per group, download with ticked sheets, upload + ticked groups + WEF, result + issues) · `addons-export/{id}?groups[]=` · `addons` (POST `file`, `groups[]`, `wef_date`; queued) · `addons-issues/{id}` · `addons-continue` (a run or stored rows → stage Rules) |
 | `resources/views/admin/pricing/process/_progress.blade.php` | shared running-step card: `@include('admin.pricing.process._progress', ['session' => $s, 'step' => 'prices'])` — shows the job message / error, polls `pricing.workflow.status` every 2 s while `progress.state = running`, reloads when done |
+| `Rules\RuleRange` | `RuleRange::parse($text)` (ANY / "0-3000" / "1 to 7" / ">1500" / "Above 2000000" / "< 30KW" / "4"; units ignored; throws on anything else) → `contains($value)`, `isAny()`, `isInverted()` (lower > upper — can never match). Shared by the rule imports and the engine (DEC-078) |
+| `Rules\RuleFormula` | `evaluate($formula, $vars = [])` → float; `variables($formula)` → list (validates); `isNumber($v)`. Numbers, `%` (÷100), + − × (x, *, of, per) ÷, parentheses, variables `VARIABLES` (OD LPG SEAT IDV INVOICE TAX ESR TP; "Setat" = SEAT). No `eval()`; throws `InvalidArgumentException` with the reason. E.g. `evaluate("12.5% of Tax", ["TAX" => 10000])` = 1250 |
+| `Import\RtoWorkbookService` | step 6. `SHEET`, `COLUMNS` (reference order) · `presence()` · `export($path)` → rows (exactly as written) · `import($path, $wef, ?$onProgress)` → `rows, written, blank, duplicates, rejected, expired, issues[]`: one transaction = expire the live RTO rules + insert through `RtoRuleService`; ranges and formulas validated (unparseable → rejected; inverted → imported with a warning); conflicting duplicate scopes rejected. Run inside `record()` |
+| `Import\InsuranceWorkbookService` | step 6. `SHEETS` (companies "Insurance Co.", premium "Insu Premium", permit_map "Permit Map"), `KEY_COLUMNS`, `HEADS`, `ADDONS` · `presence()` → `[companies, premium, permit_map]` · `export($path)` → rows per sheet (plus blank company rows for every model × insurance permit without one) · `import($path, $wef, ?$onProgress)` → `sheets[part] {rows, written, blank, duplicates, rejected, expired}`, `issues[]`: permit map, then companies (model names → codes, Co. 1 = default), then premium (base rule + IDV slots + add-on rates, heads kept as written), each in one transaction. Reads the reference layout (typo labels aliased, rightmost "IDV n" = the basis, calculator columns and the "Rules" sheet ignored). Run inside `record()` |
+| `Jobs\Vehicle\Pricing\Process\ImportRulesJob($sessionId, $kind, $uploadPath, $wef)` | `KINDS` insurance / rto; timeout 1800, tries 1; import inside `record()`; `putStats('rules', [kind => [run, at, wef] + result])`; progress `step rules` |
+| screens (`Admin\Pricing\Process\RulesController`) | `pricing.workflow.rules-form` (per kind: stored / none — import required, download current, upload + WEF, result + issues) · `rules-export/{kind}/{id}` · `rules` (POST `kind`, `file`, `wef_date`; queued) · `rules-issues/{kind}/{id}` · `rules-continue` (both kinds stored → stage Impact) |
 
 ## The import workflow (legacy flow — replaced step by step by the DEC-073 engine above)
 `ImportSession` stages: `idle → detecting → awaiting_vehicle → importing_prices → awaiting_addons → importing_addons →
@@ -97,16 +103,15 @@ awaiting_rules → calculating → summary → completed` (or `cancelled`). Stat
 | Vehicle Info (specs) | **replaced** by `Import\VehicleInfoWorkbookService` + `ImportVehicleInfoJob` (above) | |
 | prices | **replaced** by `Import\PriceListImportService` + `ImportPricesJob` (above) | |
 | add-ons & discounts | **replaced** by `Import\AddonDiscountWorkbookService` + `ImportAddonsJob` (above) | |
-| insurance & RTO rules (keep or import) | `RulesWorkbookService::presence()` (what exists), `exportCurrent($session)`, `importFile($path, $session, $kinds, $wefDate, $userId)` | `rto_count`, `insurance_count`, `written`, `skipped`, `errors` |
+| insurance & RTO rules (keep or import) | **replaced** by `Import\InsuranceWorkbookService` / `Import\RtoWorkbookService` + `ImportRulesJob` (above) | |
 | hold (optional) | `PricingSessionService::setHoldScopes($session, $scopes)`; `Hold::putOnHold($scope, $reason, $userId)`, `Hold::reopen(...)`, `Hold::isHeld($scope = 'ALL')` | |
 | calculate & publish | `RecalculateVehiclePricingJob` → `calculateAndPublish()` per affected variant (`Affected` rows) | `calculated`, `skipped_incomplete` |
 | move on / cancel | `advance($session, $stage, $statsMerge, $userId)`, `updateStats()`, `discard($session, $userId)` | the session |
 | current session | `activeSession()` | `?ImportSession` |
 
-Sheet recognition: `PriceListVehicleDetector::sheetCodeFromTitle($title)` (static) and
-`AddonDiscountImportService::sheetCodeFromTitle($title)` map a sheet title to its code (`SHEET_MAP`);
-`RulesWorkbookService::kindFromTitle($title)` → `rto` / `insurance` / null; its statics `percentOrNum($v)` ("18%" → 18.0) and
-`num($v)` parse sheet numbers (null when blank).
+Sheet recognition: `Import\PriceListDetectService::sheetCode($title)`, `AddonDiscountWorkbookService::groupOf($title)`;
+the Insurance / RTO workbooks match their sheet titles exactly (`SHEETS`, `RtoWorkbookService::SHEET`).
+(`RulesWorkbookService`, `AddonDiscountImportService` and `PriceListVehicleDetector` were removed with DEC-073 phases 4–6.)
 
 Header mapping for every sheet goes through `SheetHeaderService` (labels / aliases → stable `field_code`; registry labels and sheet cells are normalised the same way by the public `normalizeLabel()` — `-` `.` `_` → space, lower case; when several columns match one field the primary label beats its aliases, then the first column wins — BUG-200):
 `labelMap($sheet)`, `mapHeaderRow($sheet, $cells)`, `findHeaderRow($sheet, $rows, $maxScan = 25)` (→ `[rowIndex,
@@ -132,12 +137,13 @@ All support `create / update / upsert / validate` (see [core.md](core.md)); the 
 | `Addons\AddonService` | `xlr8_vehicle_pricing_addons` | RSA / Shield; scope columns `segment`, `model_code` (ANY = all), `variant_code`, `permit`, `shield_pack`, `transmission`, `fuel`; `tenure_years`, `amount`, `oem_share`, `dealer_share`, `is_default` |
 | `Addons\DealerChargeService` | `xlr8_vehicle_pricing_dealer_charges` | `segment` (ANY), `permit`, `model_code`; `incidental`, `fastag`, `trc`, `rto_tape`, `cod`, `kazam`, extra json — note BUG-178 (engine ignores WIDE charges / model scope); an all-zero row is allowed at a specific segment (explicit "no charges") but refused at ANY (DEC-077) |
 | `Addons\DiscountService` | `xlr8_vehicle_pricing_discounts` | Exchange, Corporate …; total = sheet Total or OEM + dealer share |
-| `Rules\RtoRuleService` | `xlr8_vehicle_pricing_rto_rules` | scope `permit`, `wheels` (`RuleFields::wheels()`: ANY → null), `reg_type`, `body_type`, `gvw_range`, `fuel_type`, `cc_range`; tax factor / basis / slab, fees |
+| `Rules\RtoRuleService` | `xlr8_vehicle_pricing_rto_rules` | scope `permit`, `wheels` (`RuleFields::wheels()`: ANY → null), `reg_type`, `body_type`, `gvw_range`, `seater`, `fuel_type`, `cc_range`, `assessable_range` (DEC-078); `tax_basis` (text), `tax_slab` (as written, e.g. "(10% * 1.25 * 2) / 15"), `tax_factor` (its value), `surcharge` + `surcharge_formula` ("12.5% of Tax"), fees; `rto_tape` = Outside State TRC |
 | `Rules\TcsConfigService` | `xlr8_vehicle_pricing_tcs_config` | at most one active row; `saveCurrent($input)` |
-| `Rules\InsBaseRuleService` | `xlr8_vehicle_pricing_ins_base_rules` | plan `"1+3"` → `od_years` / `tp_years`; OD factor, TP amounts |
+| `Rules\InsBaseRuleService` | `xlr8_vehicle_pricing_ins_base_rules` | plan `"1+3"` → `od_years` / `tp_years`; OD factor, TP amounts, `tp_pa_owner`; `heads` JSON = every OD / TP head as written (numbers or formulas such as "5% x OD", "1162 x (Seat -1)"; DEC-078) |
 | `Rules\InsIdvSlotService` | `xlr8_vehicle_pricing_ins_idv_slots` | per base rule: `year_no`, `idv_basis` text, `idv_pct` |
-| `Rules\InsDefaultService` | `xlr8_vehicle_pricing_ins_defaults` | companies per model + permit, priority 1 = default (`InsDefault::getCompanies($model, $permit)`) |
-| `Rules\InsAddonRateService` | `xlr8_vehicle_pricing_ins_addon_rates` | written by screens only; no importer yet (GAP-01) |
+| `Rules\InsDefaultService` | `xlr8_vehicle_pricing_ins_defaults` | companies per model + permit, priority 1 = default. `InsDefault::getCompanies($model, $permit)` → the model's companies by priority, else the ANY rows, `[]` when none (BUG-202 fixed) |
+| `Rules\PermitMapService` (+ `PermitMap` model) | `xlr8_vehicle_pricing_permit_map` | `vehicle_permit`, `wheels` (ANY → null), `rto_permit`, `insu_permit`, `label`; `resolve($vehiclePermit, $wheels)` → the live row (a wheel-specific row beats a no-wheels row) |
+| `Rules\InsAddonRateService` | `xlr8_vehicle_pricing_ins_addon_rates` | per `base_rule_id` (company / permit / band / plan row), `addon_slug` (NIL_DEP, CONSUMABLES, ENGINE, …), `rate_type` `idv_rate` (< 1, × IDV) / `flat` / `formula`, `rate_value` (4 dp) and `rate_text` (exact); written by the Insurance workbook import (GAP-01 closed) |
 
 ```php
 $svc = app(AddonService::class);
@@ -169,8 +175,8 @@ the JSON you showed the customer (quote snapshot) — the live price may change 
 **"Why is this variant not priced?"** → `app(VehicleService::class)->missingFields($variant)`, then
 `Profile::forModel($code)->first()` flags, then `Hold::isHeld($scope)`.
 
-**New rule set for October** → **Pricing → Workflow** (rules stage) or `RulesWorkbookService::importFile()` with the new
-WEF; old rows are expired, not deleted.
+**New rule set for October** → **Pricing → Workflow** (step 6, Insurance & RTO) or `RtoWorkbookService::import($path, $wef)` /
+`InsuranceWorkbookService::import($path, $wef)` inside a session; old rows are expired, not deleted.
 
 ## Gotchas (from production incidents — see the rules file)
 - Never load a whole workbook; one sheet at a time, capped columns, chunked rows.

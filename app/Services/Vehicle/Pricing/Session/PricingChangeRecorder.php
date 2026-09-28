@@ -67,7 +67,9 @@ class PricingChangeRecorder
     /**
      * Record the rows a bulk update is about to change (call before running it).
      *
-     * @param  Builder<Model>  $query
+     * @template TModel of Model
+     *
+     * @param  Builder<TModel>  $query
      * @param  list<string>  $columns  columns the update will change
      */
     public function captureBulk(Builder $query, array $columns): void

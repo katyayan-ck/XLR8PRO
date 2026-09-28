@@ -13,6 +13,7 @@ use App\Models\Vehicle\Pricing\InsAddonRate;
 use App\Models\Vehicle\Pricing\InsBaseRule;
 use App\Models\Vehicle\Pricing\InsDefault;
 use App\Models\Vehicle\Pricing\InsIdvSlot;
+use App\Models\Vehicle\Pricing\PermitMap;
 use App\Models\Vehicle\Pricing\Pricing;
 use App\Models\Vehicle\Pricing\PricingHistory;
 use App\Models\Vehicle\Pricing\Profile;
@@ -153,7 +154,7 @@ class AppServiceProvider extends ServiceProvider
             Addon::class, Discount::class, AddonHistory::class, DiscountHistory::class,
             DealerCharge::class, RtoRule::class,
             InsBaseRule::class, InsIdvSlot::class,
-            InsDefault::class, InsAddonRate::class,
+            InsDefault::class, InsAddonRate::class, PermitMap::class,
             TcsConfig::class, Snapshot::class,
             Profile::class, Hold::class,
             ChangeFlag::class, Variant::class,

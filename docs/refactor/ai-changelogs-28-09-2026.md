@@ -766,3 +766,41 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   - export blanks + round trip;
   - screen export / queued import / continue.
   Plus the dealer-charge zero-row test updated. Pricing suites: 29 passed.
+
+## Pricing redesign — Phase 6: standalone Insurance & RTO workbooks (DEC-073, DEC-078; BUG-202 fixed)
+- **Shared parsers:**
+  - `Rules\RuleRange` covers every range spelling in the sheets and flags inverted bands.
+  - `Rules\RuleFormula` is a safe evaluator for "(10% * 1.25 * 2) / 15", "12.5% of Tax", "5% x OD",
+    "1162 x (Seat -1)" and "150 Per Seat", with no `eval()`.
+  - Both are unit-tested (13).
+- **Migration** `2026_09_28_234119_pricing_rules_workbooks_dec078` (backup
+  `storage/app/backups/xlrm-pricing-rules-pre-DEC078-28-09-2026.sql`; xlrm + xlrm_testing; rollback verified):
+  - RTO rules gain `seater` and `assessable_range`. `RtoRule::findBestMatch()` already filtered on the missing seater.
+  - Insurance base rules gain `heads` JSON and `tp_pa_owner`.
+  - Insurance add-on rates gain `base_rule_id` and `rate_text`.
+  - Registry rows for RTO_RULES / INSU_COMPANY / INSU_PREMIUM / PERMIT_MAP.
+- **New:**
+  - `Import\RtoWorkbookService` and `Import\InsuranceWorkbookService` (presence / export / import; one transaction
+    per sheet; formulas and ranges validated; conflicting duplicates rejected).
+  - `Rules\PermitMapService` + `PermitMap` model.
+  - `ImportRulesJob` and `RulesController`. The screen has one card per workbook: "None stored — import required" or
+    stored and kept, download current, upload + WEF, result and issues. Continue needs both kinds.
+- **Before → after:**
+  - Insurance add-on rates were never imported (GAP-01). Now 108 rates per premium row set.
+  - Formula heads were lost. Now they are kept as written.
+  - Re-importing the rules wiped insurance. Now each kind is replaced on its own.
+- **BUG-202 fixed:** `InsDefault::getCompanies()` / `scopeActive()` used columns the table does not have.
+- **Also:**
+  - The legacy `RtoService` surcharge now uses `RuleFormula`.
+  - `PricingChangeRecorder::captureBulk()` generic type fixed.
+- **Removed:** `RulesWorkbookService`, the legacy rules actions / view / `rules-keep` route, and its legacy test.
+- **Real files:**
+  - `RTO-Rules.xlsx`: 45 rules in 1 s. The 3 BH rows with assessable "1000000 - 200000" are reported as never
+    matching; the band probably means 1000000 - 2000000, which is for the user to fix in the sheet.
+  - `Insurance.xlsx`: 62 company rows and 26 premium rules (108 add-on rates) in 1 s.
+  - The export (4 s) re-imports losslessly: identical heads and counts.
+- **Tests:**
+  - `PricingRulesImportTest` (3): RTO formulas / ranges / rejects / expiry; insurance reference layout + round trip;
+    the step's gate.
+  - `RuleRangeAndFormulaTest` (13).
+  - Pricing suites: 70 passed.

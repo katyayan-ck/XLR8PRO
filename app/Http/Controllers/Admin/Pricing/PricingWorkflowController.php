@@ -14,17 +14,13 @@ use App\Models\Vehicle\Pricing\ImportSession;
 use App\Models\Vehicle\Pricing\Pricing;
 use App\Models\Vehicle\Pricing\Profile;
 use App\Services\Vehicle\Pricing\PricingSessionService;
-use App\Services\Vehicle\Pricing\RulesWorkbookService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class PricingWorkflowController extends Controller
 {
     public function __construct(
-        protected PricingSessionService $sessions,
-        protected RulesWorkbookService $rules
+        protected PricingSessionService $sessions
     ) {}
 
     public function impactSummary(int $sessionId)
@@ -159,108 +155,5 @@ class PricingWorkflowController extends Controller
             'count' => $failed->count(),
             'vehicles' => $failed,
         ]);
-    }
-
-    public function rulesForm()
-    {
-        if (! backpack_user()->can('PRC_WKFL_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view the pricing workflow.');
-        }
-
-        $session = $this->sessions->activeSession();
-        if (! $session) {
-            return redirect()->route('pricing.workflow.index')
-                ->with('warning', 'No active pricing session.');
-        }
-
-        return view('admin.pricing.workflow.rules', [
-            'title' => 'Insurance & RTO Rules',
-            'session' => $session,
-            'presence' => $this->rules->presence(),
-        ]);
-    }
-
-    public function rulesExport(int $sessionId)
-    {
-        if (! backpack_user()->can('PRC_WKFL_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view the pricing workflow.');
-        }
-
-        $session = ImportSession::findOrFail($sessionId);
-        $export = $this->rules->exportCurrent($session);
-
-        return response()->download($export['path'], $export['filename'])->deleteFileAfterSend(false);
-    }
-
-    public function rulesKeep()
-    {
-        if (! backpack_user()->can('PRC_WKFL_MANAGE')) {
-            abort(403, 'Unauthorized. You do not have permission to run the pricing workflow.');
-        }
-
-        $session = $this->sessions->activeSession();
-        if (! $session) {
-            return response()->json(['success' => false, 'message' => 'No active session.'], 409);
-        }
-        $presence = $this->rules->presence();
-        if (! $presence['any']) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No Insurance / RTO rules in database. Import a workbook first.',
-            ], 422);
-        }
-        $this->sessions->updateStats($session, ['rules' => ['kept_existing' => true] + $presence]);
-        $this->sessions->advance($session, ImportSession::STAGE_AWAITING_RULES);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Keeping existing Insurance / RTO rules.',
-            'impact_url' => route('pricing.workflow.impact-summary-view', $session->id),
-        ]);
-    }
-
-    public function rulesImport(Request $request)
-    {
-        if (! backpack_user()->can('PRC_WKFL_MANAGE')) {
-            abort(403, 'Unauthorized. You do not have permission to run the pricing workflow.');
-        }
-
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls',
-            'kinds' => 'required|array|min:1',
-            'kinds.*' => 'in:rto,insurance',
-            'wef_date' => 'nullable|date',
-        ]);
-
-        $session = $this->sessions->activeSession();
-        if (! $session) {
-            return response()->json(['success' => false, 'message' => 'No active session.'], 409);
-        }
-
-        $path = $request->file('file')->store('pricing-uploads');
-        $absolute = Storage::path($path);
-        $wef = $request->input('wef_date', $session->wef_date?->format('Y-m-d') ?? now()->toDateString());
-
-        try {
-            $stats = $this->rules->importFile(
-                $absolute,
-                $session,
-                $request->input('kinds', ['rto', 'insurance']),
-                $wef,
-                auth()->id()
-            );
-            $this->sessions->updateStats($session, ['rules' => $stats]);
-
-            return response()->json([
-                'success' => true,
-                'stats' => $stats,
-                'message' => 'Rules imported.',
-                'impact_url' => route('pricing.workflow.impact-summary-view', $session->id),
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('[PricingWorkflow] rulesImport failed', ['error' => $e->getMessage()]);
-
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
     }
 }

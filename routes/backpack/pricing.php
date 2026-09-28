@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\Pricing\PricingWorkflowController;
 use App\Http\Controllers\Admin\Pricing\Process\AddonsController;
 use App\Http\Controllers\Admin\Pricing\Process\PricesController;
 use App\Http\Controllers\Admin\Pricing\Process\PricingProcessController;
+use App\Http\Controllers\Admin\Pricing\Process\RulesController;
 use App\Http\Controllers\Admin\Pricing\Process\VehicleInfoController;
 use App\Http\Controllers\Admin\Pricing\RtoRuleController;
 use App\Http\Controllers\Admin\Pricing\TcsConfigController;
@@ -62,10 +63,11 @@ Route::group([
     Route::get('workflow/addons-issues/{sessionId}', [AddonsController::class, 'issues'])->whereNumber('sessionId')->name('pricing.workflow.addons-issues');
     Route::post('workflow/addons-continue', [AddonsController::class, 'continue'])->name('pricing.workflow.addons-continue');
 
-    Route::get('workflow/rules', [PricingWorkflowController::class, 'rulesForm'])->name('pricing.workflow.rules-form');
-    Route::get('workflow/rules-export/{sessionId}', [PricingWorkflowController::class, 'rulesExport'])->name('pricing.workflow.rules-export');
-    Route::post('workflow/rules-keep', [PricingWorkflowController::class, 'rulesKeep'])->name('pricing.workflow.rules-keep');
-    Route::post('workflow/rules', [PricingWorkflowController::class, 'rulesImport'])->name('pricing.workflow.rules');
+    Route::get('workflow/rules', [RulesController::class, 'show'])->name('pricing.workflow.rules-form');
+    Route::get('workflow/rules-export/{kind}/{sessionId}', [RulesController::class, 'export'])->whereIn('kind', ['insurance', 'rto'])->whereNumber('sessionId')->name('pricing.workflow.rules-export');
+    Route::post('workflow/rules', [RulesController::class, 'import'])->name('pricing.workflow.rules');
+    Route::get('workflow/rules-issues/{kind}/{sessionId}', [RulesController::class, 'issues'])->whereIn('kind', ['insurance', 'rto'])->whereNumber('sessionId')->name('pricing.workflow.rules-issues');
+    Route::post('workflow/rules-continue', [RulesController::class, 'continue'])->name('pricing.workflow.rules-continue');
 
     Route::post('workflow/discard', [PricingProcessController::class, 'discard'])->name('pricing.workflow.discard');
 

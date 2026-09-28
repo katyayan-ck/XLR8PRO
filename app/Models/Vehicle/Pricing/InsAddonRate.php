@@ -5,7 +5,24 @@ namespace App\Models\Vehicle\Pricing;
 use App\Models\BaseModel;
 use App\Services\Vehicle\Pricing\Rules\InsAddonRateService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int|null $import_session_id
+ * @property int|null $base_rule_id
+ * @property string $insurance_company
+ * @property string|null $permit
+ * @property string $addon_slug
+ * @property string|null $addon_name
+ * @property string $rate_type
+ * @property string $rate_value
+ * @property string|null $rate_text
+ * @property string $applies_on
+ * @property Carbon|null $wef_date
+ * @property Carbon|null $expired_on
+ * @property bool $is_active
+ */
 class InsAddonRate extends BaseModel
 {
     protected $table = 'xlr8_vehicle_pricing_ins_addon_rates';
@@ -15,12 +32,14 @@ class InsAddonRate extends BaseModel
 
     protected $fillable = [
         'import_session_id',
+        'base_rule_id',
         'insurance_company',
         'permit',
         'addon_slug',
         'addon_name',
         'rate_type',
         'rate_value',
+        'rate_text',
         'applies_on',
         'is_active',
         'wef_date',

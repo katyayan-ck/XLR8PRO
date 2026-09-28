@@ -237,6 +237,7 @@ Entry format:
 | BUG-199 | Variant rows imported before DEC-051 store the OEM code **without** the colour suffix (`code` = 16-char stem, colour only in `color_code`; 2,652 rows for 652 codes). Price-list codes carry the colour, so Detect treats those vehicles as new and creates duplicate INCOMPLETE stubs (test copy: 1,859 of 2,782 PV stubs) | High | DECIDED (DEC-074) — purge + re-import per environment | 28-09-2026 | — |
 | BUG-200 | Pricing sheet headers with a hyphen / dot never matched the registry (labels only lower-cased, cells also had `-` `.` `_` → space): "Ex-Showroom Price ORG" and every CV- / OV- scheme column were ignored, so the price import used MM Invoice as ex-showroom and imported no schemes; a hard alias also mapped TZU's pre-subsidy price | Critical | FIXED (DEC-076, 28-09-2026) | 28-09-2026 | — |
 | BUG-201 | `PricingHistory` model does not match its table (fillable `variant_code`, `pricing_snapshot`, `changed_by`… are not columns; timestamps off) — nothing could write price history | Medium | FIXED (DEC-076 / DEC-077, 28-09-2026) | 28-09-2026 | — |
+| BUG-202 | `InsDefault::getCompanies()` and `scopeActive()` used columns the table does not have (`default_company`, `company_priority_2/3`, `wef_date`) — any call would fail with an SQL error; it also silently returned USGI when nothing was set | Medium | FIXED (DEC-078, 28-09-2026) | 28-09-2026 | 28-09-2026 |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -2313,3 +2314,9 @@ guessed at.
 - **Resolution (28-09-2026):** PricingHistory aligned with its table (pricing_id, model_code, channel, wef_date, payload, action); the new price import writes one row per code (insert / update / unchanged).
 - **Resolution (28-09-2026):** Same defect in AddonHistory and DiscountHistory (fillable old_data/new_data/changed_by… not in the tables): both aligned (addon_id / discount_id, model_code, payload, action) and registered with the session change observer; the add-on import writes them.
 
+### BUG-202 — InsDefault read non-existent columns
+
+- **Status:** FIXED (DEC-078, 28-09-2026)
+- **Severity:** Medium — nothing called it yet, but the engine (Phase 8) needs the company list; the first call would have thrown.
+- **Found:** 28-09-2026, DEC-073 Phase 6 (PHPStan on the insurance workbook service).
+- **Fix:** `scopeActive()` filters `is_active` only; `getCompanies($model, $permit)` returns the model's companies by priority (ANY rows when the model has none), `[]` when none is set (no hard-coded USGI).
