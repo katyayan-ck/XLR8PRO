@@ -179,7 +179,7 @@ class BookingCrudController extends CrudController
             'receipt_date' => $bookingPaymentLogs->first()?->date ?? '',
             'payment_mode' => $bookingPaymentLogs->first()?->mode ?? '',
             'total_amount' => (float) $bookingPaymentLogs->sum(
-                fn ($payment) => (float) $payment->amount
+                fn($payment) => (float) $payment->amount
             ),
         ];
 
@@ -207,7 +207,7 @@ class BookingCrudController extends CrudController
     public function setup()
     {
         CRUD::setModel(Booking::class);
-        CRUD::setRoute(config('backpack.base.route_prefix').'/sales/booking');
+        CRUD::setRoute(config('backpack.base.route_prefix') . '/sales/booking');
         CRUD::setEntityNameStrings('booking', 'bookings');
     }
 
@@ -255,7 +255,7 @@ class BookingCrudController extends CrudController
             }
         }
 
-        
+
         $customer_categories = OrgService::keywordValueByCode('CUSTOMER_TYPE');
         $occupation_types = OrgService::keywordValueByCode('OCCUPATION_TYPE');
         $body_type_map = [
@@ -597,9 +597,9 @@ class BookingCrudController extends CrudController
 
                 $booking->buyer_type =
                     ! empty($enquiry->purchase_type_crm)
-                        ? ($purchaseTypeMap[$enquiry->purchase_type_crm]
-                            ?? $enquiry->purchase_type_crm)
-                        : ($enquiry->purchase_type ?? null);
+                    ? ($purchaseTypeMap[$enquiry->purchase_type_crm]
+                        ?? $enquiry->purchase_type_crm)
+                    : ($enquiry->purchase_type ?? null);
                 $booking->exist_oem1 = $enquiry->brand_make;
                 $booking->exist_oem2 = $enquiry->consid_brand2;
                 $booking->vh1_detail = $enquiry->brand_model;
@@ -768,15 +768,15 @@ class BookingCrudController extends CrudController
                 ->toArray();
         }
 
-        $data['collector_name'] = match ((int) $booking->col_type) {
-            1 => 'N/A',
-            2 => 'TEST SALES',
-            3 => 'TEST DSA',
-            default => 'N/A',
-        };
+        // $data['collector_name'] = match ((int) $booking->col_type) {
+        //     1 => 'N/A',
+        //     2 => 'TEST SALES',
+        //     3 => 'TEST DSA',
+        //     default => 'N/A',
+        // };
 
         $drec = Xl_DSA_Master::find($booking->dsa_id);
-        $data['dsaname'] = $drec ? $drec->name.' - '.$drec->mobile : 'N/A';
+        $data['dsaname'] = $drec ? $drec->name . ' - ' . $drec->mobile : 'N/A';
 
         $data['make1'] = $booking->exist_oem1 ?? 'N/A';
         $data['make2'] = $booking->exist_oem2 ?? 'N/A';
@@ -804,7 +804,7 @@ class BookingCrudController extends CrudController
         )->get()->toArray() ?? [];
 
         $data['dsa_details'] = Xl_DSA_Master::all()
-            ->map(fn ($dsa) => [
+            ->map(fn($dsa) => [
                 'id' => $dsa->id,
                 'name' => $dsa->name,
                 'mobile' => $dsa->mobile,
@@ -813,9 +813,9 @@ class BookingCrudController extends CrudController
             ])->toArray() ?? [];
 
         $locations = CommonHelper::getLocations($booking->branch_code) ?? [];
-        usort($locations, fn ($a, $b) => strcmp(
-            ($a['name'] ?? '').' - '.($a['code'] ?? ''),
-            ($b['name'] ?? '').' - '.($b['code'] ?? '')
+        usort($locations, fn($a, $b) => strcmp(
+            ($a['name'] ?? '') . ' - ' . ($a['code'] ?? ''),
+            ($b['name'] ?? '') . ' - ' . ($b['code'] ?? '')
         ));
         $data['locations'] = $locations;
 
@@ -997,7 +997,7 @@ class BookingCrudController extends CrudController
                 // 3. Fallbacks
                 DB::raw('NULL as location_other'),
                 DB::raw('NULL as vehicle_oem_code'),
-                
+
             ]);
 
         $query->leftJoin('xlr8_booking_refund as ref', function ($join) {
@@ -1089,7 +1089,7 @@ class BookingCrudController extends CrudController
         $modelCodes = $bookings->pluck('model_code')->filter()->unique()->values();
         $segmentCodes = $bookings->pluck('segment_code')->filter()->unique()->values();
         $variantCodes = $bookings->pluck('variant_code')->filter()->unique()->values();
-        $colorCodes = $bookings->pluck('color_code')->filter()->unique()->values(); 
+        $colorCodes = $bookings->pluck('color_code')->filter()->unique()->values();
 
         return [
             'consultants' => DB::table('xlr8_admin_employee as e')
@@ -1131,7 +1131,7 @@ class BookingCrudController extends CrudController
             'permitMap' => OrgService::getKeyValuesByCode('RTO_PERMIT')
                 ->sortBy('id')
                 ->values()
-                ->mapWithKeys(fn ($permit, $index) => [(string) ($index + 1) => $permit->value])
+                ->mapWithKeys(fn($permit, $index) => [(string) ($index + 1) => $permit->value])
                 ->toArray(),
         ];
     }
@@ -1262,7 +1262,7 @@ class BookingCrudController extends CrudController
         $permit_map = $lookups['permitMap'] ?? OrgService::getKeyValuesByCode('RTO_PERMIT')
             ->sortBy('id')
             ->values()
-            ->mapWithKeys(fn ($permit, $index) => [(string) ($index + 1) => $permit->value])
+            ->mapWithKeys(fn($permit, $index) => [(string) ($index + 1) => $permit->value])
             ->toArray();
 
         $rto_permit = $permit_map[(string) ($booking->permit ?? '')] ?? 'N/A';
@@ -1341,7 +1341,7 @@ class BookingCrudController extends CrudController
         // decimal-fraction semantics every formula below already expects).
         $GST_RATE = app(SystemSettingService::class)->getGSTRate() / 100;
 
-        $gst_rate_formatted = ($GST_RATE * 100).'%';
+        $gst_rate_formatted = ($GST_RATE * 100) . '%';
 
         $gst_included_display = match ((float) ($booking->gst_included ?? 0)) {
             0.0 => '0%',
@@ -1373,13 +1373,13 @@ class BookingCrudController extends CrudController
 
         $diff_without_gst = $total_prov_without_gst - $expected_payout_amount_without_gst + $consideration_no_gst;
 
-        $expected_payout_pct_formatted = number_format($expected_payout_pct, 4).'%';
+        $expected_payout_pct_formatted = number_format($expected_payout_pct, 4) . '%';
 
-        $expected_payout_pct_without_gst_formatted = number_format($expected_payout_pct_without_gst * 100, 4).'%';
+        $expected_payout_pct_without_gst_formatted = number_format($expected_payout_pct_without_gst * 100, 4) . '%';
 
-        $prov_prc_without_gst_formatted = number_format($prov_prc_without_gst, 4).'%';
+        $prov_prc_without_gst_formatted = number_format($prov_prc_without_gst, 4) . '%';
 
-        $diff_without_gst_formatted = '₹ '.number_format($diff_without_gst, 2, '.', ',');
+        $diff_without_gst_formatted = '₹ ' . number_format($diff_without_gst, 2, '.', ',');
 
         $row = (object) [
             'id' => $booking->id,
@@ -2043,7 +2043,7 @@ class BookingCrudController extends CrudController
                 $name = trim($cover['name'] ?? '');
                 $price = (float) ($cover['price'] ?? 0);
                 if ($name) {
-                    $formatted[] = $name.($price > 0 ? ' (₹'.number_format($price, 2).')' : '');
+                    $formatted[] = $name . ($price > 0 ? ' (₹' . number_format($price, 2) . ')' : '');
                 }
             } elseif (is_string($cover)) {
                 $formatted[] = $cover;
@@ -2128,7 +2128,7 @@ class BookingCrudController extends CrudController
         if (! $fullActions) {
             return '
         <div class="d-flex justify-content-center gap-2" role="group" aria-label="Actions">
-            <a href="'.$showUrl.'"
+            <a href="' . $showUrl . '"
                class="btn btn-sm btn-primary" title="View Details">
                 View
             </a>
@@ -2148,7 +2148,7 @@ class BookingCrudController extends CrudController
 
         $quotationAction = '
                 <a href="javascript:void(0);"
-                    onclick="openVOTF('.$booking->id.')"
+                    onclick="openVOTF(' . $booking->id . ')"
                     class="btn btn-sm btn-success py-1 px-2"
                     title="VOTF">
                         VOTF
@@ -2157,25 +2157,25 @@ class BookingCrudController extends CrudController
         return '
                 <div class="d-flex gap-2">
 
-                    <a href="'.$showUrl.'"
+                    <a href="' . $showUrl . '"
                     class="btn btn-sm btn-primary py-1 px-2"
                     title="View">
                         View
                     </a>
 
-                    <a href="'.$amountUrl.'"
+                    <a href="' . $amountUrl . '"
                     class="btn btn-sm btn-success py-1 px-2"
                     title="Add Amount">
                         Add ₹
                     </a>
 
-                    <a href="'.$editUrl.'"
+                    <a href="' . $editUrl . '"
                     class="btn btn-sm btn-info py-1 px-2"
                     title="Edit">
                         Edit
                     </a>
 
-                    '.$quotationAction.'
+                    ' . $quotationAction . '
 
                 </div>
             ';
@@ -2552,10 +2552,10 @@ class BookingCrudController extends CrudController
             $quotation?->variant_code ?? $enquiry?->variant_code ?? null
         );
 
-        $data['branches'] = collect(CommonHelper::getBranches())->map(fn ($b) => (object) $b);
-        $data['location'] = collect(CommonHelper::getLocations())->map(fn ($l) => (object) $l);
+        $data['branches'] = collect(CommonHelper::getBranches())->map(fn($b) => (object) $b);
+        $data['location'] = collect(CommonHelper::getLocations())->map(fn($l) => (object) $l);
         $data['allusers'] = OrgService::getUsers(deptCode: 'SLS');
-        $data['financiers'] = collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn ($f) => (object) $f);
+        $data['financiers'] = collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn($f) => (object) $f);
         $data['salesconsultants'] = OrgService::getUsers(desigCode: 'CNS');
 
         $data['person_id'] = backpack_auth()->id();
@@ -2626,7 +2626,7 @@ class BookingCrudController extends CrudController
                 $vouchers = $bookingPaymentLogs->where('type', 2);
 
                 $latestPayment = $bookingPaymentLogs
-                    ->filter(fn ($payment) => in_array((int) $payment->type, [1, 2], true))
+                    ->filter(fn($payment) => in_array((int) $payment->type, [1, 2], true))
                     ->first();
 
                 if ($latestPayment) {
@@ -2643,7 +2643,7 @@ class BookingCrudController extends CrudController
                         'receipt_date'         => $latestPayment->date,
                         'payment_mode'         => $latestPayment->mode,
                         'total_amount'         => (float) $bookingPaymentLogs->sum(
-                            fn ($payment) => (float) $payment->amount
+                            fn($payment) => (float) $payment->amount
                         ),
                     ];
                 }
@@ -2746,7 +2746,6 @@ class BookingCrudController extends CrudController
                 $linkedEnquiry->purchase_type =
                     $purchaseTypeMap[$crmPurchaseType]
                     ?? $linkedEnquiry->purchase_type_crm;
-
             } else {
 
                 $linkedEnquiry->purchase_type =
@@ -2801,10 +2800,10 @@ class BookingCrudController extends CrudController
         $data['loan_status'] = $finance?->loan_status;
 
         $data['branches'] = collect(CommonHelper::getBranches())
-            ->map(fn ($b) => (object) $b);
+            ->map(fn($b) => (object) $b);
 
         $data['locations'] = collect(CommonHelper::getLocations())
-            ->map(fn ($l) => (object) $l);
+            ->map(fn($l) => (object) $l);
 
         $data['allusers'] = OrgService::getUsers(deptCode: 'SLS');
 
@@ -2812,7 +2811,7 @@ class BookingCrudController extends CrudController
             XlFinancier::select('id', 'name', 'short_name')
                 ->get()
                 ->toArray()
-        )->map(fn ($f) => (object) $f);
+        )->map(fn($f) => (object) $f);
 
         // ==========================================================
         // SALES CONSULTANTS
@@ -2827,8 +2826,8 @@ class BookingCrudController extends CrudController
         // Get saved consultant code from enquiry
         $savedScCode = trim((string) (
             $linkedEnquiry?->x8_sc_code
-                ?? $linkedEnquiry?->sc_code
-                ?? ''
+            ?? $linkedEnquiry?->sc_code
+            ?? ''
         ));
 
         Log::info('SALES CONSULTANT EDIT DEBUG', [
@@ -2895,7 +2894,7 @@ class BookingCrudController extends CrudController
         ]);
 
         $data['dsa_details'] = Xl_DSA_Master::all()
-            ->map(fn ($dsa) => (object) [
+            ->map(fn($dsa) => (object) [
                 'id' => $dsa->id,
                 'name' => $dsa->name,
                 'mobile' => $dsa->mobile,
@@ -2975,43 +2974,43 @@ class BookingCrudController extends CrudController
                 : [];
         }
 
-                // ==========================================================
-                // 11. STORE DATA
-                // ==========================================================
-                $this->data['entry'] = $entry;
+        // ==========================================================
+        // 11. STORE DATA
+        // ==========================================================
+        $this->data['entry'] = $entry;
 
-                // Payment logs + prefill (edit mode me bhi dikhane ke liye)
-                $bookingPaymentLogs = Bookingamount::withTrashed()
-                    ->where('bid', $entry->id)
-                    ->whereIn('type', [1, 2])
-                    ->orderBy('date', 'desc')
-                    ->orderBy('id', 'desc')
-                    ->get();
+        // Payment logs + prefill (edit mode me bhi dikhane ke liye)
+        $bookingPaymentLogs = Bookingamount::withTrashed()
+            ->where('bid', $entry->id)
+            ->whereIn('type', [1, 2])
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->get();
 
-                $bookingPaymentLogs->each(function ($payment) {
-                    if (empty($payment->mode)) {
-                        $payment->mode_name = '—';
-                        return;
-                    }
-                    if (is_numeric($payment->mode)) {
-                        $payment->mode_name = OrgService::getKeyValueById((int) $payment->mode)?->value ?? (string) $payment->mode;
-                    } else {
-                        $payment->mode_name = OrgService::getKeyValueByCode((string) $payment->mode)?->value ?? (string) $payment->mode;
-                    }
-                });
+        $bookingPaymentLogs->each(function ($payment) {
+            if (empty($payment->mode)) {
+                $payment->mode_name = '—';
+                return;
+            }
+            if (is_numeric($payment->mode)) {
+                $payment->mode_name = OrgService::getKeyValueById((int) $payment->mode)?->value ?? (string) $payment->mode;
+            } else {
+                $payment->mode_name = OrgService::getKeyValueByCode((string) $payment->mode)?->value ?? (string) $payment->mode;
+            }
+        });
 
-                $data['booking_payment_logs'] = $bookingPaymentLogs;
+        $data['booking_payment_logs'] = $bookingPaymentLogs;
 
-                $data['booking_payment_prefill'] = [
-                    'has_previous_payment' => $bookingPaymentLogs->isNotEmpty(),
-                    'collection_type' => (string) ($entry->col_type ?? ''),
-                    'receipt_no' => $bookingPaymentLogs->first()?->type_number ?? '',
-                    'receipt_date' => $bookingPaymentLogs->first()?->date ?? '',
-                    'payment_mode' => $bookingPaymentLogs->first()?->mode ?? '',
-                    'total_amount' => (float) $bookingPaymentLogs->sum(fn ($p) => (float) $p->amount),
-                ];
+        $data['booking_payment_prefill'] = [
+            'has_previous_payment' => $bookingPaymentLogs->isNotEmpty(),
+            'collection_type' => (string) ($entry->col_type ?? ''),
+            'receipt_no' => $bookingPaymentLogs->first()?->type_number ?? '',
+            'receipt_date' => $bookingPaymentLogs->first()?->date ?? '',
+            'payment_mode' => $bookingPaymentLogs->first()?->mode ?? '',
+            'total_amount' => (float) $bookingPaymentLogs->sum(fn($p) => (float) $p->amount),
+        ];
 
-                $this->data['data'] = $data;
+        $this->data['data'] = $data;
 
         // Also expose enquiry to view
         $this->data['enquiry'] = $linkedEnquiry;
@@ -3194,7 +3193,7 @@ class BookingCrudController extends CrudController
 
                 $file = $request->file('amount_proof');
                 $ext = $file->extension();
-                $fileName = 'tf_ap_'.date('d-m-Y_His').'.'.$ext;
+                $fileName = 'tf_ap_' . date('d-m-Y_His') . '.' . $ext;
 
                 $file->move($tempDir, $fileName);
 
@@ -3206,7 +3205,7 @@ class BookingCrudController extends CrudController
                 $amountRecord->mode = $request->mode;
                 $amountRecord->save();
 
-                $amountRecord->addMedia($tempDir.$fileName)
+                $amountRecord->addMedia($tempDir . $fileName)
                     ->toMediaCollection('amount-proof');
 
                 $remarks = [];
@@ -3218,10 +3217,10 @@ class BookingCrudController extends CrudController
                 $newDate = Carbon::parse($request->receipt_date)->format('Y-m-d');
 
                 if ($oldReceipt !== $newReceipt) {
-                    $remarks[] = 'Receipt No. changed from '.($oldReceipt ?? 'N/A')." to $newReceipt";
+                    $remarks[] = 'Receipt No. changed from ' . ($oldReceipt ?? 'N/A') . " to $newReceipt";
                 }
                 if ($oldDate !== $newDate) {
-                    $remarks[] = 'Receipt Date changed from '.($oldDate ?? 'N/A')." to $newDate";
+                    $remarks[] = 'Receipt Date changed from ' . ($oldDate ?? 'N/A') . " to $newDate";
                 }
                 if ($newAmount > 0) {
                     $remarks[] = "Amount received: $newAmount";
@@ -3283,10 +3282,10 @@ class BookingCrudController extends CrudController
                 $history = $booking->addHistory(
                     'commented',
                     'Additional Amount Added',
-                    'Additional amount of ₹'.number_format($newAmount, 2).
-                        ' added. Booking amount changed from ₹'.
-                        number_format($oldBookingAmount, 2).
-                        ' to ₹'.
+                    'Additional amount of ₹' . number_format($newAmount, 2) .
+                        ' added. Booking amount changed from ₹' .
+                        number_format($oldBookingAmount, 2) .
+                        ' to ₹' .
                         number_format($booking->booking_amount, 2),
                     [
                         'receipt_no' => $newReceipt,
@@ -3317,15 +3316,15 @@ class BookingCrudController extends CrudController
                     );
                 }
 
-                if (File::exists($tempDir.$fileName)) {
-                    File::delete($tempDir.$fileName);
+                if (File::exists($tempDir . $fileName)) {
+                    File::delete($tempDir . $fileName);
                 }
 
                 return redirect(backpack_url('sales/booking'))
                     ->with('success', 'Amount & receipt added successfully!');
             });
         } catch (Exception $e) {
-            Log::error('addAmount failed: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            Log::error('addAmount failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
 
             return redirect()->back()
                 ->withInput()
@@ -3445,10 +3444,10 @@ class BookingCrudController extends CrudController
                 $history = $booking->addHistory(
                     'commented',
                     'Receipt Added',
-                    'Receipt of ₹'.number_format($amount, 2).
-                        ' added. Total collection changed from ₹'.
-                        number_format($oldTotalReceived, 2).
-                        ' to ₹'.
+                    'Receipt of ₹' . number_format($amount, 2) .
+                        ' added. Total collection changed from ₹' .
+                        number_format($oldTotalReceived, 2) .
+                        ' to ₹' .
                         number_format($totalReceived, 2),
                     [
                         'receipt_no' => $receiptNo,
@@ -3651,7 +3650,7 @@ class BookingCrudController extends CrudController
                 }
 
                 if (! empty(trim($request->remark ?? ''))) {
-                    $historyBody .= ' ,Remarks: '.trim($request->remark);
+                    $historyBody .= ' ,Remarks: ' . trim($request->remark);
                 }
 
                 $booking->addHistory(
@@ -3710,7 +3709,7 @@ class BookingCrudController extends CrudController
             7 => 'Refund Rejected',
             8 => 'Active (Pending)',
             0 => 'No Change',
-            default => 'Unknown ('.$status.')'
+            default => 'Unknown (' . $status . ')'
         };
     }
 
@@ -3920,15 +3919,15 @@ class BookingCrudController extends CrudController
             if (in_array($user->id, $allowedUsers)) {
                 $action = '<div style="display:flex;gap:8px;justify-content:center;">';
                 if ($t->order == 1) {
-                    $action .= '<a href="'.route('sales.booking.order-update', ['id' => $t->id, 'status' => 2]).'"
+                    $action .= '<a href="' . route('sales.booking.order-update', ['id' => $t->id, 'status' => 2]) . '"
                             class="btn btn-success btn-sm">Accept</a>';
-                    $action .= '<a href="'.route('sales.booking.order-update', ['id' => $t->id, 'status' => 0]).'"
+                    $action .= '<a href="' . route('sales.booking.order-update', ['id' => $t->id, 'status' => 0]) . '"
                             class="btn btn-danger btn-sm">Reject</a>';
                 } elseif ($t->order == 2) {
-                    $action .= '<a href="'.route('sales.booking.order-update', ['id' => $t->id, 'status' => 0]).'"
+                    $action .= '<a href="' . route('sales.booking.order-update', ['id' => $t->id, 'status' => 0]) . '"
                             class="btn btn-danger btn-sm">Reject</a>';
                 } elseif ($t->order == 0) {
-                    $action .= '<a href="'.route('sales.booking.order-update', ['id' => $t->id, 'status' => 2]).'"
+                    $action .= '<a href="' . route('sales.booking.order-update', ['id' => $t->id, 'status' => 2]) . '"
                             class="btn btn-success btn-sm">Accept</a>';
                 }
                 $action .= '</div>';
@@ -4078,7 +4077,7 @@ class BookingCrudController extends CrudController
 
             $row = $this->mapBookingForGrid($t, $gridLookups);
             if (empty((array) $row)) {
-                \Log::info('mapBookingForGrid returned empty for booking ID: '.$t->id);
+                \Log::info('mapBookingForGrid returned empty for booking ID: ' . $t->id);
             }
             \Log::debug("Mapped row for ID {$t->id}", (array) $row);
 
@@ -4086,7 +4085,7 @@ class BookingCrudController extends CrudController
 
             if (in_array($user->id, $allowedUsers)) {
                 $row->action = '<div class="d-flex justify-content-center gap-2">
-                    <a class="btn btn-sm btn-primary" href="'.route('sales.booking.dms-edit', $t->id).'?from=pending" title="Edit DMS / SO">
+                    <a class="btn btn-sm btn-primary" href="' . route('sales.booking.dms-edit', $t->id) . '?from=pending" title="Edit DMS / SO">
                         Process
                     </a>
                 </div>';
@@ -4277,7 +4276,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-            <a href="'.route('sales.booking.kyc.edit', $t->id).'"
+            <a href="' . route('sales.booking.kyc.edit', $t->id) . '"
                         class="btn btn-sm btn-primary" title="Complete KYC">
                             Process
                        </a>
@@ -4436,15 +4435,15 @@ class BookingCrudController extends CrudController
 
             if ($t->order == 1) {
                 $actionHtml .= '
-                <a href="'.route('sales.booking.order-update', ['id' => $t->id, 'status' => 0]).'"
+                <a href="' . route('sales.booking.order-update', ['id' => $t->id, 'status' => 0]) . '"
                    class="btn btn-sm btn-success">Resume</a>';
             } else {
                 $actionHtml .= '
-                <a href="'.route('sales.booking.order-update', ['id' => $t->id, 'status' => 1]).'"
+                <a href="' . route('sales.booking.order-update', ['id' => $t->id, 'status' => 1]) . '"
                    class="btn btn-sm btn-danger">Hold</a>';
 
                 $actionHtml .= '
-                <a href="'.route('sales.booking.dms-edit', $t->id).'"
+                <a href="' . route('sales.booking.dms-edit', $t->id) . '"
                    class="btn btn-sm btn-primary py-1 px-2">Process</a>';
             }
 
@@ -4525,7 +4524,7 @@ class BookingCrudController extends CrudController
             $row->location = $location;
 
             $row->action = '<div class="d-flex justify-content-center gap-2">
-            <a href="'.route('sales.booking.exchange.edit', $t->id).'#exch"
+            <a href="' . route('sales.booking.exchange.edit', $t->id) . '#exch"
                class="btn btn-primary btn-sm">
                 Process
             </a>
@@ -4610,9 +4609,9 @@ class BookingCrudController extends CrudController
             $price_gap = ($t->expected_price ?? 0) - (($t->offered_price ?? 0) + ($t->exchange_bonus ?? 0));
             $row->price_gap = number_format($price_gap);
 
-            $row->expected_price = '₹ '.number_format($t->expected_price ?? 0);
-            $row->offered_price = '₹ '.number_format($t->offered_price ?? 0);
-            $row->exchange_bonus = '₹ '.number_format($t->exchange_bonus ?? 0);
+            $row->expected_price = '₹ ' . number_format($t->expected_price ?? 0);
+            $row->offered_price = '₹ ' . number_format($t->offered_price ?? 0);
+            $row->exchange_bonus = '₹ ' . number_format($t->exchange_bonus ?? 0);
 
             $location = $t->location_code && $t->location_code > 0
                 ? (Location::find($t->location_code)->name ?? 'N/A')
@@ -4622,7 +4621,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('sales.booking.exchange.edit', $t->id).'#scrappage"
+                <a href="' . route('sales.booking.exchange.edit', $t->id) . '#scrappage"
                    class="btn btn-primary btn-sm"
                    >
                     Process
@@ -4708,9 +4707,9 @@ class BookingCrudController extends CrudController
             $price_gap = ($t->used_vehicle_exp_price ?? 0) - ($t->used_vehicle_off_price ?? 0);
             $row->price_gap = number_format($price_gap);
 
-            $row->used_vehicle_exp_price = '₹ '.number_format($t->used_vehicle_exp_price ?? 0);
-            $row->used_vehicle_off_price = '₹ '.number_format($t->used_vehicle_off_price ?? 0);
-            $row->new_vehicle_exc_bonus = '₹ '.number_format($t->new_vehicle_exc_bonus ?? 0);
+            $row->used_vehicle_exp_price = '₹ ' . number_format($t->used_vehicle_exp_price ?? 0);
+            $row->used_vehicle_off_price = '₹ ' . number_format($t->used_vehicle_off_price ?? 0);
+            $row->new_vehicle_exc_bonus = '₹ ' . number_format($t->new_vehicle_exc_bonus ?? 0);
 
             $location = $t->location_code && $t->location_code > 0
                 ? (Location::find($t->location_code)->name ?? 'N/A')
@@ -4722,7 +4721,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
                 <div class="d-flex justify-content-center gap-2">
-                    <a href="'.route('sales.booking.exchange.edit', $t->id).'#exch"
+                    <a href="' . route('sales.booking.exchange.edit', $t->id) . '#exch"
                     class="btn btn-primary btn-sm"
                     >
                         Process
@@ -4821,7 +4820,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('sales.booking.finance.edit', $t->id).'"
+                <a href="' . route('sales.booking.finance.edit', $t->id) . '"
                 class="btn btn-primary btn-sm">
                     Update
                 </a>
@@ -5013,7 +5012,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
                 <div class="d-flex justify-content-center gap-2">
-                    <a href="'.route('sales.booking.finance.edit', $t->id).'"
+                    <a href="' . route('sales.booking.finance.edit', $t->id) . '"
                     class="btn btn-primary btn-sm">
                         Process
                     </a>
@@ -5094,7 +5093,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('sales.booking.finance.retail-edit', $t->id).'"
+                <a href="' . route('sales.booking.finance.retail-edit', $t->id) . '"
                    class="btn btn-primary btn-sm"
                     >
                     Process
@@ -5184,7 +5183,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('sales.booking.finance.payout-edit', $t->id).'"
+                <a href="' . route('sales.booking.finance.payout-edit', $t->id) . '"
                    class="btn btn-primary btn-sm"
                    >
                     Process
@@ -5278,7 +5277,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('sales.booking.finance.view', $t->id).'"
+                <a href="' . route('sales.booking.finance.view', $t->id) . '"
                    class="btn btn-info btn-sm"
                    title="View Finance">
                     <i class="fas fa-eye"></i> View
@@ -5327,7 +5326,7 @@ class BookingCrudController extends CrudController
         $mtdStart = $now->copy()->startOfMonth();
         $ytdStart = $now->copy()->startOfYear();
 
-        $data = Cache::remember('cbr_data_'.$now->format('YmdH'), 3600, function () {
+        $data = Cache::remember('cbr_data_' . $now->format('YmdH'), 3600, function () {
             $bookings = DB::table('xlr8_booking_master as bm')
                 ->join('xlr8_vehicle_master as vm', 'bm.vehicle_oem_code', '=', 'vm.id')
                 ->join('bmpl_enum_master as em', 'vm.segment_code', '=', 'em.id')
@@ -5374,7 +5373,7 @@ class BookingCrudController extends CrudController
             $finances = DB::table('xlr8_booking_finance')
                 ->whereIn('verification_status', [0, null])
                 ->pluck('bid')
-                ->mapWithKeys(fn ($bid) => [$bid => 1]);
+                ->mapWithKeys(fn($bid) => [$bid => 1]);
 
             $data = collect();
             $index = 1;
@@ -5429,7 +5428,7 @@ class BookingCrudController extends CrudController
         });
 
         $title = 'Pending Data Report';
-        $filename = 'PndngDataRprt_'.$now->format('Y-m-d-H-i-s').'.xlsx';
+        $filename = 'PndngDataRprt_' . $now->format('Y-m-d-H-i-s') . '.xlsx';
         $stkbr = $tbr = null;
         $header = [
             ['title' => 'S.No.', 'field' => 'sno', 'hozAlign' => 'center', 'formatter' => 'plaintext'],
@@ -5518,7 +5517,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-            <a href="'.route('sales.booking.pending-edit', $t->id).'#pending"
+            <a href="' . route('sales.booking.pending-edit', $t->id) . '#pending"
                             class="btn btn-primary btn-sm" title="Add/Edit Payment">
                                 Process
                         </a>
@@ -5604,7 +5603,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('sales.booking.insurance.edit', $t->id).'"
+                <a href="' . route('sales.booking.insurance.edit', $t->id) . '"
                    class="btn btn-primary btn-sm"
                    >
                     Process
@@ -5696,7 +5695,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('sales.booking.rto.edit', $t->id).'"
+                <a href="' . route('sales.booking.rto.edit', $t->id) . '"
                    class="btn btn-primary btn-sm"
                    >
                     Process
@@ -5775,7 +5774,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.backpack_url("sales/booking/{$t->id}/delivery-edit").'#delivery"
+                <a href="' . backpack_url("sales/booking/{$t->id}/delivery-edit") . '#delivery"
                    class="btn btn-primary btn-sm">
                     Process
                 </a>
@@ -5849,7 +5848,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
         <div class="d-flex justify-content-center gap-2">
-            <a href="'.route('sales.booking.rto.edit', $t->id).'"
+            <a href="' . route('sales.booking.rto.edit', $t->id) . '"
                class="btn btn-primary btn-sm">
                 Process
             </a>
@@ -5911,7 +5910,7 @@ class BookingCrudController extends CrudController
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
             $row->action = '<div class="d-flex justify-content-center gap-2">
-            <a href="'.route('sales.booking.do.edit', $booking->id).'"
+            <a href="' . route('sales.booking.do.edit', $booking->id) . '"
                class="btn btn-primary btn-sm">
                 </i> Process
             </a>
@@ -6055,7 +6054,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.backpack_url("sales/booking/{$t->id}/dealer-invoice").'"
+                <a href="' . backpack_url("sales/booking/{$t->id}/dealer-invoice") . '"
                    class="btn btn-primary btn-sm"
                    title="Edit Dealer Invoice">
                     Process
@@ -6214,7 +6213,6 @@ class BookingCrudController extends CrudController
 
                         return strtoupper((string) $row->color_code)
                             === strtoupper((string) $colorCode);
-
                     });
 
                     if ($colorRow) {
@@ -6413,7 +6411,7 @@ class BookingCrudController extends CrudController
         }
 
         $msg = $request->has('pending_flag')
-            ? 'Booking successfully marked as INVOICED! Chassis: '.$request->chassis
+            ? 'Booking successfully marked as INVOICED! Chassis: ' . $request->chassis
             : 'Pending data updated successfully!';
 
         Log::info('=== PENDING UPDATE SUCCESS ===', [
@@ -6430,7 +6428,7 @@ class BookingCrudController extends CrudController
         if ($newValue != $model->$field) {
             $old = $model->$field ?? '(empty)';
             $new = $newValue ?? '(empty)';
-            $changes[] = ucfirst(str_replace('_', ' ', $field))." changed from '{$old}' → '{$new}'";
+            $changes[] = ucfirst(str_replace('_', ' ', $field)) . " changed from '{$old}' → '{$new}'";
             $model->$field = $newValue;
             Log::info("Field updated: {$field}", ['old' => $old, 'new' => $new]);
         }
@@ -6444,7 +6442,7 @@ class BookingCrudController extends CrudController
         if ($current != $new) {
             $model->$field = $new;
             if (! empty($new)) {
-                $changes[] = ucfirst(str_replace('_', ' ', $field)).' updated to '.$new;
+                $changes[] = ucfirst(str_replace('_', ' ', $field)) . ' updated to ' . $new;
             }
         }
     }
@@ -6552,8 +6550,15 @@ class BookingCrudController extends CrudController
 
         try {
             $this->refundService->apply($booking, $request->only([
-                'bank_name', 'branch_name', 'account_type', 'account_number', 'holder_name',
-                'ifsc_code', 'deduction_reason', 'deduction', 'remaining_amount',
+                'bank_name',
+                'branch_name',
+                'account_type',
+                'account_number',
+                'holder_name',
+                'ifsc_code',
+                'deduction_reason',
+                'deduction',
+                'remaining_amount',
             ]), [
                 'acc_proof' => $request->file('acc_proof'),
                 'aadhar' => $request->file('aadhar'),
@@ -6561,7 +6566,7 @@ class BookingCrudController extends CrudController
             ]);
 
             return redirect(backpack_url('sales/booking/cancelled'))
-                ->with('success', 'Refund request submitted successfully for Booking #'.$booking->id);
+                ->with('success', 'Refund request submitted successfully for Booking #' . $booking->id);
         } catch (QueryException $dbEx) {
             Log::critical('REFUND_DATABASE_ERROR', [
                 'booking_id' => $id,
@@ -6643,17 +6648,17 @@ class BookingCrudController extends CrudController
 
             // Only clear refund request date when restoring a cancelled booking
             if ($oldStatus == 3 && in_array($newStatus, [1, 8])) {
-            $booking->refund_request_date = null;
+                $booking->refund_request_date = null;
             }
 
             // and store the rejection date.
             if ($newStatus == 7) {
-            $booking->refund_rejection_date = Carbon::now()->format('Y-m-d');
+                $booking->refund_rejection_date = Carbon::now()->format('Y-m-d');
 
-            Log::info('REFUND_REJECTION_DATE_SET', [
-                'booking_id' => $id,
-                'date' => $booking->refund_rejection_date,
-            ]);
+                Log::info('REFUND_REJECTION_DATE_SET', [
+                    'booking_id' => $id,
+                    'date' => $booking->refund_rejection_date,
+                ]);
             }
 
             $booking->save();
@@ -6731,7 +6736,7 @@ class BookingCrudController extends CrudController
                 'booking_id' => $id,
             ]);
 
-            return redirect()->back()->with('error', 'Something went wrong: '.$e->getMessage());
+            return redirect()->back()->with('error', 'Something went wrong: ' . $e->getMessage());
         }
     }
 
@@ -6753,7 +6758,7 @@ class BookingCrudController extends CrudController
         $this->data['entry'] = $receipt;
         $this->data['crud'] = $this->crud;
         $this->data['saveAction'] = $this->crud->getSaveAction();
-        $this->data['title'] = 'Edit Receipt #'.($receipt->type_number ?? $receiptId);
+        $this->data['title'] = 'Edit Receipt #' . ($receipt->type_number ?? $receiptId);
         $this->data['booking'] = $booking;
         $this->data['booking_id'] = $bookingId;
         $this->data['receipt_id'] = $receiptId;
@@ -6783,8 +6788,8 @@ class BookingCrudController extends CrudController
             $booking->addHistory(
                 'commented',
                 'Receipt Deleted',
-                "Receipt No. {$receipt->type_number} deleted. Amount ₹".number_format($receipt->amount, 2).
-                    ' deducted from booking. New Booking Amount: ₹'.number_format($booking->booking_amount, 2),
+                "Receipt No. {$receipt->type_number} deleted. Amount ₹" . number_format($receipt->amount, 2) .
+                    ' deducted from booking. New Booking Amount: ₹' . number_format($booking->booking_amount, 2),
                 [
                     'receipt_no' => $receipt->type_number,
                     'deleted_amount' => $receipt->amount,
@@ -6856,7 +6861,7 @@ class BookingCrudController extends CrudController
 
         \Alert::success('Receipt updated .')->flash();
 
-        return redirect(backpack_url('sales/booking/'.$bookingId.'/pending-edit'));
+        return redirect(backpack_url('sales/booking/' . $bookingId . '/pending-edit'));
     }
 
     // public function dealerInvoice($id)
@@ -6991,7 +6996,7 @@ class BookingCrudController extends CrudController
 
         $this->data['crud'] = $this->crud;
         $this->data['title'] =
-            'Dealer Invoice Details - Booking #'.$booking->id;
+            'Dealer Invoice Details - Booking #' . $booking->id;
 
         $this->data['booking'] = $booking;
 
@@ -7077,7 +7082,7 @@ class BookingCrudController extends CrudController
             ]);
 
             return redirect()->route('sales.booking.pending-invoices')
-                ->with('success', 'Dealer invoice details updated successfully for Booking #'.$booking->id);
+                ->with('success', 'Dealer invoice details updated successfully for Booking #' . $booking->id);
         } catch (Exception $e) {
             Log::error('Dealer Invoice Update Failed', [
                 'booking_id' => $id,
@@ -7140,7 +7145,7 @@ class BookingCrudController extends CrudController
             $this->insuranceService->apply((int) $validated['booking_id'], $validated, $policyCopy);
 
             return redirect()->route('sales.booking.pending-insurance')
-                ->with('success', 'Insurance details saved successfully for Booking #'.$request->booking_id);
+                ->with('success', 'Insurance details saved successfully for Booking #' . $request->booking_id);
         } catch (ValidationException $e) {
             Log::warning('Validation failed in insUpdate', [
                 'booking_id' => $request->booking_id ?? 'unknown',
@@ -7431,7 +7436,7 @@ class BookingCrudController extends CrudController
 
             return redirect()
                 ->route('sales.booking.pending-rto')
-                ->with('success', 'RTO data saved successfully for Booking #'.$id);
+                ->with('success', 'RTO data saved successfully for Booking #' . $id);
         } catch (Exception $e) {
             \Log::error('RTO Update Failed', [
                 'booking_id' => $id,
@@ -7443,7 +7448,7 @@ class BookingCrudController extends CrudController
 
             return redirect()
                 ->back()
-                ->with('error', 'Failed to save RTO data: '.$e->getMessage())
+                ->with('error', 'Failed to save RTO data: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -7520,7 +7525,7 @@ class BookingCrudController extends CrudController
 
             return redirect()
                 ->route('sales.booking.pending-deliveries')
-                ->with('success', 'Delivery updated successfully with photos! Booking #'.$id);
+                ->with('success', 'Delivery updated successfully with photos! Booking #' . $id);
         } catch (FileCannotBeAdded $e) {
             \Log::error('Media upload error', [
                 'booking_id' => $id,
@@ -7528,7 +7533,7 @@ class BookingCrudController extends CrudController
             ]);
 
             return redirect()->back()
-                ->with('error', 'Photo upload failed: '.$e->getMessage())
+                ->with('error', 'Photo upload failed: ' . $e->getMessage())
                 ->withInput();
         } catch (Exception $e) {
             \Log::critical('PendDeliveryUpdate failed', [
@@ -7598,27 +7603,40 @@ class BookingCrudController extends CrudController
 
             'registration_no' => [
                 Rule::requiredIf($isExchangeOrScrap),
-                'nullable', 'string', 'max:255',
+                'nullable',
+                'string',
+                'max:255',
             ],
             'manufacturing_year' => [
                 Rule::requiredIf($isExchangeOrScrap),
-                'nullable', 'integer', 'min:1900', 'max:'.date('Y'),
+                'nullable',
+                'integer',
+                'min:1900',
+                'max:' . date('Y'),
             ],
             'odometer_reading' => [
                 Rule::requiredIf($isExchange),
-                'nullable', 'numeric', 'min:0',
+                'nullable',
+                'numeric',
+                'min:0',
             ],
             'expected_price' => [
                 Rule::requiredIf($isExchange),
-                'nullable', 'numeric', 'min:0',
+                'nullable',
+                'numeric',
+                'min:0',
             ],
             'offered_price' => [
                 Rule::requiredIf($isExchange),
-                'nullable', 'numeric', 'min:0',
+                'nullable',
+                'numeric',
+                'min:0',
             ],
             'exchange_bonus' => [
                 Rule::requiredIf($isExchange),
-                'nullable', 'numeric', 'min:0',
+                'nullable',
+                'numeric',
+                'min:0',
             ],
 
             'update' => 'required|integer|in:1,2,3',
@@ -7654,9 +7672,20 @@ class BookingCrudController extends CrudController
         }
 
         ['changes' => $rem] = $this->exchangeService->apply($booking, $request->only([
-            'buyer_type', 'enum_master1', 'vehicle_details', 'enum_master2', 'vehicle_details2',
-            'registration_no', 'manufacturing_year', 'odometer_reading', 'expected_price',
-            'offered_price', 'exchange_bonus', 'update', 'case_status', 'remark',
+            'buyer_type',
+            'enum_master1',
+            'vehicle_details',
+            'enum_master2',
+            'vehicle_details2',
+            'registration_no',
+            'manufacturing_year',
+            'odometer_reading',
+            'expected_price',
+            'offered_price',
+            'exchange_bonus',
+            'update',
+            'case_status',
+            'remark',
         ]));
 
         \Log::info('EXCHANGE UPDATE SUCCESS', [
@@ -7763,15 +7792,28 @@ class BookingCrudController extends CrudController
 
         $booking = Booking::findOrFail($id);
 
-        $this->financeService->apply($booking, [
-            ...$request->only([
-                'fin_mode', 'loan_status', 'financier', 'verification_status', 'case_status',
-                'instrument_type', 'instrument_ref_no', 'loan_amount', 'margin_money',
-                'file_charge', 'financier_subvention', 'case_lost_reason', 'remark',
-                'retail', 'payout',
-            ]),
-            'instrument_proof_file' => $request->file('instrument_proof'),
-        ],
+        $this->financeService->apply(
+            $booking,
+            [
+                ...$request->only([
+                    'fin_mode',
+                    'loan_status',
+                    'financier',
+                    'verification_status',
+                    'case_status',
+                    'instrument_type',
+                    'instrument_ref_no',
+                    'loan_amount',
+                    'margin_money',
+                    'file_charge',
+                    'financier_subvention',
+                    'case_lost_reason',
+                    'remark',
+                    'retail',
+                    'payout',
+                ]),
+                'instrument_proof_file' => $request->file('instrument_proof'),
+            ],
             hasInstrumentProofFile: $request->hasFile('instrument_proof'),
             deleteInstrumentProof: $request->has('delete_instrument_proof') && $request->delete_instrument_proof == '1'
         );
@@ -7908,10 +7950,21 @@ class BookingCrudController extends CrudController
         }
 
         $this->financeService->applyPayout($booking, $finance, $request->only([
-            'payout_category', 'do_number', 'loan_amount', 'expected_payout_pct',
-            'gst_included', 'inv1_no', 'inv1_name', 'inv1_prov_gst', 'inv2_no',
-            'inv2_name', 'inv2_prov_gst', 'consideration_no_gst', 'difference_no_gst',
-            'payout_remarks', 'no_payout_reason',
+            'payout_category',
+            'do_number',
+            'loan_amount',
+            'expected_payout_pct',
+            'gst_included',
+            'inv1_no',
+            'inv1_name',
+            'inv1_prov_gst',
+            'inv2_no',
+            'inv2_name',
+            'inv2_prov_gst',
+            'consideration_no_gst',
+            'difference_no_gst',
+            'payout_remarks',
+            'no_payout_reason',
         ]));
 
         return redirect()
@@ -7978,7 +8031,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.backpack_url("sales/booking/{$t->id}/refund-view").'"
+                <a href="' . backpack_url("sales/booking/{$t->id}/refund-view") . '"
                    class="btn btn-primary btn-sm">
                     Process
                 </a>
@@ -8118,7 +8171,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('sales.booking.rejected-view', $t->id).'"
+                <a href="' . route('sales.booking.rejected-view', $t->id) . '"
                    class="btn btn-primary btn-sm"
                    >
                     <i class="fas fa-eye"></i> Process
@@ -8304,7 +8357,11 @@ class BookingCrudController extends CrudController
         }
 
         $this->refundService->applyRefundUpdate($booking, $refund, $request->only([
-            'hidden_ref', 'ref_date', 'mode', 'transaction_details', 'remark',
+            'hidden_ref',
+            'ref_date',
+            'mode',
+            'transaction_details',
+            'remark',
         ]), $request->file('pay_proof'));
 
         return redirect()->route('sales.booking.refund.requested')
@@ -8356,7 +8413,7 @@ class BookingCrudController extends CrudController
 
             $row->action = '
             <div class="d-flex justify-content-center gap-2">
-                <a href="'.route('sales.booking.show', $t->id).'"
+                <a href="' . route('sales.booking.show', $t->id) . '"
                    class="btn btn-primary btn-sm"
                    >
                     Process
@@ -8440,7 +8497,11 @@ class BookingCrudController extends CrudController
         }
 
         $this->refundService->applyRefundedUpdate($booking, $refund, $request->only([
-            'hidden_ref', 'ref_date', 'mode', 'transaction_details', 'remark',
+            'hidden_ref',
+            'ref_date',
+            'mode',
+            'transaction_details',
+            'remark',
         ]), $request->file('pay_proof'));
 
         return redirect()->route('sales.booking.refunded')
@@ -8807,8 +8868,8 @@ class BookingCrudController extends CrudController
         $now = Carbon::now();
         $py = $now->format('Y') - 1;
         $cy = $now->format('Y');
-        $ovin = 'STOCK VIN-'.$py;
-        $cvin = 'STOCK VIN-'.$cy;
+        $ovin = 'STOCK VIN-' . $py;
+        $cvin = 'STOCK VIN-' . $cy;
 
         $locbr = DB::table('xlr8_us_location')
             ->whereNotNull('abbr')
@@ -8924,8 +8985,8 @@ class BookingCrudController extends CrudController
             }
 
             foreach ($locbr as $loc) {
-                $row['ovin_'.strtolower($loc)] = $ovin_stats[$loc] ?? 0;
-                $row['cvin_'.strtolower($loc)] = $cvin_stats[$loc] ?? 0;
+                $row['ovin_' . strtolower($loc)] = $ovin_stats[$loc] ?? 0;
+                $row['cvin_' . strtolower($loc)] = $cvin_stats[$loc] ?? 0;
             }
 
             $row['ovin_damage'] = $ovin_stats['damage'];
@@ -8935,8 +8996,8 @@ class BookingCrudController extends CrudController
             $row['cvin_dlr_transit'] = $cvin_stats['dlr_transit'];
             $row['cvin_oem_transit'] = $cvin_stats['oem_transit'];
 
-            $row['tst_max_age'] = $tst_max_age ? $tst_max_age.' D' : '0 D';
-            $row['stock_max_age'] = $stock_max_age ? $stock_max_age.' D' : '0 D';
+            $row['tst_max_age'] = $tst_max_age ? $tst_max_age . ' D' : '0 D';
+            $row['stock_max_age'] = $stock_max_age ? $stock_max_age . ' D' : '0 D';
             $row['stock_gt_60'] = $stock_gt_60;
 
             $data[] = $row;
@@ -8967,7 +9028,7 @@ class BookingCrudController extends CrudController
             [
                 'headerName' => $ovin,
                 'children' => array_merge(
-                    array_map(fn ($loc) => ['field' => 'ovin_'.strtolower($loc), 'headerName' => $loc, 'width' => 80, 'cellClass' => 'text-right'], $locbr),
+                    array_map(fn($loc) => ['field' => 'ovin_' . strtolower($loc), 'headerName' => $loc, 'width' => 80, 'cellClass' => 'text-right'], $locbr),
                     [
                         ['field' => 'ovin_damage',      'headerName' => 'DAMAGE',     'width' => 100, 'cellClass' => 'text-right'],
                         ['field' => 'ovin_dlr_transit', 'headerName' => 'DLR TST',    'width' => 110, 'cellClass' => 'text-right'],
@@ -8979,7 +9040,7 @@ class BookingCrudController extends CrudController
             [
                 'headerName' => $cvin,
                 'children' => array_merge(
-                    array_map(fn ($loc) => ['field' => 'cvin_'.strtolower($loc), 'headerName' => $loc, 'width' => 80, 'cellClass' => 'text-right'], $locbr),
+                    array_map(fn($loc) => ['field' => 'cvin_' . strtolower($loc), 'headerName' => $loc, 'width' => 80, 'cellClass' => 'text-right'], $locbr),
                     [
                         ['field' => 'cvin_damage',      'headerName' => 'DAMAGE',     'width' => 100, 'cellClass' => 'text-right'],
                         ['field' => 'cvin_dlr_transit', 'headerName' => 'DLR TST',    'width' => 110, 'cellClass' => 'text-right'],
@@ -9090,7 +9151,7 @@ class BookingCrudController extends CrudController
         $mtdStart = $now->copy()->startOfMonth();
         $ytdStart = $now->copy()->startOfYear();
 
-        $data = Cache::remember('cbr_data_'.$now->format('YmdH'), 3600, function () use ($mtdStart, $ytdStart) {
+        $data = Cache::remember('cbr_data_' . $now->format('YmdH'), 3600, function () use ($mtdStart, $ytdStart) {
             $bookings = DB::table('xlr8_booking_master as bm')
                 ->join('xlr8_vehicle_master as vm', 'bm.vehicle_oem_code', '=', 'vm.id')
                 ->join('bmpl_enum_master as em', 'vm.segment_code', '=', 'em.id')
@@ -9137,7 +9198,7 @@ class BookingCrudController extends CrudController
                 ->get();
 
             $stocks = $stocksRaw->groupBy('group_key')->map(function ($group) {
-                return $group->groupBy('branch_code')->map(fn ($bg) => $bg->sum('quantity'));
+                return $group->groupBy('branch_code')->map(fn($bg) => $bg->sum('quantity'));
             });
 
             $exchanges = DB::table('xlr8_exchange')
@@ -9155,7 +9216,7 @@ class BookingCrudController extends CrudController
             $finances = DB::table('xlr8_booking_finance')
                 ->whereIn('verification_status', [0, null])
                 ->pluck('bid')
-                ->mapWithKeys(fn ($bid) => [$bid => 1]);
+                ->mapWithKeys(fn($bid) => [$bid => 1]);
 
             $data = collect();
             $index = 1;
@@ -9174,10 +9235,10 @@ class BookingCrudController extends CrudController
                 $chr_bookings = $liveGroup->where('b_type', 'Dealer')->count();
 
                 $max_age_days = $liveGroup->max(
-                    fn ($booking) => abs(Carbon::parse($booking->created_at)->diffInDays(now()))
+                    fn($booking) => abs(Carbon::parse($booking->created_at)->diffInDays(now()))
                 );
 
-                $age_gt_60 = $liveGroup->filter(fn ($booking) => abs(Carbon::parse($booking->created_at)->diffInDays(now()))
+                $age_gt_60 = $liveGroup->filter(fn($booking) => abs(Carbon::parse($booking->created_at)->diffInDays(now()))
                     > 60)->count();
 
                 $live_orders = $liveOrders->get($groupKey, 0);
@@ -9209,7 +9270,7 @@ class BookingCrudController extends CrudController
                 $self = $liveGroup->where('fin_mode', 'Customer-Self')->count();
                 $self_pct = $total_bookings > 0 ? round(($self / $total_bookings) * 100, 2) : 0;
 
-                $finance_pending = $liveGroup->filter(fn ($booking) => $finances->get($booking->id, 0) > 0)->count();
+                $finance_pending = $liveGroup->filter(fn($booking) => $finances->get($booking->id, 0) > 0)->count();
 
                 $mtd_live = $liveGroup->where('created_at', '>=', $mtdStart);
                 $mtd_total = $mtd_live->count();
@@ -9223,7 +9284,7 @@ class BookingCrudController extends CrudController
 
                 $exchange_inhouse = $liveGroup->where('buyer_type', 'Exchange')->count();
                 $exchange_pct = $total_bookings > 0 ? round(($exchange_inhouse / $total_bookings) * 100, 2) : 0;
-                $exchange_pending = $liveGroup->filter(fn ($booking) => ($exchanges->get($booking->id)['exchange_pending'] ?? 0) > 0)->count();
+                $exchange_pending = $liveGroup->filter(fn($booking) => ($exchanges->get($booking->id)['exchange_pending'] ?? 0) > 0)->count();
 
                 $mtd_exchange_inhouse = $mtd_live->where('buyer_type', 'Exchange')->count();
                 $mtd_exchange = $mtd_total > 0 ? round(($mtd_exchange_inhouse / $mtd_total) * 100, 2) : 0;
@@ -9233,7 +9294,7 @@ class BookingCrudController extends CrudController
 
                 $scrappage_inhouse = $liveGroup->where('buyer_type', 'Scrappage')->count();
                 $scrappage_pct = $total_bookings > 0 ? round(($scrappage_inhouse / $total_bookings) * 100, 2) : 0;
-                $scrappage_pending = $liveGroup->filter(fn ($booking) => ($exchanges->get($booking->id)['scrappage_pending'] ?? 0) > 0)->count();
+                $scrappage_pending = $liveGroup->filter(fn($booking) => ($exchanges->get($booking->id)['scrappage_pending'] ?? 0) > 0)->count();
 
                 $mtd_scrappage_inhouse = $mtd_live->where('buyer_type', 'Scrappage')->count();
                 $mtd_scrappage = $mtd_total > 0 ? round(($mtd_scrappage_inhouse / $mtd_total) * 100, 2) : 0;
@@ -9258,7 +9319,7 @@ class BookingCrudController extends CrudController
                     'total_bookings' => $total_bookings,
                     'bkn_bookings' => $bkn_bookings,
                     'chr_bookings' => $chr_bookings,
-                    'max_age' => $max_age_days ? ceil($max_age_days).' D' : '0 D',
+                    'max_age' => $max_age_days ? ceil($max_age_days) . ' D' : '0 D',
                     'age_gt_60d' => $age_gt_60,
                     'live_orders' => $live_orders,
                     'dummy_bookings' => $dummy_bookings,
@@ -9269,24 +9330,24 @@ class BookingCrudController extends CrudController
                     'data' => $data_pending,
                     'refund' => $refunds,
                     'cash' => $cash,
-                    'cash_pct' => number_format($cash_pct, 2).'%',
+                    'cash_pct' => number_format($cash_pct, 2) . '%',
                     'inhouse' => $inhouse,
-                    'inhouse_pct' => number_format($inhouse_pct, 2).'%',
+                    'inhouse_pct' => number_format($inhouse_pct, 2) . '%',
                     'self' => $self,
-                    'self_pct' => number_format($self_pct, 2).'%',
+                    'self_pct' => number_format($self_pct, 2) . '%',
                     'finance_pending' => $finance_pending,
-                    'mtd' => number_format($mtd_finance, 2).'%',
-                    'ytd' => number_format($ytd_finance, 2).'%',
+                    'mtd' => number_format($mtd_finance, 2) . '%',
+                    'ytd' => number_format($ytd_finance, 2) . '%',
                     'exchange_inhouse' => $exchange_inhouse,
-                    'exchange_inhouse_pct' => number_format($exchange_pct, 2).'%',
+                    'exchange_inhouse_pct' => number_format($exchange_pct, 2) . '%',
                     'exchange_pending' => $exchange_pending,
-                    'exchange_mtd' => number_format($mtd_exchange, 2).'%',
-                    'exchange_ytd' => number_format($ytd_exchange, 2).'%',
+                    'exchange_mtd' => number_format($mtd_exchange, 2) . '%',
+                    'exchange_ytd' => number_format($ytd_exchange, 2) . '%',
                     'scrappage_inhouse' => $scrappage_inhouse,
-                    'scrappage_inhouse_pct' => number_format($scrappage_pct, 2).'%',
+                    'scrappage_inhouse_pct' => number_format($scrappage_pct, 2) . '%',
                     'scrappage_pending' => $scrappage_pending,
-                    'scrappage_mtd' => number_format($mtd_scrappage, 2).'%',
-                    'scrappage_ytd' => number_format($ytd_scrappage, 2).'%',
+                    'scrappage_mtd' => number_format($mtd_scrappage, 2) . '%',
+                    'scrappage_ytd' => number_format($ytd_scrappage, 2) . '%',
                 ]);
             }
 
@@ -9301,7 +9362,7 @@ class BookingCrudController extends CrudController
             'stock_total' => $data->sum('stock_total'),
             'stock_bkn' => $data->sum('stock_bkn'),
             'stock_chr' => $data->sum('stock_chr'),
-            'max_age' => $data->max('max_age') ? str_replace(' D', '', $data->max('max_age')).' D' : '',
+            'max_age' => $data->max('max_age') ? str_replace(' D', '', $data->max('max_age')) . ' D' : '',
             'age_gt_60d' => $data->sum('age_gt_60d'),
             'live_orders' => $data->sum('live_orders'),
             'dummy_bookings' => $data->sum('dummy_bookings'),
@@ -9312,24 +9373,24 @@ class BookingCrudController extends CrudController
             'data' => $data->sum('data'),
             'refund' => $data->sum('refund'),
             'cash' => $data->sum('cash'),
-            'cash_pct' => $data->count() > 0 ? number_format($data->avg(fn ($r) => (float) str_replace('%', '', $r['cash_pct'])), 2).'%' : '0.00%',
+            'cash_pct' => $data->count() > 0 ? number_format($data->avg(fn($r) => (float) str_replace('%', '', $r['cash_pct'])), 2) . '%' : '0.00%',
             'inhouse' => $data->sum('inhouse'),
-            'inhouse_pct' => $data->count() > 0 ? number_format($data->avg(fn ($r) => (float) str_replace('%', '', $r['inhouse_pct'])), 2).'%' : '0.00%',
+            'inhouse_pct' => $data->count() > 0 ? number_format($data->avg(fn($r) => (float) str_replace('%', '', $r['inhouse_pct'])), 2) . '%' : '0.00%',
             'self' => $data->sum('self'),
-            'self_pct' => $data->count() > 0 ? number_format($data->avg(fn ($r) => (float) str_replace('%', '', $r['self_pct'])), 2).'%' : '0.00%',
+            'self_pct' => $data->count() > 0 ? number_format($data->avg(fn($r) => (float) str_replace('%', '', $r['self_pct'])), 2) . '%' : '0.00%',
             'finance_pending' => $data->sum('finance_pending'),
-            'mtd' => $data->count() > 0 ? number_format($data->avg(fn ($r) => (float) str_replace('%', '', $r['mtd'])), 2).'%' : '0.00%',
-            'ytd' => $data->count() > 0 ? number_format($data->avg(fn ($r) => (float) str_replace('%', '', $r['ytd'])), 2).'%' : '0.00%',
+            'mtd' => $data->count() > 0 ? number_format($data->avg(fn($r) => (float) str_replace('%', '', $r['mtd'])), 2) . '%' : '0.00%',
+            'ytd' => $data->count() > 0 ? number_format($data->avg(fn($r) => (float) str_replace('%', '', $r['ytd'])), 2) . '%' : '0.00%',
             'exchange_inhouse' => $data->sum('exchange_inhouse'),
-            'exchange_inhouse_pct' => $data->count() > 0 ? number_format($data->avg(fn ($r) => (float) str_replace('%', '', $r['exchange_inhouse_pct'])), 2).'%' : '0.00%',
+            'exchange_inhouse_pct' => $data->count() > 0 ? number_format($data->avg(fn($r) => (float) str_replace('%', '', $r['exchange_inhouse_pct'])), 2) . '%' : '0.00%',
             'exchange_pending' => $data->sum('exchange_pending'),
-            'exchange_mtd' => $data->count() > 0 ? number_format($data->avg(fn ($r) => (float) str_replace('%', '', $r['exchange_mtd'])), 2).'%' : '0.00%',
-            'exchange_ytd' => $data->count() > 0 ? number_format($data->avg(fn ($r) => (float) str_replace('%', '', $r['exchange_ytd'])), 2).'%' : '0.00%',
+            'exchange_mtd' => $data->count() > 0 ? number_format($data->avg(fn($r) => (float) str_replace('%', '', $r['exchange_mtd'])), 2) . '%' : '0.00%',
+            'exchange_ytd' => $data->count() > 0 ? number_format($data->avg(fn($r) => (float) str_replace('%', '', $r['exchange_ytd'])), 2) . '%' : '0.00%',
             'scrappage_inhouse' => $data->sum('scrappage_inhouse'),
-            'scrappage_inhouse_pct' => $data->count() > 0 ? number_format($data->avg(fn ($r) => (float) str_replace('%', '', $r['scrappage_inhouse_pct'])), 2).'%' : '0.00%',
+            'scrappage_inhouse_pct' => $data->count() > 0 ? number_format($data->avg(fn($r) => (float) str_replace('%', '', $r['scrappage_inhouse_pct'])), 2) . '%' : '0.00%',
             'scrappage_pending' => $data->sum('scrappage_pending'),
-            'scrappage_mtd' => $data->count() > 0 ? number_format($data->avg(fn ($r) => (float) str_replace('%', '', $r['scrappage_mtd'])), 2).'%' : '0.00%',
-            'scrappage_ytd' => $data->count() > 0 ? number_format($data->avg(fn ($r) => (float) str_replace('%', '', $r['scrappage_ytd'])), 2).'%' : '0.00%',
+            'scrappage_mtd' => $data->count() > 0 ? number_format($data->avg(fn($r) => (float) str_replace('%', '', $r['scrappage_mtd'])), 2) . '%' : '0.00%',
+            'scrappage_ytd' => $data->count() > 0 ? number_format($data->avg(fn($r) => (float) str_replace('%', '', $r['scrappage_ytd'])), 2) . '%' : '0.00%',
         ];
 
         $stkbr = [
@@ -9345,7 +9406,7 @@ class BookingCrudController extends CrudController
         ];
 
         $title = 'Consolidated Booking Report';
-        $filename = 'CnsldtBkngRprt_'.$now->format('Y-m-d-H-i-s').'.xlsx';
+        $filename = 'CnsldtBkngRprt_' . $now->format('Y-m-d-H-i-s') . '.xlsx';
 
         $header = [
             ['title' => 'S.No.', 'field' => 'sno', 'hozAlign' => 'center', 'formatter' => 'plaintext'],
@@ -9378,14 +9439,14 @@ class BookingCrudController extends CrudController
                 'title' => 'Global Info',
                 'columns' => [
                     ['title' => 'Max Age', 'field' => 'max_age', 'bottomCalc' => function ($values) {
-                        $max = collect($values)->map(fn ($val) => (int) str_replace(' D', '', $val))->max();
+                        $max = collect($values)->map(fn($val) => (int) str_replace(' D', '', $val))->max();
 
-                        return $max.' D';
+                        return $max . ' D';
                     }],
                     ['title' => 'Age > 60D', 'field' => 'age_gt_60d', 'bottomCalc' => function ($values) {
-                        $max = collect($values)->map(fn ($val) => (int) str_replace(' D', '', $val))->max();
+                        $max = collect($values)->map(fn($val) => (int) str_replace(' D', '', $val))->max();
 
-                        return $max.' D';
+                        return $max . ' D';
                     }],
                     ['title' => 'Live Orders', 'field' => 'live_orders', 'bottomCalc' => 'sum'],
                     ['title' => 'Dummy Bookings', 'field' => 'dummy_bookings', 'bottomCalc' => 'sum'],
@@ -9407,32 +9468,32 @@ class BookingCrudController extends CrudController
                 'columns' => [
                     ['title' => 'Cash', 'field' => 'cash'],
                     ['title' => 'Cash %', 'field' => 'cash_pct', 'bottomCalc' => function ($values) {
-                        $avg = collect($values)->map(fn ($val) => (float) str_replace('%', '', $val))->avg();
+                        $avg = collect($values)->map(fn($val) => (float) str_replace('%', '', $val))->avg();
 
-                        return number_format($avg, 2).'%';
+                        return number_format($avg, 2) . '%';
                     }],
                     ['title' => 'In-house', 'field' => 'inhouse'],
                     ['title' => 'In-house %', 'field' => 'inhouse_pct', 'bottomCalc' => function ($values) {
-                        $avg = collect($values)->map(fn ($val) => (float) str_replace('%', '', $val))->avg();
+                        $avg = collect($values)->map(fn($val) => (float) str_replace('%', '', $val))->avg();
 
-                        return number_format($avg, 2).'%';
+                        return number_format($avg, 2) . '%';
                     }],
                     ['title' => 'Self', 'field' => 'self'],
                     ['title' => 'Self %', 'field' => 'self_pct', 'bottomCalc' => function ($values) {
-                        $avg = collect($values)->map(fn ($val) => (float) str_replace('%', '', $val))->avg();
+                        $avg = collect($values)->map(fn($val) => (float) str_replace('%', '', $val))->avg();
 
-                        return number_format($avg, 2).'%';
+                        return number_format($avg, 2) . '%';
                     }],
                     ['title' => 'Pending', 'field' => 'finance_pending'],
                     ['title' => 'MTD', 'field' => 'mtd', 'bottomCalc' => function ($values) {
-                        $avg = collect($values)->map(fn ($val) => (float) str_replace('%', '', $val))->avg();
+                        $avg = collect($values)->map(fn($val) => (float) str_replace('%', '', $val))->avg();
 
-                        return number_format($avg, 2).'%';
+                        return number_format($avg, 2) . '%';
                     }],
                     ['title' => 'YTD', 'field' => 'ytd', 'bottomCalc' => function ($values) {
-                        $avg = collect($values)->map(fn ($val) => (float) str_replace('%', '', $val))->avg();
+                        $avg = collect($values)->map(fn($val) => (float) str_replace('%', '', $val))->avg();
 
-                        return number_format($avg, 2).'%';
+                        return number_format($avg, 2) . '%';
                     }],
                 ],
             ],
@@ -9441,20 +9502,20 @@ class BookingCrudController extends CrudController
                 'columns' => [
                     ['title' => 'In-house', 'field' => 'exchange_inhouse'],
                     ['title' => 'In-house %', 'field' => 'exchange_inhouse_pct', 'bottomCalc' => function ($values) {
-                        $avg = collect($values)->map(fn ($val) => (float) str_replace('%', '', $val))->avg();
+                        $avg = collect($values)->map(fn($val) => (float) str_replace('%', '', $val))->avg();
 
-                        return number_format($avg, 2).'%';
+                        return number_format($avg, 2) . '%';
                     }],
                     ['title' => 'Pending', 'field' => 'exchange_pending'],
                     ['title' => 'MTD', 'field' => 'exchange_mtd', 'bottomCalc' => function ($values) {
-                        $avg = collect($values)->map(fn ($val) => (float) str_replace('%', '', $val))->avg();
+                        $avg = collect($values)->map(fn($val) => (float) str_replace('%', '', $val))->avg();
 
-                        return number_format($avg, 2).'%';
+                        return number_format($avg, 2) . '%';
                     }],
                     ['title' => 'YTD', 'field' => 'exchange_ytd', 'bottomCalc' => function ($values) {
-                        $avg = collect($values)->map(fn ($val) => (float) str_replace('%', '', $val))->avg();
+                        $avg = collect($values)->map(fn($val) => (float) str_replace('%', '', $val))->avg();
 
-                        return number_format($avg, 2).'%';
+                        return number_format($avg, 2) . '%';
                     }],
                 ],
             ],
@@ -9532,7 +9593,7 @@ class BookingCrudController extends CrudController
             ->get();
 
         $stocks = $stocksRaw->groupBy('group_key')->map(function ($group) {
-            return $group->groupBy('branch_code')->map(fn ($bg) => $bg->sum('quantity'));
+            return $group->groupBy('branch_code')->map(fn($bg) => $bg->sum('quantity'));
         });
 
         $exchanges = DB::table('xlr8_exchange')
@@ -9550,7 +9611,7 @@ class BookingCrudController extends CrudController
         $finances = DB::table('xlr8_booking_finance')
             ->whereIn('verification_status', [0, null])
             ->pluck('bid')
-            ->mapWithKeys(fn ($bid) => [$bid => 1]);
+            ->mapWithKeys(fn($bid) => [$bid => 1]);
 
         $gridData = [];
         $sno = 1;
@@ -9568,9 +9629,9 @@ class BookingCrudController extends CrudController
             $bkn_bookings = $liveGroup->where('b_type', 'Individual')->count();
             $churu_bookings = $liveGroup->where('b_type', 'Dealer')->count();
 
-            $max_age_days = $liveGroup->max(fn ($b) => abs(Carbon::parse($b->created_at)->diffInDays($now)));
+            $max_age_days = $liveGroup->max(fn($b) => abs(Carbon::parse($b->created_at)->diffInDays($now)));
 
-            $age_gt_60 = $liveGroup->filter(fn ($b) => abs(Carbon::parse($b->created_at)->diffInDays($now)) > 60)->count();
+            $age_gt_60 = $liveGroup->filter(fn($b) => abs(Carbon::parse($b->created_at)->diffInDays($now)) > 60)->count();
 
             $live_orders = $liveOrders->get($groupKey, 0);
 
@@ -9599,7 +9660,7 @@ class BookingCrudController extends CrudController
             $self = $liveGroup->where('fin_mode', 'Customer-Self')->count();
             $self_pct = $total_bookings ? round($self / $total_bookings * 100, 2) : 0;
 
-            $finance_pending = $liveGroup->filter(fn ($b) => $finances->get($b->id, 0))->count();
+            $finance_pending = $liveGroup->filter(fn($b) => $finances->get($b->id, 0))->count();
 
             $stock_group = $stocks->get($groupKey, collect());
             $stock_total = $stock_group->values()->sum();
@@ -9628,8 +9689,8 @@ class BookingCrudController extends CrudController
                 'exchange_total' => $liveGroup->where('buyer_type', 'Exchange')->count(),
                 'exchange_bikaner' => 0,
                 'exchange_churu' => 0,
-                'exchange_pending' => $liveGroup->filter(fn ($b) => $exchanges->get($b->id)['exchange_pending'] ?? 0)->count(),
-                'max_age' => $max_age_days ? ceil($max_age_days).' D' : '0 D',
+                'exchange_pending' => $liveGroup->filter(fn($b) => $exchanges->get($b->id)['exchange_pending'] ?? 0)->count(),
+                'max_age' => $max_age_days ? ceil($max_age_days) . ' D' : '0 D',
                 'age_gt_60d' => $age_gt_60,
                 'live_orders' => $live_orders,
                 'dummy_bookings' => $dummy_bookings,
@@ -9792,7 +9853,7 @@ class BookingCrudController extends CrudController
             ->groupBy('group_key', 'ul.name')
             ->get();
 
-        $stocks = $stocksRaw->groupBy('group_key')->map(fn ($g) => $g->pluck('quantity', 'branch_name')->toArray());
+        $stocks = $stocksRaw->groupBy('group_key')->map(fn($g) => $g->pluck('quantity', 'branch_name')->toArray());
 
         $gridData = [];
         $sno = 1;
@@ -9810,9 +9871,9 @@ class BookingCrudController extends CrudController
             $bkn_bookings = $liveGroup->where('b_type', 'Individual')->count();
             $churu_bookings = $liveGroup->where('b_type', 'Dealer')->count();
 
-            $max_age_days = $liveGroup->max(fn ($b) => abs(Carbon::parse($b->created_at)->diffInDays($now)));
+            $max_age_days = $liveGroup->max(fn($b) => abs(Carbon::parse($b->created_at)->diffInDays($now)));
 
-            $age_gt_60 = $liveGroup->filter(fn ($b) => abs(Carbon::parse($b->created_at)->diffInDays($now)) > 60)->count();
+            $age_gt_60 = $liveGroup->filter(fn($b) => abs(Carbon::parse($b->created_at)->diffInDays($now)) > 60)->count();
 
             $on_hold = $liveGroup->where('status', 6)->count();
 
@@ -9854,7 +9915,7 @@ class BookingCrudController extends CrudController
 
                 'total_bookings' => $total_bookings,
 
-                'max_age' => $max_age_days ? ceil($max_age_days).' D' : '0 D',
+                'max_age' => $max_age_days ? ceil($max_age_days) . ' D' : '0 D',
                 'age_gt_60d' => $age_gt_60,
                 'dummy_bookings' => $dummy_bookings,
                 'on_hold' => $on_hold,
@@ -10035,7 +10096,7 @@ class BookingCrudController extends CrudController
 
         $gridData = [];
         $grouped = $pendings->groupBy(function ($item) {
-            return $item->segment.'|'.$item->model.'|'.$item->variant.'|'.$item->color;
+            return $item->segment . '|' . $item->model . '|' . $item->variant . '|' . $item->color;
         });
 
         $sno = 1;
@@ -10390,7 +10451,7 @@ class BookingCrudController extends CrudController
             $receiptDisplay = [];
             $receiptTotal = 0;
             foreach ($receiptLogs as $receipt) {
-                $receiptDisplay[] = "{$receipt->type_number} / ".site_date($receipt->date).' / ₹'.number_format($receipt->amount, 2);
+                $receiptDisplay[] = "{$receipt->type_number} / " . site_date($receipt->date) . ' / ₹' . number_format($receipt->amount, 2);
                 $receiptTotal += (float) $receipt->amount;
             }
             $mapped->receipt_details = ! empty($receiptDisplay) ? implode(' | ', $receiptDisplay) : 'N/A';
@@ -10424,7 +10485,7 @@ class BookingCrudController extends CrudController
             // ----- OTF Action Button -----
             $otfUrl = backpack_url("sales/booking/otf-form/{$booking->id}");
             $mapped->action = '<div class="d-flex justify-content-center gap-2">
-                <a href="'.$otfUrl.'" class="btn btn-sm btn-success">OTF Form</a>
+                <a href="' . $otfUrl . '" class="btn btn-sm btn-success">OTF Form</a>
             </div>';
 
             return $mapped;
@@ -10574,7 +10635,6 @@ class BookingCrudController extends CrudController
                 $booking,
                 $branchCode
             );
-
         } catch (\InvalidArgumentException $e) {
 
             return response()->json([
