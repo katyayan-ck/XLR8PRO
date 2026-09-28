@@ -46,8 +46,9 @@ final class VariantService extends EntityService
             Field::name('oem_name')->label(__('vehicle.fields.oem_name'))->required(),
             Field::name('custom_name')->label(__('vehicle.fields.custom_name')),
             Field::name('display_name')->label(__('vehicle.fields.display_name')),
-            Field::make('taxi_price')->label(__('vehicle.fields.taxi_price'))->format('YES / NO')
-                ->transform('trim', 'uppercase')->rules('in:YES,NO')->required(),
+            // not required on create: a price-list stub has no taxi flag yet — completeness asks for it (DEC-073)
+            Field::make('taxi_price')->label(__('vehicle.fields.taxi_price'))->format('YES / NO (Y / N accepted)')
+                ->transform('trim', 'uppercase', fn (string $v) => ['Y' => 'YES', 'N' => 'NO'][$v] ?? $v)->rules('in:YES,NO'),
             $keyvalue('permit_id'),
             $keyvalue('fuel_type_id'),
             $keyvalue('body_type_id'),
@@ -64,18 +65,39 @@ final class VariantService extends EntityService
             Field::text('shield_pack', 25)->label('Shield Pack')->transform('uppercase'),
             Field::flag('is_csd', false)->label(__('vehicle.fields.is_csd')),
             Field::text('csd_index')->label(__('vehicle.fields.csd_index')),
-            Field::flag('is_active')->label(__('vehicle.fields.is_active')),
+            Field::flag('is_active', false)->label(__('vehicle.fields.is_active')),   // new vehicles start inactive (DEC-073)
         ];
     }
 
     protected function beforeCreate(array &$data): void
     {
         $this->assertHierarchy($data);
+        $this->assertActivatable(new Variant, $data);
     }
 
     protected function beforeUpdate(Model $model, array &$data): void
     {
         $this->assertHierarchy(array_merge($model->only(['segment_code', 'sub_segment_code', 'model_code']), $data));
+        /** @var Variant $model */
+        $this->assertActivatable($model, $data);
+    }
+
+    /**
+     * Only a complete vehicle may be Active (DEC-073) — from any screen, import or service.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function assertActivatable(Variant $model, array $data): void
+    {
+        $active = array_key_exists('is_active', $data) ? (bool) $data['is_active'] : (bool) $model->is_active;
+        if (! $active) {
+            return;
+        }
+        $probe = (clone $model)->forceFill($data);
+        $missing = app(VehicleCompleteness::class)->missingLabels($probe);
+        if ($missing !== []) {
+            $this->fail('is_active', 'Only a complete vehicle can be Active. Missing: '.implode(', ', $missing).'.');
+        }
     }
 
     /**

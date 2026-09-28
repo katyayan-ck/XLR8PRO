@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Pricing;
 
+use App\Models\Utilities\KeyValue\Keyvalue;
 use App\Models\Vehicle\Pricing\Pricing;
 use App\Models\Vehicle\VehicleModel;
 use App\Services\Vehicle\Pricing\Prices\PriceService;
@@ -30,7 +31,9 @@ class PricingVehicleAndPriceServicesTest extends TestCase
         $this->assertSame('ZETA-ROXX-MAX', $first['model']->code);
         $this->assertSame($first['model']->id, $again['model']->id, 'second stub reuses the model');
         $this->assertSame(1, VehicleModel::where('code', 'ZETA-ROXX-MAX')->count());
-        $this->assertSame(['RD', false, 'NO'], [$first['variant']->color_code, (bool) $first['variant']->is_active, $first['variant']->taxi_price]);
+        // DEC-073: a FRESH stub is INCOMPLETE — only what the price list knows; taxi flag / colour name come later
+        $this->assertSame(['RD', false, null, null], [$first['variant']->color_code, (bool) $first['variant']->is_active, $first['variant']->taxi_price, $first['variant']->color]);
+        $this->assertSame('INCOMPLETE', Keyvalue::whereKey($first['variant']->status_id)->value('code'));
     }
 
     public function test_vehicle_info_is_applied_through_the_variant_rules(): void

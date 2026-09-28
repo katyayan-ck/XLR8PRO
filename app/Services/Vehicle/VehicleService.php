@@ -31,6 +31,7 @@ use App\Services\Utils\KeyvalueService;
 use App\Support\Entity\EntityService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class VehicleService
 {
@@ -40,6 +41,8 @@ class VehicleService
 
     public const STATUS_DISCONTINUED = 'DISCONTINUED';
 
+    public const STATUS_INCOMPLETE = 'INCOMPLETE';
+
     public const STATUS_ALL = 'ALL';
 
     public function norm(mixed $value): string
@@ -47,8 +50,12 @@ class VehicleService
         return strtoupper(trim((string) $value));
     }
 
-    public function colorFromOemCode(string $oemCode): string
+    public function colorFromOemCode(string $oemCode, ?string $sheetCode = null): string
     {
+        // LMM TZU material codes (e.g. 0000AMJ00030N) carry no colour suffix (DEC-073)
+        if ($sheetCode !== null && str_contains($this->norm($sheetCode), 'TZU')) {
+            return 'NA';
+        }
         $code = $this->norm($oemCode);
 
         return strlen($code) >= 2 ? substr($code, -2) : $code;
@@ -171,7 +178,7 @@ class VehicleService
         $oemCode = $this->norm($oemCode);
         $oemModel = $this->norm($oemModel);
         $oemVariant = $this->norm($oemVariant);
-        $color = $this->colorFromOemCode($oemCode);
+        $color = $this->colorFromOemCode($oemCode, $sheetTitle);
         $segmentCode = $this->segmentFromSheetTitle($sheetTitle);
 
         $existing = Variant::query()->where('code', $oemCode)->first();
@@ -197,12 +204,12 @@ class VehicleService
             'model_code' => $model->code,
             'code' => $oemCode,
             'oem_name' => $oemVariant !== '' ? $oemVariant : $oemModel,
-            'custom_name' => $oemVariant !== '' ? $oemVariant : null,
-            'color' => $color,
+            // DEC-073: a FRESH stub carries only what the price list knows (code, OEM names, colour code); colour name,
+            // custom variant, taxi flag, wheels … are left for the Vehicle Info round-trip so the stub is INCOMPLETE
             'color_code' => $color,
-            'taxi_price' => 'NO',
-            'is_csd' => $segmentCode === 'CSD',
+            'is_csd' => false,
             'is_active' => false,
+            'status_id' => $this->kkvId('VEHICLE_STATUS', self::STATUS_INCOMPLETE),
         ]);
 
         Log::info('[VehicleService] stub created', [
@@ -281,11 +288,22 @@ class VehicleService
             }
         }
 
-        foreach (['fuel_type_id' => ['FUEL_TYPE', 'fuel'], 'permit_id' => ['PERMIT', 'permit'], 'body_make_id' => ['BODY_MAKE', 'body_make'], 'body_type_id' => ['BODY_TYPE', 'body_type']] as $column => [$keyword, $sheetField]) {
-            $id = $this->kkvId($keyword, $row[$sheetField] ?? null, true);
-            if ($id !== null) {
+        // unknown lookup values reject the row (DEC-073) — add them under Utilities → Key values, never auto-created
+        $unknown = [];
+        foreach (['fuel_type_id' => ['FUEL_TYPE', 'fuel', 'Fuel'], 'permit_id' => ['PERMIT', 'permit', 'Permit'], 'body_make_id' => ['BODY_MAKE', 'body_make', 'Body Make'], 'body_type_id' => ['BODY_TYPE', 'body_type', 'Body Type']] as $column => [$keyword, $sheetField, $label]) {
+            $value = $row[$sheetField] ?? null;
+            if ($value === null || $value === '') {
+                continue;
+            }
+            $id = $this->kkvId($keyword, $value);
+            if ($id === null) {
+                $unknown[$sheetField] = "Unknown {$label} \"{$value}\" (not in key values {$keyword}).";
+            } else {
                 $changes[$column] = $id;
             }
+        }
+        if ($unknown !== []) {
+            throw ValidationException::withMessages($unknown);
         }
 
         // Completeness is judged on the values as they will be stored (the service's formats).
@@ -310,6 +328,7 @@ class VehicleService
             $changes['status_id'] = $this->kkvId('VEHICLE_STATUS', 'DISCONTINUED') ?? $variant->status_id;
         } else {
             $changes['is_active'] = $complete ? (bool) $variant->is_active : false;
+            $changes['status_id'] = $this->kkvId('VEHICLE_STATUS', $complete ? ($changes['is_active'] ? 'ACTIVE' : 'INACTIVE') : self::STATUS_INCOMPLETE) ?? $variant->status_id;
         }
 
         $variant = $variants->update($variant, $changes);
@@ -328,77 +347,13 @@ class VehicleService
     }
 
     /**
-     * @return string[]
+     * Missing completeness fields — the single rule lives in VehicleCompleteness (DEC-073).
+     *
+     * @return list<string>
      */
     public function missingFields(Variant $variant): array
     {
-        $missing = [];
-
-        $checks = [
-            'segment_code' => $variant->segment_code,
-            'sub_segment_code' => $variant->sub_segment_code,
-            'fuel_type_id' => $variant->fuel_type_id,
-            'seating_capacity' => $variant->seating_capacity,
-            'wheels' => $variant->wheels,
-            'transmission' => $variant->transmission,
-            'drivetrain' => $variant->drivetrain,
-            'body_make_id' => $variant->body_make_id,
-            'body_type_id' => $variant->body_type_id,
-            'gst_percent' => $variant->gst_percent,
-            'permit_id' => $variant->permit_id,
-            'taxi_price' => $variant->taxi_price,
-            'custom_name' => $variant->custom_name,
-            'display_name' => $variant->display_name,
-            'color' => $variant->color,
-        ];
-
-        foreach ($checks as $field => $value) {
-            if ($value === null || $value === '') {
-                $missing[] = $field;
-            }
-        }
-
-        $modelName = null;
-        if ($variant->relationLoaded('vehicleModel')) {
-            $modelName = $variant->vehicleModel?->name ?: $variant->vehicleModel?->oem_name;
-        } elseif ($variant->model_code) {
-            $model = VehicleModel::query()
-                ->whereIn('code', $this->modelCodeCandidates($variant->model_code))
-                ->first();
-            $modelName = $model?->name ?: $model?->oem_name;
-        }
-
-        if ($modelName === null || $modelName === '') {
-            $missing[] = 'custom_model';
-        }
-
-        $permit = $this->permitCode($variant);
-        $fuel = $this->fuelCode($variant);
-        $isElectric = $fuel !== null && (str_contains($fuel, 'ELECTRIC') || $fuel === 'EV' || str_contains($fuel, 'BEV'));
-        $wheels = (int) ($variant->wheels ?? 0);
-        $isPassenger = $permit !== null && str_contains($permit, 'PASSENGER');
-        $isPrivate = $permit === 'PRIVATE';
-        $isGoods = $permit === 'GOODS';
-        $is3w = $wheels === 3;
-        $is4w = $wheels >= 4;
-
-        if ($isGoods) {
-            if ($variant->gvw === null || $variant->gvw === '') {
-                $missing[] = 'gvw';
-            }
-        } elseif ($isPrivate || ($isPassenger && $is4w)) {
-            if ($isElectric) {
-                if ($variant->motor === null || $variant->motor === '') {
-                    $missing[] = 'motor';
-                }
-            } elseif ($variant->cc_capacity === null || $variant->cc_capacity === '') {
-                $missing[] = 'cc_capacity';
-            }
-        } elseif ($isPassenger && $is3w) {
-            // no CC / Motor / GVW required
-        }
-
-        return $missing;
+        return app(VehicleCompleteness::class)->missing($variant);
     }
 
     public function permitCode(Variant $variant): ?string

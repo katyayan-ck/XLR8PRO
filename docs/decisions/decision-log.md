@@ -952,3 +952,28 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   Supporting indexes on enquiry / follow-up / test-drive / satellite columns (local migration, reversible).
 - **Approved-by:** user (28-09). · **Risk:** MED (auth form, first screen every user sees) · **Reversal:** revert commits;
   `setup_my_account_routes` back to true; `migrate:rollback` for the index migration.
+
+### DEC-073 | 28-09-2026 | A (Vehicle pricing) | Pricing import process redesign — 11 steps, gate to on-demand getPricing
+- **Why:** the user asked for the full pricing process (0 gate … 11 getPricing). The study of the reference workbooks
+  (`docs/reference/XLRM-Pricing-Data`), spec v3.1.1 and the code found a session that never completes, a discard that
+  rolls back live data, colliding taxi snapshots, wrong prices (dealer charges 0 — BUG-178, TCS rate unread, accessories
+  outside on-road), lossy round-trips, a double completeness source, no snapshot reader, an unrouted API and a mock
+  quotation. Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md`.
+- **User decisions (28-09):**
+  - Completeness: Passenger **and** MISC need none of CC / Motor / GVW (Private + ICE → CC, Private + EV → Motor,
+    Goods → GVW). **Amends locked spec v3.1.1 §3.3** (user override).
+  - Taxi (taxi_price YES) publishes PRIVATE and PASSENGER snapshots; Passenger 4W uses RTO "Taxi" rules and insurance
+    "Passenger" permit via one permit map (insurance "Rules" sheet); MISC → RTO "Ambulance", insurance "Misc".
+  - CSD never creates vehicles (prices for existing vehicles, CSD channel); LMM TZU stubs get colour NA, OEM Model =
+    Model Name, OEM Variant = Material Description.
+  - Bases = ex-showroom: RTO ESR = ex-showroom rounded up to ₹1,000 (BH: assessable + dealer margin); IDV =
+    ex-showroom × slot %; snapshot TCS when ex-showroom ≥ configured limit at the configured rate.
+  - The quotation screen is rewired to getPricing as the last phase (hold enforcement, server-side gate re-validation).
+- **Technical calls:** `PRC_WKFL_MANAGE` is the manage_pricing gate; add-on import blank = no rule, 0 = explicit zero;
+  prices keep DEC-058 (material change) + history rows; add-on groups expire-and-insert per WEF; conflicting duplicate
+  codes rejected; OV block only on PV/CV/BEV (others OV = NV); insurance stores per company × plan base + each add-on
+  premium (default Base + NilDep + Consumables, frozen); snapshot `withheld` = 0 (quotation fills it); discard exact
+  via a session change log and only before publish; snapshot key gains permit.
+- **Approved-by:** user (plan approved 28-09). · **Risk:** HIGH (prices shown to customers) — every phase tested on
+  fixtures + real reference workbooks; nothing merged to stage without approval. · **Reversal:** revert commits;
+  migrations roll back.
