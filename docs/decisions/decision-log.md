@@ -936,3 +936,19 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   (`data-scope:off`); master switch `scope.enabled`. Jobs / console (no user) are never scoped.
 - **Approved-by:** user (28-09: "start", plan saved to docs/plans). · **Risk:** HIGH (changes what users see) — mitigated
   by the master switch and visible-unassigned default. · **Reversal:** setting `scope.enabled = false`, then revert commits.
+
+### DEC-072 | 28-09-2026 | A (IAM / UI) | My Account rebuild and a dynamic, permission- and scope-aware dashboard
+- **Why:** the user asked (28-09) for a My Account page per user type (employee: personal info, designation, primary +
+  add-on scopes read-only, employment history, contact, reporting manager; change password after checking the current
+  one; edit display name and profile image; designation under the name) and a dashboard built per role / permission with
+  data inside the user's scope instead of the static page. Plan: `docs/plans/2026-09-28-my-account-and-dashboard-DEC-072.md`.
+- **Decisions (user, 28-09):** open enquiries = stage in Enquiry / Test Drive / Quotation / Booking / Postponed; aligned
+  deliveries = invoiced bookings (status 2) with `del_date` in the period (delivered vs pending); password min 8 with
+  letters and numbers, different from the current one, other sessions signed out; top-bar avatar = the person's profile
+  photo (initials otherwise) instead of Gravatar (D17).
+- **Mechanism:** own `MyAccountController` on Backpack's route names; display name / photo through
+  `PersonRecordService`; username read-only. Dashboard widgets declared in `config/dashboard.php`, each gated by a
+  permission and computed by a provider through scoped models / `DataScope::apply()`, cached per user + scope + period.
+  Supporting indexes on enquiry / follow-up / test-drive / satellite columns (local migration, reversible).
+- **Approved-by:** user (28-09). · **Risk:** MED (auth form, first screen every user sees) · **Reversal:** revert commits;
+  `setup_my_account_routes` back to true; `migrate:rollback` for the index migration.

@@ -34,7 +34,7 @@
         </div>
         <div class="dropdown-divider"></div>
 
-        @if (config('backpack.base.setup_my_account_routes'))
+        @if (Route::has('backpack.account.info'))
             <a href="{{ route('backpack.account.info') }}" class="dropdown-item">
                 <i class="la la-user-circle dropdown-item-icon"></i> {{ trans('backpack::base.my_account') }}
             </a>

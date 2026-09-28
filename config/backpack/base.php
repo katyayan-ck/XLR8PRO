@@ -56,7 +56,7 @@ return [
 
     // Set this to false if you would like to skip adding "my account" routes
     // (you then need to manually define the routes in your web.php)
-    'setup_my_account_routes' => true,
+    'setup_my_account_routes' => false,   // DEC-072: our MyAccountController (routes/backpack/account.php) owns these routes
 
     // Set this to false if you would like to skip adding the password recovery routes
     // (you then need to manually define the routes in your web.php)
@@ -152,7 +152,7 @@ return [
     // Other options:
     // - null (generic image with their first letter)
     // - example_method_name (specify the method on the User model that returns the URL)
-    'avatar_type' => 'gravatar',
+    'avatar_type' => 'profilePhotoUrl',   // DEC-072: User::profilePhotoUrl() — person photo, else initials
 
     // Gravatar fallback options are 'identicon', 'monsterid', 'wavatar', 'retro', 'robohash', 'blank'
     // 'blank' will keep the generic image with the user first letter

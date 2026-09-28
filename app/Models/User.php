@@ -277,6 +277,17 @@ class User extends Authenticatable
         return substr($initials, 0, 2) ?: 'U';
     }
 
+    /**
+     * Avatar for the top bar and My Account (config backpack.base.avatar_type, DEC-072): the person's profile photo,
+     * or null so the initials show. Replaces Gravatar (users have no email; it made an external call).
+     */
+    public function profilePhotoUrl(): ?string
+    {
+        $url = $this->person?->getFirstMediaUrl('profile_photos');
+
+        return $url !== null && $url !== '' ? $url : null;
+    }
+
     public function getPrimaryDesignationAttribute(): ?string
     {
         return $this->employee?->designation?->name

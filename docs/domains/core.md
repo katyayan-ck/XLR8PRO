@@ -97,6 +97,7 @@ last_login_at`. Writes go through `App\Services\IAM\UserService` (entity service
 | `display_name` | person's display name, else the employee's person, else username |
 | `avatar_initials` | 1–2 letters for avatars |
 | `primary_designation` | designation name of the employee, or null |
+| `profilePhotoUrl()` | the person's `profile_photos` URL or null — the Backpack avatar (`avatar_type`, DEC-072); initials show when null |
 | `primary_mobile` / `primary_email` | from Person contacts (primary) |
 | `all_mobiles` / `all_emails` / `all_addresses` / `all_banking` | collections from Person |
 | `primaryBranchCode()` / `primaryLocationCode()` / `primaryDepartmentCode()` / `primaryDivisionCode()` / `primaryPost()` | employee's primary org codes |

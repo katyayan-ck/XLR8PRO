@@ -127,6 +127,25 @@ Cache::remember('counts:'.DataScope::current()->hash(), 60, fn () => …);    //
 Backfill existing rows: `php artisan data-scope:backfill [--entity=booking|enquiry] [--apply]` (report first).
 The User edit screen shows the resolved "Effective data access".
 
+## My Account (DEC-072) — `MyAccountService`, `Admin\Account\MyAccountController`
+Routes keep Backpack's names (`backpack.account.info` GET / `.store` POST, `backpack.account.photo` POST,
+`backpack.account.password` POST; Backpack's own are off: `setup_my_account_routes = false`). Only the signed-in user's
+own record; no module permission (the admin panel itself admits `user_type = Emp` only — `CheckIfAdmin`).
+
+| Method | Returns / does |
+|---|---|
+| `profile(User $u)` | `['user', 'person', 'employee', 'isEmployee', 'photoUrl', 'designation', 'contacts' => ['mobiles', 'emails', 'address'], 'primaries' => level => ['code', 'name'] \| null, 'addons' => level => codes beyond the primary, 'effective' => ScopeSet, 'manager' => ['name', 'designation', 'photoUrl', 'code'] \| null, 'history' => newest-first journey rows]` |
+| `updateDisplayName(User $u, string $name)` | `Person` — through `PersonRecordService` (title-cased); `ValidationException` when the user has no person |
+| `updatePhoto(User $u, ?UploadedFile $photo)` | `Person` — replaces the `profile_photos` image, or removes it when `$photo` is null |
+| `changePassword(User $u, string $current, string $new)` | checks the current password, rejects an unchanged one, hashes, signs other sessions out; `ValidationException` on `current_password` / `new_password` |
+| `photoUrl(?Person $p)` | profile photo URL or null |
+
+The controller validates the new password as min 8 with letters and numbers (`Password::min(8)->letters()->numbers()`),
+confirmed. The username is read-only. The page (`resources/views/admin/account/show.blade.php`) has tabs Profile,
+Organisation & access (primary assignment, add-on scopes, effective access — shared partial
+`admin.org.user._effective_access`), Employment history (timeline), Contact, Security; non-employee accounts see
+Profile, Contact and Security.
+
 ## AuthService (mobile OTP login, API v1)
 Called by `Api\V1\AuthController`; responses are wrapped in the API envelope by the controller.
 
