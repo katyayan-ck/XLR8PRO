@@ -91,9 +91,7 @@ Route::group([
     Route::post('workflow/retry-failed', [CalculateController::class, 'retry'])->name('pricing.workflow.retry-failed');
     Route::post('workflow/complete', [CalculateController::class, 'complete'])->name('pricing.workflow.complete');
 
-    // RESET To Date
-    // For Preview Only : http://xlrm.test/admin/pricing/reset?after=2026-08-20&confirm=1
-    // For Actual Run : http://xlrm.test/admin/pricing/reset?after=2026-08-20
-
-    Route::get('reset', PricingResetController::class)->name('pricing.reset');
+    // Pricing reset (DEC-082): GET = dry preview + confirmation form; POST = run (PRC_RESET_MANAGE, local only)
+    Route::get('reset', [PricingResetController::class, 'preview'])->name('pricing.reset');
+    Route::post('reset', [PricingResetController::class, 'run'])->name('pricing.reset.run');
 });

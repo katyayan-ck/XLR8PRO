@@ -238,6 +238,7 @@ Entry format:
 | BUG-200 | Pricing sheet headers with a hyphen / dot never matched the registry (labels only lower-cased, cells also had `-` `.` `_` → space): "Ex-Showroom Price ORG" and every CV- / OV- scheme column were ignored, so the price import used MM Invoice as ex-showroom and imported no schemes; a hard alias also mapped TZU's pre-subsidy price | Critical | FIXED (DEC-076, 28-09-2026) | 28-09-2026 | — |
 | BUG-201 | `PricingHistory` model does not match its table (fillable `variant_code`, `pricing_snapshot`, `changed_by`… are not columns; timestamps off) — nothing could write price history | Medium | FIXED (DEC-076 / DEC-077, 28-09-2026) | 28-09-2026 | — |
 | BUG-202 | `InsDefault::getCompanies()` and `scopeActive()` used columns the table does not have (`default_company`, `company_priority_2/3`, `wef_date`) — any call would fail with an SQL error; it also silently returned USGI when nothing was set | Medium | FIXED (DEC-078, 28-09-2026) | 28-09-2026 | 28-09-2026 |
+| BUG-203 | Quotation create screen auto-loaded a hard-coded mock (enquiry "019", BE6 "bev6Premium" prices) — every new quotation showed fake prices, insurance and RTO; TCS limit/rate hard-coded; save never re-validated the gate or TCS | High | FIXED (DEC-082, 29-09-2026) | 29-09-2026 | 29-09-2026 |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -2321,3 +2322,15 @@ guessed at.
 - **Severity:** Medium — nothing called it yet, but the engine (Phase 8) needs the company list; the first call would have thrown.
 - **Found:** 28-09-2026, DEC-073 Phase 6 (PHPStan on the insurance workbook service).
 - **Fix:** `scopeActive()` filters `is_active` only; `getCompanies($model, $permit)` returns the model's companies by priority (ANY rows when the model has none), `[]` when none is set (no hard-coded USGI).
+
+### BUG-203 — Quotation create used hard-coded mock prices
+
+- **Status:** FIXED (DEC-082, 29-09-2026)
+- **Severity:** High — UAT-visible: every new quotation showed the same fake BE6 prices whatever the enquiry's vehicle.
+- **Found:** 29-09-2026, DEC-073 Phase 11 (quotation rewire). `create.blade.php` defined `ENQUIRIES` / `PRICING` JS mocks and, in create mode, set `#mock_enquiry_no = '019'` and clicked the hidden Fetch button on load.
+- **Fix:**
+  - The mocks are removed. The user picks the vehicle (Segment → Model → Variant → Colour, locked where the enquiry has
+    the code), and the colour loads published prices through `QuotationPricingService` / `getPricing`.
+  - The TCS rule comes from the snapshot.
+  - `store()` / `update()` refuse a held list, a broken gate or a wrong TCS, and store `standard_data.pricing`.
+  - Tests: `tests/Feature/Pricing/QuotationPricingTest.php`.

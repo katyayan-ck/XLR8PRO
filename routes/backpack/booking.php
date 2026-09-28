@@ -99,6 +99,9 @@ Route::group([
 
     Route::get('sales/quotation/create', [QuotationCrudController::class, 'create'])->name('sales.quotation.create');
 
+    Route::get('sales/quotation/pricing', [QuotationCrudController::class, 'pricing'])->name('sales.quotation.pricing');
+    Route::get('sales/quotation/vehicle-options/{level}', [QuotationCrudController::class, 'vehicleOptions'])->whereIn('level', ['segment', 'model', 'variant', 'colour'])->name('sales.quotation.vehicle-options');
+
     Route::post('sales/quotation/store', [QuotationCrudController::class, 'store'])->name('sales.quotation.store');
 
     Route::get('sales/quotation/{id}/edit', [QuotationCrudController::class, 'edit'])->name('sales.quotation.edit');

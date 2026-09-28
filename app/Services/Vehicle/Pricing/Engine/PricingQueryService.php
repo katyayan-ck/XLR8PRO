@@ -46,6 +46,14 @@ class PricingQueryService
         return Result::ok(['pricing' => $payload], 'Pricing ready.');
     }
 
+    /** The hold message when the vehicle's published price list is on hold today, else null (quotation / booking guard). */
+    public function holdMessage(string $oemCode): ?string
+    {
+        $result = $this->getPricing($oemCode);
+
+        return $result->code === 'ON_HOLD' ? $result->message : null;
+    }
+
     /**
      * The snapshot valid on the date: WEF on or before it, not expired by then (default: today, the vehicle's own
      * permit, NV, normal channel).

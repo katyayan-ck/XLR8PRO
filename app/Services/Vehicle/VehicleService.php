@@ -571,6 +571,26 @@ class VehicleService
     }
 
     /**
+     * One row per OEM variant of a model (variant rows are per colour): `code` = a representative colour row's code
+     * (pass it to colorOptions()), `name` = display name, else custom / OEM name. Active rows only.
+     *
+     * @return Collection<int, array{code: string, name: string}>
+     */
+    public function variantGroupOptions(?string $modelCode): Collection
+    {
+        return Variant::query()
+            ->select('code', 'display_name', 'custom_name', 'oem_name')
+            ->where('is_active', true)
+            ->where('model_code', $this->norm($modelCode))
+            ->orderBy('code')
+            ->get()
+            ->unique(fn ($v) => (string) ($v->oem_name ?: $v->code))
+            ->map(fn ($v) => ['code' => (string) $v->code, 'name' => (string) ($v->display_name ?: ($v->custom_name ?: $v->oem_name))])
+            ->sortBy('name')
+            ->values();
+    }
+
+    /**
      * Colours available for a variant: its sibling colour rows (one variant row per colour,
      * DEC-048) as `code` (= colour code), `name` (= colour), `variant_code`. Replaces the retired
      * colour table, which new imports no longer fill.

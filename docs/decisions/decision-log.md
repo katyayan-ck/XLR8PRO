@@ -1217,3 +1217,45 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
      (NV list, like the PDFs).
 - **Approved-by:** user (screens, lists, columns); auto (technical 1–6; the Electric list is flagged) · **Risk:** LOW
   (read-only) · **Reversal:** revert; the migration's `down()` drops the two columns.
+
+### DEC-082 | 29-09-2026 | A (Sales / pricing) | Quotation on getPricing (DEC-073 phase 11): no mock prices, hold + server re-validation
+- **Context:**
+  - The quotation create screen auto-loaded a hard-coded mock (enquiry "019" / "bev6Premium" BE6 prices), so every
+    new quotation showed fake prices.
+  - Per the FRS, the vehicle comes from the enquiry (Segment / Model / Variant read-only, Colour chosen on the
+    quotation). But **0 of 60,923 enquiries carry vehicle codes** (only free-text model names).
+- **User decisions already made:** DEC-073 (quotation rewired to getPricing, hold enforcement, server-side gate and
+  TCS re-validation, full snapshot stored). DEC-081 (getPricing contract).
+- **Technical calls (flagged for confirmation):**
+  1. **Vehicle:**
+     - When the enquiry has segment / model / variant codes they are prefilled and locked.
+     - Otherwise the user picks Segment → Model → Variant → Colour on the quotation (published vehicles only).
+     - The colour gives the full OEM code, and prices load from `getPricing`. There is no fallback to mock prices.
+  2. **Adapter** (`Sales\Quotation\QuotationPricingService`) maps contract v2 onto the screen's existing pricing shape,
+     so the 6.5k-line screen keeps its behaviour:
+     - one insurance / RTO entry per published permit (own + taxi PASSENGER);
+     - insurance heads are GST-inclusive ("Basic OD + TP" = OD + TP + GST, add-on = premium × (1 + OD GST%));
+       mandatory = the frozen default add-ons;
+     - RTO = the rule total; TRC = the dealer-charge TRC;
+     - RSA / Shield options + "No …"; incidental / FASTag / RTO tape / Kazam / COD (COD only when in the total);
+     - TCS limit / rate from the snapshot.
+  3. **Discount types = the screen's existing defaults** (the mock's; still editable where the screen allows):
+     - consumer scheme → Cash Scheme OEM (INV_OE);
+     - cash → dealer discount (CN1);
+     - accessory → accessories scheme (INV_OE);
+     - Shield → Shield scheme (CN1);
+     - **RSA discount → other cash discount (CN1)** (the screen has no RSA-discount row);
+     - corporate → INV; exchange → CN2.
+     - Conditional discounts (exchange / corporate) are listed but **not auto-applied** (the mock auto-applied the first
+       exchange scheme).
+  4. **Hold:** a held list blocks create / store / update with the hold message (getPricing `ON_HOLD`).
+  5. **Server re-validation on store / update:**
+     - The gate: a Group A scheme of type INV / INV_OE needs total CN ≥ that amount.
+     - TCS: invoice = ex − (INV + INV_OE + INV_D); TCS = rate % × invoice when invoice ≥ limit (the screen's FRS rule;
+       limit / rate from the snapshot). A mismatch over ₹1 is refused.
+     - The screen-shape pricing + the contract are stored in `standard_data.pricing` for edit / audit.
+     - Legacy quotations without an OEM code are edited as before (no pricing checks).
+  6. **Note:** the snapshot's default TCS (DEC-080: rate × (ex − discounts) when ex ≥ limit) and the quotation's FRS TCS
+     (on invoice amount) can differ at the edges. The quotation keeps its FRS rule.
+- **Approved-by:** user (DEC-073 scope); auto (1–6, flagged) · **Risk:** HIGH (UAT-visible quotation screen) ·
+  **Reversal:** revert the commit (the mock returns).

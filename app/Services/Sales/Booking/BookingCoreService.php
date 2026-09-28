@@ -14,6 +14,7 @@ use App\Models\Module\Booking\XlRto;
 use App\Models\Module\Finance\XFinance;
 use App\Models\Module\Insurance\XlInsurance;
 use App\Services\OrgService;
+use App\Services\Vehicle\Pricing\Engine\PricingQueryService;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -49,6 +50,18 @@ class BookingCoreService
      *
      * @param  array<string, mixed>  $input  the raw request payload (all fields store() reads)
      */
+    /**
+     * DEC-082: the hold message when the linked quotation's published price list is on hold, else null (no booking on a
+     * held list; the vehicle is the quotation's stored `standard_data.pricing.oem_code`).
+     */
+    public function heldPriceMessage(mixed $quotationId): ?string
+    {
+        $quotation = $quotationId ? Quotation::query()->find($quotationId) : null;
+        $code = $quotation instanceof Quotation ? ($quotation->standard_data['pricing']['oem_code'] ?? null) : null;
+
+        return $code ? app(PricingQueryService::class)->holdMessage((string) $code) : null;
+    }
+
     public function store(array $input): Booking
     {
         $pending = 0;

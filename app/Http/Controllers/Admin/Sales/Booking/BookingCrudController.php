@@ -256,6 +256,10 @@ class BookingCrudController extends CrudController
             }
         }
 
+        if ($held = $this->coreService->heldPriceMessage(request('quotation_id'))) {
+            \Alert::warning($held)->flash();
+        }
+
         $customer_categories = OrgService::keywordValueByCode('CUSTOMER_TYPE');
         $occupation_types = OrgService::keywordValueByCode('OCCUPATION_TYPE');
         $body_type_map = [
@@ -270,13 +274,7 @@ class BookingCrudController extends CrudController
         return $this->traitCreate();
     }
 
-    /**
-     * Centralized method to prepare complete booking data for show/edit/invoice views
-     *
-     * @param  int  $id  Booking ID
-     * @param  string  $viewName  Blade view name suffix (default: 'view')
-     * @return View
-     */
+    /** Store a new booking: validation → price-hold guard (DEC-082) → BookingCoreService::store(). */
     public function store(Request $request)
     {
         if (! backpack_user()->can('SLS_BKNG_CREATE')) {
@@ -416,6 +414,11 @@ class BookingCrudController extends CrudController
 
                 return redirect()->back()->withInput()->with('error', $validator->messages()->first());
             }
+        }
+
+        // DEC-082: no booking on a held price list (vehicle = the linked quotation's published pricing)
+        if ($held = $this->coreService->heldPriceMessage($request->input('quotation_id') ?? $request->input('quotation_no'))) {
+            return redirect()->back()->withInput()->with('error', $held);
         }
 
         $this->coreService->store($request->all());

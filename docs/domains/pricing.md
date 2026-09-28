@@ -8,52 +8,20 @@ touching importers**.
 | Need | Use |
 |---|---|
 | on-road price for a variant (quotation, booking, API) | `app(PricingQueryService::class)->getPricing($oemCode, ['permit' => 'PRIVATE', 'vin_type' => 'NV', 'channel' => 'normal'])` — the published snapshot (step 11, below) |
-| publish prices after an import | `PricingEngineService::calculateAndPublish(...)` (run by `RecalculateVehiclePricingJob`) |
+| publish prices after an import | **Pricing → Pricing Process** step 9 (`Engine\PricingCalculationService`, below) |
 | drive the import workflow | `PricingSessionService` + the importers (admin **Pricing → Workflow** screens) |
 | write a rule / add-on / price row | the entity services under `Pricing\Rules\*`, `Pricing\Addons\*`, `Pricing\Prices\PriceService` (DEC-056/057/058) |
-| a single calculator | `TcsService::compute()`, `RtoService::quote()`, `InsuranceService::quote()` |
+| a single calculator (admin test screens) | `RtoService::quote()`, `InsuranceService::quote()`; the engine uses `Engine\RtoCalculator` / `Engine\InsuranceCalculator` |
+| quotation prices, gate + TCS re-validation | `App\Services\Sales\Quotation\QuotationPricingService` ([crm-enquiry-quotation.md](crm-enquiry-quotation.md)) |
 
 ---
 
-## The legacy pricing JSON (`PricingJsonContract::empty()`) — superseded by `Engine\PricingContract` v2 (below)
-Keys **never change**; unused ones are present as `0` / `null` (the UI hides what is missing / zero).
-```text
-oem_code, channel (normal|csd), vin_type (nv|ov), wef_date, segment, model_code, display_name, permit, fuel, taxi_price,
-ex_showroom, assessable_value, gst_percent, gst_amount, mm_invoice, dealer_margin,
-dealer_charges {incidental, fasttag, trc, rto_tape, cod, other, total, lines[{name, amount}]},
-rsa {selected_years, selected_amount, options[{years, amount, default}]},
-shield {selected_scheme, selected_amount, options[{scheme, amount, default}]},
-discounts {oem_scheme, dealer_cont, cash, accessory, shield, rsa, cash_portion, credit_note,
-           corporate {category, oem, dealer, total, options[]}, exchange {scheme, oem, dealer, total, options[]}, …},
-insurance {…companies, default_company, plan, idv, od, tp, addons, standard_total…},
-rto {permit, tax, surcharge, registration_fee, hypothecation, green_tax, rto_tape, fitness, total, bifurcation…},
-accessories, tcs {applicable, limit, rate, amount}, invoice_value, on_road, on_road_nv, on_road_ov,
-withheld, incomplete, hold, errors[]
-```
-`incomplete = true` → the vehicle master is not complete (never published); `hold` / `withheld` → a price hold is on
-for its scope; `errors` lists what could not be computed.
-
-## PricingEngineService (`App\Services\Vehicle\Pricing\PricingEngineService`) — legacy, no callers since Phase 10 (removed in Phase 11)
-| Method | Returns |
-|---|---|
-| `getPricingPayload(string $oemCode, array $options = [])` | the pricing JSON. Options: `channel` (`normal` / `csd`), `vin_type` (`nv` new-vehicle / `ov` old; `new`/`current` → `nv`, `old` → `ov`), `wef_date` (price as of a date), `permit` (force RTO / insurance permit, e.g. taxi Private vs Passenger) |
-| `build($oemCode, $channel = 'normal', $vinType = 'nv', ?$wefDate, ?$permitOverride)` | same computation with positional args |
-| `calculateAndPublish($oemCode, $channel, $vinType, ?$wefDate, ?$sessionId, ?$userId, ?$permitOverride)` | `['payload' => …, 'published' => bool, 'errors' => [...]]` — writes an active `Snapshot` (expiring the previous one at the WEF) unless the vehicle is incomplete |
-
-**Invoice value** (IDV / RTO base) is an agreed interim formula (ex-showroom + dealer charges + selected RSA / Shield
-− discounts) pending business sign-off (GAP-04); it lives in one private method so it can change in one place.
-
-```php
-$json = app(PricingEngineService::class)->getPricingPayload($variant->code, ['vin_type' => 'nv']);
-if ($json['incomplete'] || $json['hold']) { /* don't quote; show why */ }
-$onRoad = $json['on_road'];
-```
-The v1 API no longer uses this — see `getPricing` (step 11) below.
+The legacy `PricingEngineService`, `PricingJsonContract` and `TcsService` were removed in Phase 11 (DEC-082); the
+contract is `Engine\PricingContract` v2 and consumers read published snapshots through `getPricing`.
 
 ## Calculators
 | Service | Method | Returns |
 |---|---|---|
-| `TcsService` | `config()`, `compute(float $invoice)` | `['applicable' => bool, 'limit', 'rate', 'amount']` — TCS when invoice > limit (`TcsConfig::current()`) |
 | `RtoService` | `quote(array $ctx)` / `calculate($modelOrCtx, $options)` | `['rule_id', 'permit', 'selected_permit', 'permit_options', 'tax', 'tax_basis', 'surcharge', 'surcharge_formula', 'registration_fee', 'hypothecation', 'green_tax', 'rto_tape', 'fitness', 'duplicate_tax_card', 'penalty', 'total', 'bifurcation', …]` — best-matching `RtoRule` (`findBestMatch`) |
 | `InsuranceService` | `quote(array $ctx)` / `calculate($modelOrCtx, $options)` | `['companies', 'default_company', 'default_plan', 'selected', 'idv_sum', 'od', 'tp', 'nildep', 'consumables', 'addons', 'standard_combo', 'standard_total', 'selected_total', …]` from `InsDefault` (company order), `InsBaseRule::findBestMatch()`, IDV slots and add-on rates |
 `$ctx` keys used by the engine: `segment`, `model`, `variant`, `permit`, `fuel`, `wheels`, `cc`, `gvw`, `seating`,
@@ -246,8 +214,9 @@ DB::transaction(function () use ($svc, $rows, $wef) {
 | `SheetHeader` | Excel header registry | `active()`, `forSheet()`, `ordered()`, `allLabels()` |
 
 ## Use cases
-**Quotation / booking needs the on-road price** → `getPricingPayload()`; never recompute pieces in a controller. Store
-the JSON you showed the customer (quote snapshot) — the live price may change after the next WEF.
+**Quotation / booking needs the on-road price** → `PricingQueryService::getPricing()` (the quotation goes through
+`QuotationPricingService::forVehicle()`); never recompute pieces in a controller. The quotation stores what it showed in
+`standard_data.pricing` — the published price may change after the next WEF.
 
 **"Why is this variant not priced?"** → `app(VehicleService::class)->missingFields($variant)`, then
 `Profile::forModel($code)->first()` flags, then `Hold::isHeld($scope)`.
@@ -260,9 +229,10 @@ the JSON you showed the customer (quote snapshot) — the live price may change 
 - Same WEF → update the live row; different WEF → expire then insert. Group imports expire only their group.
 - Scope match: ANY / blank / ALL / `*` = all; comma = union; the more specific row replaces the whole match.
 - Calculate skips incomplete vehicles.
-- Pricing admin needs `PRC_*` permissions.
+- Pricing admin needs `PRC_*` permissions. The reset (`pricing.reset`) is a GET preview + POST with the typed
+  confirmation `RESET`, local environments only (DEC-082).
 
 ## Testing
-Pricing tests need vehicle rows → `xlrm_testing`. Build a payload for a known complete variant and assert keys exist
-(`array_keys(PricingJsonContract::empty())` ⊆ payload keys) and totals; for rule services assert `expireActive()`
+Pricing tests need vehicle rows → `xlrm_testing`. Build a snapshot payload with `PricingContract::normalize()` and assert keys exist
+(`array_keys(PricingContract::defaults())` ⊆ payload keys) and totals; for rule services assert `expireActive()`
 counts and that history rows remain.

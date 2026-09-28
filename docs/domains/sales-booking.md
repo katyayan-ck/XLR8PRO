@@ -69,6 +69,9 @@ combination), `XlDelivery` (`xlr8_booking_delivered`, photo collections), `Xl_Re
 - `update(Booking $b, array $input): Booking` — diffs every field into a readable change log, updates booking and
   enquiry fields, seeds `XExchange` on the first switch to "Exchange Buy", upserts finance **without nulling fields
   that were disabled on the form**.
+- `heldPriceMessage(mixed $quotationId): ?string` — the hold message when the linked quotation's published price list
+  (`standard_data.pricing.oem_code`) is on hold, else null. `create()` shows it as a warning and `store()` refuses the
+  booking (DEC-082). Example: `if ($msg = $core->heldPriceMessage($id)) { return back()->with('error', $msg); }`
 
 ### BookingKycService
 - `resolveEditData(Booking $b): array` — names for branch / location / segment / model / variant / colour and customer,

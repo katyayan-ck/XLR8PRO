@@ -29,9 +29,11 @@ paths:
 
 ## Quotation (FRS v1.0, July 2026)
 - Form locked until a valid enquiry resolves; reject closed/converted/cancelled enquiries.
-- Variant → colour → `PricingEngineService::getPricingPayload(oemCode)`; UI is driven only by pricing JSON keys (missing key = hidden).
+- Variant → colour → `QuotationPricingService::forVehicle(oemCode)` (published snapshots via `getPricing`, DEC-082); no mock
+  prices. The enquiry's codes are prefilled and locked when present (enquiries mostly lack them). UI is driven only by pricing keys.
 - Maxicare/PPF/Ceramic are accessories, not grid rows. Discount types I, C, C1, C2, B.
-- Gate: any ordinary C > 0 ⇒ CreditNoteDiscount ≥ OEM scheme (C1/C2 excluded both sides). Server re-validates on save; store full snapshot.
+- Gate: any ordinary C > 0 ⇒ CreditNoteDiscount ≥ OEM scheme (C1/C2 excluded both sides). Server re-validates gate + TCS on save
+  (`validateSubmission`); `standard_data.pricing` keeps the published pricing. A held price list blocks quotation save and booking.
 - TCS = 1% of FinvoiceAmount (Subtotal − InvoicedDiscount), threshold ₹10,00,000 or financier invoice.
 - Quotation does not create bookings in v1. Approvals are a **parallel counter-offer** engine (highest level wins,
   approvers never reject) — built in Track B per FRS §7–8; don't build approve/reject chains here.

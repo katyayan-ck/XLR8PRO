@@ -12,7 +12,7 @@ utilities — **don't use them in new code**.
 | `docs/*` | `DocController` | `DocService` (→ Docs) | `Docs` facade (docs/utilities/04) |
 | `history/{entityType}/{entityId}` (+ `/thread`) | `EntityHistoryController` | `Utils\EntityHistoryService` (→ Chat) | `Chat` facade (docs/utilities/03) |
 | `system-settings*` | `SystemSettingApiController` | `SystemSettingService`, `SystemSettingExportImportService` ([utils-legacy.md](utils-legacy.md)) | `Settings` facade |
-| vehicle pricing | `Api\V1\Vehicle\Pricing\PricingController::getPricing` | `PricingEngineService::getPricingPayload()` ([pricing.md](pricing.md)) | same |
+| vehicle pricing | `Api\V1\Vehicle\Pricing\PricingController::show` (`GET v1/vehicle/pricing/{oemCode}`) | `Engine\PricingQueryService::getPricing()` ([pricing.md](pricing.md)); 404 `PRICING_NOT_FOUND`, 423 `PRICING_ON_HOLD` |
 
 Known issues on this surface: BUG-182 (history / docs endpoints trust a client-supplied model class and skip record
 access), BUG-187 (auth responses return null name / email / mobile), BUG-188 (OTP from `rand()`), BUG-189 (full mobile

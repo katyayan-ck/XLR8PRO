@@ -1,56 +1,60 @@
 <?php
 
-/**
- * Path: app/Http/Controllers/Admin/Pricing/PricingResetController.php
- *
- * GET /admin/pricing/reset?after=2026-08-20
- * GET /admin/pricing/reset?after=2026-08-20&confirm=1
- */
-
 namespace App\Http\Controllers\Admin\Pricing;
 
 use App\Http\Controllers\Controller;
 use App\Services\Vehicle\Pricing\PricingResetService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\View\View;
 
+/**
+ * Destructive pricing reset (local environments only). GET shows a dry preview and a confirmation form; only a POST
+ * with the typed confirmation runs it (DEC-082 — was a GET with `confirm=1`).
+ */
 class PricingResetController extends Controller
 {
+    public const CONFIRMATION = 'RESET';
+
     public function __construct(
         protected PricingResetService $reset
     ) {}
 
-    public function __invoke(Request $request): Response
+    public function preview(Request $request): View
     {
         if (! backpack_user()->can('PRC_RESET_MANAGE')) {
             abort(403, 'Unauthorized. You do not have permission to run a pricing reset.');
         }
+        $after = $request->validate(['after' => ['nullable', 'date_format:Y-m-d']])['after'] ?? '2026-08-20';
 
-        $after = $request->query('after', '2026-08-20');
-        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $after)) {
-            return response("ERROR: after must be YYYY-MM-DD (got {$after})\n", 422)
-                ->header('Content-Type', 'text/plain; charset=UTF-8');
+        return view('admin.pricing.reset', [
+            'title' => 'Pricing Reset',
+            'after' => $after,
+            'allowed' => $this->allowed(),
+            'confirmation' => self::CONFIRMATION,
+        ]);
+    }
+
+    public function run(Request $request): Response
+    {
+        if (! backpack_user()->can('PRC_RESET_MANAGE')) {
+            abort(403, 'Unauthorized. You do not have permission to run a pricing reset.');
         }
-
-        if (! $request->boolean('confirm')) {
-            $body = implode("\n", [
-                'PRICING RESET — dry preview (nothing deleted)',
-                "Cutoff date: {$after} 00:00:00 (created_at >= this is deleted from variants/models)",
-                'Will FLUSH: sessions, profile, OEM prices + history, flags, draft, affected, snapshots, holds, CSD, jobs',
-                'Will KEEP: sheet_headers, addons, discounts, dealer_charges, RTO, insurance, TCS, synonyms',
-                'Will DELETE: xlr8_vehicle_variant + orphan xlr8_vehicle_model created on/after cutoff',
-                '',
-                'Re-run with confirm=1 to execute:',
-                url()->current().'?after='.$after.'&confirm=1',
-                '',
-            ]);
-
-            return response($body, 200)->header('Content-Type', 'text/plain; charset=UTF-8');
+        if (! $this->allowed()) {
+            abort(403, 'The pricing reset runs only in a local environment.');
         }
+        $input = $request->validate([
+            'after' => ['required', 'date_format:Y-m-d'],
+            'confirmation' => ['required', 'in:'.self::CONFIRMATION],
+        ], ['confirmation.in' => 'Type '.self::CONFIRMATION.' to confirm.']);
 
-        $lines = $this->reset->run($after, $request->boolean('flush_queue', true));
+        $lines = $this->reset->run($input['after'], $request->boolean('flush_queue', true));
 
-        return response(implode("\n", $lines)."\n", 200)
-            ->header('Content-Type', 'text/plain; charset=UTF-8');
+        return response(implode("\n", $lines)."\n", 200)->header('Content-Type', 'text/plain; charset=UTF-8');
+    }
+
+    private function allowed(): bool
+    {
+        return app()->environment(['local', 'testing']);
     }
 }

@@ -25,7 +25,8 @@ Completeness SSOT: `VehicleService::missingFields()` / `isComplete()`; the gate 
 ## Pipeline (gated, one active ImportSession at a time)
 Upload price lists + WEF → detect (INCOMPLETE stubs) → Vehicle Info import → prices (WEF history) →
 add-ons & discounts → insurance & RTO (keep or import) → impact summary → optional hold → Calculate & Publish
-→ reopen holds → consumers call `PricingEngineService::getPricingPayload(oemCode, [channel, vin_type, wef_date, permit])` (fixed-key `PricingJsonContract`).
+→ reopen holds → consumers call `Engine\PricingQueryService::getPricing(oemCode, [permit, vin_type, channel, wef_date, …selections])`
+(published snapshot, fixed-key `Engine\PricingContract` v2; `ON_HOLD` / `NOT_FOUND`). Price List screens: `Engine\PriceListService` (DEC-081).
 
 ## Pitfalls (each has broken production before)
 - Never load a whole workbook: one sheet, cap columns (~AZ), chunk rows (CSD is heaviest).

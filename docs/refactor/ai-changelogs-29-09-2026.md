@@ -59,3 +59,45 @@
   - list membership (PV / Taxi / CSD / CV), date validity, break-ups and conditional columns;
   - cache refresh after a publish, and the hold flag;
   - any logged-in user can open the lists; guests are redirected; an unknown list gives 404.
+
+## Quotation on getPricing, booking hold guard, reset hardening, legacy engine removed (DEC-082, DEC-073 phase 11)
+- **New `app/Services/Sales/Quotation/QuotationPricingService.php`:**
+  - `forVehicle()`: getPricing → the screen's shape, with every published permit.
+  - `screen()`, `validateSubmission()` (gate + TCS), `vehicleOptions()`.
+- **`VehicleService::variantGroupOptions()`:** one row per OEM variant.
+- **`PricingQueryService::holdMessage()`:** new.
+- **`QuotationCrudController`:**
+  - New `pricing()` (`sales.quotation.pricing`, JSON 200 / 404 / 423) and `vehicleOptions()`
+    (`sales.quotation.vehicle-options/{level}`), gated by `SLS_QUOT_CREATE` or `SLS_QUOT_EDIT`.
+  - `store()` requires an OEM code; `store()` / `update()` re-validate through `repriceSubmission()` and store
+    `standard_data.pricing`.
+  - Pint normalised the file's existing style.
+- **`quotation/create.blade.php`:**
+  - Before: `ENQUIRIES` / `PRICING` mocks, auto-loaded enquiry 019 (BUG-203).
+  - After: Segment → Model → Variant → Colour pickers in create mode (locked where the enquiry has codes). The colour
+    loads getPricing into `applyPricing()` (the former mock-fetch handler). Save stays disabled until prices load and
+    the list is open.
+  - Edit mode reloads `PRICING.saved`. The TCS limit / rate come from the pricing. The exchange scheme is no longer
+    auto-applied on live prices.
+  - The mock HTML and the Reset-mock handler are removed.
+- **`BookingCoreService::heldPriceMessage()`:** new; `BookingCrudController` `create()` warns and `store()` refuses when
+  the linked quotation's price list is held (guide: `docs/domains/sales-booking.md`). The stale `store()` docblock is fixed. Pint normalised the file (PHPStan errors 446 → 441).
+- **`PricingResetController`:**
+  - Before: `GET pricing/reset?confirm=1` ran the destructive reset.
+  - After: GET = dry preview + form (`admin/pricing/reset.blade.php`); `POST pricing.reset.run` needs
+    `PRC_RESET_MANAGE`, a local / testing environment and the typed `RESET`.
+- **Removed:** `PricingEngineService`, `PricingJsonContract`, `TcsService`, and
+  `tests/Unit/Services/Vehicle/Pricing/PricingEngineServiceTest.php` (no callers). `InsuranceService` / `RtoService`
+  stay for the admin test-calculate screens.
+- **Docs:**
+  - `docs/domains/pricing.md` (legacy sections replaced), `crm-enquiry-quotation.md` (new "Quotation pricing" section),
+    `api-v1-adapters.md`, `docs/domains/README.md`.
+  - `.ai/rules/services.md`, `modules/sales.md`, `modules/vehicle-pricing.md`.
+  - BUG-203 logged and fixed.
+- **Tests:**
+  - `QuotationPricingTest` (4): the adapter shape, gate / TCS re-validation, endpoints + save (no vehicle / held /
+    stored pricing), the create page without mocks.
+  - `PricingResetTest` (1).
+  - Pricing + vehicle + sales unit suites: 150 passed.
+  - JS of the rendered create and edit pages passes `node --check`.
+  - Smoke: users 1 and 40.

@@ -16,7 +16,7 @@ Email / SMS / WhatsApp / Telephony, UI kit).
 | [dashboard.md](dashboard.md) | dynamic dashboard: widget registry, `DashboardService` (every widget's definition), `DashboardPeriod` |
 | [hr.md](hr.md) | employee history over time; `EmployeeJourneyService` |
 | [vehicle.md](vehicle.md) | segment → sub segment → model → variant (per colour), status, accessories; `VehicleService`, vehicle entity services, `AccessoryService` |
-| [pricing.md](pricing.md) | the price-list pipeline, rule / add-on / price entity services, the pricing JSON and `PricingEngineService` |
+| [pricing.md](pricing.md) | the price-list pipeline, rule / add-on / price entity services, the pricing JSON and `PricingQueryService` |
 | [crm-enquiry-quotation.md](crm-enquiry-quotation.md) | leads, enquiries, quotations, test drives, campaigns; `EnquiryReferenceService` |
 | [sales-booking.md](sales-booking.md) | the booking and its 10 sub-domain services (KYC, DMS, OTF, finance, insurance, RTO, exchange, delivery, refunds) |
 | [accounts.md](accounts.md) | receipts and journal vouchers (`Bookingamount`) |

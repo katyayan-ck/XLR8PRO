@@ -9,12 +9,15 @@ use App\Models\Module\Booking\Booking;
 use App\Models\Module\Booking\XlFinancier;
 use App\Models\Vehicle\Accessory;
 use App\Services\OrgService;
+use App\Services\Sales\Quotation\QuotationPricingService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -71,7 +74,7 @@ class QuotationCrudController extends CrudController
             ->whereNotIn('status', ['booked'])
             ->latest('id')
             ->get();
-        
+
         $bookingMap = DB::table('xlr8_booking_master')
             ->whereNotNull('quotation_id')
             ->pluck('id', 'quotation_id');
@@ -415,25 +418,25 @@ class QuotationCrudController extends CrudController
 
             $booking = Booking::findOrFail($bookingId);
 
-            if (!empty($booking->enq_no)) {
+            if (! empty($booking->enq_no)) {
                 $enquiry = Enquiry::resolveByAnyReference(
                     $booking->enq_no
                 );
             }
 
-            if (!$enquiry && !empty($booking->quotation_id)) {
+            if (! $enquiry && ! empty($booking->quotation_id)) {
                 $linkedQuotation = Quotation::with('enquiry')
                     ->find($booking->quotation_id);
 
                 $enquiry = $linkedQuotation?->enquiry;
             }
 
-            if (!$enquiry) {
+            if (! $enquiry) {
                 abort(
                     404,
-                    'Associated enquiry not found. ' .
-                    'Booking ID: ' . $bookingId .
-                    ', Enquiry Reference: ' . ($booking->enq_no ?? 'NULL')
+                    'Associated enquiry not found. '.
+                    'Booking ID: '.$bookingId.
+                    ', Enquiry Reference: '.($booking->enq_no ?? 'NULL')
                 );
             }
 
@@ -443,7 +446,7 @@ class QuotationCrudController extends CrudController
 
             $enquiryReference = request('id');
 
-            if (!$enquiryReference) {
+            if (! $enquiryReference) {
                 abort(404, 'Enquiry not found.');
             }
 
@@ -451,10 +454,10 @@ class QuotationCrudController extends CrudController
                 $enquiryReference
             );
 
-            if (!$selectedEnquiry) {
+            if (! $selectedEnquiry) {
                 abort(
                     404,
-                    'Enquiry not found. Reference: ' . $enquiryReference
+                    'Enquiry not found. Reference: '.$enquiryReference
                 );
             }
 
@@ -546,7 +549,6 @@ class QuotationCrudController extends CrudController
             ],
         ];
 
-
         return view('admin.sales.quotation.create', $data);
     }
 
@@ -555,7 +557,12 @@ class QuotationCrudController extends CrudController
         if (! backpack_user()->can('SLS_QUOT_CREATE')) {
             abort(403, 'Unauthorized. You do not have permission to create quotations.');
         }
-        
+
+        $pricing = $this->repriceSubmission($request, true);
+        if ($pricing instanceof RedirectResponse) {
+            return $pricing;
+        }
+
         $booking = null;
 
         if ($request->filled('booking_id')) {
@@ -616,19 +623,17 @@ class QuotationCrudController extends CrudController
 
             $quotation->invoice_price = $request->input('invoice_amount') ?? 0;
 
-            $quotation->standard_data = $quotationData;
+            $quotation->standard_data = $quotationData + ['pricing' => $pricing];
             $quotation->status = 'raised';
             $quotation->created_by = auth()->id();
 
-            $quotation->save();     
+            $quotation->save();
 
-            
             if ($booking) {
                 $booking->quotation_id = $quotation->id;
                 $booking->save();
             }
 
-           
             $this->saveDiscountFields(
                 $quotation,
                 $quotationData
@@ -684,6 +689,71 @@ class QuotationCrudController extends CrudController
 
             return back()->withInput();
         }
+    }
+
+    /**
+     * DEC-082: published pricing of the submitted vehicle. Refuses a held list, a broken discount gate or a wrong TCS;
+     * returns what is stored in `standard_data.pricing` ([] for a legacy quotation without an OEM code).
+     *
+     * @return array<string, mixed>|RedirectResponse
+     */
+    private function repriceSubmission(Request $request, bool $required): array|RedirectResponse
+    {
+        $code = trim((string) $request->input('oem_code'));
+        if ($code === '') {
+            if (! $required) {
+                return [];
+            }
+            \Alert::error('Choose the vehicle and its colour — prices come from the published price list.')->flash();
+
+            return back()->withInput();
+        }
+        $service = app(QuotationPricingService::class);
+        $result = $service->forVehicle($code);
+        if (! $result->ok) {
+            \Alert::error($result->message)->flash();
+
+            return back()->withInput();
+        }
+        $screen = (array) $result->get('screen');
+        $check = $service->validateSubmission($request->all(), $screen['receivables']['tcs']);
+        if (! $check->ok) {
+            \Alert::error($check->message)->flash();
+
+            return back()->withInput();
+        }
+        $contracts = (array) $result->get('contracts');
+
+        return ['oem_code' => $result->get('oem_code'), 'wef_date' => $screen['wef_date'], 'checked_at' => now()->toIso8601String(),
+            'screen' => $screen, 'contract' => reset($contracts)];
+    }
+
+    /** DEC-082: getPricing for the chosen colour, in the screen's shape (hold → 423 with the data). */
+    public function pricing(Request $request): JsonResponse
+    {
+        if (! backpack_user()->can('SLS_QUOT_CREATE') && ! backpack_user()->can('SLS_QUOT_EDIT')) {
+            abort(403, 'Unauthorized. You do not have permission to create quotations.');
+        }
+        $code = (string) $request->validate(['oem_code' => ['required', 'string', 'max:40']])['oem_code'];
+        $result = app(QuotationPricingService::class)->forVehicle($code);
+
+        return response()->json(['ok' => $result->ok, 'code' => $result->code, 'message' => $result->message]
+            + ['screen' => $result->get('screen'), 'hold' => (bool) $result->get('hold', false)],
+            match ($result->code) {
+                'NOT_FOUND' => 404,
+                'ON_HOLD' => 423,
+                default => 200,
+            });
+    }
+
+    /** DEC-082: vehicle picker options — segment, model/{segment}, variant/{model}, colour/{variant} (published only). */
+    public function vehicleOptions(Request $request, string $level): JsonResponse
+    {
+        if (! backpack_user()->can('SLS_QUOT_CREATE') && ! backpack_user()->can('SLS_QUOT_EDIT')) {
+            abort(403, 'Unauthorized. You do not have permission to create quotations.');
+        }
+
+        return response()->json(app(QuotationPricingService::class)->vehicleOptions($level, $request->query('parent')));
     }
 
     private function saveDiscountFields($quotation, $data)
@@ -1137,6 +1207,11 @@ class QuotationCrudController extends CrudController
             'enquiry_id' => 'required',
         ]);
 
+        $pricing = $this->repriceSubmission($request, false);
+        if ($pricing instanceof RedirectResponse) {
+            return $pricing;
+        }
+
         DB::beginTransaction();
 
         try {
@@ -1176,6 +1251,9 @@ class QuotationCrudController extends CrudController
                 $previousProposal,
                 $request->except(['_token', '_method'])
             );
+            if ($pricing !== []) {
+                $quotationData['pricing'] = $pricing;
+            }
 
             $oldFinancier = $previousProposal['financier'] ?? null;
             $newFinancier = $quotationData['financier'] ?? null;

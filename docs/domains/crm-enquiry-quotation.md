@@ -11,7 +11,7 @@ the shared helpers they use.
 | write a cross-reference into a booking / receipt / JV | `EnquiryReferenceService::toReference($enquiryId)` → `XENQ-12` |
 | enquiry list highlight filters | `OrgService::applyHighlightFilter($query, $filter)` ([org.md](org.md)) |
 | customer / transaction lookup across enquiry, booking, VOTF | `OrgService::getCustomerByTransactionIds($enq, $booking, $votf)` |
-| on-road price for a quote | `PricingEngineService::getPricingPayload()` ([pricing.md](pricing.md)) |
+| on-road price for a quote | `QuotationPricingService::forVehicle($oemCode)` → published prices in the screen's shape ([pricing.md](pricing.md)) |
 | extra discount approval | the approval engine (docs/utilities/07-approvals.md) — not wired into quotations yet |
 
 ---
@@ -111,3 +111,28 @@ $enquiry = Enquiry::resolveByAnyReference(app(EnquiryReferenceService::class)->f
 ## Testing
 Enquiry / quotation rows may be absent in `xlrm_testing` — create them inside the transaction or `markTestSkipped()` as
 the platform tests do.
+
+## Quotation pricing (DEC-082, `App\Services\Sales\Quotation\QuotationPricingService`)
+The quotation screen reads **published prices only** (the hard-coded mock enquiry / BE6 prices are gone).
+
+| Method | Returns |
+|---|---|
+| `forVehicle(string $oemCode, ?string $date = null): Result` | ok `{oem_code, screen, contracts{permit: contract v2}, hold}` · fail `NOT_FOUND` · fail `ON_HOLD` (same data) |
+| `screen(array $contracts): array` | the screen's pricing shape: `permit[]`; `receivables` (ex-showroom, insurance per permit with GST-inclusive heads — mandatory = default add-ons, `RTO {TRC, TAX[]}`, RSA / Shield choices, charges, `tcs {limit, rate}`); `deductibles` (types in `TYPES`); `live = true` |
+| `validateSubmission(array $input, array $tcs): Result` | ok `{invoice, tcs, inv_side, cn_side}` · fail `GATE` (Group A INV / INV_OE scheme > total CN) · fail `TCS` (submitted TCS off by more than ₹1 from rate % × invoice when invoice ≥ limit) |
+| `vehicleOptions(string $level, ?string $parent)` | picker rows `{code, name}` for `segment`, `model`, `variant` (one per OEM variant, `VehicleService::variantGroupOptions()`), `colour` (full OEM codes with a published NV price) |
+
+- **Screen:** create mode shows Segment → Model → Variant → Colour pickers. Codes the enquiry already has are prefilled
+  and locked. The colour loads `sales.quotation.pricing` (JSON; 404 / 423) into the screen's fill routine
+  (`applyPricing`). Saving stays disabled until prices load and the list is open.
+- **Save:** `store()` requires an OEM code; `store()` / `update()` re-fetch the prices and refuse a held list, a broken gate
+  or a wrong TCS. They store `standard_data.pricing` = `{oem_code, wef_date, checked_at, screen, contract}`; edit mode
+  reloads `screen` as `PRICING.saved`. Legacy quotations without an OEM code are edited as before.
+- **Booking:** create warns, and store refuses, when the linked quotation's price list is on hold
+  (`PricingQueryService::holdMessage()`).
+- **Discount defaults (flagged, DEC-082):**
+  - consumer scheme → Cash Scheme OEM (INV_OE);
+  - cash → dealer discount (CN1);
+  - accessory (INV_OE) and Shield (CN1) schemes;
+  - RSA discount → other cash discount (CN1);
+  - corporate INV, exchange CN2 — offered, never auto-applied.

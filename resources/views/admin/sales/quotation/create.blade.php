@@ -1480,30 +1480,6 @@
                 <div class="quotation-sheet">
                     <div class="form-section">
 
-                        {{-- MOCK ENQUIRY TEST INPUT (NO-PRINT) - Only in create mode --}}
-                        @if (!isset($quotation) && !$viewMode)
-                            <div class="no-print mb-3 d-none">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="input-group">
-                                            <span class="input-group-text">🔍 Mock Enquiry</span>
-                                            <input type="text" id="mock_enquiry_no" class="form-control"
-                                                placeholder="Enter 001-018" value="019">
-                                            <button type="button" id="btnFetchMock" class="btn btn-primary">
-                                                <i class="la la-refresh"></i> Fetch
-                                            </button>
-                                            <button type="button" id="btnResetMock" class="btn btn-secondary">
-                                                <i class="la la-undo"></i> Reset
-                                            </button>
-                                        </div>
-                                        <small class="text-muted">Enter enquiry number (001-018) and click Fetch to load
-                                            mock
-                                            data</small>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
-
                         {{-- ================= Customer Details ================= --}}
                         <table class="bill-table mb-2">
                             <tr>
@@ -1649,42 +1625,65 @@
                                 $colorCode = $selectedEnquiry?->color_code ?? '';
                             @endphp
 
-                            <!-- Isko ensure karo ki yeh values enquiry se aa rahi hain -->
+                            @php
+                                // DEC-082: create mode picks the vehicle (locked where the enquiry already has the code); the
+                                // colour gives the OEM code and prices load from the published price list (getPricing).
+                                $vehiclePicker = ! isset($quotation) && ! ($viewMode ?? false);
+                                $savedOemCode = old('oem_code', $quotationData['oem_code'] ?? ($quotationData['pricing']['oem_code'] ?? ''));
+                            @endphp
                             <tr>
                                 <td class="title">Segment</td>
                                 <td>
-                                    <input type="text" id="segment" value="{{ $segmentName }}" readonly>
-
-                                    <input type="hidden" name="segment_code" id="segment_code"
-                                        value="{{ $segmentCode }}">
+                                    @if ($vehiclePicker)
+                                        <label class="visually-hidden" for="pick_segment">Segment</label>
+                                        <select id="pick_segment" data-xl="off" data-level="segment" data-value="{{ $segmentCode }}" @disabled($segmentCode !== '')></select>
+                                    @else
+                                        <input type="text" id="segment" value="{{ $segmentName }}" readonly>
+                                    @endif
+                                    <input type="hidden" name="segment_code" id="segment_code" value="{{ $segmentCode }}">
                                 </td>
 
                                 <td class="title">Model</td>
                                 <td>
-                                    <input type="text" id="model" value="{{ $modelName }}" readonly>
-
-                                    <input type="hidden" name="model_code" id="model_code"
-                                        value="{{ $modelCode }}">
+                                    @if ($vehiclePicker)
+                                        <label class="visually-hidden" for="pick_model">Model</label>
+                                        <select id="pick_model" data-xl="off" data-level="model" data-value="{{ $modelCode }}" @disabled($modelCode !== '')></select>
+                                    @else
+                                        <input type="text" id="model" value="{{ $modelName }}" readonly>
+                                    @endif
+                                    <input type="hidden" name="model_code" id="model_code" value="{{ $modelCode }}">
                                 </td>
                             </tr>
 
                             <tr>
                                 <td class="title">Variant</td>
                                 <td>
-                                    <input type="text" id="variant" value="{{ $variantName }}" readonly>
-
-                                    <input type="hidden" name="variant_code" id="variant_code"
-                                        value="{{ $variantCode }}">
+                                    @if ($vehiclePicker)
+                                        <label class="visually-hidden" for="pick_variant">Variant</label>
+                                        <select id="pick_variant" data-xl="off" data-level="variant" data-value="{{ $variantCode }}" @disabled($variantCode !== '')></select>
+                                    @else
+                                        <input type="text" id="variant" value="{{ $variantName }}" readonly>
+                                    @endif
+                                    <input type="hidden" name="variant_code" id="variant_code" value="{{ $variantCode }}">
                                 </td>
 
                                 <td class="title">Color</td>
                                 <td>
-                                    <input type="text" id="color" value="{{ $colorName }}" readonly>
-
-                                    <input type="hidden" name="color_code" id="color_code"
-                                        value="{{ $colorCode }}">
+                                    @if ($vehiclePicker)
+                                        <label class="visually-hidden" for="pick_colour">Colour</label>
+                                        <select id="pick_colour" data-xl="off" data-level="colour" data-value="{{ $savedOemCode }}"></select>
+                                    @else
+                                        <input type="text" id="color" value="{{ $colorName }}" readonly>
+                                    @endif
+                                    <input type="hidden" name="color_code" id="color_code" value="{{ $colorCode }}">
+                                    <input type="hidden" name="oem_code" id="oem_code_hidden" value="{{ $savedOemCode }}">
                                 </td>
                             </tr>
+                            @if ($vehiclePicker)
+                                <tr class="no-print">
+                                    <td colspan="4"><div id="pricing_status" class="small text-body-secondary">Choose the vehicle and its colour — prices load from the published price list.</div></td>
+                                </tr>
+                            @endif
                             <tr>
                                 <td class="title">Permit</td>
                                 <td>
@@ -2759,45 +2758,15 @@
 
     <script>
         // ============================================================
-        // 1. MOCK DATA DEFINITION
+        // 1. PRICING SOURCE (DEC-082): published prices via getPricing - no mock data.
+        //    PRICING.live = the chosen vehicle's pricing; PRICING.saved = the pricing stored with an edited quotation.
         // ============================================================
 
-        const ENQUIRIES = {
-
-            "019": {
-                enquiry_no: "ENQ0019",
-                customer: {
-                    name: "Dr. Ananya Reddy",
-                    mobile: "9876500019",
-                    careOf: "3",
-                    careOfName: "Dr. Suresh Reddy"
-                },
-                vehicle: {
-                    segment_code: "BEV",
-                    segment_name: "Electric Vehicle",
-                    model_code: "BE6",
-                    model_name: "BE6",
-                    variant_code: "BM12AH515MB01D00",
-                    variant_name: "BE6 One Above B59 R19 C11",
-                    color_code: "QK",
-                    color_name: "Galaxy Grey",
-                    oem_code: "BEV-BE6-ONE-ABOVE-GALAXY-GREY"
-                },
-                pricingKey: "bev6Premium"
-            }
-        };
         let enquiryIdFromServer = @json($selectedEnquiry->id ?? '');
 
         let cleanId = enquiryIdFromServer
             ? String(enquiryIdFromServer)
             : '';
-
-        let enquiryData = null;
-
-        // Mock enquiry support
-        if (cleanId && ENQUIRIES[cleanId]) {
-            enquiryData = ENQUIRIES[cleanId];
-        }
 
         // Always display real enquiry ID
         let finalEnquiryNo = cleanId
@@ -2809,289 +2778,18 @@
 
         // Hidden field used for form submission
         $('#enquiry_id_hidden').val(cleanId);
-        const PRICING = {
-            bev6Premium: {
-                permit: [
-                    { type: "Private",   default: true  },
-                    { type: "Goods",     default: false },
-                    { type: "Passenger", default: false }
-                ],
+        const PRICING = {};
+        @if (! empty($quotationData['pricing']['screen'] ?? null))
+            PRICING.saved = @json($quotationData['pricing']['screen']);
+        @endif
 
-                receivables: {
-                    exShowroom: 2499000,
-
-                    // Insurance — one entry per permit CATEGORY
-                    insurance: [
-                        {
-                            permit: "Private",
-                            default: true,
-                            companies: [
-                                {
-                                    insCo: "ICICI Lombard",
-                                    default: true,
-                                    price: [
-                                        { head: "Basic OD + TP",       price: 42500, Nature: "M" },
-                                        { head: "Nil Depreciation",    price: 8500,  Nature: "M" },
-                                        { head: "Consumables",         price: 1800,  Nature: "M" },
-                                        { head: "Battery Protect Plus",price: 12000, Nature: "O" },
-                                        { head: "RTI",                 price: 6800,  Nature: "O" },
-                                        { head: "Engine Protect",      price: 5500,  Nature: "O" },
-                                        { head: "Key Protect",         price: 1200,  Nature: "O" },
-                                        { head: "Tyre Protect",        price: 3200,  Nature: "O" },
-                                        { head: "RSA Premium",         price: 2800,  Nature: "O" },
-                                        { head: "NCB Protect Plus",    price: 4500,  Nature: "O" }
-                                    ]
-                                },
-                                {
-                                    insCo: "Bajaj Allianz",
-                                    default: false,
-                                    price: [
-                                        { head: "Basic OD + TP",        price: 39800, Nature: "M" },
-                                        { head: "Nil Depreciation",     price: 7800,  Nature: "M" },
-                                        { head: "Consumables",          price: 1600,  Nature: "M" },
-                                        { head: "Battery Protect Plus", price: 10500, Nature: "O" },
-                                        { head: "RTI",                  price: 6200,  Nature: "O" },
-                                        { head: "Key Protect",          price: 1100,  Nature: "O" },
-                                        { head: "Tyre Protect",         price: 2800,  Nature: "O" }
-                                    ]
-                                },
-                                {
-                                    insCo: "United India (USGI)",
-                                    default: false,
-                                    price: [
-                                        { head: "Basic OD + TP",     price: 41500, Nature: "M" },
-                                        { head: "Nil Depreciation",  price: 8200,  Nature: "M" },
-                                        { head: "Consumables",       price: 1700,  Nature: "M" },
-                                        { head: "Battery Protect",   price: 9800,  Nature: "O" },
-                                        { head: "RTI",               price: 6500,  Nature: "O" },
-                                        { head: "Engine Protect",    price: 5200,  Nature: "O" },
-                                        { head: "NCB Protect",       price: 3500,  Nature: "O" }
-                                    ]
-                                }
-                            ]
-                        },
-                        {
-                            permit: "Goods",
-                            default: false,
-                            companies: [
-                                {
-                                    insCo: "ICICI Lombard",
-                                    default: true,
-                                    price: [
-                                        { head: "Basic OD + TP",       price: 42500, Nature: "M" },
-                                        { head: "Nil Depreciation",    price: 8500,  Nature: "M" },
-                                        { head: "Consumables",         price: 1800,  Nature: "M" },
-                                        { head: "Battery Protect Plus",price: 12000, Nature: "O" },
-                                        { head: "RTI",                 price: 6800,  Nature: "O" },
-                                        { head: "Engine Protect",      price: 5500,  Nature: "O" },
-                                        { head: "Key Protect",         price: 1200,  Nature: "O" },
-                                        { head: "Tyre Protect",        price: 3200,  Nature: "O" },
-                                        { head: "RSA Premium",         price: 2800,  Nature: "O" },
-                                        { head: "NCB Protect Plus",    price: 4500,  Nature: "O" }
-                                    ]
-                                },
-                                {
-                                    insCo: "Bajaj Allianz",
-                                    default: false,
-                                    price: [
-                                        { head: "Basic OD + TP",        price: 39800, Nature: "M" },
-                                        { head: "Nil Depreciation",     price: 7800,  Nature: "M" },
-                                        { head: "Consumables",          price: 1600,  Nature: "M" },
-                                        { head: "Battery Protect Plus", price: 10500, Nature: "O" },
-                                        { head: "RTI",                  price: 6200,  Nature: "O" },
-                                        { head: "Key Protect",          price: 1100,  Nature: "O" },
-                                        { head: "Tyre Protect",         price: 2800,  Nature: "O" }
-                                    ]
-                                },
-                                {
-                                    insCo: "United India (USGI)",
-                                    default: false,
-                                    price: [
-                                        { head: "Basic OD + TP",     price: 41500, Nature: "M" },
-                                        { head: "Nil Depreciation",  price: 8200,  Nature: "M" },
-                                        { head: "Consumables",       price: 1700,  Nature: "M" },
-                                        { head: "Battery Protect",   price: 9800,  Nature: "O" },
-                                        { head: "RTI",               price: 6500,  Nature: "O" },
-                                        { head: "Engine Protect",    price: 5200,  Nature: "O" },
-                                        { head: "NCB Protect",       price: 3500,  Nature: "O" }
-                                    ]
-                                }
-                            ]
-                        },
-                        {
-                            permit: "Passenger",
-                            default: false,
-                            companies: [
-                                {
-                                    insCo: "ICICI Lombard",
-                                    default: true,
-                                    price: [
-                                        { head: "Basic OD + TP",       price: 42500, Nature: "M" },
-                                        { head: "Nil Depreciation",    price: 8500,  Nature: "M" },
-                                        { head: "Consumables",         price: 1800,  Nature: "M" },
-                                        { head: "Battery Protect Plus",price: 12000, Nature: "O" },
-                                        { head: "RTI",                 price: 6800,  Nature: "O" },
-                                        { head: "Engine Protect",      price: 5500,  Nature: "O" },
-                                        { head: "Key Protect",         price: 1200,  Nature: "O" },
-                                        { head: "Tyre Protect",        price: 3200,  Nature: "O" },
-                                        { head: "RSA Premium",         price: 2800,  Nature: "O" },
-                                        { head: "NCB Protect Plus",    price: 4500,  Nature: "O" }
-                                    ]
-                                },
-                                {
-                                    insCo: "Bajaj Allianz",
-                                    default: false,
-                                    price: [
-                                        { head: "Basic OD + TP",        price: 39800, Nature: "M" },
-                                        { head: "Nil Depreciation",     price: 7800,  Nature: "M" },
-                                        { head: "Consumables",          price: 1600,  Nature: "M" },
-                                        { head: "Battery Protect Plus", price: 10500, Nature: "O" },
-                                        { head: "RTI",                  price: 6200,  Nature: "O" },
-                                        { head: "Key Protect",          price: 1100,  Nature: "O" },
-                                        { head: "Tyre Protect",         price: 2800,  Nature: "O" }
-                                    ]
-                                },
-                                {
-                                    insCo: "United India (USGI)",
-                                    default: false,
-                                    price: [
-                                        { head: "Basic OD + TP",     price: 41500, Nature: "M" },
-                                        { head: "Nil Depreciation",  price: 8200,  Nature: "M" },
-                                        { head: "Consumables",       price: 1700,  Nature: "M" },
-                                        { head: "Battery Protect",   price: 9800,  Nature: "O" },
-                                        { head: "RTI",               price: 6500,  Nature: "O" },
-                                        { head: "Engine Protect",    price: 5200,  Nature: "O" },
-                                        { head: "NCB Protect",       price: 3500,  Nature: "O" }
-                                    ]
-                                }
-                            ]
-                        }
-                    ],
-
-                    // RTO Registration — one entry per permit CATEGORY
-                    RTO: {
-                        TRC: 1800,
-                        TAX: [
-                            { permit: "Private",   default: true,  amount: 245000 },
-                            { permit: "Goods",     default: false, amount: 180000 },
-                            { permit: "Passenger", default: false, amount: 220000 }
-                        ]
-                    },
-
-                    // ─────────────────────────────────────────────
-                    // Nothing below this line has changed
-                    // ─────────────────────────────────────────────
-
-                    coating: [
-                        { title: "Ceramic",     price: 24999, default: true  },
-                        { title: "Graphene",    price: 45999, default: false },
-                        { title: "No Coating",  price: 0,     default: false }
-                    ],
-
-                    ppf: [
-                        { title: "PPF Ultra",    price: 124999, default: true  },
-                        { title: "PPF Premium",  price: 164999, default: false },
-                        { title: "PPF Ultimate", price: 199999, default: false },
-                        { title: "No PPF",       price: 0,      default: false }
-                    ],
-
-                    accessories: [
-                        { item: "7.2 kW Home Charger",    mrp: 45000, discount: 5000, code: "HC-72"   },
-                        { item: "11.2 kW Home Charger",   mrp: 65000, discount: 8000, code: "HC-112"  },
-                        { item: "Dash Cam Dual Channel",  mrp: 8299,  discount: 1200, code: "DC-DUAL" },
-                        { item: "Parking Assist 360°",    mrp: 15999, discount: 2500, code: "PA-360"  },
-                        { item: "Leather Seat Covers",    mrp: 14990, discount: 2000, code: "LSC-7"   },
-                        { item: "Premium Floor Mats",     mrp: 5899,  discount: 800,  code: "PFM-7"   },
-                        { item: "Chrome Door Visors",     mrp: 4999,  discount: 500,  code: "CDV"     },
-                        { item: "Alloy Wheel Locks",      mrp: 2999,  discount: 400,  code: "AWL"     },
-                        { item: "Scuff Plates LED",       mrp: 3899,  discount: 600,  code: "SP-LED"  },
-                        { item: "Mud Flaps",              mrp: 1299,  discount: 200,  code: "MF"      },
-                        { item: "Perfume Dispenser",      mrp: 899,   discount: 0,    code: "PD-001"  },
-                        { item: "Car Cover Premium",      mrp: 3499,  discount: 500,  code: "CC-PREM" },
-                        { item: "Sun Shade Set",          mrp: 2499,  discount: 300,  code: "SS-4"    },
-                        { item: "USB C Charging Kit",     mrp: 1899,  discount: 200,  code: "USB-C"   },
-                        { item: "First Aid Kit",          mrp: 999,   discount: 0,    code: "FAK"     }
-                    ],
-
-                    maxicare: 34999,
-
-                    shield: [
-                        { title: "4th Year",        price: 34990, default: true  },
-                        { title: "4th + 5th Year",  price: 52990, default: false },
-                        { title: "No Shield",       price: 0,     default: false }
-                    ],
-
-                    rsa: [
-                        { title: "1 Year",  price: 2499, default: true  },
-                        { title: "2 Year",  price: 4599, default: false },
-                        { title: "3 Year",  price: 6499, default: false },
-                        { title: "No RSA",  price: 0,    default: false }
-                    ],
-
-                    vltd: { permit: "Private", price: 5499 },
-                    kazam: 8500,
-                    incidental: 5000,
-                    "rto-tape": 1999,
-                    fastag: 600,
-                    COD: 2500,
-
-                    "charger-swapping": [
-                        { title: "NCH to 7.2 kW @ ₹18,500",      amount: 18500, default: true  },
-                        { title: "NCH to 11.2 kW @ ₹28,500",     amount: 28500, default: false },
-                        { title: "7.2 kW to 11.2 kW @ ₹15,000",  amount: 15000, default: false }
-                    ],
-
-                    tcs: {
-                        limit: 1000000,
-                        rate: 1.0
-                    }
-                },
-
-                // Deductibles / Discounts — unchanged
-                deductibles: {
-                    "oem-schemes": [
-                        { key: "cash_scheme_oem", label: "Cash Scheme OEM",   amount: 8500, type: "INV_OE" },
-                        { key: "csd_discount",    label: "CSD Discount",      amount: 3500, type: "INV_OE" },
-                        { key: "fame_subsidy",    label: "Fame Subsidy (LMM)",amount: 1500, type: "INV_OE" }
-                    ],
-
-                    "dealer-scheme":    { amount: 25000, type: "CN1"    },
-                    "accessory-scheme": { amount: 8000,  type: "INV_OE" },
-                    "shield-scheme":    { amount: 3500,  type: "CN1"    },
-
-                    "corp-scheme": [
-                        { name: "Corporate Discount", amount: 60000, type: "INV" },
-                        { name: "Loyalty Bonus",      amount: 35000, type: "INV" }
-                    ],
-
-                    "exchange-scheme": [
-                        { name: "Exchange Bonus", amount: 45000, type: "CN2" },
-                        { name: "Green Bonus",    amount: 25000, type: "CN2" },
-                        { name: "Welcome Bonus",  amount: 15000, type: "CN2" }
-                    ],
-
-                    "accessories-spl-discount": { amount: 5000,  type: "INV_D" },
-                    "coating-spl-discount":     { amount: 3000,  type: "INV_D" },
-                    "ppf-spl-discount":         { amount: 10000, type: "CN1"   },
-                    "charger-swapping-discount":{ amount: 7500,  type: "CN3", option: "7.2 kW to NCH" },
-                    "other-cash-discount":      { amount: 2000,  type: "CN1"   },
-                    "special-cash-discount":    { amount: 75000, type: "INV_D" }
-                },
-
-                conditional_rules: {
-                    accessories_scheme: {
-                        min_amount: 8000,
-                        discount_percentage: 20,
-                        freeze_message: 'Accessories above ₹8,000'
-                    },
-                    shield_scheme: {
-                        min_amount: 6000,
-                        discount_amount: 3000,
-                        freeze_message: 'Shield above ₹6,000'
-                    }
-                }
-            }
-        };
+        /** The pricing permit label for a permit id / label (case-insensitive match against the pricing's permits). */
+        function pricingPermitFor(permitKey, pricing) {
+            const labels = @json($permit_map ?? []);
+            let wanted = String(labels[permitKey] || permitKey || '').toLowerCase();
+            let hit = (pricing?.permit || []).find(x => String(x.type).toLowerCase() === wanted);
+            return hit ? hit.type : null;
+        }
 
         // Add this at the top of your script, after PRICING definition
         const ACCESSORY_NAME_MAP = {
@@ -3347,12 +3045,10 @@
 
             const permitPricingType = @json($permit_pricing_map ?? []);
 
-            let pricingPermit = permitPricingType[permit] || permit;
+            let pricing = currentPricing;
+            if (!pricing) return;
 
-            let enquiry = ENQUIRIES[$("#mock_enquiry_no").val()];
-            if (!enquiry) return;
-
-            let pricing = PRICING[enquiry.pricingKey];
+            let pricingPermit = pricingPermitFor(permit, pricing) || permitPricingType[permit] || permit;
 
             currentInsurance = pricing.receivables.insurance.find(
                 x => x.permit === pricingPermit
@@ -3484,8 +3180,7 @@
     let selectedAccessories = [];
 
     let savedEnquiryNo = "{{ $quotationData['enquiry_no'] ?? ($quotation->enquiry_no ?? '') }}";
-    let savedEnquiry = ENQUIRIES[savedEnquiryNo] || null;
-    let savedPricing = savedEnquiry ? PRICING[savedEnquiry.pricingKey] : null;
+    let savedPricing = PRICING.saved || null;
     let mockAccessories = savedPricing?.receivables?.accessories || [];
 
     SAVED_ACCESSORIES.forEach(function(accessory) {
@@ -3730,12 +3425,10 @@
 
             const permitPricingType = @json($permit_pricing_map ?? []);
 
-            let pricingPermit = permitPricingType[permit] || permit;
+            let pricing = currentPricing;
+            if (!pricing) return;
 
-            let enquiry = ENQUIRIES[$("#mock_enquiry_no").val()];
-            if (!enquiry) return;
-
-            let pricing = PRICING[enquiry.pricingKey];
+            let pricingPermit = pricingPermitFor(permit, pricing) || permitPricingType[permit] || permit;
 
             let tax = pricing.receivables.RTO.TAX.find(
                 x => x.permit === pricingPermit
@@ -4201,20 +3894,8 @@
         // 6. FETCH MOCK DATA
         // ============================================================
 
-        $('#btnFetchMock').click(function() {
-            let no = $('#mock_enquiry_no').val().trim();
-
-            if (!ENQUIRIES[no]) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Invalid Enquiry',
-                    text: 'Please enter a valid enquiry number (001-013)'
-                });
-                return;
-            }
-
-            let enquiry = ENQUIRIES[no];
-            let pricing = PRICING[enquiry.pricingKey];
+        /** Fill every price field from a pricing object in the screen's shape (DEC-082: from getPricing). */
+        function applyPricing(pricing) {
             currentPricing = pricing;
 
             // ---- Populate Permit ----
@@ -4241,7 +3922,9 @@
                     selectedPermit = legacyPermitMap[selectedPermit];
                 }
 
-                let isSel = selectedPermit === key;
+                let isSel = selectedPermit
+                    ? selectedPermit === key
+                    : String(label).toLowerCase() === String(pricing.permit?.[0]?.type || '').toLowerCase();
 
                 $("#permit").append(
                     `<option value="${key}" ${isSel ? 'selected' : ''}>${label}</option>`
@@ -4250,21 +3933,6 @@
 
             loadInsuranceByPermit();
 
-            // Mock data (customer/vehicle/pricing) loads as-is from ENQUIRIES,
-            // but the enquiry number shown on screen is always forced into the
-            // "XENQ-<id>" display format (real URL id takes priority; falls
-            // back to the mock number if no real id is present) instead of
-            // the mock's own hardcoded enquiry_no (e.g. "ENQ0019").
-            let displayEnquiryId = cleanId || no;
-            $('#enquiry_id').val(displayEnquiryId ? 'XENQ-' + displayEnquiryId : enquiry.enquiry_no);
-            $('#enquiry_no_hidden').val(no);
-
-            console.log('Vehicle from Enquiry:', {
-                segment: $('#segment').val(),
-                model: $('#model').val(),
-                variant: $('#variant').val(),
-                color: $('#color').val()
-            });
 
             // $('#oem_code').val(enquiry.vehicle.oem_code);
             // $('#oem_code_hidden').val(enquiry.vehicle.oem_code);
@@ -4435,7 +4103,8 @@
                     $('#group_c_amount').val(loyalty.amount).trigger('keyup');
                 }
             }
-            if (pricing.deductibles["exchange-scheme"] && pricing.deductibles["exchange-scheme"].length > 0) {
+            // conditional discounts are offered, never auto-applied on live prices (DEC-082)
+            if (!pricing.live && pricing.deductibles["exchange-scheme"] && pricing.deductibles["exchange-scheme"].length > 0) {
                 let exch = pricing.deductibles["exchange-scheme"][0];
                 $('#group_c_select').val(exch.name ? exch.name.toLowerCase().replace(' ', '_') : 'exchange_bonus')
                     .trigger('change');
@@ -4482,75 +4151,8 @@
 
             checkConditionalFields();
 
-        });
+        }
 
-        // ---- Reset Mock Data ----
-        $('#btnResetMock').click(function() {
-            $('#mock_enquiry_no').val('');
-            // $('#customer_name').val('');
-            // $('#mobile').val('');
-            $('#careof').val('').trigger('change');
-            $('#careofname').val('');
-            // $('#segment').val('');
-            // $('#model').val('');
-            // $('#variant').val('');
-            // $('#color').val('');
-            $('#oem_code').val('');
-            $('#oem_code_hidden').val('');
-            $('#ex_showroom_price').val('');
-            $('#insurance_amount').val('');
-            $('#registration_amount').val('');
-            $('#accessories_amount').val('0.00');
-            $('#maxicare').val('');
-            $('#vltd_device').val('');
-            $('#coating_price').val('');
-            $('#ppf').val('');
-            $('#rto_yellow_tape').val('');
-            $('#kazam_charging_kit').val('');
-            $('#incidental_charges').val('');
-            $('#shield_price').val('');
-            $('#rsa_amount').val('');
-            $('#fastag').val('');
-            $('#cod_charges').val('');
-            $('#charger_swapping_amount').val('');
-            $('#tcs').val('');
-            $('#total_receivable').val('');
-            $('#total_discount_amount').val('');
-            $('#net_receivable_summary').val('');
-            $('#fi_total_receivable').val('');
-            $('#less_inv_discount').val('');
-            $('#finvoice_amount').val('');
-            $('#invoiced_discount').val('');
-            $('#credit_note_discount').val('');
-            $('#total_discount_summary').val('');
-            $('#dealer_discount').val('');
-            $('#accessories_discount').val('');
-            $('#shield_scheme').val('');
-            $('#group_b_type').val('Inv Disc.');
-            $('#group_b_amount').val('');
-            $('#special_cash_discount_type').val('Inv Disc. (D)');
-            $('#special_cash_discount').val('');
-            $('#accessories_spl_disc').val('');
-            $('#ceramic_discount').val('');
-            $('#ppf_discount').val('');
-            $('#charger_swapping_discount').val('');
-            $('#other_cash_discount').val('');
-            $('#special_cash_discount').val('');
-            syncGroupALinkedTypes();
-            $('#insurance_covers').empty();
-            $('#insurance_print').text('');
-            $('#accessories_print').text('');
-            $('#accessories').val([]).trigger('change');
-            $('#permit').empty().append('<option value="">Select Permit</option>');
-            $('#insurance_company').empty().append('<option value="">Select Company</option>');
-            $('#group_a_dynamic_container').empty();
-
-            // Show all rows again
-            $('.price-grid tbody tr, .discount-grid tbody tr').show();
-
-            calculateQuotation();
-            checkConditionalFields();
-        });
 
         // ============================================================
         // 7. EVENT HANDLERS
@@ -4843,8 +4445,9 @@
             $('#invoice_amount').val(invoiceAmount.toFixed(2));
 
             let tcs = 0;
-            if (invoiceAmount >= 1000000) {
-                tcs = invoiceAmount * 0.01;
+            let tcsRule = (currentPricing || PRICING.saved || {})?.receivables?.tcs || { limit: 1000000, rate: 1 };
+            if (tcsRule.limit > 0 && invoiceAmount >= tcsRule.limit) {
+                tcs = Math.round(invoiceAmount * tcsRule.rate) / 100;
                 $('#tcs').val(tcs.toFixed(2)).prop('readonly', true).prop('disabled', false);
             } else {
                 $('#tcs').val('N/A').prop('readonly', true).prop('disabled', true);
@@ -5644,7 +5247,6 @@
 
                 let enquiryNo = @json($quotationData['enquiry_no'] ?? ($quotation->enquiry_no ?? ''));
 
-                $('#mock_enquiry_no').val(enquiryNo);
 
                 let savedCompany = @json($quotationData['insurance_company'] ?? '');
                 let savedPermit = @json($quotationData['permit'] ?? '');
@@ -5655,33 +5257,7 @@
                 // EDIT MODE - LOAD PRICING FOR REAL ENQUIRY
                 // ========================================================
 
-                let enquiry = null;
-
-                if (typeof ENQUIRIES !== 'undefined' && ENQUIRIES[enquiryNo]) {
-                    enquiry = ENQUIRIES[enquiryNo];
-                }
-
-                if (!enquiry) {
-
-                    let pricingKey = Object.keys(PRICING).find(function(key) {
-
-                        let pricing = PRICING[key];
-
-                        return Number(
-                            pricing?.receivables?.exShowroom || 0
-                        ) === savedExShowroom;
-
-                    });
-
-                    if (pricingKey) {
-                        currentPricing = PRICING[pricingKey];
-                    }
-
-                } else {
-
-                    currentPricing = PRICING[enquiry.pricingKey];
-
-                }
+                currentPricing = PRICING.saved || null;
 
 
                 // ========================================================
@@ -5835,8 +5411,7 @@
 
             @if (!isset($quotation))
                 if (!IS_VIEW_MODE) {
-                    $('#mock_enquiry_no').val('019');
-                    $('#btnFetchMock').click();
+                    initVehiclePicker();
                 }
             @endif
 
@@ -6002,38 +5577,111 @@
             updateRegistrationPrintText();
         });
 
+        /**
+         * DEC-082 vehicle picker: segment -> model -> variant -> colour (published prices only). Choosing the colour sets
+         * the OEM code and loads getPricing into the screen; saving stays disabled until prices load and the list is open.
+         */
+        function initVehiclePicker() {
+            const OPTIONS_URL = @json(route('sales.quotation.vehicle-options', ['level' => '__L__']));
+            const PRICING_URL = @json(route('sales.quotation.pricing'));
+            const CHAIN = ['segment', 'model', 'variant', 'colour'];
+            const HIDDEN = { segment: '#segment_code', model: '#model_code' };
+            const $status = $('#pricing_status');
+            const $save = $status.closest('form').find('button[type="submit"], input[type="submit"]');
+
+            function block(blocked) { $save.prop('disabled', blocked); }
+
+            function clearFrom(index) {
+                for (let i = index; i < CHAIN.length; i++) {
+                    $('#pick_' + CHAIN[i]).empty();
+                }
+                if (index <= CHAIN.length - 1) {
+                    $('#oem_code_hidden').val('');
+                    block(true);
+                }
+            }
+
+            function load(level, parent) {
+                let $sel = $('#pick_' + level);
+                $sel.empty().append($('<option>', { value: '', text: 'Loading…' }));
+                return $.getJSON(OPTIONS_URL.replace('__L__', level), parent ? { parent: parent } : {}).then(function (rows) {
+                    let empty = level === 'colour' ? 'No published price' : 'None';
+                    $sel.empty().append($('<option>', { value: '', text: rows.length ? 'Select ' + level : empty }));
+                    rows.forEach(function (r) { $sel.append($('<option>', { value: r.code, text: r.name })); });
+                    let want = String($sel.data('value') || '');
+                    if (want && rows.some(function (r) { return String(r.code) === want; })) {
+                        $sel.val(want);
+                    }
+                    return $sel.val();
+                });
+            }
+
+            function cascade(index, parent) {
+                clearFrom(index + 1);
+                load(CHAIN[index], parent).then(function (value) {
+                    if (value) {
+                        picked(CHAIN[index], value);
+                    }
+                });
+            }
+
+            function picked(level, value) {
+                let index = CHAIN.indexOf(level);
+                if (HIDDEN[level]) {
+                    $(HIDDEN[level]).val(value || '');
+                }
+                if (!value) {
+                    clearFrom(index + 1);
+                    return;
+                }
+                if (level === 'colour') {
+                    $('#variant_code').val(value);
+                    $('#color_code').val(String(value).slice(-2));
+                    fetchPricing(value);
+                } else {
+                    cascade(index + 1, value);
+                }
+            }
+
+            function fetchPricing(code) {
+                $('#oem_code_hidden').val(code);
+                block(true);
+                $status.removeClass('text-danger text-warning').text('Loading published prices…');
+                $.ajax({ url: PRICING_URL, data: { oem_code: code }, dataType: 'json' })
+                    .done(function (res) {
+                        PRICING.live = res.screen;
+                        applyPricing(res.screen);
+                        let wef = window.XL && XL.formatDate ? XL.formatDate(res.screen.wef_date) : res.screen.wef_date;
+                        $status.text('Published prices loaded (WEF ' + wef + ').');
+                        block(false);
+                    })
+                    .fail(function (xhr) {
+                        let res = xhr.responseJSON || {};
+                        if (xhr.status === 423 && res.screen) {
+                            PRICING.live = res.screen;
+                            applyPricing(res.screen);
+                        }
+                        $status.addClass(xhr.status === 423 ? 'text-warning' : 'text-danger')
+                            .text(res.message || 'Prices could not be loaded — try again.');
+                    });
+            }
+
+            CHAIN.forEach(function (level) {
+                $('#pick_' + level).on('change', function () {
+                    $(this).data('value', '');
+                    picked(level, $(this).val());
+                });
+            });
+
+            block(true);
+            cascade(0, null);
+        }
+
         let conditionalRules = null;
 
         function loadConditionalRules() {
 
-            let enquiryNo = $('#mock_enquiry_no').val();
-
-            // 1. Try the mock key from #mock_enquiry_no (create mode / after btnFetchMock)
-            let pricing = null;
-
-            if (enquiryNo && ENQUIRIES[enquiryNo]) {
-                pricing = PRICING[ENQUIRIES[enquiryNo].pricingKey];
-            }
-
-            // 2. Edit-mode fallback: match by savedExShowroom against PRICING
-            //    (works even when the real enquiry id is NOT a mock key)
-            if (!pricing && IS_EDIT_MODE) {
-
-                let savedExShowroom = Number(@json($quotationData['ex_showroom_price'] ?? 0));
-
-                let pricingKey = Object.keys(PRICING).find(function (key) {
-                    return Number(PRICING[key]?.receivables?.exShowroom || 0) === savedExShowroom;
-                        });
-
-                        if (pricingKey) {
-                            pricing = PRICING[pricingKey];
-                        }
-                    }
-
-            // 3. Last-ditch fallback: if only one pricing exists, use it
-            if (!pricing && Object.keys(PRICING).length === 1) {
-                pricing = PRICING[Object.keys(PRICING)[0]];
-            }
+            let pricing = currentPricing || PRICING.saved || null;
 
             conditionalRules = pricing?.conditional_rules || null;
         }
@@ -6354,12 +6002,6 @@
             toggleRowVisibility();
         });
 
-        $(document).on('click', '#btnFetchMock', function() {
-            // Wait for all data to populate then check conditions
-            setTimeout(function() {
-                checkConditionalFields();
-            }, 300);
-        });
         @if (request()->query('saved') == '1')
 
             function showPrintOptions() {

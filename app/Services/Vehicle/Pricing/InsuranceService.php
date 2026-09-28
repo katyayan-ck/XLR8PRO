@@ -11,7 +11,7 @@
  * than fixed idv_1..idv_N columns, so a future 5+8 plan needs no schema change.
  * od = round(idv_sum * od_factor, 3) exactly per the locked Machine Spec —
  * idv_sum is already an absolute rupee figure (percent-of-invoice resolved
- * against PricingEngineService::invoiceBase() before this is called), so
+ * against the snapshot's invoice base before this is called), so
  * od_factor is applied directly, with no further /100.
  */
 
