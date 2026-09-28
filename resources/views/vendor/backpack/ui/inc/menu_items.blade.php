@@ -174,6 +174,29 @@
     </x-backpack::menu-dropdown>
 @endif
 
+    {{-- Pricing (DEC-073 / DEC-081, resolves BUG-069) --}}
+    @php $u = backpack_user(); @endphp
+    @if ($u && ($u->can('PRC_WKFL_VIEW') || $u->can('PRC_HOLD_VIEW') || $u->can('PRC_TCS_VIEW') || $u->can('PRC_RTOR_VIEW') || $u->can('PRC_INSR_VIEW')))
+        <x-backpack::menu-dropdown title="Pricing" icon="la la-rupee-sign" nested="true">
+            @if ($u->can('PRC_WKFL_VIEW'))
+                <a class="dropdown-item" href="{{ route('pricing.workflow.index') }}"><i class="la la-stream me-2"></i>Pricing Process</a>
+                <a class="dropdown-item" href="{{ route('pricing.lookup') }}"><i class="la la-search-dollar me-2"></i>Price Lookup</a>
+            @endif
+            @if ($u->can('PRC_HOLD_VIEW'))
+                <a class="dropdown-item" href="{{ route('pricing.hold.index') }}"><i class="la la-pause-circle me-2"></i>Price Holds</a>
+            @endif
+            @if ($u->can('PRC_TCS_VIEW'))
+                <a class="dropdown-item" href="{{ route('pricing.tcs.index') }}"><i class="la la-percent me-2"></i>TCS</a>
+            @endif
+            @if ($u->can('PRC_RTOR_VIEW'))
+                <a class="dropdown-item" href="{{ route('pricing.rto.index') }}"><i class="la la-id-card me-2"></i>RTO Rules</a>
+            @endif
+            @if ($u->can('PRC_INSR_VIEW'))
+                <a class="dropdown-item" href="{{ route('pricing.insurance.base-rules') }}"><i class="la la-shield-alt me-2"></i>Insurance Rules</a>
+            @endif
+        </x-backpack::menu-dropdown>
+    @endif
+
     {{-- Separator --}}
     <x-backpack::menu-separator title="Users & Organization" />
 
@@ -323,13 +346,19 @@
             });
         @endphp
 
+        {{-- PRICE LIST — every logged-in user, read-only (DEC-081) --}}
+        <x-backpack::menu-dropdown title="Price List" icon="la la-tags">
+            <a class="dropdown-item" href="{{ route('pricing.price-list.index') }}"><i class="la la-th-large me-2"></i>All price lists</a>
+            @foreach (\App\Services\Vehicle\Pricing\Engine\PriceListService::LISTS as $plKey => $plDef)
+                <a class="dropdown-item" href="{{ route('pricing.price-list.show', $plKey) }}"><i class="la la-list me-2"></i>{{ $plDef['label'] }}</a>
+            @endforeach
+        </x-backpack::menu-dropdown>
+
         {{-- SALES MAIN DROPDOWN --}}
         <x-backpack::menu-dropdown title="Sales" icon="la la-chart-line">
 
             {{-- Separator --}}
             <x-backpack::menu-separator title="Sales Configuration" />
-
-            {{-- Price List hidden: admin/pricing has no route or screen (BUG-069, DEC-038). --}}
 
             {{-- Enquiries --}}
             <x-backpack::menu-dropdown title="Enquiries" icon="la la-question-circle" nested="true">

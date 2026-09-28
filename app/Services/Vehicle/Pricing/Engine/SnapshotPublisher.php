@@ -29,6 +29,7 @@ final class SnapshotPublisher
                 $row = Snapshot::query()->where($key)->first() ?? new Snapshot($key);
                 $row->fill([
                     'import_session_id' => $sessionId, 'variant_code' => $variant->code, 'rto_permit' => $s['rto_permit'], 'insu_permit' => $s['insu_permit'],
+                    'price_list' => $s['payload']['price_list'] ?? null, 'vehicle_permit' => $s['payload']['vehicle_permit'] ?? null,
                     'payload' => ['published_at' => $now] + $s['payload'], 'is_active' => true, 'expired_on' => null,
                 ])->save();
                 $kept[] = $row->id;

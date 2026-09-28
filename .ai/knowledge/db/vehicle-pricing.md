@@ -11,6 +11,10 @@ Indexes: (model_code,addon_type,is_active), (import_session_id)
 id bigint unsigned PK, import_session_id bigint unsigned, model_code varchar(40), variant_code varchar(40)?, status varchar(20), error_message varchar(500)?, created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
 Indexes: (status), UNIQUE (import_session_id,model_code,variant_code)
 
+## `xlr8_vehicle_pricing_calc_results` · ~0 rows · model: App\Models\Vehicle\Pricing\CalcResult
+id bigint unsigned PK, import_session_id bigint unsigned, model_code varchar(40), price_list varchar(20)?, status varchar(12), snapshots smallint unsigned, message varchar(500)?, created_at timestamp?, updated_at timestamp?, created_by bigint unsigned?, updated_by bigint unsigned?
+Indexes: (import_session_id,status), UNIQUE (import_session_id,model_code)
+
 ## `xlr8_vehicle_pricing_change_flags` · ~54 rows · model: App\Models\Vehicle\Pricing\ChangeFlag
 id bigint unsigned PK, import_session_id bigint unsigned, segment varchar(20)?, change_type varchar(40), model_code varchar(40)?, variant_code varchar(40)?, field_name varchar(60)?, old_value text?, new_value text?, is_processed tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
 Indexes: (model_code), (import_session_id,is_processed), (change_type)
@@ -47,11 +51,11 @@ id bigint unsigned PK, wef_date date?, hold_scopes json?, hold_lists json?, stat
 Indexes: (status), (wef_date)
 
 ## `xlr8_vehicle_pricing_ins_addon_rates` · ~0 rows · model: App\Models\Vehicle\Pricing\InsAddonRate
-id bigint unsigned PK, import_session_id bigint unsigned?, insurance_company varchar(40), permit varchar(30), addon_slug varchar(40), addon_name varchar(80)?, rate_type varchar(20), rate_value decimal(12,4), applies_on varchar(20), wef_date date?, expired_on date?, is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
-Indexes: (import_session_id), (insurance_company,permit,is_active)
+id bigint unsigned PK, import_session_id bigint unsigned?, base_rule_id bigint unsigned?, insurance_company varchar(40), permit varchar(30), addon_slug varchar(40), addon_name varchar(80)?, rate_type varchar(20), rate_value decimal(12,4), rate_text varchar(60)?, applies_on varchar(20), wef_date date?, expired_on date?, is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
+Indexes: (import_session_id), (base_rule_id), (insurance_company,permit,is_active)
 
 ## `xlr8_vehicle_pricing_ins_base_rules` · ~0 rows · model: App\Models\Vehicle\Pricing\InsBaseRule
-id bigint unsigned PK, import_session_id bigint unsigned?, company varchar(40)?, plan varchar(20)?, od_years tinyint unsigned?, tp_years tinyint unsigned?, permit varchar(30), fuel_type varchar(30)?, wheels tinyint unsigned?, seating varchar(30)?, cc_range varchar(30)?, gvw_range varchar(30)?, od_factor decimal(10,6), od_surcharge decimal(8,4), od_discount_rate decimal(8,2), tp_basic decimal(12,2), tp_per_passenger decimal(12,2), tp_legal_driver decimal(12,2), tp_non_fare_passenger decimal(12,2), tp_bi_fuel_kit decimal(12,2), wef_date date?, expired_on date?, is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
+id bigint unsigned PK, import_session_id bigint unsigned?, company varchar(40)?, plan varchar(20)?, od_years tinyint unsigned?, tp_years tinyint unsigned?, permit varchar(30), fuel_type varchar(30)?, wheels tinyint unsigned?, seating varchar(30)?, cc_range varchar(30)?, gvw_range varchar(30)?, od_factor decimal(10,6), od_surcharge decimal(8,4), od_discount_rate decimal(8,2), tp_basic decimal(12,2), tp_per_passenger decimal(12,2), tp_legal_driver decimal(12,2), tp_non_fare_passenger decimal(12,2), tp_bi_fuel_kit decimal(12,2), tp_pa_owner decimal(15,2), heads json?, wef_date date?, expired_on date?, is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
 Indexes: (import_session_id), (permit,is_active)
 
 ## `xlr8_vehicle_pricing_ins_defaults` · ~0 rows · model: App\Models\Vehicle\Pricing\InsDefault
@@ -62,7 +66,7 @@ Indexes: (import_session_id), (model_code,permit)
 id bigint unsigned PK, base_rule_id bigint unsigned, year_no tinyint unsigned, idv_basis varchar(60)?, idv_pct decimal(6,3)?, created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
 Indexes: (base_rule_id)
 
-## `xlr8_vehicle_pricing_permit_map` · ~6 rows · model: —
+## `xlr8_vehicle_pricing_permit_map` · ~6 rows · model: App\Models\Vehicle\Pricing\PermitMap
 id bigint unsigned PK, vehicle_permit varchar(20), wheels tinyint unsigned?, rto_permit varchar(30), insu_permit varchar(30), label varchar(100)?, is_active tinyint(1), created_at timestamp?, updated_at timestamp?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
 Indexes: (vehicle_permit,wheels)
 
@@ -71,7 +75,7 @@ id bigint unsigned PK, import_session_id bigint unsigned?, model_code varchar(40
 Indexes: (import_session_id), (is_publishable), (segment), UNIQUE (model_code)
 
 ## `xlr8_vehicle_pricing_rto_rules` · ~0 rows · model: App\Models\Vehicle\Pricing\RtoRule
-id bigint unsigned PK, import_session_id bigint unsigned?, code varchar(50)?, permit varchar(30), wheels tinyint unsigned?, reg_type varchar(20)?, body_type varchar(30)?, gvw_range varchar(30)?, seater varchar(20)?, fuel_type varchar(30)?, cc_range varchar(30)?, tax_factor decimal(10,6), tax_basis varchar(120)?, tax_slab varchar(50)?, surcharge decimal(12,2), surcharge_formula varchar(120)?, hypothecation decimal(12,2), green_tax decimal(12,2), registration_fee decimal(12,2), duplicate_tax_card decimal(12,2), fitness decimal(12,2), penalty decimal(12,2), rto_tape decimal(12,2), wef_date date?, expired_on date?, is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?, extra_json json?
+id bigint unsigned PK, import_session_id bigint unsigned?, code varchar(50)?, permit varchar(30), wheels tinyint unsigned?, reg_type varchar(20)?, body_type varchar(30)?, gvw_range varchar(30)?, seater varchar(20)?, fuel_type varchar(30)?, cc_range varchar(30)?, assessable_range varchar(40)?, tax_factor decimal(10,6), tax_basis varchar(120)?, tax_slab varchar(50)?, surcharge decimal(12,2), surcharge_formula varchar(120)?, hypothecation decimal(12,2), green_tax decimal(12,2), registration_fee decimal(12,2), duplicate_tax_card decimal(12,2), fitness decimal(12,2), penalty decimal(12,2), rto_tape decimal(12,2), wef_date date?, expired_on date?, is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?, extra_json json?
 Indexes: (import_session_id), (permit,is_active)
 
 ## `xlr8_vehicle_pricing_session_changes` · ~0 rows · model: —
@@ -83,8 +87,8 @@ id bigint unsigned PK, sheet_code varchar(64), field_code varchar(64), label var
 Indexes: (sheet_code,is_active), UNIQUE (sheet_code,field_code)
 
 ## `xlr8_vehicle_pricing_snapshots` · ~0 rows · model: App\Models\Vehicle\Pricing\Snapshot
-id bigint unsigned PK, import_session_id bigint unsigned?, model_code varchar(40), variant_code varchar(40)?, channel varchar(16), vin_type varchar(8), permit varchar(20), rto_permit varchar(30)?, insu_permit varchar(30)?, wef_date date, payload json, is_active tinyint(1), expired_on date?, created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
-Indexes: (is_active,wef_date), (import_session_id), UNIQUE (model_code,channel,vin_type,permit,wef_date)
+id bigint unsigned PK, import_session_id bigint unsigned?, model_code varchar(40), variant_code varchar(40)?, channel varchar(16), vin_type varchar(8), permit varchar(20), price_list varchar(20)?, vehicle_permit varchar(20)?, rto_permit varchar(30)?, insu_permit varchar(30)?, wef_date date, payload json, is_active tinyint(1), expired_on date?, created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
+Indexes: (is_active,wef_date), (import_session_id), (price_list,channel,vin_type,is_active), UNIQUE (model_code,channel,vin_type,permit,wef_date)
 
 ## `xlr8_vehicle_pricing_tcs_config` · ~0 rows · model: App\Models\Vehicle\Pricing\TcsConfig
 id bigint unsigned PK, limit_amount decimal(14,2), rate_pct decimal(5,2), is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?

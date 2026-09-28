@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\Pricing\HoldController;
 use App\Http\Controllers\Admin\Pricing\InsuranceController;
+use App\Http\Controllers\Admin\Pricing\PriceListController;
+use App\Http\Controllers\Admin\Pricing\PriceLookupController;
 use App\Http\Controllers\Admin\Pricing\PricingResetController;
 use App\Http\Controllers\Admin\Pricing\Process\AddonsController;
 use App\Http\Controllers\Admin\Pricing\Process\CalculateController;
@@ -24,6 +26,13 @@ Route::group([
 
     Route::get('tcs', [TcsConfigController::class, 'index'])->name('pricing.tcs.index');
     Route::put('tcs', [TcsConfigController::class, 'update'])->name('pricing.tcs.update');
+
+    Route::get('lookup', [PriceLookupController::class, 'index'])->name('pricing.lookup');
+
+    // DEC-081 standalone Price List — every logged-in user, read-only
+    Route::get('price-list', [PriceListController::class, 'index'])->name('pricing.price-list.index');
+    Route::get('price-list/{list}', [PriceListController::class, 'show'])->where('list', 'pv|taxi|cv|bev|lmm|tzu|csd')->name('pricing.price-list.show');
+    Route::get('price-list/{list}/rows', [PriceListController::class, 'rows'])->where('list', 'pv|taxi|cv|bev|lmm|tzu|csd')->name('pricing.price-list.rows');
 
     Route::get('hold', [HoldController::class, 'index'])->name('pricing.hold.index');
     Route::post('hold', [HoldController::class, 'hold'])->name('pricing.hold.apply');

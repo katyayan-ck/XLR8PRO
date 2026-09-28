@@ -148,6 +148,7 @@ final class InsuranceCalculator
             'idv' => $idv, 'od_factor' => $factor, 'od_gross' => $odGross, 'od_discount' => $odDiscount, 'od' => $od,
             'od_heads' => ['cng_kit' => $cng, 'imt23' => $imt], 'od_heads_total' => $cng + $imt,
             'tp' => $tp, 'tp_heads' => $tpHeads, 'tp_gst' => round($tp * $tpGstPct / 100),
+            'od_gst_pct' => $this->book->insuranceGstPct, 'tp_gst_pct' => $tpGstPct,   // frozen with the snapshot (getPricing re-prices selections)
             'gst' => $baseGst, 'base_total' => $odPart + $tp + $baseGst,
             'addons' => $addons,
             'standard_total' => $odPart + $tp + $standardAddons + round(($odPart + $standardAddons) * $this->book->insuranceGstPct / 100) + round($tp * $tpGstPct / 100),

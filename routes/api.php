@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\DocController;
 use App\Http\Controllers\Api\V1\EntityHistoryController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\SystemSettingApiController;
+use App\Http\Controllers\Api\V1\Vehicle\Pricing\PricingController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -22,10 +23,6 @@ Route::prefix('v1')->group(function () {
             ->name('api.auth.verify-otp');
     });
 
-    // Pricing API removed: calculate-exchange called PricingService::calculateExchangeGap(),
-    // which never existed (PricingService was an empty file), and generate-quote had no
-    // method. Track B rebuilds the pricing API on PricingEngineService (DEC-020, DEC-030).
-
     // ╔════════════════════════════════════════════════════════╗
     // ║ PROTECTED ROUTES (Authentication + Device Validation) ║
     // ╚════════════════════════════════════════════════════════╝
@@ -40,6 +37,10 @@ Route::prefix('v1')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout'])
                 ->name('api.auth.logout');
         });
+
+        // getPricing — published snapshot as the fixed-key contract v2 (DEC-073 step 11, DEC-080)
+        Route::get('vehicle/pricing/{oemCode}', [PricingController::class, 'show'])
+            ->name('api.vehicle.pricing.show');
 
         // DocManager Routes
         Route::post('docs/upload', [DocController::class, 'upload']);

@@ -1178,3 +1178,42 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Addendum (user, 29-09):** COD charges (₹42,000 in the reference Dealer Charges sheet) are controlled by the setting
   `pricing.dealer_charges.include_cod`. The default is off: COD is shown in the snapshot but not in the on-road total
   until the user decides. Snapshots are frozen, so a change applies at the next Calculate & Publish.
+
+### DEC-081 | 29-09-2026 | A (Vehicle pricing) | getPricing (DEC-073 step 11) and the standalone Price List screens
+- **User request (28–29-09):**
+  - Wire the pricing process into the Admin **Pricing** menu.
+  - Add a standalone **Price List** menu **open to every logged-in user**, with one read-only AG Grid per list: PV,
+    Taxi, CV, LMM, TZU and CSD.
+  - Columns:
+    - vehicle: custom model, variant display name, colour, ex-showroom;
+    - add-on prices, bifurcated where needed (insurance and RTO shown on hover);
+    - standard discounts;
+    - conditional discounts;
+    - on-road at the default values.
+  - Layout like the reference PDFs.
+- **Technical calls:**
+  1. **getPricing:**
+     - `PricingQueryService::getPricing()` serves the published snapshot valid on the date; it never recalculates from
+       live rules.
+     - Caller selections are applied on top and the totals recomputed with the snapshot's formulas.
+     - The API is `GET /api/v1/vehicle/pricing/{oemCode}` (Sanctum + device): 404 `PRICING_NOT_FOUND`, 423
+       `PRICING_ON_HOLD` (the pricing is included, with `hold = true`).
+     - There is an admin lookup at `pricing.lookup` (`PRC_WKFL_VIEW`).
+  2. **Lists and their sources** (NV snapshots valid on the chosen date, default today):
+     - PV / CV / LMM / TZU (`LMM_TZU`) = the normal channel, that price list, the vehicle's own permit.
+     - Taxi = the extra PASSENGER snapshot of `taxi_price = YES` vehicles.
+     - CSD = the csd channel.
+     - **Electric (BEV) is added as its own list.** Its price list exists and `PriceList-ELECTRIC.pdf` is in the
+       reference; it is easy to remove if not wanted.
+  3. **Snapshot columns:** snapshots gain `price_list` + `vehicle_permit` (mirroring the payload, back-filled), so a
+     list is an indexed query instead of a JSON scan.
+  4. **Access:** the Price List routes need only an admin login (no permission), as requested. A held list still shows,
+     with an "On hold" banner.
+  5. **Performance:**
+     - The rows are projected server-side (a few fields per snapshot) and returned as JSON through an AJAX endpoint.
+     - The result is cached per list × date × the latest snapshot change, so it rebuilds by itself after a publish.
+     - The grid loads its rows after the page renders.
+  6. **Conditional discounts:** one column per exchange scheme / corporate category found in the list. OV is not shown
+     (NV list, like the PDFs).
+- **Approved-by:** user (screens, lists, columns); auto (technical 1–6; the Electric list is flagged) · **Risk:** LOW
+  (read-only) · **Reversal:** revert; the migration's `down()` drops the two columns.

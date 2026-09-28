@@ -18,6 +18,8 @@ use Illuminate\Support\Carbon;
  * @property string $channel
  * @property string $vin_type
  * @property string $permit
+ * @property string|null $price_list PV, CV, BEV, LMM, LMM_TZU, CSD (DEC-081)
+ * @property string|null $vehicle_permit the vehicle's own permit; ≠ permit on a taxi's extra PASSENGER snapshot
  * @property string|null $rto_permit
  * @property string|null $insu_permit
  * @property Carbon|null $wef_date
@@ -38,6 +40,8 @@ class Snapshot extends BaseModel
         'channel',
         'vin_type',
         'permit',
+        'price_list',
+        'vehicle_permit',
         'rto_permit',
         'insu_permit',
         'wef_date',

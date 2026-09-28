@@ -7,7 +7,7 @@ touching importers**.
 
 | Need | Use |
 |---|---|
-| on-road price for a variant (quotation, booking, API) | `app(PricingEngineService::class)->getPricingPayload($oemCode, ['channel' => 'normal', 'vin_type' => 'nv'])` |
+| on-road price for a variant (quotation, booking, API) | `app(PricingQueryService::class)->getPricing($oemCode, ['permit' => 'PRIVATE', 'vin_type' => 'NV', 'channel' => 'normal'])` — the published snapshot (step 11, below) |
 | publish prices after an import | `PricingEngineService::calculateAndPublish(...)` (run by `RecalculateVehiclePricingJob`) |
 | drive the import workflow | `PricingSessionService` + the importers (admin **Pricing → Workflow** screens) |
 | write a rule / add-on / price row | the entity services under `Pricing\Rules\*`, `Pricing\Addons\*`, `Pricing\Prices\PriceService` (DEC-056/057/058) |
@@ -33,7 +33,7 @@ withheld, incomplete, hold, errors[]
 `incomplete = true` → the vehicle master is not complete (never published); `hold` / `withheld` → a price hold is on
 for its scope; `errors` lists what could not be computed.
 
-## PricingEngineService (`App\Services\Vehicle\Pricing\PricingEngineService`) — legacy, used only by the unrouted v1 API until Phase 10
+## PricingEngineService (`App\Services\Vehicle\Pricing\PricingEngineService`) — legacy, no callers since Phase 10 (removed in Phase 11)
 | Method | Returns |
 |---|---|
 | `getPricingPayload(string $oemCode, array $options = [])` | the pricing JSON. Options: `channel` (`normal` / `csd`), `vin_type` (`nv` new-vehicle / `ov` old; `new`/`current` → `nv`, `old` → `ov`), `wef_date` (price as of a date), `permit` (force RTO / insurance permit, e.g. taxi Private vs Passenger) |
@@ -48,7 +48,7 @@ $json = app(PricingEngineService::class)->getPricingPayload($variant->code, ['vi
 if ($json['incomplete'] || $json['hold']) { /* don't quote; show why */ }
 $onRoad = $json['on_road'];
 ```
-API v1: `Api\V1\Vehicle\Pricing\PricingController::getPricing()` wraps this for the mobile app.
+The v1 API no longer uses this — see `getPricing` (step 11) below.
 
 ## Calculators
 | Service | Method | Returns |
@@ -110,6 +110,64 @@ API v1: `Api\V1\Vehicle\Pricing\PricingController::getPricing()` wraps this for 
 | `PricingCalculationService` | • `start($session)`: HoldCheck → Calculating; held lists recorded as skipped; `Bus::batch` of `CalculateVehiclesJob` (`CHUNK` = 100); `finally` → `finish()`.<br>• `calculate($session, $codes)`: build → publish → `CalcResult`; the first snapshot marks the session published; TAXI / CSD holds drop those snapshots.<br>• `finish($id)`: → Summary with the counts.<br>• `retryFailed($session)`, `counts($session)`. |
 | `CalcResult` (`xlr8_vehicle_pricing_calc_results`) | Per session × vehicle: `published` (with the snapshot count), `failed` (with the reason) or `skipped` (held, not Active). |
 | screens (`Admin\Pricing\Process\CalculateController`) | • `calculate-start` (POST, from the hold check).<br>• `summary/{id}`: progress with the batch %, counts per list, failures.<br>• `summary-results/{id}`: failed + skipped download.<br>• `retry-failed` (POST).<br>• `complete` (POST `reopen_lists[]`): → Completed, gate released.<br>`pricing.workflow.status/{id}` adds `batch {total, processed, failed, percent}`. |
+
+## getPricing — step 11 (`App\Services\Vehicle\Pricing\Engine\PricingQueryService`)
+Serves the **published snapshot**; nothing is recalculated from live rules. Selections are applied on top and the totals
+recomputed with the snapshot's own formulas (`gross`, TCS on ex − discounts, `invoice_value`, `on_road`).
+
+| Method | Returns |
+|---|---|
+| `getPricing(string $oemCode, array $options = []): Result` | ok `['pricing' => contract v2]` (`source = snapshot`) · fail `NOT_FOUND` · fail `ON_HOLD` with `data.pricing` (`hold = true`) |
+| `apply(array $payload, array $options): array` | the selections applied to a normalized payload, totals recomputed; unknown selections go to `errors[]` and are not applied |
+
+**Snapshot chosen:** `wef_date` ≤ the date (default today) and not expired by then; `vin_type` (default NV); `channel`
+(default normal); `permit` (default the vehicle's own — a taxi-priced car's PRIVATE snapshot, not its PASSENGER one).
+**Options:** `rsa_years` (0 = none), `shield_scheme` (0 = none), `insurance {company, plan, addons[]}` (re-priced
+with the plan's frozen `od_gst_pct` / `tp_gst`; `frozen` stays true only for the default combo), `reg_type = BH`
+(uses `rto.options[0]`), `outside_state` (adds `outside_state_trc`), `include_cod`, `exchange` (scheme),
+`corporate` (category). **Hold:** `PricingHoldService::isHeld(price_list, channel, permit, taxi-extra)` — a TAXI hold
+blocks only the extra PASSENGER price. `PricingContract::normalize()` casts numeric values to float where the default is
+a float (MySQL JSON returns `1000000.0` as `1000000`).
+
+```php
+$r = app(PricingQueryService::class)->getPricing('AZ1116YGTTA4EA01BZ', ['rsa_years' => 2, 'exchange' => 'Scrappage']);
+if (! $r->ok) { /* $r->code: NOT_FOUND | ON_HOLD */ }
+$onRoad = $r->get('pricing')['on_road'];
+```
+- **API:** `GET /api/v1/vehicle/pricing/{oemCode}` (`auth:sanctum` + `validate_device`, name `api.vehicle.pricing.show`,
+  `Api\V1\Vehicle\Pricing\PricingController::show`). The options go in the query string; the envelope has
+  `data.pricing`; 404 `PRICING_NOT_FOUND`; 423 `PRICING_ON_HOLD` (with `data.pricing`).
+- **Admin:** `admin/pricing/lookup` (`pricing.lookup`, `PRC_WKFL_VIEW`, `Admin\Pricing\PriceLookupController`) — the
+  same options as a form, the build-up, discounts, RTO / insurance heads and the raw JSON.
+
+## Price List screens (DEC-081, `App\Services\Vehicle\Pricing\Engine\PriceListService`)
+Read-only lists of the published NV prices at the default selections, laid out like the reference PDFs. They are open
+to **every logged-in user** (no permission). The menu is **Price List**; the routes are `pricing.price-list.index`,
+`pricing.price-list.show/{list}` and `pricing.price-list.rows/{list}` (JSON). The controller is
+`Admin\Pricing\PriceListController`.
+
+| Method | Returns |
+|---|---|
+| `rows(string $list, ?string $date = null): array` | `{list, label, date, hold, wef[], exchange[], corporate[], rows[]}`. Each row has `code, model, variant, colour, ex_showroom, incidental, fastag_trc, other_charges (+other_tip), rsa, shield, accessories, insurance (+insurance_tip), rto (+rto_tip), disc_consumer / cash / accessory / shield / rsa / total, exchange{scheme: amount}, corporate{category: amount}, tcs, invoice, on_road`. |
+| `counts(?string $date = null): array<string, int>` | vehicles per list on the date (landing cards) |
+| `LISTS` | `pv`, `taxi`, `cv`, `bev` (Electric), `lmm`, `tzu` (`LMM_TZU`), `csd` → label, hold code, channel, price list |
+
+- **Which snapshots each list shows:** NV snapshots valid on the date.
+  - PV / CV / BEV / LMM / TZU: the normal channel, that `price_list`, and `permit = vehicle_permit`.
+  - Taxi: the extra PASSENGER snapshot (`permit ≠ vehicle_permit`).
+  - CSD: the csd channel.
+- **Snapshot columns:** snapshots carry `price_list` and `vehicle_permit` (migration `2026_09_29_014111`, filled by
+  `SnapshotPublisher`), so a list is an indexed query.
+- **Performance:**
+  - Rows are read in chunks (`chunkById` 500) and projected.
+  - They are cached per list × date × (latest `updated_at` + count), so a publish refreshes the list by itself.
+  - The page loads the rows by AJAX into the AG Grid.
+- **Grid:**
+  - Pinned model and variant; on-road pinned on the right.
+  - Hover break-ups for insurance, RTO and other charges.
+  - Amount columns that are zero on every row are hidden.
+  - Quick search and CSV download.
+  - A held list shows an "On hold" banner.
 
 ## The import workflow (legacy flow — replaced step by step by the DEC-073 engine above)
 `ImportSession` stages: `idle → detecting → awaiting_vehicle → importing_prices → awaiting_addons → importing_addons →

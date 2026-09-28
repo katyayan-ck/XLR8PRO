@@ -75,6 +75,8 @@ final class PricingContract
         foreach ($given as $key => $value) {
             if (is_array($value) && isset($defaults[$key]) && is_array($defaults[$key]) && ! array_is_list($defaults[$key])) {
                 $out[$key] = self::fill($defaults[$key], $value);
+            } elseif (is_float($defaults[$key] ?? null) && is_numeric($value)) {
+                $out[$key] = (float) $value;   // MySQL JSON returns 1000000.0 as 1000000 — amounts stay floats
             } else {
                 $out[$key] = $value;
             }
