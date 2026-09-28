@@ -234,7 +234,7 @@ Entry format:
 | BUG-196 | Two insurance policy copies sit in `media` with `model_type = App\Models\Module\Insurance\Xlinsurer` (lower-case i, a class that does not exist); the insurance screen reads `XlInsurance` and never shows them | Low | FIXED by the DEC-069 migration | 28-09-2026 | — |
 | BUG-197 | Division `PRSNL` belongs to department `ADM` in the master, but 42 users hold scopes department `SLS` + division `PRSNL` — the division can't narrow the SLS department, so those users resolve to every SLS division | Low | FIXED (DEC-071, data) — PRSNL moved to SLS | 28-09-2026 | — |
 | BUG-198 | Rebuilding the Spatie permission cache takes ~10 s and ~2,900 queries; it happens on the first permission check after any role / permission change or cache clear, so that request (for a non-superadmin) is very slow | Medium | OPEN (performance) | 28-09-2026 | — |
-| BUG-199 | Variant rows imported before DEC-051 store the OEM code **without** the colour suffix (`code` = 16-char stem, colour only in `color_code`; 2,652 rows for 652 codes). Price-list codes carry the colour, so Detect treats those vehicles as new and creates duplicate INCOMPLETE stubs (test copy: 1,859 of 2,782 PV stubs) | High | OPEN (needs decision) | 28-09-2026 | — |
+| BUG-199 | Variant rows imported before DEC-051 store the OEM code **without** the colour suffix (`code` = 16-char stem, colour only in `color_code`; 2,652 rows for 652 codes). Price-list codes carry the colour, so Detect treats those vehicles as new and creates duplicate INCOMPLETE stubs (test copy: 1,859 of 2,782 PV stubs) | High | DECIDED (DEC-074) — purge + re-import per environment | 28-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -2274,7 +2274,7 @@ guessed at.
 
 ### BUG-199 — Legacy variant codes lack the colour suffix, so Detect duplicates them
 
-- **Status:** OPEN (needs a user decision before any environment other than the purged local `xlrm` runs the new process)
+- **Status:** DECIDED (DEC-074) — purge + re-import per environment
 - **Severity:** High — the first pricing run on a database that still holds the pre-DEC-051 vehicle master (UAT, production, `xlrm_testing`)
   would create a second, incomplete vehicle for most existing variants.
 - **Found:** 28-09-2026, DEC-073 Phase 2 end-to-end run of the real `Pricing.xlsx` on `xlrm_testing` (process #57, discarded:
@@ -2285,3 +2285,5 @@ guessed at.
 - **Proposed solution (choose one):** (a) a guarded data migration that rewrites legacy rows to `code = stem + color_code`
   (and their children / references) — a mass remap, needs approval; or (b) purge and re-import the masters as done locally
   (DEC-051); or (c) Detect also matches `stem + color_code` as known (keeps two code shapes alive — not recommended).
+- **Resolution (28-09-2026):** User chose option 2 (28-09-2026): each environment backs up, purges the vehicle masters and rebuilds them through the pricing process; the Start screen warns while old-format rows exist (PriceListDetectService::legacyCodeCount()).
+

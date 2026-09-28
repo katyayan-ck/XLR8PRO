@@ -7,10 +7,12 @@ use App\Models\User;
 use App\Models\Vehicle\Pricing\Hold;
 use App\Models\Vehicle\Pricing\ImportSession;
 use App\Models\Vehicle\Variant;
+use App\Services\Vehicle\Pricing\Import\PriceListDetectService;
 use App\Services\Vehicle\Pricing\Session\PricingStage;
 use App\Services\Vehicle\VehicleService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -162,5 +164,20 @@ class PricingProcessStartTest extends TestCase
         $this->actingAsBackpackUser($manager)->post(route('pricing.workflow.discard'))->assertSessionHas('success');
         $this->assertFalse(Variant::withTrashed()->where('code', "ZQP{$this->tag}WH")->exists(), 'discard removes the stubs');
         $this->assertTrue(Variant::where('code', $known)->exists(), 'vehicles from before the process stay');
+    }
+
+    public function test_the_start_screen_warns_about_old_format_vehicle_codes(): void
+    {
+        $detect = app(PriceListDetectService::class);
+        $before = $detect->legacyCodeCount();
+        app(VehicleService::class)->createStubFromPriceList("ZQF{$this->tag}WH", 'ZETA PRO', 'ZX', 'Price List PV');
+        $this->assertSame($before, $detect->legacyCodeCount(), 'a full OEM code (with colour) is not old-format');
+
+        $legacy = app(VehicleService::class)->createStubFromPriceList("ZQL{$this->tag}RD", 'ZETA PRO', 'ZX', 'Price List PV')['variant'];
+        DB::table($legacy->getTable())->where('id', $legacy->id)->update(['code' => "ZQL{$this->tag}"]); // pre-DEC-051 shape
+        $this->assertSame($before + 1, $detect->legacyCodeCount());
+
+        $this->actingAsBackpackUser($this->user(['PRC_WKFL_VIEW', 'PRC_WKFL_MANAGE']))->get(route('pricing.workflow.start-form'))
+            ->assertOk()->assertSee('use the old code format');
     }
 }

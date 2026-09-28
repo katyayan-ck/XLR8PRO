@@ -17,6 +17,12 @@
         <a href="{{ route('pricing.workflow.index') }}" class="btn btn-link px-0"><i class="la la-arrow-left me-1"></i>Back</a>
     </div>
 
+    @if ($legacyCodes > 0)
+        <div class="alert alert-warning" role="alert">
+            <strong>{{ number_format($legacyCodes) }} vehicle(s) use the old code format</strong> (OEM code without the colour suffix).
+            Detect will treat them as new and create duplicates. Purge and re-import the vehicle masters first (DEC-074, BUG-199).
+        </div>
+    @endif
     @if ($errors->any())
         <div class="alert alert-danger" role="alert">
             @foreach ($errors->all() as $message)

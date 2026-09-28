@@ -977,3 +977,18 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Approved-by:** user (plan approved 28-09). · **Risk:** HIGH (prices shown to customers) — every phase tested on
   fixtures + real reference workbooks; nothing merged to stage without approval. · **Reversal:** revert commits;
   migrations roll back.
+
+### DEC-074 | 28-09-2026 | A (Vehicle pricing) | BUG-199: purge and re-import the vehicle masters before the first DEC-073 run
+- **Facts:** variant rows loaded before DEC-051 keep the OEM code without the colour suffix (`AW62BMZR7TF08A00` + `BA`).
+  Price lists carry the full code (`AW62BMZR7TF08A00BA`), so Detect creates duplicate INCOMPLETE vehicles.
+- **Decision (user, option 2):** every environment empties its vehicle masters (segment, sub-segment, model, variant) and
+  rebuilds them with the new pricing process, as local `xlrm` did under DEC-051. There is no code remap and no dual-format
+  matching.
+- **Guard:** the Start screen counts old-format variant rows (`color_code` set, `code` not ending in it) and warns before
+  a process is started (`PriceListDetectService::legacyCodeCount()`).
+- **Per environment (at deploy):**
+  1. Take a backup.
+  2. Purge the masters. This is a non-local DB operation and needs the user's go-ahead for each environment.
+  3. Run the pricing process.
+  `xlrm_testing` keeps its legacy copy until the local fresh import is complete (DEC-051).
+- **Approved-by:** user (28-09). · **Risk:** HIGH (destructive per environment, done manually with a backup) · **Reversal:** restore the backup.

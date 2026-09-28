@@ -627,3 +627,11 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
 - **Guides:** `docs/domains/pricing.md` (detect service, job, screens; legacy start / detect rows marked replaced).
 - **Phase 1 follow-up:** `VehicleMasterWriteTest` (2 tests) saved incomplete variants as Active, which the DEC-073 gate now
   refuses. The tests are about codes and colours, so they now save the rows inactive. Full suite: 385 passed, 1 skipped.
+
+## BUG-199 decision (DEC-074)
+- **Decision (user, option 2):** each environment backs up, purges its vehicle masters and rebuilds them through the
+  pricing process. No code remap.
+- **New:** `PriceListDetectService::legacyCodeCount()` counts variant rows whose code lacks the colour suffix. The Start
+  screen shows a warning while any exist. It is a warning only: the test copy keeps its legacy rows (DEC-051).
+- **Test:** `PricingProcessStartTest::test_the_start_screen_warns_about_old_format_vehicle_codes`.
+- **Tracker:** BUG-199 → DECIDED (DEC-074). The purge is still to be done per environment.

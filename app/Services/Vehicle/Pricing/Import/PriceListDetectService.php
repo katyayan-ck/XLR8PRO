@@ -41,6 +41,18 @@ class PriceListDetectService
     }
 
     /**
+     * Variant rows still in the pre-DEC-051 shape: code without the colour suffix (BUG-199). Detect would duplicate them,
+     * so the Start screen warns until the masters are purged and re-imported (DEC-074).
+     */
+    public function legacyCodeCount(): int
+    {
+        return Variant::query()
+            ->whereNotNull('color_code')->where('color_code', '<>', '')->where('color_code', '<>', 'NA')
+            ->whereRaw('RIGHT(code, CHAR_LENGTH(color_code)) <> color_code')
+            ->count();
+    }
+
+    /**
      * Match the chosen lists (PV, CV, BEV, LMM, LMM_TZU, CSD) to the workbook's sheet titles.
      *
      * @param  list<string>  $titles  the workbook's sheet titles

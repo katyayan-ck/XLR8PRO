@@ -65,6 +65,7 @@ class PricingProcessController extends Controller
             'lists' => self::LISTS,
             'holdLists' => PricingHoldService::LISTS,
             'heldLists' => $this->holds->heldLists(),
+            'legacyCodes' => app(PriceListDetectService::class)->legacyCodeCount(),
         ]);
     }
 
