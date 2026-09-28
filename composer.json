@@ -47,9 +47,6 @@
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         },
-        "files": [
-            "app/Support/helpers.php"
-        ],
         "exclude-from-classmap": [
             "vendor/laravel/pint/app/",
             "vendor/league/flysystem/src/Local/"

@@ -31,39 +31,6 @@ class DateFormatService
         return is_string($format) && $format !== '' ? $format : self::DEFAULT_FORMAT;
     }
 
-    /** Date + time format: the site date format followed by `display.time_format` (default "H:i"). */
-    public function phpDateTimeFormat(): string
-    {
-        $time = $this->settings->get('display.time_format', 'H:i');
-
-        return $this->phpFormat().' '.(is_string($time) && $time !== '' ? $time : 'H:i');
-    }
-
-    /** Formats a date-time value with the site date format plus time; same fallback rules as format(). */
-    public function formatDateTime(mixed $date, string $fallback = 'N/A'): string
-    {
-        if (empty($date)) {
-            return $fallback;
-        }
-        try {
-            return ($date instanceof CarbonInterface ? $date : Carbon::parse($date))->format($this->phpDateTimeFormat());
-        } catch (\Throwable) {
-            return $fallback;
-        }
-    }
-
-    /**
-     * The site format as Carbon isoFormat tokens (what Backpack's date/datetime columns use), so
-     * Backpack lists follow the same setting.
-     */
-    public function isoFormat(bool $withTime = false): string
-    {
-        $map = ['d' => 'DD', 'j' => 'D', 'D' => 'ddd', 'l' => 'dddd', 'm' => 'MM', 'n' => 'M', 'M' => 'MMM', 'F' => 'MMMM',
-            'Y' => 'YYYY', 'y' => 'YY', 'H' => 'HH', 'G' => 'H', 'h' => 'hh', 'g' => 'h', 'i' => 'mm', 's' => 'ss', 'A' => 'A', 'a' => 'a'];
-
-        return strtr($withTime ? $this->phpDateTimeFormat() : $this->phpFormat(), $map);
-    }
-
     /**
      * Formats a date value using the site's configured date format.
      * Accepts anything Carbon::parse() accepts (string, Carbon, DateTime),

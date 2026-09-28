@@ -411,16 +411,3 @@ BUG-055, 090 (partly), 166, 167, 170, 171, 172, 174, 175, 176.
 ### Verification
 - Full suite: 288 passed, 1 skipped (VOTF data-dependent).
 - Targeted smoke of the touched screens as superadmin (200) and user 40 (403 where they lack permission).
-
-## Seeders through the entity services (DEC-059)
-- **`EntityService::firstOrCreate()` (new).**
-- **Seeders:**
-  - `ItDepartmentSeeder`: `DB::table` / `Division::create` became the services.
-  - `MasterDataSeeder`: the truncate + `Model::insert` became `ensure()` = `firstOrCreate` per row through the services. It no longer truncates.
-  - `SuperAdminSeeder`: the services, plus the correct `superadmin` role.
-  - `KeywordKeyvalueSeeder` / `SiteSettingSeeder`: were broken on `keyword_master_id`; they now go through the keyword services.
-  - `CrmStatusSeeder` / `EnumToKeyValueSeeder`: the keyword services.
-- **Tests:**
-  - New: `KeywordEntityServicesTest::test_first_or_create_matches_the_normalised_value_and_never_overwrites`.
-  - Full suite: 288 passed, 1 skipped (before the new test).
-- **Left:** `ProductionRBACSeeder` test users (broken, owner's call).

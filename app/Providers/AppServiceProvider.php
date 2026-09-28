@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\ApprovalService;
 use App\Services\AuthService;
 use App\Services\DateFormatService;
 use App\Services\EnquiryReferenceService;
@@ -37,6 +38,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        require_once app_path('Helpers/date-format.php');
+
         // // Register services as singletons for performance
         $this->app->singleton(RBACService::class, function ($app) {
             return new RBACService;
@@ -54,12 +57,20 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(ApprovalService::class, function ($app) {
+            return new ApprovalService;
+        });
+
         // Firebase Services
         $this->app->singleton(FirebaseService::class, function ($app) {
             return new FirebaseService;
         });
 
-        $this->app->singleton(NotificationService::class);
+        $this->app->singleton(NotificationService::class, function ($app) {
+            return new NotificationService(
+                $app->make(FirebaseService::class)
+            );
+        });
 
         // $this->app->singleton(\App\Services\IAM\DataScopeService::class);
         $this->app->singleton(HRJourneyService::class);
@@ -128,18 +139,5 @@ class AppServiceProvider extends ServiceProvider
         Blade::directive('sitedate', function ($expression) {
             return "<?php echo app(\App\Services\DateFormatService::class)->format({$expression}); ?>";
         });
-        Blade::directive('sitedatetime', function ($expression) {
-            return "<?php echo app(\App\Services\DateFormatService::class)->formatDateTime({$expression}); ?>";
-        });
-
-        // Backpack's own date / datetime columns follow the same site setting (DEC-066). Skipped when
-        // the database is not reachable (package discovery, fresh installs).
-        rescue(function () {
-            $dates = $this->app->make(DateFormatService::class);
-            config([
-                'backpack.ui.default_date_format' => $dates->isoFormat(),
-                'backpack.ui.default_datetime_format' => $dates->isoFormat(true),
-            ]);
-        }, null, false);
     }
 }

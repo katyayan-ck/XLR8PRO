@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\BaseController;
-use App\Models\Utilities\Docs\DocGroup;
-use App\Models\Utilities\Docs\Document;
 use App\Services\DocService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Throwable;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Utilities\Docs\Document;
+use App\Models\Utilities\Docs\DocGroup;
 
 /**
  * @OA\Tag(
@@ -40,16 +40,12 @@ class DocController extends BaseController
      *     summary="Upload document",
      *     description="Upload standalone or entity-bound document",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\RequestBody(
      *         required=true,
-     *
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
-     *
      *             @OA\Schema(
      *                 required={"title","file"},
-     *
      *                 @OA\Property(property="title", type="string", example="Contract Document"),
      *                 @OA\Property(property="description", type="string", nullable=true, example="Annual contract"),
      *                 @OA\Property(property="category_key", type="string", example="contracts"),
@@ -61,13 +57,10 @@ class DocController extends BaseController
      *             )
      *         )
      *     ),
-     *
      *     @OA\Response(
      *         response=201,
      *         description="Document uploaded",
-     *
      *         @OA\JsonContent(
-     *
      *             @OA\Property(property="http_status", type="integer", example=201),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S201"),
@@ -75,11 +68,13 @@ class DocController extends BaseController
      *             @OA\Property(property="data", type="object")
      *         )
      *     ),
-     *
      *     @OA\Response(response=400, description="Invalid input"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function upload(Request $request): JsonResponse
     {
@@ -95,7 +90,7 @@ class DocController extends BaseController
                 'requires_approval' => 'boolean',
             ]);
 
-            $entity = ($validated['entity_type'] ?? null) && ($validated['entity_id'] ?? null)
+            $entity = $validated['entity_type'] && $validated['entity_id']
                 ? app("App\\Models\\{$validated['entity_type']}")->findOrFail($validated['entity_id'])
                 : null;
 
@@ -119,13 +114,10 @@ class DocController extends BaseController
      *     summary="Get my documents",
      *     description="List own and accessible documents",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\Response(
      *         response=200,
      *         description="Documents retrieved",
-     *
      *         @OA\JsonContent(
-     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -133,16 +125,17 @@ class DocController extends BaseController
      *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
      *         )
      *     ),
-     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function getMyDocs(Request $request): JsonResponse
     {
         try {
             $docs = $this->docService->getMyDocuments(Auth::user());
-
             return $this->successResponse($docs, 'Documents retrieved');
         } catch (Throwable $e) {
             return $this->handleException($e, 'Get My Documents');
@@ -161,24 +154,18 @@ class DocController extends BaseController
      *     summary="Create document group",
      *     description="Create temp group for documents",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\RequestBody(
      *         required=true,
-     *
      *         @OA\JsonContent(
      *             required={"name"},
-     *
      *             @OA\Property(property="name", type="string", example="Project Files"),
      *             @OA\Property(property="description", type="string", nullable=true)
      *         )
      *     ),
-     *
      *     @OA\Response(
      *         response=201,
      *         description="Group created",
-     *
      *         @OA\JsonContent(
-     *
      *             @OA\Property(property="http_status", type="integer", example=201),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S201"),
@@ -186,11 +173,13 @@ class DocController extends BaseController
      *             @OA\Property(property="data", type="object")
      *         )
      *     ),
-     *
      *     @OA\Response(response=400, description="Invalid input"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function createGroup(Request $request): JsonResponse
     {
@@ -220,47 +209,42 @@ class DocController extends BaseController
      *     summary="Add to group",
      *     description="Add document to temp group",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\Parameter(
      *         name="groupId",
      *         in="path",
      *         required=true,
-     *
      *         @OA\Schema(type="integer")
      *     ),
-     *
      *     @OA\RequestBody(
      *         required=true,
-     *
      *         @OA\JsonContent(
      *             required={"doc_id"},
-     *
      *             @OA\Property(property="doc_id", type="integer", example=1)
      *         )
      *     ),
-     *
      *     @OA\Response(
      *         response=200,
      *         description="Added to group",
-     *
      *         @OA\JsonContent(
-     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
      *             @OA\Property(property="message", type="string", example="Added to group")
      *         )
      *     ),
-     *
      *     @OA\Response(response=404, description="Not found"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
+     *
+     * @param Request $request
+     * @param int $groupId
+     * @return JsonResponse
      */
     public function addToGroup(Request $request, int $groupId): JsonResponse
     {
         try {
-            $validated = $request->validate(['doc_id' => 'required|integer|exists:xlr8_utils_docs_document,id']);
+            $validated = $request->validate(['doc_id' => 'required|integer|exists:documents,id']);
 
             $group = DocGroup::findOrFail($groupId);
             $doc = Document::findOrFail($validated['doc_id']);
@@ -285,40 +269,36 @@ class DocController extends BaseController
      *     summary="Remove from group",
      *     description="Remove document from temp group",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\Parameter(
      *         name="groupId",
      *         in="path",
      *         required=true,
-     *
      *         @OA\Schema(type="integer")
      *     ),
-     *
      *     @OA\Parameter(
      *         name="docId",
      *         in="path",
      *         required=true,
-     *
      *         @OA\Schema(type="integer")
      *     ),
-     *
      *     @OA\Response(
      *         response=200,
      *         description="Removed from group",
-     *
      *         @OA\JsonContent(
-     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
      *             @OA\Property(property="message", type="string", example="Removed from group")
      *         )
      *     ),
-     *
      *     @OA\Response(response=404, description="Not found"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
+     *
+     * @param int $groupId
+     * @param int $docId
+     * @return JsonResponse
      */
     public function removeFromGroup(int $groupId, int $docId): JsonResponse
     {
@@ -346,30 +326,27 @@ class DocController extends BaseController
      *     summary="Download group ZIP",
      *     description="Download temp group as ZIP",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\Parameter(
      *         name="groupId",
      *         in="path",
      *         required=true,
-     *
      *         @OA\Schema(type="integer")
      *     ),
-     *
      *     @OA\Response(
      *         response=200,
      *         description="ZIP downloaded",
-     *
      *         @OA\MediaType(
      *             mediaType="application/zip",
-     *
      *             @OA\Schema(type="string", format="binary")
      *         )
      *     ),
-     *
      *     @OA\Response(response=404, description="Group not found"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
+     *
+     * @param int $groupId
+     * @return Response
      */
     public function downloadGroupZip(int $groupId): Response
     {
@@ -395,21 +372,16 @@ class DocController extends BaseController
      *     summary="Search documents",
      *     description="Full-text search on accessible documents",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\Parameter(
      *         name="query",
      *         in="query",
      *         required=true,
-     *
      *         @OA\Schema(type="string", example="contract")
      *     ),
-     *
      *     @OA\Response(
      *         response=200,
      *         description="Search results",
-     *
      *         @OA\JsonContent(
-     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -417,18 +389,19 @@ class DocController extends BaseController
      *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
      *         )
      *     ),
-     *
      *     @OA\Response(response=400, description="Invalid input"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function search(Request $request): JsonResponse
     {
         try {
             $validated = $request->validate(['query' => 'required|string']);
             $results = $this->docService->search($validated['query'], Auth::user());
-
             return $this->successResponse($results, 'Search results');
         } catch (Throwable $e) {
             return $this->handleException($e, 'Search Documents');
@@ -447,13 +420,10 @@ class DocController extends BaseController
      *     summary="Get analytics",
      *     description="Document views/downloads stats",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\Response(
      *         response=200,
      *         description="Analytics retrieved",
-     *
      *         @OA\JsonContent(
-     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -461,16 +431,17 @@ class DocController extends BaseController
      *             @OA\Property(property="data", type="object")
      *         )
      *     ),
-     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function getAnalytics(Request $request): JsonResponse
     {
         try {
             $analytics = $this->docService->getAnalytics(Auth::user());
-
             return $this->successResponse($analytics, 'Analytics retrieved');
         } catch (Throwable $e) {
             return $this->handleException($e, 'Get Analytics');
@@ -489,40 +460,36 @@ class DocController extends BaseController
      *     summary="Approve document",
      *     description="Approve pending document",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\Parameter(
      *         name="docId",
      *         in="path",
      *         required=true,
-     *
      *         @OA\Schema(type="integer")
      *     ),
-     *
      *     @OA\Response(
      *         response=200,
      *         description="Document approved",
-     *
      *         @OA\JsonContent(
-     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
      *             @OA\Property(property="message", type="string", example="Document approved")
      *         )
      *     ),
-     *
      *     @OA\Response(response=404, description="Document not found"),
      *     @OA\Response(response=403, description="Forbidden"),
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
+     *
+     * @param int $docId
+     * @return JsonResponse
      */
     public function approve(int $docId): JsonResponse
     {
         try {
             $doc = Document::findOrFail($docId);
             $this->docService->approve($doc, Auth::user());
-
             return $this->successResponse(null, 'Document approved');
         } catch (Throwable $e) {
             return $this->handleException($e, 'Approve Document');

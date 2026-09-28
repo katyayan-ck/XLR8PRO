@@ -25,7 +25,7 @@ id int PK, enq_no varchar(100)?, bid int, vh_id varchar(50)?, fin_mode varchar(5
 ## `xlr8_booking_financier` · ~86 rows · model: App\Models\Module\Booking\XlFinancier, XlFinancier
 id int PK, name varchar(150), short_name varchar(50), status int, created_at timestamp, created_by int, updated_at timestamp?, updated_by int?, deleted_at timestamp?, deleted_by int?
 
-## `xlr8_booking_insurance` · ~1500 rows · model: App\Models\Module\Insurance\XlInsurance
+## `xlr8_booking_insurance` · ~1497 rows · model: App\Models\Module\Insurance\XlInsurance
 id int PK, bid int?, source int?, insurer int?, insurer_code varchar(20)?, pol_no varchar(50)?, pol_date date?, pol_type int?, pol_tenure int?, policy_type varchar(50)?, insured_name varchar(50)?, mob_no varchar(50)?, rgn_no varchar(50)?, yom int?, ncb int?, vh_class varchar(50)?, pol_effective_date date?, pol_expiry_date date?, product_type varchar(50)?, model varchar(50)?, vh_body_type varchar(50)?, fuel varchar(50)?, vin varchar(50)?, engine_no varchar(50)?, created_date date?, payment_generation varchar(50)?, payment_no varchar(50)?, od_discount int?, total_idv bigint?, addon_prem_a int?, netod_prem_a int?, net_prem int?, imt23 int?, gross_prem int?, prev_pol_no int?, prev_insurance_company varchar(50)?, own_dmg_cover_start date?, own_dmg_cover_end date?, liability_cover_start date?, liability_cover_end date?, cpa_cover_start date?, cpa_cover_end date?, 64vb_status varchar(50)?, bundle_addon varchar(50)?, status int, created_at timestamp, created_by int, updated_at timestamp?, updated_by int?, deleted_at timestamp?, deleted_by int?
 
 ## `xlr8_booking_insurer` · ~30 rows · model: App\Models\Module\Booking\XlInsurer, XlInsurer

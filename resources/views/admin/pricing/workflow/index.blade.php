@@ -24,7 +24,7 @@
                             <span class="badge badge-primary">Active session #{{ $session->id }}</span>
                             Stage: <code>{{ $session->current_stage }}</code>
                             &nbsp;|&nbsp; Status: <code>{{ $session->status }}</code>
-                            &nbsp;|&nbsp; WEF: <code>{{ site_date($session->wef_date, '—') }}</code>
+                            &nbsp;|&nbsp; WEF: <code>{{ $session->wef_date?->format('Y-m-d') }}</code>
                         </p>
                         <pre class="small bg-light p-2">{{ json_encode($session->stats, JSON_PRETTY_PRINT) }}</pre>
                         <div class="mt-3">

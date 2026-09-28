@@ -22,7 +22,7 @@
                     <td>{{ $r->tax_factor }}</td>
                     <td>{{ $r->registration_fee }}</td>
                     <td>{{ $r->rto_tape }}</td>
-                    <td>{{ site_date($r->wef_date, '—') }}</td>
+                    <td>{{ $r->wef_date?->format('Y-m-d') }}</td>
                     <td>{{ $r->is_active ? 'Yes' : 'No' }}</td>
                     <td><a href="{{ route('pricing.rto.edit', $r->id) }}">Edit</a></td>
                 </tr>

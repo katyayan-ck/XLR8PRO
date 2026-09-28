@@ -19,7 +19,7 @@ class CommThread extends BaseModel implements HasMedia
 
     protected $fillable = ['comm_master_id', 'parent_id', 'actor_id', 'action_id', 'title', 'body', 'extra_data'];
 
-    protected $casts = ['extra_data' => 'array', 'is_internal' => 'boolean', 'edited_at' => 'datetime'];
+    protected $casts = ['extra_data' => 'array'];
 
     public function master(): BelongsTo
     {
@@ -31,12 +31,12 @@ class CommThread extends BaseModel implements HasMedia
         return $this->hasMany(self::class, 'parent_id');
     }
 
-    public function actor(): BelongsTo
+    public function actor()
     {
         return $this->belongsTo(User::class, 'actor_id');
     }
 
-    public function action(): BelongsTo
+    public function action()
     {
         return $this->belongsTo(Keyvalue::class, 'action_id');
     }

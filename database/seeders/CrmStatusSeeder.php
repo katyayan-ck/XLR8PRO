@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Services\Utils\KeyvalueService;
-use App\Services\Utils\KeywordMasterService;
 use Illuminate\Database\Seeder;
+use App\Models\Utilities\KeyValue\KeywordMaster;
+use App\Models\Utilities\KeyValue\Keyvalue;
 use Illuminate\Support\Facades\Cache;
 
 class CrmStatusSeeder extends Seeder
@@ -66,18 +66,18 @@ class CrmStatusSeeder extends Seeder
 
     private function seedKeyword(string $keyword, array $statuses): void
     {
-        app(KeywordMasterService::class)->firstOrCreate(
+        $km = KeywordMaster::firstOrCreate(
             ['code' => $keyword],
             [
                 'keyword' => $keyword,
-                'description' => ucfirst(str_replace('_', ' ', strtolower($keyword))).' statuses for CRM pipeline',
+                'description' => ucfirst(str_replace('_', ' ', strtolower($keyword))) . ' statuses for CRM pipeline',
                 'is_active' => true,
                 'status' => 1,
             ]
         );
 
         foreach ($statuses as $status) {
-            app(KeyvalueService::class)->firstOrCreate(
+            Keyvalue::firstOrCreate(
                 [
                     'keyword_code' => $keyword,
                     'code' => $status['code'],

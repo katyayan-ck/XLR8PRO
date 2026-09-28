@@ -1,65 +1,70 @@
 <?php
-
 namespace App\Services\Utils;
 
-use App\Jobs\SendHistoryNotification;
 use App\Models\Utilities\CommHistory\CommMaster;
 use App\Models\Utilities\CommHistory\CommThread;
-use App\Services\Platform\Chat\ChatService;
-use Illuminate\Database\Eloquent\Model;
+use App\Services\KeywordValueService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use App\Jobs\SendHistoryNotification;
 
-/**
- * Legacy entity-history API kept as a thin adapter over ChatService (DEC-061), so existing callers
- * (Booking's `addHistory()`, the mobile v1 history endpoints) keep working. New code uses the
- * Chat facade: Chat::event(), Chat::remark(), Chat::timeline().
- */
 class EntityHistoryService
 {
-    public function __construct(private readonly ChatService $chat) {}
-
-    public function createMaster(Model $entity, ?string $title = null, mixed ...$ignored): CommMaster
+    public function createMaster($entity, ?string $title = null): CommMaster
     {
-        return $this->chat->master($entity, $title);
+        return CommMaster::firstOrCreate([
+            'entityable_type' => get_class($entity),
+            'entityable_id'   => $entity->id,
+        ], [
+            'title' => $title ?? class_basename($entity) . " #{$entity->id}",
+        ]);
     }
 
-    /**
-     * @param  array<string, mixed>  $extraData
-     */
     public function addThread(
         CommMaster $master,
         string $actionSlug,
-        ?string $title,
+        string $title,
         ?string $body = null,
         array $extraData = [],
-        ?CommThread $parentThread = null,
-        mixed $actor = null
+        $parentThread = null,
+        $actor = null
     ): CommThread {
-        $media = $extraData['media'] ?? [];
-        unset($extraData['media']);
+        return DB::transaction(function () use ($master, $actionSlug, $title, $body, $extraData, $parentThread, $actor) {
+            $actionId = KeywordValueService::getValueId('entity_actions', $actionSlug);
 
-        $thread = $this->chat->eventOnMaster(
-            $master,
-            $actionSlug,
-            $title ?? ucwords(str_replace('_', ' ', $actionSlug)),
-            $body,
-            $extraData,
-            $parentThread?->id,
-            $actor?->id ?? (is_int($actor) ? $actor : null),
-        );
+            $actorId = $actor?->id ?? auth()->user()?->current_post_id ?? auth()->id();
 
-        foreach ($media as $file) {
-            $thread->addMedia($file)->toMediaCollection('attachments');
-        }
+            // RBAC Check (customize as needed)
+            // if (!Gate::allows('view-entity-history', $master->entityable)) {
+            //     abort(403, 'You do not have permission to add history to this entity.');
+            // }
 
-        if (class_exists(SendHistoryNotification::class)) {
+            $thread = $master->threads()->create([
+                'parent_id'  => $parentThread?->id,
+                'actor_id'   => $actorId,
+                'action_id'  => $actionId,
+                'title'      => $title,
+                'body'       => $body,
+                'extra_data' => $extraData,
+            ]);
+
+            // Handle attachments if present in $extraData['media']
+            if (!empty($extraData['media'])) {
+                foreach ($extraData['media'] as $file) {
+                    $thread->addMedia($file)->toMediaCollection('attachments');
+                }
+            }
+
+            // Queue notification (non-blocking)
             SendHistoryNotification::dispatch($thread);
-        }
 
-        return $thread->load('actor', 'action', 'media');
+            return $thread->load('actor', 'action', 'media');
+        });
     }
 
-    public function getFullHistory(Model $entity): CommMaster
+    public function getFullHistory($entity)
     {
-        return $this->createMaster($entity)->load('threads.children.actor', 'threads.children.action', 'threads.media');
+        $master = $this->createMaster($entity);
+        return $master->load('threads.children.actor', 'threads.children.action', 'threads.media');
     }
 }

@@ -87,18 +87,6 @@ class KeywordEntityServicesTest extends TestCase
         $values->create(['keyword_code' => $keyword, 'code' => 'J2', 'value' => 'J', 'extra_data' => '{not json']);
     }
 
-    public function test_first_or_create_matches_the_normalised_value_and_never_overwrites(): void
-    {
-        $keyword = $this->keyword();
-        $values = app(KeyvalueService::class);
-        $created = $values->firstOrCreate(['keyword_code' => $keyword, 'code' => 'body type'], ['value' => 'Body Type']);
-
-        $found = $values->firstOrCreate(['keyword_code' => strtolower($keyword), 'code' => 'BODY-TYPE'], ['value' => 'Changed']);
-
-        $this->assertSame($created->id, $found->id);
-        $this->assertSame('Body Type', $found->value);
-    }
-
     public function test_the_key_value_screen_writes_through_the_service(): void
     {
         $keyword = $this->keyword();

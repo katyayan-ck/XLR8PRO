@@ -3,6 +3,7 @@
 namespace App\Models\Admin;
 
 use App\Models\BaseModel;
+use App\Models\Iam\Post;
 use App\Models\Traits\HasColumnTransformations;
 use App\Services\Org\BranchService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
@@ -83,6 +84,11 @@ class Branch extends BaseModel
     {
         // Keyed on code: branch_code is never populated (BUG-082, DEC-044).
         return $this->hasMany(Employee::class, 'primary_branch_code', 'code');
+    }
+
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class, 'branch_code', 'branch_code');
     }
 
     // ── Scopes ────────────────────────────────────────────────────────────────

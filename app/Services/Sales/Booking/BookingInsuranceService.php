@@ -2,7 +2,7 @@
 
 namespace App\Services\Sales\Booking;
 
-use App\Services\Vehicle\VehicleService;
+use App\Helpers\CommonHelper;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
 use App\Models\CRM\Enquiry;
@@ -59,13 +59,13 @@ class BookingInsuranceService
         }
 
         $data = [];
-        $data['segments'] = app(VehicleService::class)->segmentOptions() ?? [];
-        $data['models'] = app(VehicleService::class)->modelOptionsFor($booking->segment_code ?? null) ?? [];
-        $data['variants'] = app(VehicleService::class)->variantOptions($booking->model_code ?? null) ?? [];
-        $data['colors'] = app(VehicleService::class)->colorOptions($booking->variant_code ?? null) ?? [];
-        $data['branches'] = OrgService::branchRows() ?? [];
+        $data['segments'] = CommonHelper::getVehicleSegments() ?? [];
+        $data['models'] = CommonHelper::getVehicleModels($booking->segment_code ?? null) ?? [];
+        $data['variants'] = CommonHelper::getVehicleVariants($booking->model_code ?? null) ?? [];
+        $data['colors'] = CommonHelper::getVehicleColors($booking->variant_code ?? null) ?? [];
+        $data['branches'] = CommonHelper::getBranches() ?? [];
 
-        $locations = OrgService::locationRows($booking->branch_code) ?? [];
+        $locations = CommonHelper::getLocations($booking->branch_code) ?? [];
         usort($locations, fn ($a, $b) => strcmp(
             ($a['name'] ?? '').' - '.($a['code'] ?? ''),
             ($b['name'] ?? '').' - '.($b['code'] ?? '')

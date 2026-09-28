@@ -38,7 +38,7 @@
                                     <td>{{ $r->od_discount_rate }}</td>
                                     <td>{{ number_format($r->tp_basic, 2) }}</td>
                                     <td>{{ number_format($r->tp_per_passenger, 2) }}</td>
-                                    <td>{{ site_date($r->wef_date, '—') }}</td>
+                                    <td>{{ $r->wef_date?->format('Y-m-d') ?? '—' }}</td>
                                     <td>
                                         @if($r->is_active)
                                             <span class="badge bg-success">Yes</span>

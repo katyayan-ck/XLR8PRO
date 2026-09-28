@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Admin\Spares\SpareRequest;
 
-use App\Services\OrgService;
-use App\Services\Vehicle\VehicleService;
+use App\Helpers\XCommonHelper;
+use App\Helpers\XpricingHelper;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -21,8 +21,9 @@ use Illuminate\Support\Facades\DB;
  * This controller has THREE independent, pre-existing bugs that make every
  * one of its operations unconditionally broken, regardless of permissions —
  * see known-bugs-report.md:
- *   - BUG-030 (fixed, DEC-060): setupCreateOperation() called XCommonHelper::getServiceBranch(),
- *     which depended on a missing X_Location model; it now uses OrgService::serviceBranches().
+ *   - BUG-030: setupCreateOperation() calls XCommonHelper::getServiceBranch(),
+ *     which depends on a model class (X_Location) that doesn't exist anywhere
+ *     in the codebase — create()/edit() fatal immediately.
  *   - BUG-031: the list view calls route('spare-request.data'), which was
  *     never registered — index() fatals immediately (RouteNotFoundException).
  *   - BUG-032: setup() never calls CRUD::setModel() — the unmodified
@@ -66,8 +67,8 @@ class SpareRequestCrudController extends CrudController
         }
 
         $this->crud->setCreateView('admin.spare-request.create');
-        $this->data['branch'] = OrgService::serviceBranches();
-        $this->data['models'] = app(VehicleService::class)->modelOptions(null, false)->map(fn ($m) => ['id' => $m->id, 'name' => $m->name])->all();
+        $this->data['branch'] = XCommonHelper::getServiceBranch();
+        $this->data['models'] = XpricingHelper::getModelsX();
     }
 
     protected function setupUpdateOperation()

@@ -24,8 +24,6 @@ class Alert extends BaseModel
         'sent_at',
         'payload',
         'metadata',
-        'dispatch_id',
-        'archived_at',
         'created_by',
         'updated_by',
     ];
@@ -40,7 +38,6 @@ class Alert extends BaseModel
         'deleted_at' => 'datetime',
         'read_at' => 'datetime',
         'sent_at' => 'datetime',
-        'archived_at' => 'datetime',
     ];
 
     // ========== RELATIONSHIPS ==========

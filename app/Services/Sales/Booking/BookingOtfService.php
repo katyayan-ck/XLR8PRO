@@ -116,37 +116,38 @@ class BookingOtfService
             // Mile ID is the employee code used in the Booking/OTF dropdown.
             $consultant['mile_id'] = $consultant['employee_code'] ?? '';
 
-            return $consultant;
-        }, $salesconsultants);
+                return $consultant;
+            }, $salesconsultants);
 
-        // ==========================================================
-        // SELECTED SALES CONSULTANT
-        // ==========================================================
 
-        // Booking consultant is the value selected in the Booking/OTF
-        // Sales Consultant dropdown.
-        $selectedScCode = trim((string) (
-            $booking->consultant
-            ?? $enquiry?->x8_sc_code
-            ?? ''
-        ));
+    // ==========================================================
+    // SELECTED SALES CONSULTANT
+    // ==========================================================
 
-        $selectedSc = null;
+    // Booking consultant is the value selected in the Booking/OTF
+    // Sales Consultant dropdown.
+    $selectedScCode = trim((string) (
+        $booking->consultant
+        ?? $enquiry?->x8_sc_code
+        ?? ''
+    ));
 
-        if ($selectedScCode !== '') {
-            $selectedSc = collect($salesconsultants)->first(function ($sc) use ($selectedScCode) {
-                $employeeCode = trim((string) ($sc['employee_code'] ?? ''));
-                $personCode = trim((string) ($sc['person_code'] ?? ''));
+    $selectedSc = null;
 
-                return strcasecmp($employeeCode, $selectedScCode) === 0
-                    || strcasecmp($personCode, $selectedScCode) === 0;
-            });
-        }
+    if ($selectedScCode !== '') {
+        $selectedSc = collect($salesconsultants)->first(function ($sc) use ($selectedScCode) {
+            $employeeCode = trim((string) ($sc['employee_code'] ?? ''));
+            $personCode   = trim((string) ($sc['person_code'] ?? ''));
 
-        // Values used directly by OTF Blade.
-        $selectedScMileId = $selectedSc['mile_id'] ?? '';
-        $selectedScBranch = $selectedSc['branch_name'] ?? '';
-        $selectedScLocation = $selectedSc['location_name'] ?? '';
+            return strcasecmp($employeeCode, $selectedScCode) === 0
+                || strcasecmp($personCode, $selectedScCode) === 0;
+        });
+    }
+
+    // Values used directly by OTF Blade.
+    $selectedScMileId = $selectedSc['mile_id'] ?? '';
+    $selectedScBranch = $selectedSc['branch_name'] ?? '';
+    $selectedScLocation = $selectedSc['location_name'] ?? '';
 
         $dsaList = Xl_DSA_Master::orderBy('name')->get(['id', 'name', 'dlocation']);
         $finance = XFinance::where('bid', $booking->id)->first();
@@ -311,11 +312,12 @@ class BookingOtfService
                 $accessoriesPrintData[] = ['name' => 'Accessories', 'price' => $accAmount];
             }
         }
-        // DEC-060/068: CommonHelper is gone; OrgService::branchRows() is the same keyed-by-code shape.
-        $branches = collect(OrgService::branchRows())->map(fn ($branch) => (object) $branch);
+        $branches = collect(
+            \App\Helpers\CommonHelper::getBranches() ?? []
+        )->map(fn ($branch) => (object) $branch);
 
         return compact(
-            'booking', 'finance', 'salesconsultants', 'selectedSc', 'selectedScMileId', 'selectedScBranch', 'selectedScLocation', 'branches', 'taStatement', 'enquiry',
+            'booking', 'finance', 'salesconsultants','selectedSc', 'selectedScMileId', 'selectedScBranch', 'selectedScLocation', 'branches', 'taStatement', 'enquiry',
             'quotationData', 'finalData', 'otfData', 'insurance', 'rto', 'dsa',
             'segment', 'model', 'variant', 'color', 'accessories', 'permit_map',
             'sale_type_map', 'reg_no_type_map', 'registration_category_map',
@@ -522,13 +524,21 @@ class BookingOtfService
     public function generateVotfNumber(
         Booking $booking,
         string $branchCode
-    ): string {
-        // Bookings have no branch column; since 27-09 the OTF form makes the user pick the branch and the
-        // controller passes it in (it replaced the enquiry / FSC fallback of DEC-027 / DEC-029).
+    ): string
+    {
+        // Bookings have no branch column: use the linked enquiry's branch (the source
+        // getFullBookingData() uses for display), else the FSC's primary branch
+        // (booking.consultant is the consultant's person_code) - DEC-027, DEC-029.
         $branchCode = strtoupper(trim($branchCode));
 
         if ($branchCode === '') {
-            throw new \InvalidArgumentException('Branch code is missing.');
+            throw new \InvalidArgumentException(
+                'Branch code is missing.'
+            );
+        }
+
+        if ($branchCode === '') {
+            throw new \InvalidArgumentException('Branch code is missing for this booking.');
         }
 
         $now = now();

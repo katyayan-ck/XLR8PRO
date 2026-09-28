@@ -43,7 +43,7 @@
                 <p class="text-muted small"></p>
             </div>
             <div class="col-md-4 text-right">
-                <span class="badge badge-info">{{ now()->format('D') }}, {{ site_date(now()) }}</span>
+                <span class="badge badge-info">{{ now()->format('D, M d Y') }}</span>
             </div>
         </div>
 

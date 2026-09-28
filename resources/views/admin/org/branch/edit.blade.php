@@ -86,7 +86,11 @@
 
                                         <div class="readonly-value">
 
-                                            {{ site_datetime($branch->created_at, '—') }}
+                                            {{
+                                            $branch->created_at
+                                            ? $branch->created_at->format('d-m-Y H:i')
+                                            : '—'
+                                            }}
 
                                         </div>
                                     </div>

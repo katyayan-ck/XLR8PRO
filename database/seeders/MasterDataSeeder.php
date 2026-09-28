@@ -2,28 +2,28 @@
 
 namespace Database\Seeders;
 
-use App\Services\Org\BranchService;
-use App\Services\Org\DepartmentService;
-use App\Services\Org\DesignationService;
-use App\Services\Org\DivisionService;
-use App\Services\Org\LocationService;
-use App\Services\Org\VerticalService;
-use App\Services\Vehicle\SegmentService;
-use App\Services\Vehicle\SubSegmentService;
-use App\Support\Entity\EntityService;
 use Illuminate\Database\Seeder;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
+
+// Eloquent Models (as per your project)
+use App\Models\Admin\Branch;
+use App\Models\Admin\Location;
+use App\Models\Admin\Department;
+use App\Models\Admin\Division;
+use App\Models\Admin\Designation;
+use App\Models\Admin\Vertical;
+use App\Models\Vehicle\Segment;
+use App\Models\Vehicle\SubSegment;
 
 class MasterDataSeeder extends Seeder
 {
-    /**
-     * Fresh-install master data (demo org + vehicle segments). Idempotent: every row is found by
-     * code or created through its entity service (DEC-050) — existing data is never truncated or
-     * overwritten (the old version truncated every master table, roles included).
-     */
     public function run(): void
     {
-        $this->command->info('Starting Master Data Seeder (entity services)...');
+        $this->command->info('Starting Master Data Seeder (Eloquent Models)...');
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+        $this->truncateTables();
 
         $this->seedBranches();
         $this->seedLocations();
@@ -34,24 +34,29 @@ class MasterDataSeeder extends Seeder
         $this->seedDivisions();
         $this->seedDesignations();
 
-        $this->command->info('Master Data Seeder completed.');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        $this->command->info('Master Data Seeder completed successfully!');
     }
 
-    /**
-     * Find each row by code, or create it through the service; a rejected row is reported.
-     *
-     * @param  class-string<EntityService>  $service
-     * @param  list<array<string, mixed>>  $rows
-     */
-    private function ensure(string $service, array $rows): void
+    private function truncateTables(): void
     {
-        $entities = app($service);
-        foreach ($rows as $row) {
-            try {
-                $entities->firstOrCreate(['code' => $row['code']], $row);
-            } catch (ValidationException $e) {
-                $this->command->warn(class_basename($service)." {$row['code']}: ".collect($e->errors())->flatten()->implode(' '));
-            }
+        // Only truncate tables that actually exist
+        $models = [
+            Branch::class,
+            Location::class,
+            Vertical::class,
+            Segment::class,
+            SubSegment::class,
+            Department::class,
+            Division::class,
+            Designation::class,
+        ];
+
+        foreach ($models as $model) {
+            $table = (new $model)->getTable();
+            DB::table($table)->truncate();
+            $this->command->info("Truncated: {$table}");
         }
     }
 
@@ -64,7 +69,7 @@ class MasterDataSeeder extends Seeder
             ['code' => 'SUJ', 'name' => 'Sujangarh', 'city' => 'Sujangarh', 'state' => 'Rajasthan', 'is_head_office' => false, 'is_active' => true],
         ];
 
-        $this->ensure(BranchService::class, $data);
+        Branch::insert($data);
         $this->command->info('Seeded: Branches');
     }
 
@@ -90,7 +95,7 @@ class MasterDataSeeder extends Seeder
             ['code' => 'GGN', 'name' => 'Gurugram', 'branch_code' => 'BKN', 'is_sales_location' => false, 'is_workshop' => false, 'is_parts_location' => false, 'is_stock_location' => false, 'is_office_only' => true, 'is_mwh' => false, 'is_lmmws' => false, 'latitude' => 28.414652, 'longitude' => 77.095055, 'is_active' => true],
         ];
 
-        $this->ensure(LocationService::class, $data);
+        Location::insert($data);
         $this->command->info('Seeded: Locations');
     }
 
@@ -102,7 +107,7 @@ class MasterDataSeeder extends Seeder
             ['code' => 'NC', 'name' => 'NEW CAR',  'is_active' => true],
         ];
 
-        $this->ensure(VerticalService::class, $data);
+        Vertical::insert($data);
         $this->command->info('Seeded: Verticals');
     }
 
@@ -116,7 +121,7 @@ class MasterDataSeeder extends Seeder
             ['code' => 'LMM', 'name' => 'LMM',        'is_active' => true],
         ];
 
-        $this->ensure(SegmentService::class, $data);
+        Segment::insert($data);
         $this->command->info('Seeded: Segments');
     }
 
@@ -132,7 +137,7 @@ class MasterDataSeeder extends Seeder
             ['code' => 'LMM',  'name' => 'LMM',        'segment_code' => 'LMM', 'is_active' => true],
         ];
 
-        $this->ensure(SubSegmentService::class, $data);
+        SubSegment::insert($data);
         $this->command->info('Seeded: SubSegments');
     }
 
@@ -143,12 +148,12 @@ class MasterDataSeeder extends Seeder
             ['code' => 'ACC', 'name' => 'Accounts', 'is_active' => true],
             ['code' => 'ADM', 'name' => 'Admin',    'is_active' => true],
             ['code' => 'HR',  'name' => 'HR',       'is_active' => true],
-            ['code' => 'INS', 'name' => 'Insurance', 'is_active' => true],
+            ['code' => 'INS', 'name' => 'Insurance','is_active' => true],
             ['code' => 'SLS', 'name' => 'Sales',    'is_active' => true],
             ['code' => 'SRV', 'name' => 'Service',  'is_active' => true],
         ];
 
-        $this->ensure(DepartmentService::class, $data);
+        Department::insert($data);
         $this->command->info('Seeded: Departments');
     }
 
@@ -183,7 +188,7 @@ class MasterDataSeeder extends Seeder
             ['code' => 'WASH', 'name' => 'Washing', 'dept_code' => 'SRV', 'is_active' => true],
         ];
 
-        $this->ensure(DivisionService::class, $data);
+        Division::insert($data);
         $this->command->info('Seeded: Divisions');
     }
 
@@ -268,7 +273,7 @@ class MasterDataSeeder extends Seeder
             ['code' => 'WEBDEV_INT', 'name' => 'Web Developer - Intern', 'is_top_mgmt' => false, 'is_active' => true],
         ];
 
-        $this->ensure(DesignationService::class, $data);
+        Designation::insert($data);
         $this->command->info('Seeded: Designations ('.count($data).')');
     }
 }

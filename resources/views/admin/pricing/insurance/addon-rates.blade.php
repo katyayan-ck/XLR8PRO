@@ -36,7 +36,7 @@
                                     <td>{{ $r->rate_type }}</td>
                                     <td>{{ $r->rate_value }}</td>
                                     <td>{{ $r->applies_on }}</td>
-                                    <td>{{ site_date($r->wef_date, '—') }}</td>
+                                    <td>{{ $r->wef_date?->format('Y-m-d') ?? '—' }}</td>
                                     <td>
                                         @if($r->is_active)
                                             <span class="badge bg-success">Yes</span>

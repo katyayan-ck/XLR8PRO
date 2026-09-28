@@ -2,6 +2,8 @@
 
 namespace Tests\Unit\Services\Sales;
 
+use App\Models\Admin\Employee;
+use App\Models\CRM\Enquiry;
 use App\Models\CRM\Quotation;
 use App\Models\Module\Booking\Booking;
 use App\Models\User;
@@ -84,18 +86,42 @@ class BookingOtfServiceTest extends TestCase
         $this->assertIsArray(json_decode((string) $saved->fresh()->final_data, true));
     }
 
-    public function test_generate_votf_number_uses_the_selected_branch(): void
+    public function test_generate_votf_number_uses_the_linked_enquiry_branch(): void
     {
-        // Since 27-09 the OTF form makes the user pick the branch; the controller passes it in.
-        $votf = $this->service->generateVotfNumber($this->makeBooking(), ' jpr ');
+        // DEC-027: bookings have no branch column; the branch comes from the
+        // linked enquiry, as it does for display.
+        $enquiry = Enquiry::query()->whereNotNull('dealer_branch')->where('dealer_branch', '!=', '')->first();
+        if (! $enquiry) {
+            $this->markTestSkipped('No enquiry with a dealer_branch in the test database.');
+        }
 
-        $this->assertMatchesRegularExpression('#^\d{2}/JPR\d{4}/\d{4}$#', $votf);
+        $booking = $this->makeBooking(['enq_no' => $enquiry->id]);
+
+        $votf = $this->service->generateVotfNumber($booking);
+
+        $this->assertStringContainsString(strtoupper($enquiry->dealer_branch), $votf);
+    }
+
+    public function test_generate_votf_number_falls_back_to_the_consultant_branch(): void
+    {
+        // DEC-029: no enquiry branch, so use the FSC's primary branch.
+        $employee = Employee::query()->whereNotNull('primary_branch_code')->where('primary_branch_code', '!=', '')->first();
+        if (! $employee) {
+            $this->markTestSkipped('No employee with a primary branch in the test database.');
+        }
+
+        $booking = $this->makeBooking(['consultant' => $employee->person_code]);
+
+        $this->assertStringContainsString(strtoupper($employee->primary_branch_code), $this->service->generateVotfNumber($booking));
     }
 
     public function test_generate_votf_number_throws_when_branch_code_missing(): void
     {
+        // No branch on the booking and no linked enquiry to take it from.
+        $booking = $this->makeBooking(['branch_code' => 'TESTBR']);
+
         $this->expectException(\InvalidArgumentException::class);
 
-        $this->service->generateVotfNumber($this->makeBooking(), '   ');
+        $this->service->generateVotfNumber($booking);
     }
 }

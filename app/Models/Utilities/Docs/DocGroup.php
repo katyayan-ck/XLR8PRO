@@ -15,7 +15,7 @@ class DocGroup extends BaseModel implements Auditable
     use AuditableTrait;
     use SoftDeletes;
 
-    protected $table = 'xlr8_utils_docs_group';
+    protected $table = 'xlr8_docs_group';
 
     protected $fillable = [
         'user_id',
@@ -33,6 +33,6 @@ class DocGroup extends BaseModel implements Auditable
 
     public function documents(): BelongsToMany
     {
-        return $this->belongsToMany(Document::class, 'xlr8_utils_docs_group_pivot', 'doc_group_id', 'document_id')->withTimestamps();
+        return $this->belongsToMany(Document::class, 'doc_group_documents');
     }
 }

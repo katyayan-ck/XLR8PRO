@@ -47,7 +47,7 @@
                                     <div class="col-md-3">
                                         <label class="fw-bold">Created At</label>
                                         <div class="readonly-value">
-                                            {{ site_datetime($assignment->created_at, '—') }}
+                                            {{ $assignment->created_at?->format('d-m-Y H:i') }}
                                         </div>
                                     </div>
                                 </div>

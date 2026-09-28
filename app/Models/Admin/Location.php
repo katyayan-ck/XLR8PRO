@@ -3,10 +3,12 @@
 namespace App\Models\Admin;
 
 use App\Models\BaseModel;
+use App\Models\Iam\Post;
 use App\Models\Traits\HasColumnTransformations;
 use App\Services\Org\LocationService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Location extends BaseModel
@@ -80,6 +82,12 @@ class Location extends BaseModel
     {
         // Keyed on Branch.code: Branch.branch_code is never populated (BUG-084, DEC-044).
         return $this->belongsTo(Branch::class, 'branch_code', 'code');
+    }
+
+    /** Posts anchored to this location: post.loc_code → location.code */
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class, 'loc_code', 'code');
     }
 
     // ── Scopes ────────────────────────────────────────────────────────────────
