@@ -174,9 +174,10 @@ class BookingDmsService
 
         $booking->saveQuietly();
 
-        $booking->recordEvent(
-            'UPDATED',
+        $booking->addHistory(
+            'commented',
             'Pending Order Processed',
+            'DMS / SO details processed successfully',
             [
                 'module' => 'Pending Order Verification',
                 'dms_no' => $booking->dms_no,
@@ -185,7 +186,8 @@ class BookingDmsService
                 'status' => $booking->status,
                 'order_status' => $booking->order,
             ],
-            'DMS / SO details processed successfully'
+            null,
+            backpack_user()
         );
 
         return $booking;

@@ -5,6 +5,7 @@
 @section('title', isset($enquiry) ? 'Edit Enquiry' : 'Add New Enquiry')
 
 @push('after_styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         .enquiry-card {
             border-radius: 12px;
@@ -16,7 +17,7 @@
 
         .enquiry-card .card-header {
             background: var(--tblr-card-bg);
-            border-bottom: 1px solid var(--tblr-border-color);
+            border-bottom: 1px solid #edf2f9;
             border-top-left-radius: 12px;
             border-top-right-radius: 12px;
             padding: 1.25rem 1.5rem;
@@ -24,7 +25,7 @@
 
         .form-control:focus,
         .form-select:focus {
-            border-color: var(--tblr-primary);
+            border-color: #80bdff;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
         }
 
@@ -173,8 +174,8 @@
 
         if (isset($enquiry) && in_array(strtoupper($enquiry->current_origin ?? ''), ['LONG', 'QUICK'])) {
             $isQuick = strtoupper($enquiry->current_origin ?? '') === 'QUICK';
-            $fmtDate = fn($d) => site_date($d, '—');
-            $fmtDateTime = fn($d) => site_datetime($d, '—');
+            $fmtDate = fn($d) => !empty($d) ? \Carbon\Carbon::parse($d)->format('d-M-Y') : '—';
+            $fmtDateTime = fn($d) => !empty($d) ? \Carbon\Carbon::parse($d)->format('d-M-Y H:i') : '—';
 
             $creSegmentName = \App\Services\OrgService::segments()[$enquiry->segment_code] ?? ($enquiry->segment_code ?: '—');
             $creModelName = \App\Services\OrgService::models($enquiry->segment_code)[$enquiry->model_code] ?? ($enquiry->model_code ?: '—');
@@ -477,20 +478,20 @@
                                             @endphp
                                             <tr>
                                                 <td
-                                                    class="fw-bold align-middle table-secondary text-start px-4 py-2 text-body">
+                                                    class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">
                                                     {{ $row['label'] }}</td>
                                                 <td class="align-middle p-2">
                                                     <div
-                                                        class="form-control bg-surface h-auto border-0 text-wrap text-center">
+                                                        class="form-control bg-white h-auto border-0 text-wrap text-center">
                                                         {{ $row['cre'] }}</div>
                                                 </td>
                                                 <td class="align-middle p-2">
                                                     <div
-                                                        class="form-control bg-surface h-auto border-0 text-wrap text-center">
+                                                        class="form-control bg-white h-auto border-0 text-wrap text-center">
                                                         {{ $row['dump'] }}</div>
                                                 </td>
                                                 <td class="align-middle p-2">
-                                                    <div class="form-control bg-surface h-auto border-0 d-flex justify-content-center align-items-center"
+                                                    <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center"
                                                         style="min-height: 38px;">
                                                         @if ($anyEmpty || (isset($row['skip_comparison']) && $row['skip_comparison']))
                                                             {{-- If any side is empty or skipped, always show a dash --}}
@@ -1182,10 +1183,10 @@
                                                         $creatorName = \App\Services\OrgService::getUserNameByCode($code);
                                                     @endphp
                                                     <tr>
-                                                        <td class="fw-bold align-middle table-secondary text-center px-3 text-body">{{ $fup->fup_count }}</td>
-                                                        <td><div class="form-control bg-surface h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks }}</div></td>
-                                                        <td><div class="form-control bg-surface h-auto border-0 text-center">{{ $creatorName }}</div></td>
-                                                        <td><div class="form-control bg-surface h-auto border-0 text-center">{{ site_datetime($fup->created_at) }}</div></td>
+                                                        <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">{{ $fup->fup_count }}</td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ $creatorName }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}</div></td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>
@@ -1268,10 +1269,10 @@
                                                         $creatorName = \App\Services\OrgService::getUserNameByCode($code);
                                                     @endphp
                                                     <tr>
-                                                        <td class="fw-bold align-middle table-secondary text-center px-3 text-body">{{ $fup->fup_count }}</td>
-                                                        <td><div class="form-control bg-surface h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks }}</div></td>
-                                                        <td><div class="form-control bg-surface h-auto border-0 text-center">{{ $creatorName }}</div></td>
-                                                        <td><div class="form-control bg-surface h-auto border-0 text-center">{{ site_datetime($fup->created_at) }}</div></td>
+                                                        <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">{{ $fup->fup_count }}</td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ $creatorName }}</div></td>
+                                                        <td><div class="form-control bg-white h-auto border-0 text-center">{{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}</div></td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>
@@ -1585,60 +1586,60 @@
                                                         @endphp
                                                         <tr class="{{ $isHidden ? 'hidden-fup-row d-none' : '' }}">
                                                             <td
-                                                                class="fw-bold align-middle table-secondary text-center px-3 text-body">
+                                                                class="fw-bold align-middle table-secondary text-center px-3 text-dark">
                                                                 {{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }}
                                                                 Fup
                                                             </td>
                                                             <td>
                                                                 <div
-                                                                    class="form-control bg-surface h-auto border-0 text-nowrap text-center">
+                                                                    class="form-control bg-white h-auto border-0 text-nowrap text-center">
                                                                     {{ $fupTypeMap[$fup->followup_type ?? ''] ?? ($fup->followup_type ?? '—') }}
                                                                 </div>
                                                             </td>
                                                             <td>
                                                                 <div
-                                                                    class="form-control bg-surface h-auto border-0 text-nowrap text-center">
+                                                                    class="form-control bg-white h-auto border-0 text-nowrap text-center">
                                                                     {{ $fup->followup_status ?? '—' }}
                                                                 </div>
                                                             </td>
                                                             <td>
                                                                 <div
-                                                                    class="form-control bg-surface h-auto border-0 text-nowrap text-center">
-                                                                    {{ !empty($fup->planned_followup_date) ? site_date($fup->planned_followup_date) : '—' }}
+                                                                    class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                                    {{ !empty($fup->planned_followup_date) ? \Carbon\Carbon::parse($fup->planned_followup_date)->format('d-M-Y') : '—' }}
                                                                 </div>
                                                             </td>
                                                             <td>
                                                                 <div
-                                                                    class="form-control bg-surface h-auto border-0 text-nowrap text-center">
-                                                                    {{ !empty($fup->actual_followup_date) ? site_date($fup->actual_followup_date) : '—' }}
+                                                                    class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                                    {{ !empty($fup->actual_followup_date) ? \Carbon\Carbon::parse($fup->actual_followup_date)->format('d-M-Y') : '—' }}
                                                                 </div>
                                                             </td>
                                                             <td>
                                                                 <div
-                                                                    class="form-control bg-surface h-auto border-0 text-nowrap text-center">
+                                                                    class="form-control bg-white h-auto border-0 text-nowrap text-center">
                                                                     {{ $fup->call_duration ?? '—' }}
                                                                 </div>
                                                             </td>
                                                             <td>
-                                                                <div class="form-control bg-surface h-auto border-0 text-wrap text-center"
+                                                                <div class="form-control bg-white h-auto border-0 text-wrap text-center"
                                                                     style="min-width: 150px;">
                                                                     {{ $devMap[$fup->deviation_stage ?? ''] ?? ($fup->deviation_stage ?? '—') }}
                                                                 </div>
                                                             </td>
                                                             <td>
-                                                                <div class="form-control bg-surface h-auto border-0 text-wrap text-center"
+                                                                <div class="form-control bg-white h-auto border-0 text-wrap text-center"
                                                                     style="min-width: 120px;">
                                                                     {{ $enqStageMap[$fup->enquiry_status ?? ''] ?? ($fup->enquiry_status ?? '—') }}
                                                                 </div>
                                                             </td>
                                                             <td>
-                                                                <div class="form-control bg-surface h-auto border-0 text-wrap text-center"
+                                                                <div class="form-control bg-white h-auto border-0 text-wrap text-center"
                                                                     style="min-width: 120px;">
                                                                     {{ $remTypeMap[$fup->remark_type ?? ''] ?? ($fup->remark_type ?? '—') }}
                                                                 </div>
                                                             </td>
                                                             <td>
-                                                                <div class="form-control bg-surface h-auto border-0 text-wrap text-center"
+                                                                <div class="form-control bg-white h-auto border-0 text-wrap text-center"
                                                                     style="min-width: 150px;">
                                                                     {{ $fup->comments ?? '—' }}
                                                                 </div>
@@ -1660,7 +1661,7 @@
                                                     @endforeach
                                                 @else
                                                     <tr>
-                                                        <td colspan="10" class="text-muted py-3 bg-surface text-center">
+                                                        <td colspan="10" class="text-muted py-3 bg-white text-center">
                                                             No
                                                             Follow-up Data Found</td>
                                                     </tr>
@@ -1837,40 +1838,40 @@
                                                 @endphp
                                                 <tr class="{{ $isHidden ? 'hidden-cre-fup-row d-none' : '' }}">
                                                     <td
-                                                        class="fw-bold align-middle table-secondary text-center px-3 text-body">
+                                                        class="fw-bold align-middle table-secondary text-center px-3 text-dark">
                                                         {{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }}
                                                         Fup
                                                     </td>
                                                     <td>
                                                         <div
-                                                            class="form-control bg-surface h-auto border-0 text-nowrap text-center">
-                                                            {{ $cre?->cre_planned_fup_date ? site_datetime($cre->cre_planned_fup_date) : '—' }}
+                                                            class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                            {{ $cre?->cre_planned_fup_date ? \Carbon\Carbon::parse($cre->cre_planned_fup_date)->format('d-M-Y H:i') : '—' }}
                                                         </div>
                                                     </td>
                                                     <td>
                                                         <div
-                                                            class="form-control bg-surface h-auto border-0 text-nowrap text-center">
-                                                            {{ $cre?->cre_actual_fup_date ? site_datetime($cre->cre_actual_fup_date) : '—' }}
+                                                            class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                            {{ $cre?->cre_actual_fup_date ? \Carbon\Carbon::parse($cre->cre_actual_fup_date)->format('d-M-Y H:i') : '—' }}
                                                         </div>
                                                     </td>
                                                     <td>
-                                                        <div class="form-control bg-surface h-auto border-0 text-center">
+                                                        <div class="form-control bg-white h-auto border-0 text-center">
                                                             {{ $devMap[$cre?->cre_fup_deviation_stage ?? ''] ?? ($cre?->cre_fup_deviation_stage ?: '—') }}
                                                         </div>
                                                     </td>
                                                     <td>
-                                                        <div class="form-control bg-surface h-auto border-0 text-center">
+                                                        <div class="form-control bg-white h-auto border-0 text-center">
                                                             {{ $custStageMap[$cre?->cre_customer_stage ?? ''] ?? ($cre?->cre_customer_stage ?: '—') }}
                                                         </div>
                                                     </td>
                                                     <td>
-                                                        <div class="form-control bg-surface h-auto border-0 text-center">
+                                                        <div class="form-control bg-white h-auto border-0 text-center">
                                                             {{ $enqStageMap[$cre?->cre_enq_stage ?? ''] ?? ($cre?->cre_enq_stage ?: '—') }}
                                                         </div>
                                                     </td>
 
                                                     <td>
-                                                        <div class="form-control bg-surface h-auto border-0 text-wrap text-center"
+                                                        <div class="form-control bg-white h-auto border-0 text-wrap text-center"
                                                             style="min-width: 150px;">
                                                             {{ $cre?->cre_fup_remarks ?: '—' }}
                                                         </div>
@@ -1901,43 +1902,43 @@
                                                     !in_array(strtoupper($lastCreFup->cre_enq_stage), ['LOST', 'DROPPED']))
                                                 <tr>
                                                     <td
-                                                        class="fw-bold align-middle table-secondary text-center px-3 text-body">
+                                                        class="fw-bold align-middle table-secondary text-center px-3 text-dark">
                                                         {{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$creFupCount] ?? $creFupCount + 1 . 'th' }}
                                                         Fup
                                                     </td>
                                                     <td>
                                                         <div
-                                                            class="form-control bg-surface h-auto border-0 text-nowrap text-center">
-                                                            {{ site_datetime($lastCreFup->cre_next_fup_date) }}
+                                                            class="form-control bg-white h-auto border-0 text-nowrap text-center">
+                                                            {{ \Carbon\Carbon::parse($lastCreFup->cre_next_fup_date)->format('d-M-Y H:i') }}
                                                         </div>
                                                     </td>
                                                     <td>
                                                         <div
-                                                            class="form-control bg-surface h-auto border-0 text-nowrap text-center">
+                                                            class="form-control bg-white h-auto border-0 text-nowrap text-center">
                                                             —</div>
                                                     </td>
                                                     <td>
                                                         <div
-                                                            class="form-control bg-surface h-auto border-0 text-center text-body">
+                                                            class="form-control bg-white h-auto border-0 text-center text-dark">
                                                             Open Follow Up</div>
                                                     </td>
                                                     <td>
-                                                        <div class="form-control bg-surface h-auto border-0 text-center">—
+                                                        <div class="form-control bg-white h-auto border-0 text-center">—
                                                         </div>
                                                     </td>
                                                     <td>
-                                                        <div class="form-control bg-surface h-auto border-0 text-center">—
+                                                        <div class="form-control bg-white h-auto border-0 text-center">—
                                                         </div>
                                                     </td>
                                                     <td>
-                                                        <div class="form-control bg-surface h-auto border-0 text-center">—
+                                                        <div class="form-control bg-white h-auto border-0 text-center">—
                                                         </div>
                                                     </td>
                                                 </tr>
                                             @endif
                                         @else
                                             <tr>
-                                                <td colspan="7" class="text-muted py-3 bg-surface text-center">No CRE
+                                                <td colspan="7" class="text-muted py-3 bg-white text-center">No CRE
                                                     Follow-up Data Found</td>
                                             </tr>
                                         @endif
@@ -2034,6 +2035,7 @@
 @endsection
 
 @push('after_scripts')
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         const debounce = (func, delay = 500) => {
@@ -2185,7 +2187,6 @@
 
             flatpickr("#dob", {
                 dateFormat: "d-M-Y",
-                altInput: true, altFormat: XL.flatpickrFormat(),
                 maxDate: maxDob,
                 allowInput: true, // Allows clearing the date manually
                 onChange: function(selectedDates, dateStr, instance) {
@@ -2217,7 +2218,7 @@
                             $ageGroup.val(selectedCode).trigger('change');
                             $ageGroup.css({
                                 'pointer-events': 'none',
-                                'background-color': 'var(--tblr-bg-surface-tertiary)',
+                                'background-color': '#e9ecef',
                                 '-webkit-appearance': 'none',
                                 '-moz-appearance': 'none',
                                 'appearance': 'none'
@@ -2251,7 +2252,7 @@
             if (($('#dob').val() || '').trim() !== '') {
                 $('select[name="age_group"]').css({
                     'pointer-events': 'none',
-                    'background-color': 'var(--tblr-bg-surface-tertiary)',
+                    'background-color': '#e9ecef',
                     '-webkit-appearance': 'none',
                     '-moz-appearance': 'none',
                     'appearance': 'none'
@@ -2266,7 +2267,7 @@
                 }).removeAttr('tabindex');
             }
 
-            flatpickr("#cre_next_fup_date", { altInput: true, altFormat: XL.flatpickrFormat(true),
+            flatpickr("#cre_next_fup_date", {
                 dateFormat: "d-M-Y H:i",
                 enableTime: true,
                 allowInput: false,
@@ -2301,7 +2302,6 @@
 
             flatpickr("#cre_likely_purchase_date", {
                 dateFormat: "d-M-Y",
-                altInput: true, altFormat: XL.flatpickrFormat(),
                 allowInput: true, // Allows the user to backspace/clear the date if they want to manually pick days
                 onChange: function(selectedDates, dateStr, instance) {
                     if (selectedDates.length > 0) {
@@ -2329,7 +2329,7 @@
                         $('#cre_likely_purchase_days').val(selectedCode).trigger('change');
                         $('#cre_likely_purchase_days').css({
                             'pointer-events': 'none',
-                            'background-color': 'var(--tblr-bg-surface-tertiary)'
+                            'background-color': '#e9ecef'
                         }).attr('tabindex', '-1');
                     } else {
                         // Clear if date is removed via calendar and UNFREEZE IT
@@ -2356,7 +2356,7 @@
             if (($('#cre_likely_purchase_date').val() || '').trim() !== '') {
                 $('#cre_likely_purchase_days').css({
                     'pointer-events': 'none',
-                    'background-color': 'var(--tblr-bg-surface-tertiary)'
+                    'background-color': '#e9ecef'
                 }).attr('tabindex', '-1');
             } else {
                 $('#cre_likely_purchase_days').css({
@@ -2369,11 +2369,11 @@
             if ($('#cre_likely_purchase_date').val()) {
                 $('#cre_likely_purchase_days').css({
                     'pointer-events': 'none',
-                    'background-color': 'var(--tblr-bg-surface-tertiary)'
+                    'background-color': '#e9ecef'
                 }).attr('tabindex', '-1');
             }
 
-            window.marriagePicker = flatpickr("#marriage_date", { altInput: true, altFormat: XL.flatpickrFormat(),
+            window.marriagePicker = flatpickr("#marriage_date", {
                 dateFormat: "d-M-Y",
                 maxDate: "today",
                 allowInput: true // Allow user to manually clear it
@@ -2385,11 +2385,11 @@
 
                 if (statusText === 'MARRIED') {
                     // Enable Marriage Date
-                    $('#marriage_date').prop('disabled', false).css('background-color', 'var(--tblr-bg-surface)');
+                    $('#marriage_date').prop('disabled', false).css('background-color', '#fff');
                 } else {
                     // Disable and clear Marriage Date
                     window.marriagePicker.clear();
-                    $('#marriage_date').prop('disabled', true).css('background-color', 'var(--tblr-bg-surface-tertiary)');
+                    $('#marriage_date').prop('disabled', true).css('background-color', '#e9ecef');
                 }
             });
 
@@ -2516,7 +2516,7 @@
                     });
                     $custStage.css({
                         'pointer-events': 'none',
-                        'background-color': 'var(--tblr-bg-surface-tertiary)'
+                        'background-color': '#e9ecef'
                     }).attr('tabindex', '-1');
                     custStageVal = 'LOST';
                     custStageText = 'LOST';
@@ -2541,7 +2541,7 @@
                         .prop('required', false)
                         .css({
                             'pointer-events': 'none',
-                            'background-color': 'var(--tblr-bg-surface-tertiary)'
+                            'background-color': '#e9ecef'
                         })
                         .attr('tabindex', '-1');
                 } else {
@@ -2686,7 +2686,7 @@
                     // Freeze the child 'application' dropdown
                     $('#application').css({
                         'pointer-events': 'none',
-                        'background-color': 'var(--tblr-bg-surface-tertiary)'
+                        'background-color': '#e9ecef'
                     }).attr('tabindex', '-1');
 
                     // Clear its value after a slight delay to allow the AJAX loadKeywordDropdown to finish

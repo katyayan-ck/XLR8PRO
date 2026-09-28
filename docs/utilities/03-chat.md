@@ -29,8 +29,7 @@ Service `App\Services\Platform\Chat\ChatService` · facade `Chat` · model trait
 Timeline entries: `id, kind, action, action_label, actor_name, time_human, time_iso, title, body, files[], parent_id,
 is_internal, removed, edited, can_edit, can_delete`.
 
-Trait on your model (`use HasCommunications;`): `$model->recordEvent('CREATED', 'Quote created', $meta = [], $body = null)`
-(`$body` = the detail line under the summary),
+Trait on your model (`use HasCommunications;`): `$model->recordEvent('CREATED', 'Quote created')`,
 `$model->addRemark('text', $file)`, `$model->history()`, `$model->commMaster`.
 
 Components: `<x-chat.thread :model=… title=… filter="combined|events|remarks" :composer="true|false" />` and the

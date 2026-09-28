@@ -3,9 +3,10 @@
 @section('title', 'Delivery Data - Booking #' . $booking->id)
 
 @push('after_styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
     .required-mark {
-        color: var(--tblr-danger);
+        color: #dc3545;
         margin-left: 4px;
     }
 
@@ -23,7 +24,7 @@
     .readonly-value {
         padding: 0.375rem 0.75rem;
         background-color: var(--tblr-bg-surface-secondary);
-        border: 1px solid var(--tblr-border-color);
+        border: 1px solid #ced4da;
         border-radius: 0.25rem;
         min-height: 38px;
         display: flex;
@@ -47,7 +48,7 @@
         align-items: center;
         justify-content: space-between;
         padding: 8px 12px;
-        border: 1px solid var(--tblr-border-color);
+        border: 1px solid #ced4da;
         border-radius: 4px;
         background: var(--tblr-bg-surface-secondary);
     }
@@ -60,7 +61,7 @@
     }
 
     .icon-btn.text-danger {
-        color: var(--tblr-danger);
+        color: #dc3545;
     }
 </style>
 @endpush
@@ -75,7 +76,7 @@
         <div class="col-md-3 form-group readonly-field">
             <label class="readonly-label">Booking Date</label>
             <div class="readonly-value">
-                {{ site_date($booking->booking_date, '—') }}
+                {{ $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('d-m-Y') : '—' }}
             </div>
         </div>
 
@@ -186,6 +187,7 @@
 @endsection
 
 @push('after_scripts')
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
 
@@ -193,7 +195,6 @@
     $(document).ready(function () {
     $("#otf_date").flatpickr({
         dateFormat: "d-m-Y",
-        altInput: true, altFormat: XL.flatpickrFormat(),
         maxDate: "today",
         onChange: function(selectedDates, dateStr, instance) {
             if (selectedDates[0]) {

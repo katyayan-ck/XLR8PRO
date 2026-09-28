@@ -5,7 +5,7 @@
 @push('after_styles')
     <style>
         .card { border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); }
-        .form-control:focus, .form-select:focus { border-color: var(--tblr-primary); box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25); }
+        .form-control:focus, .form-select:focus { border-color: #80bdff; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25); }
         .finance-field { display: none; }
     </style>
 @endpush
@@ -15,8 +15,8 @@
     <div class="row">
         <div class="col-12">
             
-            <div class="card bg-surface-secondary border-0 shadow-sm mb-4">
-                <div class="card-header bg-surface">
+            <div class="card bg-light border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
                     <h2 class="mb-0">Enquiry & Customer Information (Read-only)</h2>
                 </div>
                 <div class="card-body">
@@ -46,7 +46,7 @@
                 @method('PUT')
 
                 <div class="card shadow-sm">
-                    <div class="card-header bg-surface">
+                    <div class="card-header bg-white">
                         <h2 class="mb-0">Finance & Loan Details</h2>
                     </div>
 
@@ -181,7 +181,7 @@
                                                     <td class="fw-bold">{{ $fup->fup_count }}</td>
                                                     <td class="text-start">{{ $fup->remarks }}</td>
                                                     <td>{{ $creatorName }}</td>
-                                                    <td>{{ site_datetime($fup->created_at) }}</td>
+                                                    <td>{{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}</td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
@@ -192,7 +192,7 @@
                         </div>
                     </div>
 
-                    <div class="card-footer bg-surface text-center pb-4 border-0 mt-2">
+                    <div class="card-footer bg-white text-center pb-4 border-0 mt-2">
                         <button type="submit" class="btn btn-success btn-lg px-5 py-2 shadow-sm fw-bold">
                             <i class="la la-save"></i> Save Enquiry Finance
                         </button>

@@ -12,7 +12,7 @@
 
         .form-control:focus,
         .form-select:focus {
-            border-color: var(--tblr-primary);
+            border-color: #80bdff;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
         }
     </style>
@@ -23,14 +23,14 @@
         <div class="row">
             <div class="col-12">
                 <!-- Main Header -->
-                <h2 class="mb-4 text-body fw-bold">
+                <h2 class="mb-4 text-dark fw-bold">
                     <i class="la la-shopping-cart me-2"></i>Sales Imports
                 </h2>
 
                 <!-- Int in Finance Dashboard Card -->
                 <div class="card mb-4">
-                    <div class="card-header bg-surface border-bottom">
-                        <h4 class="card-title mb-0 fw-bold text-body">
+                    <div class="card-header bg-white border-bottom">
+                        <h4 class="card-title mb-0 fw-bold text-dark">
                             <i class="la la-money-bill me-2"></i>Int in Finance Dashboard
                         </h4>
                     </div>
@@ -40,7 +40,7 @@
                                 <small class="text-muted d-block">
                                     <i class="la la-clock me-1"></i>Last Updated At
                                 </small>
-                                <span class="fw-semibold text-body">{{ $lastFinanceImport ?? 'N/A' }}</span>
+                                <span class="fw-semibold text-dark">{{ $lastFinanceImport ?? 'N/A' }}</span>
                             </div>
                             <div>
                                 <a href="{{ backpack_url('finance/import') }}"
@@ -56,8 +56,8 @@
 
                 <!-- Int in Insurance Dashboard Card -->
                 <div class="card mb-4">
-                    <div class="card-header bg-surface border-bottom">
-                        <h4 class="card-title mb-0 fw-bold text-body">
+                    <div class="card-header bg-white border-bottom">
+                        <h4 class="card-title mb-0 fw-bold text-dark">
                             <i class="la la-shield-alt me-2"></i>Int in Insurance Dashboard
                         </h4>
                     </div>
@@ -67,7 +67,7 @@
                                 <small class="text-muted d-block">
                                     <i class="la la-clock me-1"></i>Last Updated At
                                 </small>
-                                <span class="fw-semibold text-body">{{ $lastInsuranceImport ?? 'N/A' }}</span>
+                                <span class="fw-semibold text-dark">{{ $lastInsuranceImport ?? 'N/A' }}</span>
                             </div>
                             <div>
                                 <a href="{{ backpack_url('insurance/import') }}"
@@ -83,8 +83,8 @@
 
                 <!-- Int in RTO Dashboard Card -->
                 <div class="card mb-4">
-                    <div class="card-header bg-surface border-bottom">
-                        <h4 class="card-title mb-0 fw-bold text-body">
+                    <div class="card-header bg-white border-bottom">
+                        <h4 class="card-title mb-0 fw-bold text-dark">
                             <i class="la la-truck me-2"></i>Int in RTO Dashboard
                         </h4>
                     </div>
@@ -94,7 +94,7 @@
                                 <small class="text-muted d-block">
                                     <i class="la la-clock me-1"></i>Last Updated At
                                 </small>
-                                <span class="fw-semibold text-body">{{ $lastRtoImport ?? 'N/A' }}</span>
+                                <span class="fw-semibold text-dark">{{ $lastRtoImport ?? 'N/A' }}</span>
                             </div>
                             <div>
                                 <a href="{{ backpack_url('rto/import') }}"
@@ -110,8 +110,8 @@
 
                 <!-- Enquiry Dashboard Card -->
                 <div class="card mb-4">
-                    <div class="card-header bg-surface border-bottom">
-                        <h4 class="card-title mb-0 fw-bold text-body">
+                    <div class="card-header bg-white border-bottom">
+                        <h4 class="card-title mb-0 fw-bold text-dark">
                             <i class="la la-question-circle me-2"></i>Enquiry Dashboard
                         </h4>
                     </div>
@@ -119,7 +119,7 @@
                         <!-- File Upload Section -->
                         <div class="row align-items-center mb-4">
                             <div class="col-md-7">
-                                <h6 class="mb-1 text-body fw-bold">
+                                <h6 class="mb-1 text-dark fw-bold">
                                     <i class="la la-file-excel-o me-1"></i> Import Enquiries from Excel
                                 </h6>
                                 <small class="text-muted d-block">
@@ -142,7 +142,7 @@
                         </div>
 
                         <!-- Progress Panel -->
-                        <div class="border rounded p-3 mb-4 bg-surface-secondary" id="importStatusPanel" style="display:none;">
+                        <div class="border rounded p-3 mb-4 bg-light" id="importStatusPanel" style="display:none;">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <strong id="importStatusTitle"><i class="la la-spinner la-spin me-1"></i>Import in
                                     progress…</strong>
@@ -187,7 +187,7 @@
 @endsection
 
 @push('after_scripts')
-    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
+    <script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>

@@ -10,14 +10,14 @@
 
             <div
                 class="card-header bg-gradient-success d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <h2 class="card-title mb-0 fw-bold text-body text-nowrap">
+                <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
                     Live Order Report Dashboard
                 </h2>
             </div>
 
-            <div class="card-body p-0 bg-surface-secondary">
+            <div class="card-body p-0 bg-light">
 
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-surface"
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white"
                     style="border-radius: 15px">
                     <div class="d-flex align-items-center gap-2 flex-wrap">
                         <input type="text" id="quickFilter" class="form-control" style="width: 360px; min-width: 260px;"
@@ -56,6 +56,8 @@
 @endsection
 
 @push('after_styles')
+<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
+<link rel="stylesheet" href="{{ asset('css/ag-grid-tabler-theme.css') }}">
 <style>
     .ag-theme-quartz .center-header .ag-header-cell-label {
         justify-content: center !important;
@@ -75,7 +77,7 @@
 @endpush
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
+<script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>

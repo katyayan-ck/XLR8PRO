@@ -9,7 +9,7 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         }
         .form-control:focus, .form-select:focus {
-            border-color: var(--tblr-primary);
+            border-color: #80bdff;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
         }
     </style>
@@ -20,13 +20,13 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header text-body">
+                <div class="card-header text-black">
                     <h2 class="mb-0">Process Exchange / Scrappage (Enquiry: XENQ-{{ $enquiry->id }})</h2>
                 </div>
                 
                 <div class="card-body">
                     {{-- Customer & Vehicle Basics (Read-only reference) --}}
-                    <div class="row bg-surface-secondary p-3 rounded border mb-4">
+                    <div class="row bg-light p-3 rounded border mb-4">
                         <div class="col-md-3 mb-2"><label>Customer Name:</label> <input class="form-control" disabled value="{{ $enquiry->name ?? 'N/A' }}"></div>
                         <div class="col-md-3 mb-2"><label>Mobile:</label> <input class="form-control" disabled value="{{ $enquiry->mobile }}"></div>
                         <div class="col-md-3 mb-2"><label>Segment:</label> <input class="form-control" disabled value="{{ $enquiry->segment_code }}"></div>
@@ -123,7 +123,7 @@
                                                     <td class="fw-bold">{{ $fup->fup_count }}</td>
                                                     <td class="text-start">{{ $fup->remarks }}</td>
                                                     <td>{{ $creatorName }}</td>
-                                                    <td>{{ site_datetime($fup->created_at) }}</td>
+                                                    <td>{{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}</td>
                                                 </tr>
                                             @endforeach
                                         </tbody>

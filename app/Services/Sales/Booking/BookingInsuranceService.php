@@ -2,6 +2,7 @@
 
 namespace App\Services\Sales\Booking;
 
+use App\Services\Vehicle\VehicleService;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
 use App\Models\CRM\Enquiry;
@@ -13,7 +14,6 @@ use App\Models\Module\Insurance\XlInsurer;
 use App\Models\User;
 use App\Models\Vehicle\Accessory;
 use App\Services\OrgService;
-use App\Services\Vehicle\VehicleService;
 use Illuminate\Http\UploadedFile;
 
 /**
@@ -156,9 +156,10 @@ class BookingInsuranceService
         $booking = Booking::find($bookingId);
 
         if ($booking) {
-            $booking->recordEvent(
-                'UPDATED',
+            $booking->addHistory(
+                'commented',
                 'Insurance Process Completed',
+                'Insurance details updated successfully',
                 [
                     'module' => 'Insurance',
                     'insurance_type' => $validated['insurance_category'],
@@ -168,7 +169,8 @@ class BookingInsuranceService
                     'policy_type' => $validated['policy_type'],
                     'status' => $status,
                 ],
-                'Insurance details updated successfully'
+                null,
+                backpack_user()
             );
         }
 

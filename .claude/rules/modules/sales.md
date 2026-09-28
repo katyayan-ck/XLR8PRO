@@ -18,10 +18,9 @@ paths:
   `App\Services\Sales\Booking\*` — put new/changed logic in the matching service, never back into the controller.
 - `xlr8_booking_master.status` is a varchar '1'–'8' (1 Live, 2 Invoiced, 3 Cancelled, 4 Refund Queued,
   5 Refunded, 6 On Hold, 7 Refund Rejected, 8 Pending) — use the service constants, not new magic numbers.
-- Bookings have **no branch column**; display copies branch from the linked enquiry (BUG-161, DEC-029). Since 27-09 the
-  VOTF number uses the branch the user picks on the OTF form (`generateVotfNumber($booking, $branchCode)`).
-- `booking.consultant` holds a person_code. History via `$booking->recordEvent(ACTION, $title, $meta, $body)` (Chat;
-  actions CREATED / STATUS_CHANGED / UPDATED) — `addHistory()` is legacy. No full Aadhaar / account numbers in `$meta`.
+- Bookings have **no branch column**; display copies branch from the linked enquiry; VOTF uses enquiry
+  `dealer_branch` → FSC (consultant person_code → employee primary branch) (BUG-161, DEC-029).
+- `booking.consultant` holds a person_code. History via `$booking->addHistory(...)` (EntityHistoryService).
 - Duplicate models for booking satellite tables were removed (DEC-030): use `Module\Booking\*` ones.
 
 ## Quotation (FRS v1.0, July 2026)

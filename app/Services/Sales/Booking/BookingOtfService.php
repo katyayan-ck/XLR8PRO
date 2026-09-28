@@ -493,14 +493,16 @@ class BookingOtfService
 
         $booking->save();
 
-        $booking->recordEvent(
-            'UPDATED',
+        $booking->addHistory(
+            'commented',
             'OTF Form Saved',
+            'OTF form data saved successfully',
             [
                 'module' => 'OTF Form',
                 'saved_fields' => array_keys($finalJsonData),
             ],
-            'OTF form data saved successfully'
+            null,
+            backpack_user()
         );
 
         return $booking;

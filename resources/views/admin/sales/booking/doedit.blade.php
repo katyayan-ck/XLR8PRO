@@ -9,7 +9,7 @@
 @section('content')
 <div class="row">
 
-    <div class="card bg-surface-secondary border-0 shadow-sm mb-4">
+    <div class="card bg-light border-0 shadow-sm mb-4">
         <div class="card-header">
             <h2 class="mb-0">Invoice Details</h2>
         </div>
@@ -48,7 +48,7 @@
         <input type="hidden" name="bid" value="{{ $booking->id }}">
 
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-surface">
+            <div class="card-header bg-white">
                 <h2 class="mb-0">Finance Details (Delivery Order)</h2>
             </div>
 
@@ -117,7 +117,7 @@
                         <input type="text" class="form-control" value="{{ $finance->file_charge ?? '0' }}" readonly>
                     </div>
                     <div class="col-sm-3">
-                        <label class="form-label text-body">Delivery Order Number <span
+                        <label class="form-label text-black">Delivery Order Number <span
                                 class="text-danger">*</span></label>
                         <input type="text" name="instrument_ref_no" class="form-control"
                             value="{{ old('instrument_ref_no', $finance->instrument_ref_no ?? '') }}" required
@@ -126,7 +126,7 @@
                 </div>
             </div>
 
-            <div class="card-footer bg-surface text-end">
+            <div class="card-footer bg-white text-end">
                 <button type="submit" class="btn btn-success">
                     <i class="la la-save"></i> Save Delivery Order
                 </button>

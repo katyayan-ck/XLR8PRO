@@ -2,6 +2,7 @@
 
 namespace App\Services\Sales\Booking;
 
+use App\Services\Vehicle\VehicleService;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
 use App\Models\CRM\Enquiry;
@@ -15,7 +16,6 @@ use App\Models\Module\Finance\XFinance;
 use App\Models\User;
 use App\Models\Vehicle\Segment;
 use App\Services\OrgService;
-use App\Services\Vehicle\VehicleService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -345,15 +345,17 @@ class BookingExchangeService
             $message .= ' Remarks: '.trim($validated['remark']);
         }
 
-        $booking->recordEvent(
-            'UPDATED',
+        $booking->addHistory(
+            'commented',
             $title,
+            $message,
             [
                 'changes' => $rem,
                 'buyer_type' => $validated['buyer_type'],
                 'case_status' => $caseStatus,
             ],
-            $message
+            null,
+            backpack_user()
         );
 
         return ['exchange' => $exchangeEntry, 'changes' => $rem];

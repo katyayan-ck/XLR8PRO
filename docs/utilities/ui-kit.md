@@ -34,11 +34,6 @@ Opt out for one element or a whole block with `data-xl="off"`. Content added lat
 <x-ui.upload name="file" multiple reload :url="route('utils.docs.store')"
              :fields="['ref_type' => 'BOOKING', 'ref_id' => $booking->id, 'collection' => 'kyc']" />   {{-- AJAX, per-file progress + errors --}}
 ```
-**Your own flatpickr** (a view that needs custom options): keep your submit `dateFormat`, show the site format —
-`flatpickr('#x', { dateFormat: 'Y-m-d', altInput: true, altFormat: XL.flatpickrFormat() })` (`XL.flatpickrFormat(true)`
-adds the time). `XL.dateFormat` / `XL.dateTimeFormat` / `XL.flatpickrFormat()` are defined in the page head, so they work
-even in scripts that run before `xl-ui.js`. Never load flatpickr / Select2 per view — the pinned global copies are always there.
-
 Displaying dates: `@sitedate($d)` / `site_date($d)`, `@sitedatetime($d)` / `site_datetime($d, '—')`. In JavaScript:
 `XL.formatDate(value)` / `XL.formatDate(value, true)`. **Never** `->format('d-m-Y')`, `toLocaleDateString()`, or a
 hard-coded format.

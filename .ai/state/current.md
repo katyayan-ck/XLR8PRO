@@ -1,7 +1,7 @@
 # Current state (keep ≤ 50 lines; update at every checkpoint)
 
 **Branch:** `dev/admin` (working branch). **`stage`** = `6ccaf2a` (dev/admin merged and pushed 27-09-2026, deploys to dev.xceler8.in).
-**Updated:** 28-09-2026 — `stage` = `dev/admin` (DEC-059…068 merged with the Sales team's 27-09 work; Sales parity done).
+**Updated:** 28-09-2026 — dev/admin is 11 commits ahead of stage (DEC-059…067 + guides), not pushed.
 
 **Entity services (DEC-050…059), done:**
 - Every data-entry entity has one write path, an `App\Support\Entity\EntityService` subclass whose `fields()` is the only rule set. It covers:
@@ -25,7 +25,7 @@
   - No Sales flow calls the utilities yet.
   - Dead `App\Models\Core\{ApprovalHierarchy, GraphNode, GraphEdge}` await removal sign-off.
 
-**UI / design (DEC-066…068):** Sales / booking converted 28-09; the shared UI layer, the Appearance panel (mode / colour / font /
+**UI / design (DEC-066, DEC-067), paused until the Sales merge:** the shared UI layer, the Appearance panel (mode / colour / font /
 radius / layout), AG-Grid themed via the global hook, and the dev UI kit `/admin/dev/ui`. The resume list and how to verify are in
 `docs/refactor/ui-design-progress.md` (pin AG-Grid in about 86 views, convert the Sales views, remove hex, real dashboard).
 

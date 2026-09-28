@@ -97,8 +97,6 @@
         if (!$ || !$.fn || !$.fn.select2) return;
         root.querySelectorAll('select[multiple], select[data-xl="select2"]').forEach((el) => {
             if (isOff(el) || inGrid(el) || el.classList.contains('select2-hidden-accessible')) return;
-            // a select the page hides on purpose (driven by its own custom UI) must stay hidden (DEC-068)
-            if (el.hidden || el.style.display === 'none') return;
             const modal = el.closest('.modal');
             const options = {
                 width: '100%',

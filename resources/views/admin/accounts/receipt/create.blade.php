@@ -3,11 +3,12 @@
 @section('title', isset($isEdit) ? 'Edit Receipt' : 'Add Receipt')
 
 @push('after_styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         .card { border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); }
-        .form-control:focus, .form-select:focus { border-color: var(--tblr-primary); box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25); }
-        .conditional-section { display: none; border-top: 1px solid var(--tblr-border-color); margin-top: 10px; padding-top: 20px; }
-        .section-title { font-size: 16px; font-weight: 500; color: var(--tblr-primary); margin-bottom: 15px; }
+        .form-control:focus, .form-select:focus { border-color: #80bdff; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25); }
+        .conditional-section { display: none; border-top: 1px solid #e5e7eb; margin-top: 10px; padding-top: 20px; }
+        .section-title { font-size: 16px; font-weight: 500; color: #1f4b78; margin-bottom: 15px; }
     </style>
 @endpush
 
@@ -213,7 +214,7 @@
 
                         </div>
 
-                        <div class="card-footer bg-surface text-center pb-4 border-0 mt-2">
+                        <div class="card-footer bg-white text-center pb-4 border-0 mt-2">
                             <button type="submit" class="btn btn-success btn-lg px-5 py-2 shadow-sm fw-bold">
                                 <i class="la la-save"></i> {{ isset($isEdit) ? 'Update Receipt' : 'Generate Receipt' }}
                             </button>
@@ -226,10 +227,11 @@
 @endsection
 
 @push('after_scripts')
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         $(function () {
-            flatpickr("#receipt_date", { altInput: true, altFormat: XL.flatpickrFormat(), dateFormat: "Y-m-d", allowInput: true });
-            flatpickr("#transaction_date", { altInput: true, altFormat: XL.flatpickrFormat(), dateFormat: "Y-m-d", allowInput: true, maxDate: "today" });
+            flatpickr("#receipt_date", { dateFormat: "Y-m-d", allowInput: true });
+            flatpickr("#transaction_date", { dateFormat: "Y-m-d", allowInput: true, maxDate: "today" });
 
             // Lock prefixes so they cannot be deleted
             $('#xceler8_enq_no').on('input', function() {

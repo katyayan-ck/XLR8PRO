@@ -5,6 +5,7 @@
 @endsection
 
 @push('after_styles')
+<link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
 
 <style>
     .ag-theme-quartz .center-header .ag-header-cell-label {
@@ -21,7 +22,7 @@
             {{-- HEADER --}}
             <div
                 class="card-header bg-gradient-success d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <h2 class="card-title mb-0 fw-bold text-body text-nowrap">
+                <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
                     Finance Payout - Completed Dashboard
                 </h2>
 
@@ -29,7 +30,7 @@
 
                     {{-- Payout Status Dropdown --}}
                     <div class="d-flex align-items-center gap-2">
-                        <label class="text-body mb-0 text-nowrap">Payout Status:</label>
+                        <label class="text-black mb-0 text-nowrap">Payout Status:</label>
                         <select id="payout_type" class="form-control form-select" style="min-width: 220px;">
                             <option value="{{ route('sales.booking.finance.payout') }}">Pending Payout</option>
                             <option value="{{ route('sales.booking.finance.payout.completed') }}" selected>Completed Payout</option>
@@ -38,7 +39,7 @@
 
                     {{-- Difference Filter (sirf Completed ke liye) --}}
                     <div class="d-flex align-items-center gap-2">
-                        <label class="text-body mb-0 text-nowrap">Difference Filter:</label>
+                        <label class="text-black mb-0 text-nowrap">Difference Filter:</label>
                         <select id="status_filter" class="form-control form-select" style="min-width: 180px;">
                             <option value="all" {{ request('status_filter', 'all' )==='all' ? 'selected' : '' }}>All
                             </option>
@@ -70,11 +71,11 @@
             </div>
 
             {{-- BODY --}}
-            <div class="card-body p-0 bg-surface-secondary">
+            <div class="card-body p-0 bg-light">
 
                 {{-- TOOLBAR --}}
                 <div
-                    class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-surface">
+                    class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
                     <div class="d-flex align-items-center gap-2 flex-nowrap">
                         <input type="text" id="quickFilter" class="form-control w-100 w-md-auto"
                             style="width: 360px; min-width: 260px;" placeholder="Smart Search...">
@@ -92,7 +93,7 @@
                             </button>
 
                             <div id="columnBubble"
-                                style="display:none; position:absolute; top:110%; left:0; width:260px; background: var(--tblr-card-bg); border: 1px solid var(--tblr-border-color); border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.15); z-index:9999;">
+                                style="display:none; position:absolute; top:110%; left:0; width:260px; background: var(--tblr-card-bg); border:1px solid #ddd; border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.15); z-index:9999;">
                                 <div class="d-flex justify-content-between px-2 py-1 border-bottom">
                                     <strong style="font-size:13px;">Customise Headers</strong>
                                     <button id="closeColumnBubble"
@@ -138,7 +139,7 @@
 @endsection
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
+<script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
@@ -276,7 +277,7 @@
             if (groupName === 'Action') return;
 
             const groupTr = document.createElement('tr');
-            groupTr.style.background = 'var(--tblr-bg-surface-secondary)';
+            groupTr.style.background = '#f0f0f0';
             const groupCheckTd = document.createElement('td');
             groupCheckTd.style.width = '30px';
             groupCheckTd.className = 'text-center';

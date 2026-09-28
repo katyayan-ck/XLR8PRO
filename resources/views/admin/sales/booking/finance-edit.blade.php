@@ -15,8 +15,8 @@
 
         <div class="card-body">
 
-            <div class="card bg-surface-secondary border-0 shadow-sm mb-4">
-                <div class="card-header bg-surface">
+            <div class="card bg-light border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
                     <h2 class="mb-0">Booking & Customer Information (Read-only)</h2>
                 </div>
 
@@ -66,7 +66,7 @@
                 <input type="hidden" name="bid" value="{{ $booking->id }}">
 
                 <div class="card shadow-sm">
-                    <div class="card-header bg-surface">
+                    <div class="card-header bg-white">
                         <h2 class="mb-0">Finance & Loan Details</h2>
                     </div>
 
@@ -277,7 +277,7 @@
                         </div>
                     </div>
 
-                    <div class="card-footer bg-surface text-end">
+                    <div class="card-footer bg-white text-end">
                         <button type="submit" class="btn btn-primary">
                             <i class="la la-save"></i> Save Finance Details
                         </button>
@@ -330,15 +330,16 @@
 @endsection
 
 @push('after_styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 <style>
     .is-valid {
-        border-color: var(--tblr-success) !important;
+        border-color: #28a745 !important;
         box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
     }
 
     .text-danger {
-        color: var(--tblr-danger);
+        color: #dc3545;
     }
 
     input[readonly],
@@ -360,7 +361,7 @@
     #instrumentImg,
     #instrumentPdf {
         max-width: 100%;
-        border: 1px solid var(--tblr-border-color);
+        border: 1px solid #ddd;
         border-radius: 4px;
     }
 
@@ -382,12 +383,12 @@
     }
 
     .current-file-info a {
-        color: var(--tblr-primary);
+        color: #007bff;
         text-decoration: underline;
     }
 
     .current-file-info a:hover {
-        color: var(--tblr-primary);
+        color: #0056b3;
     }
 
     .select2-container--default .select2-selection--single {
@@ -426,6 +427,7 @@
 @endpush
 
 @push('after_scripts')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -445,7 +447,7 @@
                 icon: 'error',
                 title: 'File Too Large',
                 text: 'File must be less than 2MB',
-                confirmButtonColor: XL.theme.token('--tblr-primary')
+                confirmButtonColor: '#3085d6'
             });
 
             input.value = '';
@@ -736,21 +738,21 @@
             const mode = $('#fin_mode').val();
             let vText = 'Please select Finance Mode';
             let vVal = 1;
-            let vColor = 'var(--tblr-secondary)';
+            let vColor = '#6c757d';
 
             if (mode) {
                 if (mode === originalFinMode) {
                     vText = 'Verified (Match)';
                     vVal = 2;
-                    vColor = 'var(--tblr-success)';
+                    vColor = '#28a745';
                 } else if (mode === 'Purchase Plan Cancelled') {
                     vText = 'Plan Cancelled';
                     vVal = 4;
-                    vColor = 'var(--tblr-danger)';
+                    vColor = '#dc3545';
                 } else {
                     vText = 'Verified (Mismatch)';
                     vVal = 3;
-                    vColor = 'var(--tblr-danger)';
+                    vColor = '#dc3545';
                 }
             }
         

@@ -11,7 +11,7 @@
 
         .form-control:focus,
         .form-select:focus {
-            border-color: var(--tblr-primary);
+            border-color: #80bdff;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
         }
     </style>
@@ -22,7 +22,7 @@
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header text-body">
+                    <div class="card-header text-black">
                         <h2 class="mb-0">Service Imports</h2>
                     </div>
 

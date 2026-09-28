@@ -6,6 +6,7 @@ use App\Http\Requests\CampaignRequest;
 use App\Models\CRM\Campaign;
 use App\Services\OrgService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Carbon\Carbon;
 
 /**
  * Campaign is a Sales-module resource (marketing activities tied to
@@ -64,8 +65,8 @@ class CampaignCrudController extends CrudController
             $mapped['activity_name'] = OrgService::getKeyValueByCode($campaign->activity_code)?->value ?? '—';
             $mapped['branch_name'] = OrgService::branchName($campaign->branch_code);
             $mapped['location_name'] = OrgService::locationName($campaign->location_code);
-            $mapped['start_date'] = site_date($campaign->start_date, '-');
-            $mapped['end_date'] = site_date($campaign->end_date, '-');
+            $mapped['start_date'] = $campaign->start_date ? Carbon::parse($campaign->start_date)->format('d-m-Y') : '-';
+            $mapped['end_date'] = $campaign->end_date ? Carbon::parse($campaign->end_date)->format('d-m-Y') : '-';
 
             $editUrl = backpack_url("sales/campaign/{$campaign->id}/edit");
 

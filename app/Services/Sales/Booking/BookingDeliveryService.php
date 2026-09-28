@@ -127,16 +127,18 @@ class BookingDeliveryService
         $booking = Booking::find($bookingId);
 
         if ($booking) {
-            $booking->recordEvent(
-                'UPDATED',
+            $booking->addHistory(
+                'commented',
                 'Delivery Process Completed',
+                'Vehicle delivery verification completed successfully',
                 [
                     'module' => 'Delivery',
                     'remarks' => $remarks,
                     'verification' => $chassisNoVerified,
                     'delivery_status' => 1,
                 ],
-                'Vehicle delivery verification completed successfully'
+                null,
+                backpack_user()
             );
         }
 

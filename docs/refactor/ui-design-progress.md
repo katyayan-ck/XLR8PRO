@@ -44,29 +44,18 @@ dev UI kit). Commits on `dev/admin`: `080c15c` (DEC-066), `15415ed` (DEC-067). N
 - Headless Chrome at 1366 px and 390 px, light and dark, several primary colours, serif font, radius 1.5, all three layouts, the Appearance panel, and the legacy branch grid.
 - Full suite: 338 passed, 2 skipped.
 
-## 2. Sales / booking pass — done 28-09-2026 (DEC-068)
-- AG-Grid pinned to 36.2.0 in 49 views; legacy grid CSS and per-view flatpickr / Select2 tags removed (71 files).
-- 13 view-level flatpickr pickers now display the site format (`altInput` + `XL.flatpickrFormat()`), submit format unchanged;
-  23 display dates → `site_date()` / `site_datetime()` (picker `value=` attributes kept in their picker's format).
-- 227 colour classes → tokens (`bg-surface`, `bg-surface-secondary`, `text-body`); 284 hex colours in `<style>`, inline
-  styles and JS → Tabler variables (screen only — `@media print` blocks and `admin/pdf/*` untouched); SweetAlert buttons read
-  `XL.theme.token()`. `xl-ui.js` no longer wraps selects a page hides on purpose.
-- 2 native date inputs converted; file inputs and multi-selects stay enhanced at runtime (identical result).
-
-## 3. Still open (follow-ups)
-
-1. ~~Pin AG-Grid~~ — done for Sales / import / accounts (49); **~37 other views** (org, vehicle, pricing …) still load it unversioned. They load `unpkg.com/ag-grid-community` / jsDelivr unversioned (today v36.2.0), so a new major release can break every grid.
+## 2. What is NOT done: resume list (after the Sales merge)
+1. **Pin AG-Grid** in about 86 views. They load `unpkg.com/ag-grid-community` / jsDelivr unversioned (today v36.2.0), so a new major release can break every grid.
    - Replace with `https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js`.
    - Drop the `styles/ag-theme-quartz.css` link: the hook disables it anyway.
    - Drop per-view `ag-grid-tabler-theme.css`.
    - Remove any per-view `theme:` option.
-2. ~~Convert Sales / booking views~~ (done, see §2). Remaining: PDF views are exempt by design; (about 250 violations counted in the DEC-066 scan):
+2. **Convert Sales / booking / PDF views to the standards** (about 250 violations counted in the DEC-066 scan):
    - native date inputs and hard-coded date formats → `x-ui.date` / `@sitedate`;
    - list boxes → `x-ui.select`;
    - bare file inputs → `x-ui.upload`;
    - fixed pixel widths → grid classes.
-3. **Hex colours and inline `<style>` outside Sales** (org, vehicle, pricing, utils legacy views); Sales done. Booking list toolbar
-   search box has a fixed width that clips the Reset button at 390 px. (the safety net only covers the common cases):
+3. **Hex colours and inline `<style>` in 227 files** (the safety net only covers the common cases):
    - move shared styles to `xl-ui.css` / `xl-theme.css`, colours to tokens;
    - the most frequent value is `border-color:#80bdff` (84 times; an old focus colour → remove).
 4. **`menu_items.blade.php`** has an inline `<style>` block. Nested dropdown menus should be checked in the vertical layouts on real data (checked only at a glance).
@@ -76,7 +65,7 @@ dev UI kit). Commits on `dev/admin`: `080c15c` (DEC-066), `15415ed` (DEC-067). N
 8. **Avatar:** `backpack_avatar_url()` still uses Gravatar (an external call with an email hash, `config/backpack/base.php`). Consider a local photo from the Person / Docs record.
 9. After each conversion, check the screen in dark mode and with a non-default primary colour, at 390 / 768 / 1366.
 
-## 4. How to verify quickly
+## 3. How to verify quickly
 - Kit: `/admin/dev/ui` (local).
 - Theme state in the browser console:
   - `XL.theme.get()`;

@@ -4,7 +4,6 @@ namespace App\Models\CRM;
 
 use App\Models\Admin\Person;
 use App\Models\BaseModel;
-use App\Models\Traits\HasCommunications;
 use App\Models\User;
 use App\Models\Vehicle\Color;
 use App\Models\Vehicle\Segment;
@@ -16,8 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 class Enquiry extends BaseModel
 {
-    // Timeline via the Chat utility (DEC-068). HasColumnTransformations stays off: it would change stored values.
-    use HasCommunications;
+    // use HasCommunications, HasColumnTransformations;
 
     protected $table = 'xlr8_crm_enquiries';
 

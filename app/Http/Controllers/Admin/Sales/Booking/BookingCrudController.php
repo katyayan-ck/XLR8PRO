@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Sales\Booking;
 
+use App\Services\Vehicle\VehicleService;
 use App\Http\Requests\BookingRequest;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
@@ -12,6 +13,7 @@ use App\Models\Module\Booking\Booking;
 use App\Models\Module\Booking\Bookingamount;
 use App\Models\Module\Booking\Stock;
 use App\Models\Module\Booking\Xessories;
+use App\Models\Module\Booking\XExchange;
 use App\Models\Module\Booking\Xl_DSA_Master;
 use App\Models\Module\Booking\Xl_Refunds;
 use App\Models\Module\Booking\XlDelivery;
@@ -35,7 +37,6 @@ use App\Rules\Gstin;
 use App\Rules\InvoiceNumber;
 use App\Rules\OtfNumber;
 use App\Rules\PanNumber;
-use App\Services\DateFormatService;
 use App\Services\EnquiryReferenceService;
 use App\Services\IdentifierService;
 use App\Services\OrgService;
@@ -49,8 +50,8 @@ use App\Services\Sales\Booking\BookingKycService;
 use App\Services\Sales\Booking\BookingOtfService;
 use App\Services\Sales\Booking\BookingRefundService;
 use App\Services\Sales\Booking\BookingRtoService;
+use App\Services\DateFormatService;
 use App\Services\SystemSettingService;
-use App\Services\Vehicle\VehicleService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -67,7 +68,6 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -151,10 +151,10 @@ class BookingCrudController extends CrudController
             ->orderBy('id', 'desc')
             ->get();
 
+
         $bookingPaymentLogs->each(function ($payment) {
             if (empty($payment->mode)) {
                 $payment->mode_name = '—';
-
                 return;
             }
 
@@ -254,6 +254,7 @@ class BookingCrudController extends CrudController
             }
         }
 
+        
         $customer_categories = OrgService::keywordValueByCode('CUSTOMER_TYPE');
         $occupation_types = OrgService::keywordValueByCode('OCCUPATION_TYPE');
         $body_type_map = [
@@ -415,6 +416,7 @@ class BookingCrudController extends CrudController
                 return redirect()->back()->withInput()->with('error', $validator->messages()->first());
             }
         }
+
 
         $this->coreService->store($request->all());
 
@@ -994,7 +996,7 @@ class BookingCrudController extends CrudController
                 // 3. Fallbacks
                 DB::raw('NULL as location_other'),
                 DB::raw('NULL as vehicle_oem_code'),
-
+                
             ]);
 
         $query->leftJoin('xlr8_booking_refund as ref', function ($join) {
@@ -1086,7 +1088,7 @@ class BookingCrudController extends CrudController
         $modelCodes = $bookings->pluck('model_code')->filter()->unique()->values();
         $segmentCodes = $bookings->pluck('segment_code')->filter()->unique()->values();
         $variantCodes = $bookings->pluck('variant_code')->filter()->unique()->values();
-        $colorCodes = $bookings->pluck('color_code')->filter()->unique()->values();
+        $colorCodes = $bookings->pluck('color_code')->filter()->unique()->values(); 
 
         return [
             'consultants' => DB::table('xlr8_admin_employee as e')
@@ -2581,11 +2583,11 @@ class BookingCrudController extends CrudController
 
         $bookingPaymentPrefill = [
             'has_previous_payment' => false,
-            'collection_type' => '',
-            'receipt_no' => '',
-            'receipt_date' => '',
-            'payment_mode' => '',
-            'total_amount' => 0,
+            'collection_type'      => '',
+            'receipt_no'           => '',
+            'receipt_date'         => '',
+            'payment_mode'         => '',
+            'total_amount'         => 0,
         ];
 
         if ($enquiry) {
@@ -2601,7 +2603,6 @@ class BookingCrudController extends CrudController
             $bookingPaymentLogs->each(function ($payment) {
                 if (empty($payment->mode)) {
                     $payment->mode_name = '—';
-
                     return;
                 }
 
@@ -2636,11 +2637,11 @@ class BookingCrudController extends CrudController
 
                     $bookingPaymentPrefill = [
                         'has_previous_payment' => true,
-                        'collection_type' => $collectionType,
-                        'receipt_no' => $latestPayment->type_number,
-                        'receipt_date' => $latestPayment->date,
-                        'payment_mode' => $latestPayment->mode,
-                        'total_amount' => (float) $bookingPaymentLogs->sum(
+                        'collection_type'      => $collectionType,
+                        'receipt_no'           => $latestPayment->type_number,
+                        'receipt_date'         => $latestPayment->date,
+                        'payment_mode'         => $latestPayment->mode,
+                        'total_amount'         => (float) $bookingPaymentLogs->sum(
                             fn ($payment) => (float) $payment->amount
                         ),
                     ];
@@ -2973,44 +2974,43 @@ class BookingCrudController extends CrudController
                 : [];
         }
 
-        // ==========================================================
-        // 11. STORE DATA
-        // ==========================================================
-        $this->data['entry'] = $entry;
+                // ==========================================================
+                // 11. STORE DATA
+                // ==========================================================
+                $this->data['entry'] = $entry;
 
-        // Payment logs + prefill (edit mode me bhi dikhane ke liye)
-        $bookingPaymentLogs = Bookingamount::withTrashed()
-            ->where('bid', $entry->id)
-            ->whereIn('type', [1, 2])
-            ->orderBy('date', 'desc')
-            ->orderBy('id', 'desc')
-            ->get();
+                // Payment logs + prefill (edit mode me bhi dikhane ke liye)
+                $bookingPaymentLogs = Bookingamount::withTrashed()
+                    ->where('bid', $entry->id)
+                    ->whereIn('type', [1, 2])
+                    ->orderBy('date', 'desc')
+                    ->orderBy('id', 'desc')
+                    ->get();
 
-        $bookingPaymentLogs->each(function ($payment) {
-            if (empty($payment->mode)) {
-                $payment->mode_name = '—';
+                $bookingPaymentLogs->each(function ($payment) {
+                    if (empty($payment->mode)) {
+                        $payment->mode_name = '—';
+                        return;
+                    }
+                    if (is_numeric($payment->mode)) {
+                        $payment->mode_name = OrgService::getKeyValueById((int) $payment->mode)?->value ?? (string) $payment->mode;
+                    } else {
+                        $payment->mode_name = OrgService::getKeyValueByCode((string) $payment->mode)?->value ?? (string) $payment->mode;
+                    }
+                });
 
-                return;
-            }
-            if (is_numeric($payment->mode)) {
-                $payment->mode_name = OrgService::getKeyValueById((int) $payment->mode)?->value ?? (string) $payment->mode;
-            } else {
-                $payment->mode_name = OrgService::getKeyValueByCode((string) $payment->mode)?->value ?? (string) $payment->mode;
-            }
-        });
+                $data['booking_payment_logs'] = $bookingPaymentLogs;
 
-        $data['booking_payment_logs'] = $bookingPaymentLogs;
+                $data['booking_payment_prefill'] = [
+                    'has_previous_payment' => $bookingPaymentLogs->isNotEmpty(),
+                    'collection_type' => (string) ($entry->col_type ?? ''),
+                    'receipt_no' => $bookingPaymentLogs->first()?->type_number ?? '',
+                    'receipt_date' => $bookingPaymentLogs->first()?->date ?? '',
+                    'payment_mode' => $bookingPaymentLogs->first()?->mode ?? '',
+                    'total_amount' => (float) $bookingPaymentLogs->sum(fn ($p) => (float) $p->amount),
+                ];
 
-        $data['booking_payment_prefill'] = [
-            'has_previous_payment' => $bookingPaymentLogs->isNotEmpty(),
-            'collection_type' => (string) ($entry->col_type ?? ''),
-            'receipt_no' => $bookingPaymentLogs->first()?->type_number ?? '',
-            'receipt_date' => $bookingPaymentLogs->first()?->date ?? '',
-            'payment_mode' => $bookingPaymentLogs->first()?->mode ?? '',
-            'total_amount' => (float) $bookingPaymentLogs->sum(fn ($p) => (float) $p->amount),
-        ];
-
-        $this->data['data'] = $data;
+                $this->data['data'] = $data;
 
         // Also expose enquiry to view
         $this->data['enquiry'] = $linkedEnquiry;
@@ -3047,11 +3047,11 @@ class BookingCrudController extends CrudController
 
         $branchName = 'N/A';
 
-        if (! empty($branchCode)) {
+        if (!empty($branchCode)) {
             $branchName = Branch::where('code', $branchCode)
                 ->value('name');
 
-            if (! $branchName) {
+            if (!$branchName) {
                 $branchName = Branch::where('branch_code', $branchCode)
                     ->value('name');
             }
@@ -3064,7 +3064,7 @@ class BookingCrudController extends CrudController
 
         $locationName = 'N/A';
 
-        if (! empty($locationCode)) {
+        if (!empty($locationCode)) {
             $locationName = Location::where('code', $locationCode)
                 ->value('name');
         }
@@ -3083,7 +3083,7 @@ class BookingCrudController extends CrudController
 
         $modelName = 'N/A';
 
-        if (! empty($modelCode)) {
+        if (!empty($modelCode)) {
             $modelName = VehicleModel::where('code', $modelCode)
                 ->value('name');
         }
@@ -3093,7 +3093,7 @@ class BookingCrudController extends CrudController
         $variantName = 'N/A';
         $colorName = 'N/A';
 
-        if (! empty($variantCode)) {
+        if (!empty($variantCode)) {
 
             $variantRows = DB::table('xlr8_vehicle_variant')
                 ->where('code', $variantCode)
@@ -3109,7 +3109,7 @@ class BookingCrudController extends CrudController
                     ?? $variantRows->first()->display_name
                     ?? 'N/A';
 
-                if (! empty($colorCode)) {
+                if (!empty($colorCode)) {
 
                     $colorRow = $variantRows->first(function ($row) use ($colorCode) {
                         return strtoupper((string) $row->color_code)
@@ -3132,11 +3132,11 @@ class BookingCrudController extends CrudController
 
         $data = [
             'customer_name' => $customerName,
-            'branch_name' => $branchName,
+            'branch_name'   => $branchName,
             'location_name' => $locationName,
-            'model_name' => $modelName,
-            'variant_name' => $variantName,
-            'color_name' => $colorName,
+            'model_name'    => $modelName,
+            'variant_name'  => $variantName,
+            'color_name'    => $colorName,
         ];
 
         return view(
@@ -3279,9 +3279,14 @@ class BookingCrudController extends CrudController
 
                 $booking->save();
 
-                $history = $booking->recordEvent(
-                    'UPDATED',
+                $history = $booking->addHistory(
+                    'commented',
                     'Additional Amount Added',
+                    'Additional amount of ₹'.number_format($newAmount, 2).
+                        ' added. Booking amount changed from ₹'.
+                        number_format($oldBookingAmount, 2).
+                        ' to ₹'.
+                        number_format($booking->booking_amount, 2),
                     [
                         'receipt_no' => $newReceipt,
                         'receipt_date' => $newDate,
@@ -3290,17 +3295,15 @@ class BookingCrudController extends CrudController
                         'old_amount' => $oldBookingAmount,
                         'new_total_amount' => $booking->booking_amount,
                     ],
-                    'Additional amount of ₹'.number_format($newAmount, 2).
-                        ' added. Booking amount changed from ₹'.
-                        number_format($oldBookingAmount, 2).
-                        ' to ₹'.
-                        number_format($booking->booking_amount, 2)
+                    null,
+                    backpack_user()
                 );
                 if ($wasDummy) {
 
-                    $booking->recordEvent(
-                        'STATUS_CHANGED',
+                    $booking->addHistory(
+                        'commented',
                         'Dummy Entry Changed To Active Entry',
+                        $request->remark ?: 'Booking activated from Dummy to Active.',
                         [
                             'receipt_no' => $newReceipt,
                             'receipt_date' => $newDate,
@@ -3308,7 +3311,8 @@ class BookingCrudController extends CrudController
                             'old_type' => 'Dummy',
                             'new_type' => 'Active',
                         ],
-                        $request->remark ?: 'Booking activated from Dummy to Active.'
+                        null,
+                        backpack_user()
                     );
                 }
 
@@ -3437,9 +3441,14 @@ class BookingCrudController extends CrudController
                 $oldTotalReceived = $booking->totalReceivedAmount();
 
                 $totalReceived = $oldTotalReceived + $amount;
-                $history = $booking->recordEvent(
-                    'UPDATED',
+                $history = $booking->addHistory(
+                    'commented',
                     'Receipt Added',
+                    'Receipt of ₹'.number_format($amount, 2).
+                        ' added. Total collection changed from ₹'.
+                        number_format($oldTotalReceived, 2).
+                        ' to ₹'.
+                        number_format($totalReceived, 2),
                     [
                         'receipt_no' => $receiptNo,
                         'receipt_date' => $receiptDate,
@@ -3448,11 +3457,8 @@ class BookingCrudController extends CrudController
                         'new_total' => $totalReceived,
                         'booking_type' => $booking->b_type,
                     ],
-                    'Receipt of ₹'.number_format($amount, 2).
-                        ' added. Total collection changed from ₹'.
-                        number_format($oldTotalReceived, 2).
-                        ' to ₹'.
-                        number_format($totalReceived, 2)
+                    null,
+                    backpack_user()
                 );
 
                 $redirectUrl = route('sales.booking.pending-edit', $booking->id);
@@ -3647,15 +3653,17 @@ class BookingCrudController extends CrudController
                     $historyBody .= ' ,Remarks: '.trim($request->remark);
                 }
 
-                $booking->recordEvent(
-                    'UPDATED',
+                $booking->addHistory(
+                    'commented',
                     $historyTitle,
+                    $historyBody,
                     [
                         'old_status' => $oldStatus,
                         'new_status' => $newStatus,
                         'status_name' => $this->getStatusName($newStatus),
                     ],
-                    $historyBody
+                    null,
+                    backpack_user()
                 );
             }
 
@@ -3992,25 +4000,29 @@ class BookingCrudController extends CrudController
 
         if ($status == 1) {
 
-            $booking->recordEvent(
-                'STATUS_CHANGED',
+            $booking->addHistory(
+                'commented',
                 'Booking Put On Hold',
+                'Booking put on hold by verifier',
                 [
                     'hold_status' => 1,
                     'module' => 'Pending Order Verification',
                 ],
-                'Booking put on hold by verifier'
+                null,
+                backpack_user()
             );
         } elseif ($status == 0) {
 
-            $booking->recordEvent(
-                'STATUS_CHANGED',
+            $booking->addHistory(
+                'commented',
                 'Booking Resumed',
+                'Hold released and booking activated',
                 [
                     'hold_status' => 0,
                     'module' => 'Pending Order Verification',
                 ],
-                'Hold released and booking activated'
+                null,
+                backpack_user()
             );
         }
 
@@ -5985,13 +5997,15 @@ class BookingCrudController extends CrudController
         ]);
         $booking = Booking::findOrFail($id);
 
-        $booking->recordEvent(
-            'UPDATED',
+        $booking->addHistory(
+            'commented',
             'Delivery Order Completed',
+            'Delivery Order processed .',
             [
                 'instrument_ref_no' => trim($request->instrument_ref_no),
             ],
-            'Delivery Order processed .'
+            null,
+            backpack_user()
         );
 
         return redirect()->route('sales.booking.pending-do')
@@ -6359,9 +6373,10 @@ class BookingCrudController extends CrudController
 
             if ($request->has('pending_flag')) {
 
-                $booking->recordEvent(
-                    'UPDATED',
+                $booking->addHistory(
+                    'commented',
                     'Pending Invoice Processed',
+                    'Invoice and chassis details updated successfully',
                     [
                         'module' => 'Pending Invoice',
                         'invoice_number' => $booking->inv_no,
@@ -6371,17 +6386,20 @@ class BookingCrudController extends CrudController
                         'chassis_no' => $booking->chassis_no,
                         'status' => $booking->status,
                     ],
-                    'Invoice and chassis details updated successfully'
+                    null,
+                    backpack_user()
                 );
             } else {
 
-                $booking->recordEvent(
-                    'UPDATED',
+                $booking->addHistory(
+                    'commented',
                     'Pending Details Updated',
+                    'Pending booking details updated successfully',
                     [
                         'module' => 'Pending Update',
                     ],
-                    'Pending booking details updated successfully'
+                    null,
+                    backpack_user()
                 );
             }
         } catch (Exception $e) {
@@ -6624,71 +6642,79 @@ class BookingCrudController extends CrudController
 
             // Only clear refund request date when restoring a cancelled booking
             if ($oldStatus == 3 && in_array($newStatus, [1, 8])) {
-                $booking->refund_request_date = null;
+            $booking->refund_request_date = null;
             }
 
             // and store the rejection date.
             if ($newStatus == 7) {
-                $booking->refund_rejection_date = Carbon::now()->format('Y-m-d');
+            $booking->refund_rejection_date = Carbon::now()->format('Y-m-d');
 
-                Log::info('REFUND_REJECTION_DATE_SET', [
-                    'booking_id' => $id,
-                    'date' => $booking->refund_rejection_date,
-                ]);
+            Log::info('REFUND_REJECTION_DATE_SET', [
+                'booking_id' => $id,
+                'date' => $booking->refund_rejection_date,
+            ]);
             }
 
             $booking->save();
 
             if ($oldStatus == 3 && in_array($newStatus, [1, 8])) {
 
-                $booking->recordEvent(
-                    'STATUS_CHANGED',
+                $booking->addHistory(
+                    'commented',
                     'Booking Restored',
+                    "Booking restored from {$oldName} to {$newName}.",
                     [
                         'old_status' => $oldName,
                         'new_status' => $newName,
                         'remark' => $request->remark,
                     ],
-                    "Booking restored from {$oldName} to {$newName}."
+                    null,
+                    backpack_user()
                 );
             }
 
             if ($oldStatus == 6 && in_array($newStatus, [1, 8])) {
 
-                $booking->recordEvent(
-                    'STATUS_CHANGED',
+                $booking->addHistory(
+                    'commented',
                     'On Hold Removed',
+                    "Booking restored from {$oldName} to {$newName}.",
                     [
                         'old_status' => $oldName,
                         'new_status' => $newName,
                         'remark' => $request->remark,
                     ],
-                    "Booking restored from {$oldName} to {$newName}."
+                    null,
+                    backpack_user()
                 );
             }
 
             if ($newStatus == 7) {
 
-                $booking->recordEvent(
-                    'STATUS_CHANGED',
+                $booking->addHistory(
+                    'commented',
                     'Refund Rejected',
+                    'Refund request rejected.',
                     [
                         'old_status' => $oldName,
                         'new_status' => $newName,
                         'remark' => $request->remark ?? null,
                     ],
-                    'Refund request rejected.'
+                    null,
+                    backpack_user()
                 );
             }
             if ($oldStatus == 7 && $newStatus == 4) {
 
-                $booking->recordEvent(
-                    'STATUS_CHANGED',
+                $booking->addHistory(
+                    'commented',
                     'Refund Requested Again',
+                    'Customer requested refund again after rejection.',
                     [
                         'remark' => $request->remark ?? null,
                     ],
-                    'Customer requested refund again after rejection.'
+                    null,
+                    backpack_user()
                 );
             }
             \Log::info('Booking updated successfully', ['new_status' => $newStatus]);
@@ -6753,16 +6779,18 @@ class BookingCrudController extends CrudController
 
             $booking->save();
 
-            $booking->recordEvent(
-                'UPDATED',
+            $booking->addHistory(
+                'commented',
                 'Receipt Deleted',
+                "Receipt No. {$receipt->type_number} deleted. Amount ₹".number_format($receipt->amount, 2).
+                    ' deducted from booking. New Booking Amount: ₹'.number_format($booking->booking_amount, 2),
                 [
                     'receipt_no' => $receipt->type_number,
                     'deleted_amount' => $receipt->amount,
                     'new_booking_amount' => $booking->booking_amount,
                 ],
-                "Receipt No. {$receipt->type_number} deleted. Amount ₹".number_format($receipt->amount, 2).
-                    ' deducted from booking. New Booking Amount: ₹'.number_format($booking->booking_amount, 2)
+                null,
+                backpack_user()
             );
 
             $receipt->clearMediaCollection('amount-proof');
@@ -6809,9 +6837,10 @@ class BookingCrudController extends CrudController
         $oldReceiptDate = $receipt->date;
         $oldAmount = $receipt->amount;
 
-        $booking->recordEvent(
-            'UPDATED',
+        $booking->addHistory(
+            'commented',
             'Receipt Updated',
+            "Receipt updated successfully. Amount changed from ₹{$oldAmount} to ₹{$request->amount}.",
             [
                 'old_receipt_no' => $oldReceiptNo,
                 'new_receipt_no' => $request->reciept_no,
@@ -6820,7 +6849,8 @@ class BookingCrudController extends CrudController
                 'old_amount' => $oldAmount,
                 'new_amount' => $request->amount,
             ],
-            "Receipt updated successfully. Amount changed from ₹{$oldAmount} to ₹{$request->amount}."
+            null,
+            backpack_user()
         );
 
         \Alert::success('Receipt updated .')->flash();
@@ -10174,6 +10204,7 @@ class BookingCrudController extends CrudController
             compact('booking')
         );
     }
+
 
     public function liveNotInvoiced()
     {

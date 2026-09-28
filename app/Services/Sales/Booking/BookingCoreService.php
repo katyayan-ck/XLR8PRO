@@ -14,6 +14,7 @@ use App\Models\Module\Booking\XlRto;
 use App\Models\Module\Finance\XFinance;
 use App\Models\Module\Insurance\XlInsurance;
 use App\Services\OrgService;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -56,7 +57,7 @@ class BookingCoreService
         $isDummy = ($input['customertype'] ?? null) === 'Dummy';
 
         if (! $isDummy) {
-
+            
             if (($input['bookingmode'] ?? null) === 'Online') {
                 if (empty($input['refrenceno'] ?? null)) {
                     $pending++;
@@ -200,9 +201,9 @@ class BookingCoreService
         try {
             $booking->save();
 
-            $previousEnquiryPayments = collect();
+             $previousEnquiryPayments = collect();
 
-            if (! empty($booking->enq_no)) {
+            if (!empty($booking->enq_no)) {
 
                 $previousEnquiryPayments = Bookingamount::query()
                     ->where('enq_id', $booking->enq_no)
@@ -254,23 +255,27 @@ class BookingCoreService
             }
 
             try {
-                $booking->recordEvent(
-                    'CREATED',
+                $booking->addHistory(
+                    'commented',
                     'Booking Created',
+                    'New booking created successfully',
                     [
                         'booking_amount' => $booking->booking_amount,
                         'customer_name' => $booking->name,
                         'mobile' => $booking->mobile,
                     ],
-                    'New booking created successfully'
+                    null,
+                    backpack_user()
                 );
 
                 if ($isDummy) {
-                    $booking->recordEvent(
-                        'CREATED',
+                    $booking->addHistory(
+                        'commented',
                         'Dummy Entry Created',
+                        'Dummy booking created successfully',
                         ['remark' => $input['details'] ?? null],
-                        'Dummy booking created successfully'
+                        null,
+                        backpack_user()
                     );
                 }
             } catch (Exception $e) {
@@ -396,8 +401,8 @@ class BookingCoreService
         }
 
         if ($booking->booking_date != ($input['booking_date_actual'] ?? null)) {
-            $oldDate = site_date($booking->booking_date, 'null');
-            $newDate = site_date($input['booking_date_actual'] ?? null, 'null');
+            $oldDate = $booking->booking_date ? Carbon::parse($booking->booking_date)->format('d-M-Y') : 'null';
+            $newDate = ($input['booking_date_actual'] ?? null) ? Carbon::parse($input['booking_date_actual'])->format('d-M-Y') : 'null';
             $rem[] = "Booking Date Changed from {$oldDate} to {$newDate}";
             $booking->booking_date = $input['booking_date_actual'] ?? null;
         }
@@ -507,7 +512,7 @@ class BookingCoreService
             $rem[] = 'Sale Type Changed from '.($booking->sale_type ?? 'null').' to '.($input['sale_type'] ?? null);
             $booking->sale_type = $input['sale_type'] ?? null;
         }
-
+        
         if ($booking->body_type != ($input['body_type'] ?? null)) {
             $bodyTypeMap = [
                 '1' => 'Complete',
@@ -523,8 +528,8 @@ class BookingCoreService
         }
 
         if ($linkedEnquiry && $linkedEnquiry->dob != ($input['hidden_customer_dob'] ?? null)) {
-            $oldDob = site_date($linkedEnquiry->dob, 'null');
-            $newDob = site_date($input['hidden_customer_dob'] ?? null, 'null');
+            $oldDob = $linkedEnquiry->dob ? Carbon::parse($linkedEnquiry->dob)->format('d-M-Y') : 'null';
+            $newDob = ($input['hidden_customer_dob'] ?? null) ? Carbon::parse($input['hidden_customer_dob'])->format('d-M-Y') : 'null';
             $rem[] = "Customer D.O.B. Changed from {$oldDob} to {$newDob}";
             $linkedEnquiry->dob = $input['hidden_customer_dob'] ?? null;
         }
@@ -654,8 +659,8 @@ class BookingCoreService
         }
 
         if ($booking->del_date != ($input['expected_del_date_actual'] ?? null)) {
-            $oldDate = site_date($booking->del_date, 'null');
-            $newDate = site_date($input['expected_del_date_actual'] ?? null, 'null');
+            $oldDate = $booking->del_date ? Carbon::parse($booking->del_date)->format('d-M-Y') : 'null';
+            $newDate = ($input['expected_del_date_actual'] ?? null) ? Carbon::parse($input['expected_del_date_actual'])->format('d-M-Y') : 'null';
             $rem[] = "Delivery Date Changed from {$oldDate} to {$newDate}";
             $booking->del_date = $input['expected_del_date_actual'] ?? null;
         }
@@ -788,11 +793,13 @@ class BookingCoreService
         }
 
         if (! empty($rem)) {
-            $booking->recordEvent(
-                'UPDATED',
+            $booking->addHistory(
+                'commented',
                 'Booking Updated',
+                ($input['details'] ?? null).' | '.implode(' , ', $rem),
                 [],
-                ($input['details'] ?? null).' | '.implode(' , ', $rem)
+                null,
+                backpack_user()
             );
         }
 

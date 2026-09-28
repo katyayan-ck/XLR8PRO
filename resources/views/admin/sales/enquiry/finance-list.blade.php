@@ -5,6 +5,7 @@
 @endsection
 
 @push('after_styles')
+    <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-quartz.css">
     <style>
         .ag-theme-quartz .center-header .ag-header-cell-label,
         .ag-theme-quartz .ag-header-cell-label {
@@ -33,13 +34,13 @@
             <div class="card">
                 <div class="card-header bg-gradient-primary d-flex justify-content-between align-items-center">
                     <!-- NEW: Removed the count from the heading -->
-                    <h2 class="card-title mb-0 fw-bold text-body text-nowrap">
+                    <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
                         {{ isset($title) ? trim(explode('(', $title)[0]) : 'Finance List' }}
                     </h2>
                 </div>
                 <div class="card-body p-0" style="background: var(--tblr-bg-surface-secondary)">
                     <div
-                        class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-3 border-bottom bg-surface">
+                        class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-3 border-bottom bg-white">
                         <div class="d-flex align-items-center gap-2">
                             <input type="text" id="quickFilter" class="form-control" style="width:360px;"
                                 placeholder="Smart Search...">
@@ -62,7 +63,7 @@
 @endsection
 
 @push('after_scripts')
-    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
+    <script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.js"></script>
     <script>
         const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);
         const LIST_TYPE = @json($gridConfig['list_type'] ?? 'finance');

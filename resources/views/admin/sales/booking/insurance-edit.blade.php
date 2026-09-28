@@ -3,20 +3,21 @@
 @section('title', 'Edit Insurance - Booking #' . $booking->id)
 
 @push('after_styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
 <style>
     .required-mark {
-        color: var(--tblr-danger);
+        color: #dc3545;
         margin-left: 4px;
     }
 
     .is-valid {
-        border-color: var(--tblr-success) !important;
+        border-color: #28a745 !important;
         box-shadow: 0 0 4px rgba(40, 167, 69, .4) !important;
     }
 
     .is-invalid {
-        border-color: var(--tblr-danger) !important;
+        border-color: #dc3545 !important;
         box-shadow: 0 0 4px rgba(220, 53, 69, .4) !important;
     }
 
@@ -34,7 +35,7 @@
     .readonly-value {
         padding: 0.375rem 0.75rem;
         background-color: var(--tblr-bg-surface-secondary);
-        border: 1px solid var(--tblr-border-color);
+        border: 1px solid #ced4da;
         border-radius: 0.25rem;
         min-height: 38px;
         display: flex;
@@ -312,6 +313,7 @@
 @endsection
 
 @push('after_scripts')
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
     // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
     // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.

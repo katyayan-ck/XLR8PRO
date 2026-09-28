@@ -8,7 +8,7 @@
 
 @section('content')
 <div class="row">
-    <div class="card bg-surface-secondary border-0 shadow-sm mb-4">
+    <div class="card bg-light border-0 shadow-sm mb-4">
         <div class="card-header">
             <h2 class="mb-0">Invoice Details</h2>
         </div>
@@ -57,7 +57,7 @@
         @endif
 
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-surface">
+            <div class="card-header bg-white">
                 <h2 class="mb-0">Finance Details (Final)</h2>
             </div>
 
@@ -230,7 +230,7 @@
                 </div>
             </div>
 
-            <div class="card-footer bg-surface text-end">
+            <div class="card-footer bg-white text-end">
                 <button type="submit" class="btn btn-primary">
                     <i class="la la-save"></i> Save Finance Info
                 </button>
@@ -286,6 +286,7 @@
 @endsection
 
 @push('after_styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 <style>
     .finance-field {
@@ -313,12 +314,12 @@
     }
 
     .current-file-info a {
-        color: var(--tblr-primary);
+        color: #007bff;
         text-decoration: underline;
     }
 
     .current-file-info a:hover {
-        color: var(--tblr-primary);
+        color: #0056b3;
     }
 
     .select2-container--default .select2-selection--single {
@@ -330,7 +331,7 @@
     .select2-container--default .select2-selection--single {
         height: calc(1.5em + 0.75rem + 2px) !important;
         padding: 0.375rem 2.25rem 0.375rem 0.75rem !important;
-        border: 1px solid var(--tblr-border-color);
+        border: 1px solid #ced4da;
         border-radius: 0.375rem;
         background-color: var(--tblr-card-bg);
     }
@@ -351,7 +352,7 @@
     }
 
     .select2-container--default.select2-container--focus .select2-selection--single {
-        border-color: var(--tblr-primary);
+        border-color: #86b7fe;
         box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25);
     }
 
@@ -365,6 +366,7 @@
 @endpush
 
 @push('after_scripts')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
 
 <script>
@@ -389,21 +391,21 @@
 
             let vText = 'Please select Finance Mode';
             let vVal = 1;
-            let vColor = 'var(--tblr-secondary)';
+            let vColor = '#6c757d';
 
             if (mode) {
                 if (mode === originalFinMode) {
                     vText = 'Verified (Match)';
                     vVal = 2;
-                    vColor = 'var(--tblr-success)';
+                    vColor = '#28a745';
                 } else if (mode === 'Purchase Plan Cancelled') {
                     vText = 'Plan Cancelled';
                     vVal = 4;
-                    vColor = 'var(--tblr-danger)';
+                    vColor = '#dc3545';
                 } else {
                     vText = 'Verified (Mismatch)';
                     vVal = 3;
-                    vColor = 'var(--tblr-danger)';
+                    vColor = '#dc3545';
                 }
             }
 
@@ -513,13 +515,13 @@
         function verifyStatus() {
             const sel = $('#fin_mode').val();
             if (!sel) {
-                $('#verification_status_display').val('Please select Finance Mode').css('color', 'var(--tblr-danger)');
+                $('#verification_status_display').val('Please select Finance Mode').css('color', '#dc3545');
                 $('#verification_status_hidden').val(1);
             } else if (sel === originalFinMode) {
-                $('#verification_status_display').val('Verified (Match)').css('color', 'var(--tblr-success)');
+                $('#verification_status_display').val('Verified (Match)').css('color', '#28a745');
                 $('#verification_status_hidden').val(2);
             } else {
-                $('#verification_status_display').val('Verified (Mismatch)').css('color', 'var(--tblr-danger)');
+                $('#verification_status_display').val('Verified (Mismatch)').css('color', '#dc3545');
                 $('#verification_status_hidden').val(3);
             }
         }

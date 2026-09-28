@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <style>
     .required-mark {
-        color: var(--tblr-danger);
+        color: #dc3545;
         margin-left: 4px;
     }
 
@@ -24,7 +24,7 @@
     .readonly-value {
         padding: 0.375rem 0.75rem;
         background-color: var(--tblr-bg-surface-secondary);
-        border: 1px solid var(--tblr-border-color);
+        border: 1px solid #ced4da;
         border-radius: 0.25rem;
         min-height: 38px;
         display: flex;
@@ -82,7 +82,7 @@
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Booking Date</label>
                 <div class="readonly-value">
-                    {{ site_date($booking->booking_date, '—') }}
+                    {{ $booking->booking_date ? \Carbon\Carbon::parse($booking->booking_date)->format('d M Y') : '—' }}
                 </div>
             </div>
 
@@ -152,7 +152,7 @@
             <div class="col-md-2 form-group readonly-field">
                 <label class="readonly-label">Invoice Date</label>
                 <div class="readonly-value">
-                    {{ site_date($booking->inv_date, '—') }}
+                    {{ $booking->inv_date ? \Carbon\Carbon::parse($booking->inv_date)->format('d M Y') : '—' }}
                 </div>
             </div>
 
@@ -352,7 +352,7 @@
                 icon: 'error',
                 title: 'Invalid File Type',
                 text: 'Only JPG and PNG images are allowed!',
-                confirmButtonColor: XL.theme.token('--tblr-danger')
+                confirmButtonColor: '#dc3545'
             });
             this.value = '';
             return;
@@ -363,7 +363,7 @@
                 icon: 'error',
                 title: 'File Too Large',
                 text: 'Maximum file size is 5MB!',
-                confirmButtonColor: XL.theme.token('--tblr-danger')
+                confirmButtonColor: '#dc3545'
             });
             this.value = '';
             return;

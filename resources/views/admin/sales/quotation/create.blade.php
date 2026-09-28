@@ -7,6 +7,7 @@
 @section('title', isset($quotation) ? 'Edit Quotation' : 'Quotation Form')
 
 @push('after_styles')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
     <style>
         @page {
             size: A4 portrait;
@@ -207,7 +208,7 @@
 
             background: var(--tblr-card-bg);
 
-            border: 1px solid var(--tblr-body-color);
+            border: 1px solid #000;
 
             padding: 15px;
 
@@ -263,7 +264,7 @@
         }
 
         .bill-table td {
-            border: 1px solid var(--tblr-body-color);
+            border: 1px solid #000;
             padding: 2px 5px;
 
             height: 26px;
@@ -403,7 +404,7 @@
 
         .quotation-grid th,
         .quotation-grid td {
-            border: 1px solid var(--tblr-body-color);
+            border: 1px solid #000;
             padding: 3px 5px;
             font-size: 10px;
             height: 26px;
@@ -412,7 +413,7 @@
         }
 
         .quotation-grid thead th {
-            background: var(--tblr-bg-surface-tertiary);
+            background: #d9d9d9;
             font-weight: bold;
             text-align: center;
         }
@@ -479,7 +480,7 @@
         .quotation-summary {
             display: flex;
             font-weight: bold;
-            border: 1px solid var(--tblr-body-color);
+            border: 1px solid #000;
             width: 100%;
         }
 
@@ -510,8 +511,8 @@
         }
 
         .quotation-summary .onroad-row-cell {
-            background: var(--tblr-bg-surface-tertiary);
-            color: var(--tblr-body-color);
+            background: #abb8ca;
+            color: #000000;
             padding: 5px 8px;
             display: flex;
             align-items: center;
@@ -541,14 +542,14 @@
         .financier-discount-grid {
             display: grid;
             grid-template-columns: 25% 25% 25% 25%;
-            border-left: 1px solid var(--tblr-body-color);
-            border-top: 1px solid var(--tblr-body-color);
+            border-left: 1px solid #000;
+            border-top: 1px solid #000;
             margin-bottom: 15px;
         }
 
         .financier-discount-grid>div {
-            border-right: 1px solid var(--tblr-body-color);
-            border-bottom: 1px solid var(--tblr-body-color);
+            border-right: 1px solid #000;
+            border-bottom: 1px solid #000;
             padding: 3px 5px;
             font-size: 10px;
             min-height: 26px;
@@ -557,7 +558,7 @@
         }
 
         .financier-discount-grid .fd-header {
-            background: var(--tblr-bg-surface-tertiary);
+            background: #d9d9d9;
             font-weight: bold;
             text-align: center;
             justify-content: center;
@@ -697,7 +698,7 @@
             margin-right: 8px;
             width: 15px;
             height: 15px;
-            accent-color: var(--tblr-primary);
+            accent-color: #0d6efd;
             cursor: pointer;
         }
 
@@ -802,7 +803,7 @@
             background-size: 10px 7px !important;
 
             padding: 1px 22px 1px 5px !important;
-            border: 1px solid var(--tblr-border-color) !important;
+            border: 1px solid #ccc !important;
             border-radius: 3px !important;
 
             font-size: 10px !important;
@@ -830,7 +831,7 @@
             height: 26px !important;
             min-height: 26px !important;
 
-            border: 1px solid var(--tblr-border-color) !important;
+            border: 1px solid #ccc !important;
             border-radius: 3px !important;
 
             background: var(--tblr-card-bg) !important;
@@ -936,8 +937,8 @@
             width: 4px !important;
             height: 4px !important;
 
-            border-right: 1px solid var(--tblr-secondary) !important;
-            border-bottom: 1px solid var(--tblr-secondary) !important;
+            border-right: 1px solid #6c757d !important;
+            border-bottom: 1px solid #6c757d !important;
 
             transform: translateY(-65%) rotate(45deg) !important;
 
@@ -978,7 +979,7 @@
             height: 26px !important;
             min-height: 26px !important;
 
-            border: 1px solid var(--tblr-border-color) !important;
+            border: 1px solid #ccc !important;
             border-radius: 3px !important;
 
             background: var(--tblr-card-bg) !important;
@@ -1086,8 +1087,8 @@
             width: 4px !important;
             height: 4px !important;
 
-            border-right: 1px solid var(--tblr-secondary) !important;
-            border-bottom: 1px solid var(--tblr-secondary) !important;
+            border-right: 1px solid #6c757d !important;
+            border-bottom: 1px solid #6c757d !important;
 
             transform: translateY(-65%) rotate(45deg) !important;
 
@@ -1132,7 +1133,7 @@
 
         .terms-notes-container {
             width: 100%;
-            border: 1px solid var(--tblr-body-color);
+            border: 1px solid #000;
             margin-top: 6px;
             box-sizing: border-box;
             page-break-inside: avoid;
@@ -1140,7 +1141,7 @@
 
         .terms-notes-header {
             background: var(--tblr-bg-surface-secondary);
-            border-bottom: 1px solid var(--tblr-body-color);
+            border-bottom: 1px solid #000;
             font-size: 9px;
             font-weight: bold;
             padding: 3px 6px;
@@ -1162,7 +1163,7 @@
         }
 
         .notes-column:first-child {
-            border-right: 1px solid var(--tblr-body-color);
+            border-right: 1px solid #000;
         }
 
         .notes-list-split {
@@ -1204,8 +1205,8 @@
             height: 100% !important;
             min-height: 24px !important;
 
-            background-color: var(--tblr-bg-surface-secondary) !important;
-            color: var(--tblr-body-color) !important;
+            background-color: #f2f2f2 !important;
+            color: #495261 !important;
 
             font-family: inherit !important;
             font-size: 10px !important;
@@ -1236,14 +1237,14 @@
         .bill-table td:has(.group-select),
         .quotation-grid td:has(.group-select) {
             padding: 0 !important;
-            background-color: var(--tblr-bg-surface-secondary) !important;
+            background-color: #f2f2f2 !important;
             font-weight: 500 !important;
         }
 
         select.group-select:focus {
             outline: none !important;
             box-shadow: none !important;
-            background-color: var(--tblr-bg-surface-secondary) !important;
+            background-color: #f2f2f2 !important;
             font-weight: 500 !important;
         }
 
@@ -1304,8 +1305,8 @@
 
         /* Highlight financier field when empty */
         #financier.field-error {
-            border: 2px solid var(--tblr-danger) !important;
-            background-color: rgba(var(--tblr-danger-rgb), 0.06) !important;
+            border: 2px solid #dc3545 !important;
+            background-color: #fff8f8 !important;
         }
 
 
@@ -1315,14 +1316,14 @@
             -webkit-text-fill-color: var(--tblr-muted) !important;
             opacity: 0.55 !important;
             font-weight: 400 !important;
-            background-color: var(--tblr-bg-surface-secondary) !important;
+            background-color: #f8f8f8 !important;
             cursor: not-allowed !important;
         }
 
         /* Slightly lighter placeholder also */
         .quotation-grid input.frozen-field::placeholder {
-            color: var(--tblr-secondary) !important;
-            -webkit-text-fill-color: var(--tblr-secondary) !important;
+            color: #aaa !important;
+            -webkit-text-fill-color: #aaa !important;
             opacity: 0.7 !important;
         }
 
@@ -1331,12 +1332,12 @@
             color: var(--tblr-muted) !important;
             -webkit-text-fill-color: var(--tblr-muted) !important;
             opacity: 0.55 !important;
-            background-color: var(--tblr-bg-surface-secondary) !important;
+            background-color: #f8f8f8 !important;
             box-shadow: none !important;
             text-decoration: none !important;
         }
         .quotation-grid input.fixed-amount-field {
-            background-color: var(--tblr-bg-surface-secondary) !important;
+            background-color: #f8f8f8 !important;
             cursor: not-allowed !important;
         }
 
@@ -1787,7 +1788,7 @@
                                                         <div style="flex: 1 1 38%;">
                                                             <select name="registration_no_type" id="registration_no_type"
                                                                 class="form-select form-select-sm"
-                                                                style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid var(--tblr-border-color); border-radius: 3px; width: 100%; background: var(--tblr-card-bg);">
+                                                                style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid #ccc; border-radius: 3px; width: 100%; background: var(--tblr-card-bg);">
                                                                 <option value="">Select Type</option>
                                                                 @foreach ($reg_no_type_map ?? [
             '1' => 'Regular',
@@ -1806,7 +1807,7 @@
                                                             <select name="registration_category"
                                                                 id="registration_category"
                                                                 class="form-select form-select-sm"
-                                                                style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid var(--tblr-border-color); border-radius: 3px; width: 100%; background: var(--tblr-card-bg);">
+                                                                style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid #ccc; border-radius: 3px; width: 100%; background: var(--tblr-card-bg);">
                                                                 <option value="">Select Category</option>
                                                                 @foreach ($registration_type_map as $key => $value)
                                                                     <option value="{{ $key }}"
@@ -1817,7 +1818,7 @@
                                                             </select>
                                                         </div>
                                                         <div class="no-print"
-                                                            style="flex: 0 0 auto; display: flex; align-items: center; border: 1px solid var(--tblr-border-color); border-radius: 3px; padding: 1px; background: var(--tblr-card-bg); height: 22px;">
+                                                            style="flex: 0 0 auto; display: flex; align-items: center; border: 1px solid #ccc; border-radius: 3px; padding: 1px; background: var(--tblr-card-bg); height: 22px;">
                                                             <span
                                                                 style="font-size: 8px; font-weight: bold; margin-right: 3px; margin-left: 2px; color: var(--tblr-muted); white-space: nowrap;">In-House:</span>
                                                             <label
@@ -2453,7 +2454,7 @@
                                     </table>
 
                                     <div class="invoice-amount-box"
-                                        style="width:100%; margin-top:3px; border: 1px solid var(--tblr-body-color);">
+                                        style="width:100%; margin-top:3px; border:1px solid #000;">
 
                                         <table class="quotation-grid"
                                             style="width:100%; border-collapse:collapse; table-layout:fixed;">
@@ -2486,68 +2487,68 @@
 
                                     {{-- ================= DISCOUNT BIFURCATION BOX ================= --}}
                                     <div class="discount-bifurcation-box"
-                                        style="margin-top: 3px; border: 1px solid var(--tblr-body-color); width: 100%;">
+                                        style="margin-top: 3px; border: 1px solid #000; width: 100%;">
                                         <table class="quotation-grid bifurcation-grid"
                                             style="width:100%; border-collapse: collapse; table-layout: fixed;">
                                             <thead>
                                                 <tr>
                                                     <th
-                                                        style="width:16%; background: var(--tblr-bg-surface-tertiary); border: 1px solid var(--tblr-body-color); padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
+                                                        style="width:16%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
                                                         DISCOUNT BIFURCATION</th>
                                                     <th
-                                                        style="width:12%; background: var(--tblr-bg-surface-tertiary); border: 1px solid var(--tblr-body-color); padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
+                                                        style="width:12%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
                                                         Inv Disc.</th>
                                                     <th
-                                                        style="width:12%; background: var(--tblr-bg-surface-tertiary); border: 1px solid var(--tblr-body-color); padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
+                                                        style="width:12%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
                                                         Inv Disc. (OE)</th>
                                                     <th
-                                                        style="width:12%; background: var(--tblr-bg-surface-tertiary); border: 1px solid var(--tblr-body-color); padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
+                                                        style="width:12%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
                                                         Inv Disc. (D)</th>
                                                     <th
-                                                        style="width:12%; background: var(--tblr-bg-surface-tertiary); border: 1px solid var(--tblr-body-color); padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
+                                                        style="width:12%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
                                                         CN1</th>
                                                     <th
-                                                        style="width:12%; background: var(--tblr-bg-surface-tertiary); border: 1px solid var(--tblr-body-color); padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
+                                                        style="width:12%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
                                                         CN2</th>
                                                     <th
-                                                        style="width:12%; background: var(--tblr-bg-surface-tertiary); border: 1px solid var(--tblr-body-color); padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
+                                                        style="width:12%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
                                                         CN3</th>
                                                     <th
-                                                        style="width:12%; background: var(--tblr-bg-surface-tertiary); border: 1px solid var(--tblr-body-color); padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
+                                                        style="width:12%; background: #d9d9d9; border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
                                                         TOTAL</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <tr>
                                                     <td
-                                                        style="background: var(--tblr-bg-surface-secondary); border: 1px solid var(--tblr-body-color); padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
+                                                        style="background: var(--tblr-bg-surface-secondary); border:1px solid #000; padding:3px 2px; font-size:9px; font-weight:bold; text-align:center;">
                                                         AMOUNT</td>
-                                                    <td style="border: 1px solid var(--tblr-body-color); padding:3px 2px; text-align:right;">
+                                                    <td style="border:1px solid #000; padding:3px 2px; text-align:right;">
                                                         <input id="inv_discount_display" readonly
                                                             style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
                                                     </td>
-                                                    <td style="border: 1px solid var(--tblr-body-color); padding:3px 2px; text-align:right;">
+                                                    <td style="border:1px solid #000; padding:3px 2px; text-align:right;">
                                                         <input id="inv_oe_discount_display" readonly
                                                             style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
                                                     </td>
-                                                    <td style="border: 1px solid var(--tblr-body-color); padding:3px 2px; text-align:right;">
+                                                    <td style="border:1px solid #000; padding:3px 2px; text-align:right;">
                                                         <input id="inv_d_discount_display" readonly
                                                             style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
                                                     </td>
-                                                    <td style="border: 1px solid var(--tblr-body-color); padding:3px 2px; text-align:right;">
+                                                    <td style="border:1px solid #000; padding:3px 2px; text-align:right;">
                                                         <input id="cn1_discount_display" readonly
                                                             style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
                                                     </td>
-                                                    <td style="border: 1px solid var(--tblr-body-color); padding:3px 2px; text-align:right;">
+                                                    <td style="border:1px solid #000; padding:3px 2px; text-align:right;">
                                                         <input id="cn2_discount_display" readonly
                                                             style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
                                                     </td>
-                                                    <td style="border: 1px solid var(--tblr-body-color); padding:3px 2px; text-align:right;">
+                                                    <td style="border:1px solid #000; padding:3px 2px; text-align:right;">
                                                         <input id="cn3_discount_display" readonly
                                                             style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
                                                     </td>
                                                     <td
-                                                        style="background: var(--tblr-bg-surface-secondary); border: 1px solid var(--tblr-body-color); padding:3px 2px; text-align:right;">
+                                                        style="background: var(--tblr-bg-surface-secondary); border:1px solid #000; padding:3px 2px; text-align:right;">
                                                         <input id="total_discount_bifurcation_display" readonly
                                                             style="font-weight:bold; font-size:10px; text-align:center; width:100%; border:none; background:transparent;">
                                                     </td>
@@ -2570,10 +2571,10 @@
                             </div>
 
                             <!-- UNIFIED NET RECEIVABLE & AMOUNT IN WORDS BOX -->
-                            <div class="net-receivable-container mt-2" style="border: 2px solid var(--tblr-body-color); width: 100%;">
+                            <div class="net-receivable-container mt-2" style="border: 2px solid #000; width: 100%;">
                                 <!-- Top Bar: NET RECEIVABLE & AMOUNT -->
                                 <div
-                                    style="display: flex; width: 100%; border-bottom: 2px solid var(--tblr-body-color); background: var(--tblr-bg-surface-secondary);">
+                                    style="display: flex; width: 100%; border-bottom: 2px solid #000; background: var(--tblr-bg-surface-secondary);">
                                     <div
                                         style="flex: 0 0 50%; font-size: 13px; font-weight: bold; padding: 6px 10px;  color: var(--tblr-body-color);">
                                         NET RECEIVABLE AMOUNT (In Figures) :
@@ -2652,14 +2653,14 @@
                         <div class="insurance-note-row">
                             Insurance:
                             <span id="insurance_print"
-                                style="font-weight:normal; display:inline-block; min-width:70%; border-bottom: 1px solid var(--tblr-body-color);">{{ $insuranceNoteText ?: '' }}&nbsp;</span>
+                                style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">{{ $insuranceNoteText ?: '' }}&nbsp;</span>
                         </div>
 
                         {{-- ================= Accessories (shown only while printing) ================= --}}
                         <div class="accessories-note-row">
                             Accessories:
                             <span id="accessories_print"
-                                style="font-weight:normal; display:inline-block; min-width:70%; border-bottom: 1px solid var(--tblr-body-color);">&nbsp;</span>
+                                style="font-weight:normal; display:inline-block; min-width:70%; border-bottom:1px solid #000;">&nbsp;</span>
                         </div>
 
                         {{-- <table class="bill-table note-box flex-grow-1">
@@ -2755,6 +2756,7 @@
 @endsection
 
 @push('after_scripts')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
@@ -5622,8 +5624,8 @@
                     );
 
                     if (searchInput) {
-                        searchInput.style.color = 'var(--tblr-body-color)';
-                        searchInput.style.webkitTextFillColor = 'var(--tblr-body-color)';
+                        searchInput.style.color = '#212529';
+                        searchInput.style.webkitTextFillColor = '#212529';
                         searchInput.style.opacity = '1';
                         searchInput.style.visibility = 'visible';
 
@@ -6219,7 +6221,7 @@
                     message = rule.freeze_message || `(Requires accessories worth ₹${minAmount.toFixed(0)}+)`;
                 }
                 labelCell.append(
-                    ` <span class="freeze-message" style="color: var(--tblr-danger); font-weight: normal; font-size: 9px;">${message}</span>`
+                    ` <span class="freeze-message" style="color: #dc3545; font-weight: normal; font-size: 9px;">${message}</span>`
                 );
             }
         }
@@ -6297,7 +6299,7 @@
                     message = rule.freeze_message || `(Requires Shield worth ₹${minAmount.toFixed(0)}+)`;
                 }
                 labelCell.append(
-                    ` <span class="freeze-message" style="color: var(--tblr-danger); font-weight: normal; font-size: 9px;">${message}</span>`
+                    ` <span class="freeze-message" style="color: #dc3545; font-weight: normal; font-size: 9px;">${message}</span>`
                 );
             }
         }
@@ -6454,11 +6456,11 @@
                 </div>
             `,
                     confirmButtonText: 'OK, Select Financier',
-                    confirmButtonColor: XL.theme.token('--tblr-primary')
+                    confirmButtonColor: '#3085d6'
                 });
 
                 // Highlight the financier field
-                $('#financier').css('border', '2px solid var(--tblr-danger)');
+                $('#financier').css('border', '2px solid #dc3545');
 
                 return false;
             }

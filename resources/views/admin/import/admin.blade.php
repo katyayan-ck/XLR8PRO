@@ -12,7 +12,7 @@
 
         .form-control:focus,
         .form-select:focus {
-            border-color: var(--tblr-primary);
+            border-color: #80bdff;
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
         }
     </style>
@@ -23,12 +23,12 @@
         <div class="row">
             <div class="col-12">
                 <!-- Main Header -->
-                <h2 class="mb-4 text-body fw-bold">Admin Imports</h2>
+                <h2 class="mb-4 text-dark fw-bold">Admin Imports</h2>
 
                 <!-- Vehicle Import Card -->
                 <div class="card mb-4">
-                    <div class="card-header bg-surface border-bottom">
-                        <h4 class="card-title mb-0 fw-bold text-body">
+                    <div class="card-header bg-white border-bottom">
+                        <h4 class="card-title mb-0 fw-bold text-dark">
                             <i class="la la-car me-2"></i>Vehicle Import
                         </h4>
                     </div>
@@ -37,7 +37,7 @@
                             <!-- Left: Last Imported At -->
                             <div>
                                 <small class="text-muted d-block">Last Imported At</small>
-                                <span class="fw-semibold text-body">
+                                <span class="fw-semibold text-dark">
                                     {{ $lastImportedAt ?? 'N/A' }}
                                 </span>
                             </div>

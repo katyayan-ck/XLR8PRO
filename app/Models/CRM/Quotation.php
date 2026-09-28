@@ -4,17 +4,15 @@ namespace App\Models\CRM;
 
 use App\Models\Admin\Person;
 use App\Models\BaseModel;
-use App\Models\Traits\HasColumnTransformations;
-use App\Models\Traits\HasCommunications;
 use App\Models\User;
 use App\Models\Vehicle\Color;
 use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
-use App\Services\KeywordValueService;
+use App\Models\Traits\HasColumnTransformations;
 
 class Quotation extends BaseModel
 {
-    use HasColumnTransformations, HasCommunications;
+    use HasColumnTransformations;
 
     protected $table = 'xlr8_crm_quotations';
 
@@ -50,33 +48,28 @@ class Quotation extends BaseModel
         parent::__construct($attributes);
 
         $this->casts = array_merge($this->casts, [
-            'standard_data' => 'array',
+            'standard_data'  => 'array',
             // 'requested_data' => 'array',
             // 'proposed_data'  => 'array',
-            'onroad_price' => 'decimal:2',
-            'invoice_price' => 'decimal:2',
-            'revision' => 'integer',
+            'onroad_price'   => 'decimal:2',
+            'invoice_price'  => 'decimal:2',
+            'revision'       => 'integer',
         ]);
     }
 
     protected array $columnTransformations = [
-        'model_code' => 'uppercase|trim',
+        'model_code'   => 'uppercase|trim',
         'variant_code' => 'uppercase|trim',
-        'color_code' => 'uppercase|trim',
-        'enquiry_no' => 'uppercase|trim',
+        'color_code'   => 'uppercase|trim',
+        'enquiry_no'   => 'uppercase|trim',
     ];
 
-    public const STATUS_RAISED = 'raised';
-
+    public const STATUS_RAISED           = 'raised';
     public const STATUS_PENDING_APPROVAL = 'pending_approval';
-
-    public const STATUS_APPROVED = 'approved';
-
-    public const STATUS_REJECTED = 'rejected';
-
-    public const STATUS_REVISED = 'revised';
-
-    public const STATUS_CLOSED = 'closed';
+    public const STATUS_APPROVED         = 'approved';
+    public const STATUS_REJECTED         = 'rejected';
+    public const STATUS_REVISED          = 'revised';
+    public const STATUS_CLOSED           = 'closed';
 
     // ==================== CODE-BASED RELATIONSHIPS ====================
     public function enquiry()
@@ -121,7 +114,7 @@ class Quotation extends BaseModel
 
     public function getStatusLabelAttribute(): string
     {
-        return app(KeywordValueService::class)->getEnum('QUOTE_STATUS', $this->status)
+        return app(\App\Services\KeywordValueService::class)->getEnum('QUOTE_STATUS', $this->status)
             ?? ucfirst(str_replace('_', ' ', $this->status));
     }
 

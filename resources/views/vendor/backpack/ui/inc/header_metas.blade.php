@@ -28,11 +28,6 @@
 (function () {
     var XL = window.XL = window.XL || {};
     XL.grids = XL.grids || [];
-    /* DEC-068: site date formats available synchronously, so view scripts (which run before the deferred xl-ui.js)
-       can give their own flatpickr instances a site-format display: altInput: true, altFormat: XL.flatpickrFormat(). */
-    XL.dateFormat = @json($xlDates->phpFormat());
-    XL.dateTimeFormat = @json($xlDates->phpDateTimeFormat());
-    XL.flatpickrFormat = function (withTime) { return withTime ? XL.dateTimeFormat : XL.dateFormat; };
     function isDateColumn(c) {
         var f = String(c.field || ''), h = String(c.headerName || '');
         if (c.valueFormatter || c.cellRenderer || c.xlDate === false) return false;
