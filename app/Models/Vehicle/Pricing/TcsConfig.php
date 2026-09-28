@@ -5,6 +5,14 @@ namespace App\Models\Vehicle\Pricing;
 use App\Models\BaseModel;
 use App\Services\Vehicle\Pricing\Rules\TcsConfigService;
 
+/**
+ * TCS on vehicle sales: charged when ex-showroom reaches limit_amount, at rate_pct % (DEC-080).
+ *
+ * @property int $id
+ * @property string $limit_amount
+ * @property string $rate_pct
+ * @property bool $is_active
+ */
 class TcsConfig extends BaseModel
 {
     protected $table = 'xlr8_vehicle_pricing_tcs_config';

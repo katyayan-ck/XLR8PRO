@@ -13,6 +13,7 @@ use App\Services\Vehicle\Pricing\Session\PricingStage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -119,7 +120,16 @@ class PricingProcessController extends Controller
             'terminal' => $stage->isTerminal(),
             'progress' => $session->progress ?? [],
             'totals' => data_get($session->stats, 'detect.totals'),
+            'batch' => $this->batchProgress($session->progress['batch_id'] ?? null),
         ]);
+    }
+
+    /** @return array{total: int, processed: int, failed: int, percent: int}|null a running Calculate & Publish batch */
+    private function batchProgress(?string $batchId): ?array
+    {
+        $batch = $batchId ? Bus::findBatch($batchId) : null;
+
+        return $batch ? ['total' => $batch->totalJobs, 'processed' => $batch->processedJobs(), 'failed' => $batch->failedJobs, 'percent' => $batch->progress()] : null;
     }
 
     public function discard(): RedirectResponse

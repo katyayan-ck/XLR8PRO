@@ -14,6 +14,9 @@ return [
         'hold_lists.*' => 'Hold list',
         'vehicle_info_file' => 'Vehicle Info workbook',
         'source' => 'Workbook',
+        'reopen_lists' => 'Lists to reopen',
+        'reopen_lists.*' => 'List to reopen',
+        'action' => 'Action',
     ],
 
     'lists' => [

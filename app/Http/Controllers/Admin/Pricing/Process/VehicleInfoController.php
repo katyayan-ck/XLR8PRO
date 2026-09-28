@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\Vehicle\Pricing\Process\ImportVehicleInfoJob;
 use App\Models\Vehicle\Pricing\ImportSession;
 use App\Services\Vehicle\Pricing\Import\VehicleInfoWorkbookService;
+use App\Services\Vehicle\Pricing\Session\PricingIssueStore;
 use App\Services\Vehicle\Pricing\Session\PricingSessionService;
 use App\Services\Vehicle\Pricing\Session\PricingStage;
 use App\Services\Vehicle\VehicleService;
@@ -96,7 +97,7 @@ class VehicleInfoController extends Controller
             abort(403, 'You do not have permission to view the pricing process.');
         }
         $session = ImportSession::findOrFail($sessionId);
-        $issues = (array) data_get($session->stats, 'vehicle_info.issues', []);
+        $issues = app(PricingIssueStore::class)->all($session, 'vehicle_info');
 
         $book = new Spreadsheet;
         $sheet = $book->getActiveSheet()->setTitle('Issues');

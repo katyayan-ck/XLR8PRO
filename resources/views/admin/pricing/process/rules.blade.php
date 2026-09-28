@@ -45,7 +45,7 @@
                 $run = $runs[$kind] ?? null;
                 $stored = $presence[$kind];
                 $issues = collect($run['issues'] ?? []);
-                $sheets = $kind === 'rto' ? ($run ? ['RTO' => array_diff_key($run, array_flip(['run', 'at', 'wef', 'issues']))] : []) : ($run['sheets'] ?? []);
+                $sheets = $kind === 'rto' ? ($run ? ['RTO' => array_diff_key($run, array_flip(['run', 'at', 'wef', 'issues', 'issues_count']))] : []) : ($run['sheets'] ?? []);
             @endphp
             <div class="col-12 col-lg-6">
                 <div class="card h-100">
@@ -106,7 +106,7 @@
                                 @foreach ($issues->take(8) as $issue)
                                     <div class="{{ str_contains($issue['reason'], 'runs backwards') ? 'text-warning' : 'text-danger' }}">{{ $issue['sheet'] }}{{ $issue['row'] ? ' · row '.$issue['row'] : '' }} — {{ $issue['reason'] }}</div>
                                 @endforeach
-                                <a href="{{ route('pricing.workflow.rules-issues', ['kind' => $kind, 'sessionId' => $session->id]) }}" class="btn btn-sm btn-outline-secondary mt-2"><i class="la la-download me-1"></i>All {{ $issues->count() }} issue(s)</a>
+                                <a href="{{ route('pricing.workflow.rules-issues', ['kind' => $kind, 'sessionId' => $session->id]) }}" class="btn btn-sm btn-outline-secondary mt-2"><i class="la la-download me-1"></i>All {{ number_format($run['issues_count'] ?? $issues->count()) }} issue(s)</a>
                             </div>
                         @endif
                     @endif

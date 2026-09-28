@@ -4,6 +4,7 @@ namespace App\Jobs\Vehicle\Pricing\Process;
 
 use App\Models\Vehicle\Pricing\ImportSession;
 use App\Services\Vehicle\Pricing\Import\AddonDiscountWorkbookService;
+use App\Services\Vehicle\Pricing\Session\PricingIssueStore;
 use App\Services\Vehicle\Pricing\Session\PricingSessionService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -44,6 +45,7 @@ class ImportAddonsJob implements ShouldQueue
         ));
 
         $run = ((int) data_get($session->stats, 'addons.run', 0)) + 1;
+        $result = app(PricingIssueStore::class)->split($session, 'addons', $result);   // issues → file, preview in stats
         $sessions->putStats($session, 'addons', ['run' => $run, 'at' => now()->toIso8601String(), 'wef' => $this->wefDate, 'groups' => $this->groups] + $result);
         $written = array_sum(array_column($result['sheets'], 'written'));
         $sessions->progress($session, ['step' => 'addons', 'state' => 'done', 'message' => "Run {$run}: {$written} row(s) written across ".count($result['sheets']).' sheet(s).']);

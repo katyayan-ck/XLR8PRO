@@ -103,5 +103,11 @@ return [
         'whatsapp.session_hours' => ['value' => 24, 'type' => 'int', 'label' => 'WhatsApp customer-care window (hours)'],
         'comms.max_attempts' => ['value' => 3, 'type' => 'int', 'label' => 'Send attempts before an outbox row fails'],
         'templates.strict_locale' => ['value' => false, 'type' => 'bool', 'label' => 'Fail when a template locale is missing'],
+        // vehicle pricing — Calculate & Publish (DEC-080)
+        'pricing.insurance.od_discount_pct' => ['value' => 30, 'type' => 'int', 'label' => 'Insurance OD discount (%)'],
+        'pricing.insurance.gst_pct' => ['value' => 18, 'type' => 'int', 'label' => 'Insurance GST on OD, TP and add-ons (%)'],
+        'pricing.insurance.goods_tp_gst_pct' => ['value' => 12, 'type' => 'int', 'label' => 'Insurance GST on Goods TP (%)'],
+        'pricing.rto.round_up_to' => ['value' => 1000, 'type' => 'int', 'label' => 'RTO tax base rounded up to (₹)'],
+        'pricing.dealer_charges.include_cod' => ['value' => false, 'type' => 'bool', 'label' => 'Add COD charges to the default on-road price (takes effect at the next Calculate & Publish)'],
     ],
 ];

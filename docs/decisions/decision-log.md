@@ -1123,3 +1123,58 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
      Calculate & Publish (Phase 8).
   4. **Stages:** Rules → Impact (continue) → HoldCheck → Calculating.
 - **Approved-by:** user (band), auto (implements the approved DEC-073 steps 7–8) · **Risk:** LOW · **Reversal:** revert.
+
+### DEC-080 | 29-09-2026 | A (Vehicle pricing) | Calculate & Publish (DEC-073 step 9): on-road rules and the snapshot contract
+- **User decisions (29-09):**
+  1. The consumer scheme (OEM scheme + dealer contribution, with GST) is deducted in the default on-road price, together
+     with the cash, accessory, Shield and RSA discounts.
+  2. TCS = rate × (ex-showroom − default discounts), charged when ex-showroom ≥ the limit (TcsConfig, else
+     config/pricing: 1%, ₹10 lakh).
+  3. Insurance OD discount 30% (setting `pricing.insurance.od_discount_pct`, default 30).
+  4. Insurance GST 18% on OD, TP and add-ons; Goods TP at 12% (settings `pricing.insurance.gst_pct` /
+     `pricing.insurance.goods_tp_gst_pct`).
+  5. Default accessories = the accessory discount amount (0 when there is none). Actual accessories are chosen through
+     `AccessoryService` on the quotation.
+- **From the locked spec §7 (unchanged):**
+  - Default RSA = the first paid 1-year option.
+  - Default Shield = scheme 1.
+  - Dealer charges = the most specific matching row.
+  - Insurance = the default company with Base + NilDep + Consumables, marked frozen.
+  - Every company × plan is computed.
+  - RTO = the most specific rule, tax on the rounded-up base plus the surcharge formula plus all fees.
+  - Every contract key is always present.
+- **Technical calls:**
+  1. **Base amounts (DEC-073):**
+     - RTO ESR = ex-showroom rounded up to ₹1,000.
+     - The BH base = assessable + dealer margin, rounded up to ₹1,000.
+     - IDV year n = ex-showroom × slot n %.
+     - OD = Σ IDV × OD factor. A plan row without a factor uses the factor of its sibling scope row.
+     - OD discount on OD only.
+  2. **Insurance heads:**
+     - CNG / LPG kit and TP bi-fuel apply only to CNG / LPG vehicles.
+     - IMT 23 applies when the rule has it.
+     - "PA cover for passengers" is an option; the other TP heads are included.
+     - Seat formulas use the vehicle's seating.
+     - Add-on rates: `idv_rate` × IDV year 1, `flat` as is, formula through RuleFormula.
+  3. **RTO:**
+     - Default registration is Regular; BH is added as an option when a rule exists.
+     - "Outside State – TRC" is an option, not in the default.
+     - Match on permit (via the permit map), wheels, reg type, body type, GVW, seater, fuel, CC and assessable band;
+       the most specific rule wins.
+  4. **Snapshots:**
+     - One per vehicle × permit (vehicle permit; `taxi_price = YES` adds PASSENGER) × VIN type (NV uses `curr_*`, OV
+       uses `old_*`) × channel (normal; csd when a CSD price exists), at the price WEF.
+     - The previous WEF's rows for the same key are expired.
+     - Complete Active vehicles only; held lists are skipped.
+     - `withheld` = 0 (the quotation fills it).
+  5. **Execution:**
+     - A queued `Bus::batch` of chunk jobs (100 vehicles), one transaction per vehicle.
+     - Per-vehicle results go to a new `xlr8_vehicle_pricing_calc_results` table (ok / failed / skipped + reason), which
+       drives the summary and Retry failed.
+     - Progress comes from the batch.
+     - The session is marked published on the first snapshot.
+- **Approved-by:** user (1–5), auto (technical) · **Risk:** HIGH (customer prices) · **Reversal:** revert; snapshots
+  expire, not delete.
+- **Addendum (user, 29-09):** COD charges (₹42,000 in the reference Dealer Charges sheet) are controlled by the setting
+  `pricing.dealer_charges.include_cod`. The default is off: COD is shown in the snapshot but not in the on-road total
+  until the user decides. Snapshots are frozen, so a change applies at the next Calculate & Publish.

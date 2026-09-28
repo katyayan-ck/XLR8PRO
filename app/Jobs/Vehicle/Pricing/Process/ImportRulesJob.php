@@ -5,6 +5,7 @@ namespace App\Jobs\Vehicle\Pricing\Process;
 use App\Models\Vehicle\Pricing\ImportSession;
 use App\Services\Vehicle\Pricing\Import\InsuranceWorkbookService;
 use App\Services\Vehicle\Pricing\Import\RtoWorkbookService;
+use App\Services\Vehicle\Pricing\Session\PricingIssueStore;
 use App\Services\Vehicle\Pricing\Session\PricingSessionService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -54,6 +55,7 @@ class ImportRulesJob implements ShouldQueue
 
         $stats = (array) data_get($session->stats, 'rules', []);
         $run = ((int) data_get($stats, "{$this->kind}.run", 0)) + 1;
+        $result = app(PricingIssueStore::class)->split($session, 'rules-'.$this->kind, $result);   // issues → file, preview in stats
         $stats[$this->kind] = ['run' => $run, 'at' => now()->toIso8601String(), 'wef' => $this->wefDate] + $result;
         $sessions->putStats($session, 'rules', $stats);
         $written = $this->kind === 'rto' ? $result['written'] : array_sum(array_column($result['sheets'], 'written'));

@@ -16,7 +16,8 @@
         PricingStage::Prices => route('pricing.workflow.prices-form'),
         PricingStage::Addons => route('pricing.workflow.addons-form'),
         PricingStage::Rules => route('pricing.workflow.rules-form'),
-        PricingStage::Impact, PricingStage::HoldCheck, PricingStage::Calculating, PricingStage::Summary => route('pricing.workflow.impact-summary-view', $session->id),
+        PricingStage::Impact, PricingStage::HoldCheck => route('pricing.workflow.impact-summary-view', $session->id),
+        PricingStage::Calculating, PricingStage::Summary => route('pricing.workflow.summary', $session->id),
         default => null,
     } : null;
     $stepIndex = $stage ? collect($steps)->search(fn ($s) => $s->order() >= $stage->order()) : false;

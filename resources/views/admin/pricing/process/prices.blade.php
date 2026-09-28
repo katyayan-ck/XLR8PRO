@@ -130,7 +130,7 @@
                             </table>
                         </div>
                         <div class="card-footer d-flex flex-wrap align-items-center gap-2">
-                            <span class="text-body-secondary small me-auto">{{ $issues->count() > 200 ? 'First 200 of '.number_format($issues->count()).' shown.' : '' }}</span>
+                            <span class="text-body-secondary small me-auto">{{ ($run['issues_count'] ?? $issues->count()) > $issues->count() ? 'First '.$issues->count().' of '.number_format($run['issues_count']).' shown — download for all.' : '' }}</span>
                             <a href="{{ route('pricing.workflow.prices-issues', $session->id) }}" class="btn btn-sm btn-outline-secondary"><i class="la la-download me-1"></i>Download issues</a>
                         </div>
                     @endif

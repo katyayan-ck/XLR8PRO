@@ -149,6 +149,11 @@ Workers: `php artisan queue:work` must run for sends and push outside tests. The
 | `comms.webhook_secret` | blank | encrypted | HMAC for `/api/webhooks/comms/*` |
 | `comms.max_attempts` | 3 | int | outbox retries |
 | `templates.strict_locale` | false | bool | fail instead of falling back to en-IN |
+| `pricing.insurance.od_discount_pct` | 30 | int | insurance OD discount applied in every snapshot (DEC-080) |
+| `pricing.insurance.gst_pct` | 18 | int | GST on insurance OD, TP and add-ons |
+| `pricing.insurance.goods_tp_gst_pct` | 12 | int | GST on insurance TP for Goods permits |
+| `pricing.rto.round_up_to` | 1000 | int | the RTO tax base (ESR / BH base) is rounded up to this (₹) |
+| `pricing.dealer_charges.include_cod` | false | bool | add COD charges to the default on-road total; applies at the next Calculate & Publish (snapshots are frozen) |
 | `scope.enabled` | true | bool | user data scoping master switch (DEC-071) |
 | `scope.unassigned_rows` | visible | string | `visible` / `hidden`: rows with an empty scope code for scoped users |
 

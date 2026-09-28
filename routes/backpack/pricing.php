@@ -3,8 +3,8 @@
 use App\Http\Controllers\Admin\Pricing\HoldController;
 use App\Http\Controllers\Admin\Pricing\InsuranceController;
 use App\Http\Controllers\Admin\Pricing\PricingResetController;
-use App\Http\Controllers\Admin\Pricing\PricingWorkflowController;
 use App\Http\Controllers\Admin\Pricing\Process\AddonsController;
+use App\Http\Controllers\Admin\Pricing\Process\CalculateController;
 use App\Http\Controllers\Admin\Pricing\Process\ImpactController;
 use App\Http\Controllers\Admin\Pricing\Process\PricesController;
 use App\Http\Controllers\Admin\Pricing\Process\PricingProcessController;
@@ -76,9 +76,11 @@ Route::group([
     Route::get('workflow/impact-incomplete/{sessionId}', [ImpactController::class, 'incomplete'])->whereNumber('sessionId')->name('pricing.workflow.impact-incomplete');
     Route::post('workflow/impact-continue', [ImpactController::class, 'continue'])->name('pricing.workflow.impact-continue');
     Route::post('workflow/hold-check', [ImpactController::class, 'hold'])->name('pricing.workflow.hold-check');
-    Route::post('workflow/calculate/{sessionId}', [PricingWorkflowController::class, 'calculateAndPublish'])->name('pricing.workflow.calculate');
-    Route::get('workflow/session-status/{sessionId}', [PricingWorkflowController::class, 'sessionStatus'])->name('pricing.workflow.session-status');
-    Route::get('workflow/failed-vehicles/{sessionId}', [PricingWorkflowController::class, 'failedVehicles'])->name('pricing.workflow.failed-vehicles');
+    Route::post('workflow/calculate-start', [CalculateController::class, 'start'])->name('pricing.workflow.calculate-start');
+    Route::get('workflow/summary/{sessionId}', [CalculateController::class, 'summary'])->whereNumber('sessionId')->name('pricing.workflow.summary');
+    Route::get('workflow/summary-results/{sessionId}', [CalculateController::class, 'results'])->whereNumber('sessionId')->name('pricing.workflow.summary-results');
+    Route::post('workflow/retry-failed', [CalculateController::class, 'retry'])->name('pricing.workflow.retry-failed');
+    Route::post('workflow/complete', [CalculateController::class, 'complete'])->name('pricing.workflow.complete');
 
     // RESET To Date
     // For Preview Only : http://xlrm.test/admin/pricing/reset?after=2026-08-20&confirm=1

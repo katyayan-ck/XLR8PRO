@@ -7,6 +7,7 @@ use App\Jobs\Vehicle\Pricing\Process\ImportRulesJob;
 use App\Models\Vehicle\Pricing\ImportSession;
 use App\Services\Vehicle\Pricing\Import\InsuranceWorkbookService;
 use App\Services\Vehicle\Pricing\Import\RtoWorkbookService;
+use App\Services\Vehicle\Pricing\Session\PricingIssueStore;
 use App\Services\Vehicle\Pricing\Session\PricingSessionService;
 use App\Services\Vehicle\Pricing\Session\PricingStage;
 use Illuminate\Http\RedirectResponse;
@@ -99,7 +100,7 @@ class RulesController extends Controller
         }
         abort_unless(in_array($kind, ImportRulesJob::KINDS, true), 404);
         $session = ImportSession::findOrFail($sessionId);
-        $issues = (array) data_get($session->stats, "rules.{$kind}.issues", []);
+        $issues = app(PricingIssueStore::class)->all($session, 'rules-'.$kind);
 
         $book = new Spreadsheet;
         $sheet = $book->getActiveSheet()->setTitle('Issues');

@@ -4,6 +4,7 @@ namespace App\Jobs\Vehicle\Pricing\Process;
 
 use App\Models\Vehicle\Pricing\ImportSession;
 use App\Services\Vehicle\Pricing\Import\PriceListImportService;
+use App\Services\Vehicle\Pricing\Session\PricingIssueStore;
 use App\Services\Vehicle\Pricing\Session\PricingSessionService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -44,6 +45,7 @@ class ImportPricesJob implements ShouldQueue
         ));
 
         $run = ((int) data_get($session->stats, 'prices.run', 0)) + 1;
+        $result = app(PricingIssueStore::class)->split($session, 'prices', $result);   // issues → file, preview in stats
         $sessions->putStats($session, 'prices', ['run' => $run, 'at' => now()->toIso8601String(), 'wef' => $this->wefDate, 'upload' => $this->uploadPath] + $result);
         $t = $result['totals'];
         $sessions->progress($session, ['step' => 'prices', 'state' => 'done', 'message' => sprintf(

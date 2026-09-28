@@ -4,6 +4,7 @@ namespace App\Jobs\Vehicle\Pricing\Process;
 
 use App\Models\Vehicle\Pricing\ImportSession;
 use App\Services\Vehicle\Pricing\Import\PriceListDetectService;
+use App\Services\Vehicle\Pricing\Session\PricingIssueStore;
 use App\Services\Vehicle\Pricing\Session\PricingSessionService;
 use App\Services\Vehicle\Pricing\Session\PricingStage;
 use Illuminate\Bus\Queueable;
@@ -50,6 +51,9 @@ class DetectPriceListsJob implements ShouldQueue
             $totals['errors'] += count($sheet['errors'] ?? []);
         }
 
+        // the code lists go to a file beside the session; stats keep counts and a short preview
+        app(PricingIssueStore::class)->put($session, 'detect-codes', array_map(fn ($r) => array_intersect_key((array) $r, ['new_codes' => 1, 'csd_unknown_codes' => 1]), $report));
+        $report = array_map(fn ($r) => array_merge((array) $r, ['new_codes' => array_slice((array) ($r['new_codes'] ?? []), 0, PricingIssueStore::PREVIEW), 'csd_unknown_codes' => array_slice((array) ($r['csd_unknown_codes'] ?? []), 0, PricingIssueStore::PREVIEW), 'errors' => array_slice((array) ($r['errors'] ?? []), 0, PricingIssueStore::PREVIEW)]), $report);
         $sessions->advance($session, PricingStage::VehicleInfo, ['detect' => ['sheets' => $report, 'totals' => $totals]]);
         $sessions->progress($session, ['step' => 'detect', 'state' => 'done', 'message' => "{$totals['created']} new vehicle(s), {$totals['known']} known."]);
     }

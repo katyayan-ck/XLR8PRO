@@ -17,6 +17,7 @@
                 <div class="text-danger small">{{ $pp['error'] ?? 'The step failed.' }}</div>
             @endif
             @if ($ppRunning)
+                <div class="progress progress-sm mt-2 d-none" data-pp-bar-wrap style="min-width: 12rem"><div class="progress-bar" data-pp-bar role="progressbar" aria-label="Progress"></div></div>
                 <div class="text-body-secondary small">Runs in the background — you can leave this page.</div>
             @endif
         </div>
@@ -39,9 +40,16 @@
                     if (!res.ok) {
                         return;
                     }
-                    const p = (await res.json()).progress || {};
+                    const data = await res.json();
+                    const p = data.progress || {};
                     if (p.message) {
                         msg.textContent = p.message;
+                    }
+                    const bar = card.querySelector('[data-pp-bar]');
+                    if (data.batch && bar) {
+                        card.querySelector('[data-pp-bar-wrap]').classList.remove('d-none');
+                        bar.style.width = data.batch.percent + '%';
+                        bar.textContent = data.batch.percent + '%';
                     }
                     if (p.state !== 'running') {
                         clearInterval(timer);

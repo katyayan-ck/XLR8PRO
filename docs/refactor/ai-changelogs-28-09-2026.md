@@ -827,3 +827,52 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   - exact counts from the change log;
   - review → hold check → hold PV removes it → Discard undoes the hold.
   Plus a `price_list` assertion in the price import test.
+
+## Pricing redesign — Phases 8 + 9: Calculate & Publish, process summary (DEC-073, DEC-080)
+- **User decisions (DEC-080):**
+  - The consumer scheme is deducted by default.
+  - TCS = 1% × (ex-showroom − discounts) when ex-showroom ≥ ₹10 lakh.
+  - Insurance OD discount 30%.
+  - GST 18%, Goods TP 12%.
+  - Default accessories = the accessory discount.
+  - COD in on-road is controlled by the new setting `pricing.dealer_charges.include_cod` (default off).
+- **New engine** `App\Services\Vehicle\Pricing\Engine\*`:
+  - `PricingContract` v2 (fixed keys).
+  - `VehicleFacts`, `ScopeMatcher` (spec §6), `RuleBook` (all rules in memory per chunk).
+  - `ComponentResolver` (dealer charges, RSA, Shield, exchange, corporate).
+  - `RtoCalculator` (rounded-up ESR / BH base / Fixed, surcharge formula, fees, BH option).
+  - `InsuranceCalculator` (every company × plan, IDV slots, OD − 30%, CNG kit / IMT 23, TP heads with seat formulas,
+    add-ons, GST, default NilDep + Consumables frozen).
+  - `SnapshotBuilder` (permit × NV / OV × channel; taxi → Passenger on RTO Taxi / insurance Passenger).
+  - `SnapshotPublisher` (one transaction per vehicle; the previous WEF is expired).
+  - `PricingCalculationService` (queued `Bus::batch` of `CalculateVehiclesJob`, 100 vehicles each; held lists
+    skipped; failures recorded; retry; finish).
+  - `PricingFailure`.
+- **New table** `xlr8_vehicle_pricing_calc_results` (migration `2026_09_29_004433`) and `CalcResult` model.
+- **Settings** (`config/platform.php`, listed in `docs/utilities/16-reference.md`): `pricing.insurance.od_discount_pct`,
+  `pricing.insurance.gst_pct`, `pricing.insurance.goods_tp_gst_pct`, `pricing.rto.round_up_to`,
+  `pricing.dealer_charges.include_cod`.
+- **Screens:**
+  - `CalculateController`: start from the hold check; `summary/{id}` with progress, the batch %, per-list counts and
+    failures; download of failed / skipped; Retry failed; Mark complete with reopen lists (releases the gate).
+  - `pricing.workflow.status` returns the batch progress, and the shared `_progress` card shows a percentage bar.
+- **Large-workbook fix:**
+  - Step issue lists and detect's code lists are now kept in `storage/app/pricing/{id}/{step}-issues.json` through the
+    new `Session\PricingIssueStore`. The session `stats` keep the counts and a 20-row preview.
+  - The first full real run failed with "MySQL Out of memory" while rewriting a 197 KB stats blob on a machine whose
+    virtual memory was nearly exhausted.
+- **Removed (legacy):** `PricingWorkflowController`, `CalculatePricingSessionJob`, `RecalculateVehiclePricingJob`, and the
+  old `Pricing\PricingSessionService`. `PricingEngineService` remains only for the unrouted v1 API (Phase 10).
+- **Real run (all reference files, xlrm_testing):**
+  - Timings: detect 38 s, Vehicle Info 61 s, prices 34 s, add-ons 5 s, insurance 2 s, RTO 1.5 s.
+  - Calculate & Publish: 2,527 vehicles in 179 s (164 MB), 2,495 published as 9,266 snapshots.
+  - 32 failed with reasons, all data gaps in the reference sheets:
+    - 20 CNG vehicles: the RTO sheet has no CNG rows;
+    - 12 taxi vehicles with more than 7 seats: the insurance Passenger row covers "1 to 7".
+  - The Scorpio-N figures match a hand calculation.
+- **Tests:** `PricingCalculationTest` (4):
+  - on-road to the rupee, NV / OV, taxi snapshot, TCS, accessories;
+  - fixed keys + the COD setting;
+  - failure reason;
+  - the queued run: publish, TAXI hold, retry, no discard after publish, complete + reopen.
+  Pricing suites: 80 passed.

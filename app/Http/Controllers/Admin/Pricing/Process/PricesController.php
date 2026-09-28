@@ -7,6 +7,7 @@ use App\Jobs\Vehicle\Pricing\Process\ImportPricesJob;
 use App\Models\Vehicle\Pricing\ImportSession;
 use App\Services\Vehicle\Pricing\Import\PriceListDetectService;
 use App\Services\Vehicle\Pricing\Import\PricingWorkbookReader;
+use App\Services\Vehicle\Pricing\Session\PricingIssueStore;
 use App\Services\Vehicle\Pricing\Session\PricingSessionService;
 use App\Services\Vehicle\Pricing\Session\PricingStage;
 use Illuminate\Http\RedirectResponse;
@@ -100,7 +101,7 @@ class PricesController extends Controller
             abort(403, 'You do not have permission to view the pricing process.');
         }
         $session = ImportSession::findOrFail($sessionId);
-        $issues = (array) data_get($session->stats, 'prices.issues', []);
+        $issues = app(PricingIssueStore::class)->all($session, 'prices');
 
         $book = new Spreadsheet;
         $sheet = $book->getActiveSheet()->setTitle('Issues');

@@ -4,6 +4,7 @@ namespace App\Jobs\Vehicle\Pricing\Process;
 
 use App\Models\Vehicle\Pricing\ImportSession;
 use App\Services\Vehicle\Pricing\Import\VehicleInfoWorkbookService;
+use App\Services\Vehicle\Pricing\Session\PricingIssueStore;
 use App\Services\Vehicle\Pricing\Session\PricingSessionService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -49,6 +50,7 @@ class ImportVehicleInfoJob implements ShouldQueue
         }
 
         $round = ((int) data_get($session->stats, 'vehicle_info.round', 0)) + 1;
+        $result = app(PricingIssueStore::class)->split($session, 'vehicle_info', $result);   // issues → file, preview in stats
         $sessions->putStats($session, 'vehicle_info', ['round' => $round, 'at' => now()->toIso8601String()] + $result);
         $sessions->progress($session, ['step' => 'vehicle_info', 'state' => 'done', 'message' => "Round {$round}: {$result['completed']} complete, {$result['incomplete']} incomplete, ".($result['rejected'] + $result['unknown']).' rejected.']);
     }
