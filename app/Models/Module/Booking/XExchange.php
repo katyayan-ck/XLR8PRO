@@ -3,12 +3,10 @@
 namespace App\Models\Module\Booking;
 
 use App\Models\BaseModel;
-use App\Models\Traits\HasDataScope;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class XExchange extends BaseModel
 {
-    use HasDataScope;   // DEC-071: filtered by the signed-in user's data scope (config/data_scope.php)
     use SoftDeletes;
 
     protected $table = 'xlr8_booking_exchange';
@@ -19,7 +17,7 @@ class XExchange extends BaseModel
 
     public function booking()
     {
-        return $this->belongsTo(Booking::class, 'bid', 'id');   // BUG-193
+        return $this->belongsTo(Booking::class, 'booking_id', 'id');
     }
 
     /**

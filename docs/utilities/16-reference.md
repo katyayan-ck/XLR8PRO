@@ -149,8 +149,6 @@ Workers: `php artisan queue:work` must run for sends and push outside tests. The
 | `comms.webhook_secret` | blank | encrypted | HMAC for `/api/webhooks/comms/*` |
 | `comms.max_attempts` | 3 | int | outbox retries |
 | `templates.strict_locale` | false | bool | fail instead of falling back to en-IN |
-| `scope.enabled` | true | bool | user data scoping master switch (DEC-071) |
-| `scope.unassigned_rows` | visible | string | `visible` / `hidden`: rows with an empty scope code for scoped users |
 
 ## 6. Permissions (`UTL_*`, minted by `2026_09_28_100000_platform_permissions`)
 | Permission | Grants |

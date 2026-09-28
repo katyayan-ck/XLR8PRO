@@ -3,7 +3,6 @@
 namespace App\Models\Module\Booking;
 
 use App\Models\BaseModel;
-use App\Models\Traits\HasDataScope;
 use App\Models\Traits\HasDocuments;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -13,7 +12,6 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class XlRto extends BaseModel implements HasMedia
 {
-    use HasDataScope;   // DEC-071: filtered by the signed-in user's data scope (config/data_scope.php)
     use HasDocuments;
 
     /**

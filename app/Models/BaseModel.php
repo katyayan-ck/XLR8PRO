@@ -161,6 +161,11 @@ abstract class BaseModel extends Model implements HasMedia
         return $query->withTrashed();
     }
 
+    public function scopeOnlyRestored(Builder $query): Builder
+    {
+        return $query->whereNull('deleted_at')->whereNotNull('deleted_by');
+    }
+
     public function scopeNewest(Builder $query): Builder
     {
         return $query->orderByDesc('created_at');
@@ -216,7 +221,7 @@ abstract class BaseModel extends Model implements HasMedia
         return [
             'created_at' => $this->created_at?->toIso8601String(),
             'created_by_id' => $this->created_by,
-            'created_by_name' => $this->createdByUser?->display_name ?? 'System',
+            'created_by_name' => $this->createdByUser?->name ?? 'System',
         ];
     }
 
@@ -225,7 +230,7 @@ abstract class BaseModel extends Model implements HasMedia
         return [
             'updated_at' => $this->updated_at?->toIso8601String(),
             'updated_by_id' => $this->updated_by,
-            'updated_by_name' => $this->updatedByUser?->display_name ?? 'System',
+            'updated_by_name' => $this->updatedByUser?->name ?? 'System',
         ];
     }
 
@@ -238,7 +243,7 @@ abstract class BaseModel extends Model implements HasMedia
         return [
             'deleted_at' => $this->deleted_at->toIso8601String(),
             'deleted_by_id' => $this->deleted_by,
-            'deleted_by_name' => $this->deletedByUser?->display_name ?? 'System',
+            'deleted_by_name' => $this->deletedByUser?->name ?? 'System',
         ];
     }
 

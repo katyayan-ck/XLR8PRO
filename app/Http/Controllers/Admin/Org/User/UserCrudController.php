@@ -26,7 +26,6 @@ use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
 use App\Services\AuthService;
 use App\Services\HR\EmployeeJourneyService;
-use App\Services\IAM\DataScope\ScopeResolver;
 use App\Services\IAM\PermissionTreeService;
 use App\Services\IAM\UserScopeService;
 use App\Services\IAM\UserService;
@@ -602,7 +601,6 @@ class UserCrudController extends CrudController
             'person' => $person,
             'currentAddonScopes' => $employee ? $user->getAllScopes() : [],
             'currentOverrides' => $user->permissionOverrides(),
-            'effectiveScope' => app(ScopeResolver::class)->for($user),   // read-only preview (DEC-071)
         ], $this->onboardingLookupData()));
     }
 

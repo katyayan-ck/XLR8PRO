@@ -5,7 +5,6 @@ namespace App\Models\CRM;
 use App\Models\BaseModel;
 use App\Models\Traits\HasColumnTransformations;
 use App\Models\Traits\HasCommunications;
-use App\Models\Traits\HasDataScope;
 use App\Models\User;
 use App\Models\Vehicle\Color;
 use App\Models\Vehicle\Segment;
@@ -15,11 +14,8 @@ use Illuminate\Support\Facades\Cache;
 
 class Lead extends BaseModel
 {
-    // DEC-071: filtered by the signed-in user's data scope (config/data_scope.php)
-
     // Timeline via the Chat utility (DEC-068). HasColumnTransformations stays off: it would change stored values.
     use HasCommunications;
-    use HasDataScope;
 
     protected $table = 'xlr8_crm_leads';
 

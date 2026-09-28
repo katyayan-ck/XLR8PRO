@@ -3,19 +3,27 @@
 namespace App\Models\Module\Spare;
 
 use App\Models\BaseModel;
+use App\Models\Traits\ScopedQuery;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class XlSpareRequest extends BaseModel
 {
-    use SoftDeletes;
+    use ScopedQuery, SoftDeletes;
 
     protected $table = 'xlr8_spare_request';
 
     protected $guarded = ['id'];
 
-    // Not data-scoped (DEC-071): the branch column srv_brnch_id holds an id, not a code; the Spares module is
-    // hidden until its rebuild (D28), which should store a branch_code and list the model in config/data_scope.php.
+    /**
+     * DataScopeFilter config. The table's branch column is srv_brnch_id
+     * (an id; there is no branch_code column).
+     */
+    public string $scopeType = 'branch';
+
+    public string $scopeColumn = 'srv_brnch_id';
+
+    public string $scopeGroup = 'org';
 
     // ── Relations ─────────────────────────────────────────────────────
 

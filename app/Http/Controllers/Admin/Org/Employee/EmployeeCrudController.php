@@ -3,19 +3,24 @@
 namespace App\Http\Controllers\Admin\Org\Employee;
 
 use App\Models\Admin\Employee;
+use App\Models\Admin\Person;
 use App\Services\OrgService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 class EmployeeCrudController extends CrudController
 {
+    use CreateOperation;
     use DeleteOperation;
     use ListOperation {
         search as traitSearch;
         showDetailsRow as traitShowDetailsRow;
     }
+    use UpdateOperation;
 
     public function search()
     {

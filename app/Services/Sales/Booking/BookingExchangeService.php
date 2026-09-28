@@ -293,10 +293,18 @@ class BookingExchangeService
 
         $exchangeEntry = XExchange::where('bid', $booking->id)->first();
 
-        // The exchange row only holds status columns; the vehicle details live on the enquiry (synced above).
-        // BUG-102: the nine vehicle fields once sent here were silently dropped by Eloquent (no such columns).
         $exchangePayload = [
             'vh_id' => 0,
+            'enum_master1' => $validated['enum_master1'] ?? null,
+            'enum_master2' => $validated['enum_master2'] ?? null,
+            'vehicle_details' => $validated['vehicle_details'] ?? null,
+            'vehicle_details2' => $validated['vehicle_details2'] ?? null,
+            'registration_no' => $validated['registration_no'] ?? null,
+            'manufacturing_year' => $validated['manufacturing_year'] ?? null,
+            'odometer_reading' => $validated['odometer_reading'] ?? null,
+            'expected_price' => $validated['expected_price'] ?? null,
+            'offered_price' => $validated['offered_price'] ?? null,
+            'exchange_bonus' => $validated['exchange_bonus'] ?? null,
             'verification_status' => $verificationStatus,
             'case_status' => $caseStatus,
             'purchase_type' => $validated['buyer_type'],

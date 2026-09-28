@@ -65,7 +65,8 @@ Person models (`Person`, `PersonContact`, `PersonAddress`, `PersonBankingDetail`
 
 ### Name lookups (fall back to the code itself)
 `branchName($code)`, `locationName($code)`, `departmentName($code)`, `divisionName($code)`, `verticalName($code)`,
-`segmentName($code)`, `subSegmentName($code)`, `modelName($code)`, `variantName($code)` → the variant's display name, or the code when unknown (BUG-186 fixed).
+`segmentName($code)`, `subSegmentName($code)`, `modelName($code)`, `variantName($code)` (**broken — BUG-186, throws
+`TypeError`; use `variants()[$code]['name'] ?? $code`**).
 
 Format helpers: `formatCodeWithName($code, $resolver, 'code'|'name'|'code_name')` → `JPR` / `Jaipur` / `[JPR] Jaipur`;
 `formatCodeList($codes, $resolver, $format)` → comma string; `formatReportingManager($empCode, $format)`.

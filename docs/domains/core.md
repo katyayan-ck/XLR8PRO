@@ -8,7 +8,7 @@ The foundation every module builds on. Read this first; the domain guides assume
 | `User` | `app/Models/User.php` | login account (Backpack + Sanctum), roles = designations, scopes, person / employee links |
 | `HasColumnTransformations` | `app/Models/Traits/` | declarative cleanup of column values on write (and optionally read) |
 | `HasTreeStructure` | `app/Models/Traits/` | parent / children / materialised path for tree tables |
-| `HasDataScope` | `app/Models/Traits/` | automatic user data scoping (DEC-071); columns in `config/data_scope.php`; `withoutDataScope()` |
+| `ScopedQuery` | `app/Models/Traits/` | row-level data scope global scope — **not switched on yet** (BUG-083) |
 | `HasCommunications`, `HasDocuments` | `app/Models/Traits/` | opt a model into Chat / Docs — `commMaster()`, `getOrCreateCommMaster()`, `recordEvent($action, $summary, $meta = [], ?$body = null)`, `addRemark()`, `history()`, `addHistory()` (legacy) / `documents()`, `attachDocument()`, `documentsList()`, one-file slots `replaceDocument()`, `documentFor()`, `documentUrl()`, `hasDocumentIn()`, `removeDocuments()`; see `docs/utilities/03-chat.md`, `04-docs.md` |
 | `EntityService` + `Field` | `app/Support/Entity/` | **the only write path** for master / entry data (DEC-050) |
 | `Result` | `app/Support/Result.php` | return value of platform services |
@@ -47,7 +47,7 @@ class Branch extends BaseModel
 | Scope | SQL |
 |---|---|
 | `active()` / `inactive()` | `is_active = 1 / 0` — only on tables that have `is_active` |
-| `onlyTrashed()` / `includingTrashed()` | soft-delete filters (`onlyRestored()` was removed — it could never match, BUG-185) |
+| `onlyTrashed()` / `includingTrashed()` / `onlyRestored()` | soft-delete filters. `onlyRestored` = live rows with `deleted_by` set — but `restore()` clears `deleted_by`, so it misses model restores (BUG-185) |
 | `newest()` / `oldest()` | order by `created_at` desc / asc |
 | `dateRange($column, $from, $to)` | `whereBetween($column, [$from, $to])` — pass ISO dates |
 | `createdBy($userId)` / `updatedBy($userId)` / `deletedBy($userId)` | audit filters |
@@ -55,7 +55,7 @@ class Branch extends BaseModel
 **Audit helpers**
 | Method | Returns |
 |---|---|
-| `getCreationDetails()` | `['created_at' => ISO8601, 'created_by_id' => id, 'created_by_name' => …]` — the actor's `display_name`, or "System" when there is none (BUG-184 fixed) |
+| `getCreationDetails()` | `['created_at' => ISO8601, 'created_by_id' => id, 'created_by_name' => …]` — the name currently always reads "System" (BUG-184) |
 | `getUpdateDetails()` / `getDeletionDetails()` | same shape for update / delete (`null` when never deleted) |
 | `getAllAuditDetails()` | the three above in one array |
 | `getCreatedAtForHumans()` / `getUpdatedAtForHumans()` | "3 hours ago" |
@@ -171,11 +171,10 @@ The transformer never blanks a value: if a step produces an empty string the ori
 | `static tree()` | nested array of the whole table |
 | scopes `roots()`, `byLevel($n)` | level filters |
 
-## HasDataScope (automatic data scoping, DEC-071)
-`use HasDataScope;` adds the `DataScopeFilter` global scope; the model must also be listed in `config/data_scope.php`
-`entities` (columns per scope level, or `via` a parent). `Model::withoutDataScope()` gives an unscoped query;
-`DataScope::off(fn, 'reason')` and route middleware `data-scope:off` switch it off wider. Rules, API and examples:
-`docs/domains/iam-auth.md` → "Data scoping". Jobs and console run without a user and are never scoped.
+## ScopedQuery (data scoping — dormant)
+`bootScopedQuery()` adds a global scope filtering rows by the user's `UserScope` grants. **Not enabled on any model yet** (decision pending,
+BUG-083). `Model::withoutDataScope()` gives an unscoped query; `shouldBypassDataScope()` is true for superadmin /
+`bypass_data_scoping`. Jobs must never depend on a user scope.
 
 ---
 

@@ -3,8 +3,6 @@
 namespace App\Models\Module\Finance;
 
 use App\Models\BaseModel;
-use App\Models\Module\Booking\Booking;
-use App\Models\Traits\HasDataScope;
 use App\Models\Traits\HasDocuments;
 use App\Models\User;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -13,7 +11,6 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class XFinance extends BaseModel implements HasMedia
 {
-    use HasDataScope;   // DEC-071: filtered by the signed-in user's data scope (config/data_scope.php)
     use HasDocuments;
     use SoftDeletes;
 
@@ -33,7 +30,7 @@ class XFinance extends BaseModel implements HasMedia
 
     public function booking()
     {
-        return $this->belongsTo(Booking::class, 'bid', 'id');   // BUG-193
+        return $this->belongsTo(Booking::class, 'booking_id', 'id');
     }
 
     public static function getVerifiedCounts($type, $timeFrame = null)

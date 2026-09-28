@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Org\Branch;
 
+use App\Http\Controllers\Admin\Traits\ScopedCrud;
 use App\Models\Admin\Branch;
 use App\Services\Org\BranchService;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
@@ -20,6 +21,7 @@ class BranchCrudController extends CrudController
         search as traitSearch;
         showDetailsRow as traitShowDetailsRow;
     }
+    use ScopedCrud;
     use UpdateOperation;
 
     public function __construct(private BranchService $branches)
@@ -39,6 +41,11 @@ class BranchCrudController extends CrudController
         $this->authorizeManage();
 
         return $this->traitShowDetailsRow($id);
+    }
+
+    protected function getScopeType(): string
+    {
+        return 'branch';
     }
 
     public function setup()

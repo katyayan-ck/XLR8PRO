@@ -8,9 +8,7 @@ paths:
   - app/Services/AuthService.php
   - app/Http/Scopes/**
   - app/Http/Controllers/Admin/Iam/**
-  - app/Services/IAM/DataScope/**
-  - app/Models/Traits/HasDataScope.php
-  - config/data_scope.php
+  - app/Http/Controllers/Admin/Traits/ScopedCrud.php
   - app/Providers/AppServiceProvider.php
 ---
 
@@ -28,15 +26,9 @@ paths:
 
 ## Data scoping
 - Scope store: `App\Models\Admin\UserScope` (`xlr8_admin_user_scopes`: user_id, scope_type, scope_code, is_active).
-- **Automatic (DEC-071):** business models with `HasDataScope` + a row in `config/data_scope.php` are filtered on every
-  query for the signed-in user (admin + API). No rows = full access; a parent covers its children unless a child is
-  assigned (within the nearest assigned ancestor). Masters / pickers are not scoped. Rows with empty codes follow
-  setting `scope.unassigned_rows`; master switch `scope.enabled`.
-- **Opt out only with a reason:** `Model::withoutDataScope()`, `DataScope::off(fn, 'reason')`, route `data-scope:off`.
-  Required for uniqueness / numbering / duplicate checks (VOTF, receipt numbers, duplicate enquiry / booking).
-- New business table: store scope **codes** (`branch_code`, `location_code`, `model_code`…), add the trait and the config
-  row. Raw report queries: `DataScope::apply($q, Entity::class, 'alias')`. Per-user caches key on `DataScope::current()->hash()`.
-- Jobs must not rely on a user scope (they run unscoped).
+- `App\Services\IAM\DataScopeService`: `null` = unrestricted, `[]` = no access (fails closed).
+- `ScopedQuery` (model trait) / `ScopedCrud` (controller trait) / `DataScopeFilter` exist but enforcement is
+  **not switched on** anywhere yet — turning it on is a pending user decision (BUG-136/083). Jobs must not rely on a user scope.
 - `UserDataScope` model is deprecated (its table doesn't exist).
 
 ## Auth (API)

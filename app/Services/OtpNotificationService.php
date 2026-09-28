@@ -2,32 +2,26 @@
 
 namespace App\Services;
 
-use App\Services\Platform\Comms\ContactService;
-use Exception;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use Exception;
 
-/**
- * Legacy mobile-login notifications. BUG-189 (DEC-070): logs never carry the OTP, and phone numbers / emails
- are masked with ContactService::mask().
- */
 class OtpNotificationService
 {
-    private function mask(?string $address): string
-    {
-        return app(ContactService::class)->mask($address);
-    }
-
     /**
      * Send OTP via Email
+     * 
+     * @param string $email
+     * @param string $otp
+     * @param string $mobile
+     * @return bool
      */
     public function sendViaEmail(string $email, string $otp, ?string $mobile = null): bool
     {
         try {
             // Validate email
-            if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                Log::error('Invalid email format', ['email' => $this->mask($email)]);
-
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                Log::error('Invalid email format', ['email' => $email]);
                 return false;
             }
 
@@ -44,7 +38,7 @@ class OtpNotificationService
             Mail::send('emails.otp_notification_email', $data, function ($message) use ($email) {
                 $message
                     ->to($email)
-                    ->subject('Your OTP for '.config('app.name').' Login')
+                    ->subject('Your OTP for ' . config('app.name') . ' Login')
                     ->from(
                         config('mail.from.address', 'noreply@insightechindia.in'),
                         config('mail.from.name', 'VDMS')
@@ -52,8 +46,8 @@ class OtpNotificationService
             });
 
             Log::info('OTP email sent successfully', [
-                'email' => $this->mask($email),
-                'mobile' => $this->mask($mobile),
+                'email' => $email,
+                'mobile' => $mobile,
                 'timestamp' => now(),
                 'mailer' => config('mail.mailer'),
             ]);
@@ -61,7 +55,7 @@ class OtpNotificationService
             return true;
         } catch (Exception $e) {
             Log::error('Failed to send OTP via email', [
-                'email' => $this->mask($email),
+                'email' => $email,
                 'error' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'timestamp' => now(),
@@ -73,9 +67,13 @@ class OtpNotificationService
 
     /**
      * Send OTP via SMS (Placeholder for future SMS provider integration)
-     *
+     * 
      * Currently logs to console and database.
      * Will be replaced with actual SMS provider (Twilio, AWS SNS, etc.)
+     * 
+     * @param string $mobile
+     * @param string $otp
+     * @return bool
      */
     public function sendViaSms(string $mobile, string $otp): bool
     {
@@ -89,15 +87,21 @@ class OtpNotificationService
             // - Kaleyra
 
             Log::info('SMS would be sent (placeholder)', [
-                'mobile' => $this->mask($mobile),
+                'mobile' => $mobile,
+                'otp' => $otp,
                 'timestamp' => now(),
                 'note' => 'SMS provider not yet configured. Using log-only placeholder.',
             ]);
 
+            // In development, also log to stack channel
+            if (config('app.debug')) {
+                \Log::channel('stack')->info("📱 SMS OTP to {$mobile}: {$otp}");
+            }
+
             return true;
         } catch (Exception $e) {
             Log::error('Error in SMS placeholder', [
-                'mobile' => $this->mask($mobile),
+                'mobile' => $mobile,
                 'error' => $e->getMessage(),
                 'timestamp' => now(),
             ]);
@@ -108,6 +112,11 @@ class OtpNotificationService
 
     /**
      * Send OTP via both Email and SMS
+     * 
+     * @param string $email
+     * @param string $mobile
+     * @param string $otp
+     * @return array
      */
     public function sendViaEmailAndSms(string $email, string $mobile, string $otp): array
     {
@@ -117,7 +126,7 @@ class OtpNotificationService
         Log::info('OTP notification sent', [
             'email_sent' => $emailSent,
             'sms_sent' => $smsSent,
-            'mobile' => $this->mask($mobile),
+            'mobile' => $mobile,
         ]);
 
         return [
@@ -129,13 +138,17 @@ class OtpNotificationService
 
     /**
      * Send verification success notification
+     * 
+     * @param string $email
+     * @param string $mobile
+     * @param string $device_name
+     * @return bool
      */
     public function sendVerificationSuccessEmail(string $email, string $mobile, string $device_name): bool
     {
         try {
-            if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                Log::error('Invalid email format', ['email' => $this->mask($email)]);
-
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                Log::error('Invalid email format', ['email' => $email]);
                 return false;
             }
 
@@ -150,7 +163,7 @@ class OtpNotificationService
             Mail::send('emails.verification_success_email', $data, function ($message) use ($email) {
                 $message
                     ->to($email)
-                    ->subject('Login Successful - '.config('app.name'))
+                    ->subject('Login Successful - ' . config('app.name'))
                     ->from(
                         config('mail.from.address', 'noreply@insightechindia.in'),
                         config('mail.from.name', 'VDMS')
@@ -158,14 +171,14 @@ class OtpNotificationService
             });
 
             Log::info('Verification success email sent', [
-                'email' => $this->mask($email),
+                'email' => $email,
                 'device' => $device_name,
             ]);
 
             return true;
         } catch (Exception $e) {
             Log::error('Failed to send verification success email', [
-                'email' => $this->mask($email),
+                'email' => $email,
                 'error' => $e->getMessage(),
             ]);
 
@@ -175,13 +188,17 @@ class OtpNotificationService
 
     /**
      * Send account locked notification
+     * 
+     * @param string $email
+     * @param string $mobile
+     * @param string $reason
+     * @return bool
      */
     public function sendAccountLockedEmail(string $email, string $mobile, string $reason): bool
     {
         try {
-            if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                Log::error('Invalid email format', ['email' => $this->mask($email)]);
-
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                Log::error('Invalid email format', ['email' => $email]);
                 return false;
             }
 
@@ -197,7 +214,7 @@ class OtpNotificationService
             Mail::send('emails.account_locked_email', $data, function ($message) use ($email) {
                 $message
                     ->to($email)
-                    ->subject('Account Locked - '.config('app.name'))
+                    ->subject('Account Locked - ' . config('app.name'))
                     ->from(
                         config('mail.from.address', 'noreply@insightechindia.in'),
                         config('mail.from.name', 'VDMS')
@@ -205,14 +222,14 @@ class OtpNotificationService
             });
 
             Log::warning('Account locked notification sent', [
-                'email' => $this->mask($email),
+                'email' => $email,
                 'reason' => $reason,
             ]);
 
             return true;
         } catch (Exception $e) {
             Log::error('Failed to send account locked email', [
-                'email' => $this->mask($email),
+                'email' => $email,
                 'error' => $e->getMessage(),
             ]);
 

@@ -129,8 +129,8 @@ $bundle = app(AccessoryService::class)->listForVehicle($variant->segment_code, $
 - One variant row per colour: "the variant" in the UI is usually a group of rows sharing everything but `color_code`.
 - Model codes are hyphenated (`THAR-ROXX`); older rows may still hold `THAR ROXX` — use `modelCodeCandidates()` when matching.
 - The colour table is retired; don't read `xlr8_vehicle_color` in new code.
-- `OrgService::variants()` / `models()` also exist (cached arrays); prefer `VehicleService` in vehicle screens; `OrgService::variantName($code)`
-  returns the variant's display name.
+- `OrgService::variants()` / `models()` also exist (cached arrays); prefer `VehicleService` in vehicle screens, and note
+  `OrgService::variantName()` is broken (BUG-186).
 
 ## Testing
 Run against `xlrm_testing` (vehicle rows exist there). Create test variants through `VariantService` inside the

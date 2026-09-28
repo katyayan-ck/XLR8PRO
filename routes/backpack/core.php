@@ -318,9 +318,8 @@ Route::group([
     Route::get('sales/lead/{id}/edit', [LeadCrudController::class, 'edit'])->name('sales.lead.edit');
     Route::put('sales/lead/{id}', [LeadCrudController::class, 'update'])->name('sales.lead.update');
     Route::delete('sales/lead/{id}', [LeadCrudController::class, 'destroy'])->name('sales.lead.destroy');
-    // 'operation' => 'list' so Backpack runs setupListOperation() (columns) before search / details — BUG-168
-    Route::post('sales/lead/search', ['uses' => LeadCrudController::class.'@search', 'as' => 'sales.lead.search', 'operation' => 'list']);
-    Route::get('sales/lead/{id}/details', ['uses' => LeadCrudController::class.'@showDetailsRow', 'as' => 'sales.lead.details', 'operation' => 'list']);
+    Route::post('sales/lead/search', [LeadCrudController::class, 'search'])->name('sales.lead.search');
+    Route::get('sales/lead/{id}/details', [LeadCrudController::class, 'showDetailsRow'])->name('sales.lead.details');
     Route::get('sales/lead/models/{segmentCode}', [LeadCrudController::class, 'getModels'])->name('sales.lead.get-models');
     Route::get('sales/lead/variants/{modelCode}', [LeadCrudController::class, 'getVariants'])->name('sales.lead.get-variants');
     Route::get('sales/lead/colors/{variantCode}', [LeadCrudController::class, 'getColors'])->name('sales.lead.get-colors');
@@ -332,8 +331,8 @@ Route::group([
     Route::get('sales/lead-source/{id}/edit', [LeadSourceCrudController::class, 'edit'])->name('sales.lead-source.edit');
     Route::put('sales/lead-source/{id}', [LeadSourceCrudController::class, 'update'])->name('sales.lead-source.update');
     Route::delete('sales/lead-source/{id}', [LeadSourceCrudController::class, 'destroy'])->name('sales.lead-source.destroy');
-    Route::post('sales/lead-source/search', ['uses' => LeadSourceCrudController::class.'@search', 'as' => 'sales.lead-source.search', 'operation' => 'list']);
-    Route::get('sales/lead-source/{id}/details', ['uses' => LeadSourceCrudController::class.'@showDetailsRow', 'as' => 'sales.lead-source.details', 'operation' => 'list']);
+    Route::post('sales/lead-source/search', [LeadSourceCrudController::class, 'search'])->name('sales.lead-source.search');
+    Route::get('sales/lead-source/{id}/details', [LeadSourceCrudController::class, 'showDetailsRow'])->name('sales.lead-source.details');
     Route::get('sales/lead-source/check-code', [LeadSourceCrudController::class, 'checkCode'])->name('sales.lead-source.check-code');
 
     // =========== ENQUIRY ========================

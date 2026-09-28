@@ -154,8 +154,7 @@ class RefreshAiContext extends Command
             $n = count($cells);
             // | id | title | severity | status | found | fixed |
             $status = $cells[$n - 4] ?? '';
-            // closed states: FIXED…, CLOSED…, DUPLICATE…, WON'T FIX (MITIGATED stays listed — the root cause is open)
-            if (preg_match("/^(FIXED|CLOSED|DUPLICATE|WON'T FIX)\\b/i", $status)) {
+            if (preg_match('/^FIXED\b/i', $status) || preg_match("/^WON'T FIX/i", $status)) {
                 continue;
             }
             $title = mb_strimwidth(implode('|', array_slice($cells, 2, $n - 7)), 0, 160, '…');

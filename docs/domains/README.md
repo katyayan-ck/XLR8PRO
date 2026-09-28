@@ -9,10 +9,10 @@ Email / SMS / WhatsApp / Telephony, UI kit).
 
 | Guide | Covers |
 |---|---|
-| [core.md](core.md) | `BaseModel`, `User`, `HasColumnTransformations`, `HasTreeStructure`, `HasDataScope`, `EntityService` + `Field`, `Result`, `site_date()` / `DateFormatService` |
+| [core.md](core.md) | `BaseModel`, `User`, `HasColumnTransformations`, `HasTreeStructure`, `ScopedQuery`, `EntityService` + `Field`, `Result`, `site_date()` / `DateFormatService` |
 | [org.md](org.md) | branches, locations, departments, divisions, verticals, designations (= roles), employees; `OrgService`, `OrgScopeService`, org entity services |
 | [person.md](person.md) | persons, contacts, addresses, bank accounts, user types; `PersonService`, `PersonUserTypeService`, person entity services |
-| [iam-auth.md](iam-auth.md) | permissions, roles, overrides, data scopes, devices, mobile OTP login; `UserService`, `UserScopeService`, data scoping (`DataScope`, `ScopeResolver`, `ScopeCodeFiller`), `AuthService`, RBAC helpers |
+| [iam-auth.md](iam-auth.md) | permissions, roles, overrides, data scopes, devices, mobile OTP login; `UserService`, `UserScopeService`, `DataScopeService`, `AuthService`, RBAC helpers |
 | [hr.md](hr.md) | employee history over time; `EmployeeJourneyService` |
 | [vehicle.md](vehicle.md) | segment → sub segment → model → variant (per colour), status, accessories; `VehicleService`, vehicle entity services, `AccessoryService` |
 | [pricing.md](pricing.md) | the price-list pipeline, rule / add-on / price entity services, the pricing JSON and `PricingEngineService` |

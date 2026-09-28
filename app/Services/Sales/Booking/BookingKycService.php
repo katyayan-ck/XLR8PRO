@@ -163,24 +163,14 @@ class BookingKycService
             'KYC Completed',
             [
                 'module' => 'Pending KYC',
-                // BUG-195: the timeline is widely visible — never store a full PAN or Aadhaar there.
-                'pan_no' => $this->maskIdentifier($panNo),
-                'adhar_no' => $this->maskIdentifier($adharNo),
+                'pan_no' => $panNo,
+                // BUG-195: the timeline is widely visible — never store the full Aadhaar there.
+                'adhar_no' => $adharNo ? str_repeat('X', max(0, strlen($adharNo) - 4)).substr($adharNo, -4) : $adharNo,
                 'gstn' => $gstValue,
             ],
             'Customer KYC details updated successfully'
         );
 
         return $booking;
-    }
-
-    /** "XXXXXXXX0123" — keeps the last four characters so staff can still tell records apart. */
-    private function maskIdentifier(?string $value): ?string
-    {
-        if ($value === null || $value === '') {
-            return $value;
-        }
-
-        return str_repeat('X', max(0, strlen($value) - 4)).substr($value, -4);
     }
 }

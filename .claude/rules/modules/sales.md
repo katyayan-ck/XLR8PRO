@@ -18,11 +18,8 @@ paths:
   `App\Services\Sales\Booking\*` — put new/changed logic in the matching service, never back into the controller.
 - `xlr8_booking_master.status` is a varchar '1'–'8' (1 Live, 2 Invoiced, 3 Cancelled, 4 Refund Queued,
   5 Refunded, 6 On Hold, 7 Refund Rejected, 8 Pending) — use the service constants, not new magic numbers.
-- Bookings carry `branch_code`, `location_code`, `segment_code`, `sub_segment_code`, `model_code`, `variant_code` (DEC-071),
-  filled on save by `ScopeCodeFiller` (enquiry, quotation, masters; the OTF branch when empty). The VOTF number uses the
-  branch the user picks on the OTF form (`generateVotfNumber($booking, $branchCode)`).
-- Sales / booking models are **data-scoped automatically** (`HasDataScope`, DEC-071): uniqueness, numbering and duplicate
-  checks must use `withoutDataScope()` / `DataScope::off()`; per-user caches key on `DataScope::current()->hash()`.
+- Bookings have **no branch column**; display copies branch from the linked enquiry (BUG-161, DEC-029). Since 27-09 the
+  VOTF number uses the branch the user picks on the OTF form (`generateVotfNumber($booking, $branchCode)`).
 - `booking.consultant` holds a person_code. History via `$booking->recordEvent(ACTION, $title, $meta, $body)` (Chat;
   actions CREATED / STATUS_CHANGED / UPDATED) — `addHistory()` is legacy. No full Aadhaar / account numbers in `$meta`.
 - Duplicate models for booking satellite tables were removed (DEC-030): use `Module\Booking\*` ones.

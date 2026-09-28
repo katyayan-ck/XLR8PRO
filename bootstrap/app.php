@@ -2,7 +2,6 @@
 
 use App\Console\Commands\ImportUsersCommand;
 use App\Http\Middleware\CheckSuperAdmin;
-use App\Http\Middleware\DataScopeOff;
 use App\Http\Middleware\ValidateDevice;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -22,7 +21,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'checkSuperAdmin' => CheckSuperAdmin::class,
             'validate_device' => ValidateDevice::class,
-            'data-scope' => DataScopeOff::class,   // ->middleware('data-scope:off,<reason>') — DEC-071
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,

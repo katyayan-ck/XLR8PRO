@@ -11,7 +11,7 @@ No spares service yet — a new flow should add `App\Services\Spares\*` rather t
 | `XlSpareStock` | `xlr8_spare_stock` | scope `forPartsInStores($partIds, $storeIds)` |
 | `XlSpareOrder` | `xlr8_spare_order` | scope `forPartInStore($partIds, $storeId)` |
 | `XlSpareConsumed` | `xlr8_spare_consumption` | `partMaster()`; scopes `betweenDates($from, $to)`, `forStores($ids)`, `filterBySearch()`, `filterByCategory()`, `filterByDivision()` |
-| `XlSpareRequest` | `xlr8_spare_request` | `details()`; not data-scoped (its branch column `srv_brnch_id` is an id — the rebuild, D28, should store `branch_code`) |
+| `XlSpareRequest` | `xlr8_spare_request` | `details()`; uses the dormant `ScopedQuery` trait (data scoping not enforced yet) |
 | `XlSpareRequestDetail` | `xlr8_spare_req_details` | `spareRequest()`, `partMaster()`; scopes `active()`, `filterBySearch()`, `filterByCategory()`, `filterByDivision()` |
 | `XlSpareClosure` | `xlr8_spare_closure` | — |
 

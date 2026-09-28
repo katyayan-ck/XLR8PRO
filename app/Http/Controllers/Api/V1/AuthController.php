@@ -4,11 +4,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\BaseController;
 use App\Services\AuthService;
-use App\Services\Platform\Comms\ContactService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Throwable;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Authentication Controller
@@ -39,13 +38,14 @@ use Throwable;
  *     url="http://localhost/vdms/public/api/v1",
  *     description="Development Server"
  * )
+ * 
  * @OA\Server(
  *     url="https://waba.insightechindia.in/public/api/v1/",
  *     description="Production Server"
  * )
+ * 
  *
  * @OA\Components(
- *
  *     @OA\SecurityScheme(
  *         type="http",
  *         scheme="bearer",
@@ -76,23 +76,17 @@ class AuthController extends BaseController
      *     tags={"Authentication"},
      *     summary="Request OTP for authentication",
      *     description="Generate and send OTP to mobile and email",
-     *
      *     @OA\RequestBody(
      *         required=true,
-     *
      *         @OA\JsonContent(
      *             required={"mobile"},
-     *
      *             @OA\Property(property="mobile", type="string", example="9310260721", description="10-digit Indian mobile number")
      *         )
      *     ),
-     *
      *     @OA\Response(
      *         response=200,
      *         description="OTP sent successfully",
-     *
      *         @OA\JsonContent(
-     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -106,12 +100,14 @@ class AuthController extends BaseController
      *             @OA\Property(property="timestamp", type="string", format="date-time")
      *         )
      *     ),
-     *
      *     @OA\Response(response=400, description="Invalid mobile format"),
      *     @OA\Response(response=404, description="Mobile not registered"),
      *     @OA\Response(response=429, description="Too many requests"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function requestOtp(Request $request): JsonResponse
     {
@@ -129,7 +125,7 @@ class AuthController extends BaseController
             );
         } catch (Throwable $e) {
             return $this->handleException($e, 'Request OTP', [
-                'mobile' => app(ContactService::class)->mask((string) $request->input('mobile')),
+                'mobile' => $request->input('mobile'),
                 'ip_address' => $request->ip(),
             ]);
         }
@@ -148,13 +144,10 @@ class AuthController extends BaseController
      *     tags={"Authentication"},
      *     summary="Verify OTP and get authentication token",
      *     description="Validate OTP and issue Sanctum token",
-     *
      *     @OA\RequestBody(
      *         required=true,
-     *
      *         @OA\JsonContent(
      *             required={"mobile","otp","device_id","device_name","platform"},
-     *
      *             @OA\Property(property="mobile", type="string", example="9310260721"),
      *             @OA\Property(property="otp", type="string", example="123456"),
      *             @OA\Property(property="device_id", type="string", example="unique-device-uuid"),
@@ -164,13 +157,10 @@ class AuthController extends BaseController
      *             @OA\Property(property="fcm_token", type="string", example="fcm-push-token")
      *         )
      *     ),
-     *
      *     @OA\Response(
      *         response=200,
      *         description="OTP verified successfully",
-     *
      *         @OA\JsonContent(
-     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -189,13 +179,15 @@ class AuthController extends BaseController
      *             @OA\Property(property="timestamp", type="string", format="date-time")
      *         )
      *     ),
-     *
      *     @OA\Response(response=400, description="Invalid input"),
      *     @OA\Response(response=401, description="Invalid or expired OTP"),
      *     @OA\Response(response=403, description="Account locked"),
      *     @OA\Response(response=429, description="Too many attempts"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function verifyOtp(Request $request): JsonResponse
     {
@@ -226,7 +218,7 @@ class AuthController extends BaseController
             );
         } catch (Throwable $e) {
             return $this->handleException($e, 'Verify OTP', [
-                'mobile' => app(ContactService::class)->mask((string) $request->input('mobile')),
+                'mobile' => $request->input('mobile'),
                 'ip_address' => $request->ip(),
             ]);
         }
@@ -244,13 +236,10 @@ class AuthController extends BaseController
      *     summary="Get authenticated user profile",
      *     description="Retrieve current user details",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\Response(
      *         response=200,
      *         description="User profile retrieved",
-     *
      *         @OA\JsonContent(
-     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -266,17 +255,19 @@ class AuthController extends BaseController
      *             @OA\Property(property="timestamp", type="string", format="date-time")
      *         )
      *     ),
-     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function me(Request $request): JsonResponse
     {
         try {
             $user = $request->user('sanctum');
 
-            if (! $user) {
+            if (!$user) {
                 return $this->unauthorizedResponse('No authenticated user found');
             }
 
@@ -307,13 +298,10 @@ class AuthController extends BaseController
      *     summary="Logout authenticated user",
      *     description="Revoke current token",
      *     security={{"sanctum":{}}},
-     *
      *     @OA\Response(
      *         response=200,
      *         description="Logged out successfully",
-     *
      *         @OA\JsonContent(
-     *
      *             @OA\Property(property="http_status", type="integer", example=200),
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="code", type="string", example="S200"),
@@ -321,17 +309,19 @@ class AuthController extends BaseController
      *             @OA\Property(property="timestamp", type="string", format="date-time")
      *         )
      *     ),
-     *
      *     @OA\Response(response=401, description="Unauthorized"),
      *     @OA\Response(response=500, description="Internal server error")
      * )
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function logout(Request $request): JsonResponse
     {
         try {
             $user = $request->user('sanctum');
 
-            if (! $user) {
+            if (!$user) {
                 return $this->unauthorizedResponse('No authenticated user found');
             }
 
