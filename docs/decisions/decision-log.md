@@ -1041,3 +1041,28 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
      once); incomplete vehicles are skipped; CSD codes not in the master are skipped.
 - **Approved-by:** user (column choices), auto (technical calls) · **Risk:** HIGH (customer prices) · **Reversal:** revert;
   the migration rolls back.
+
+### DEC-077 | 28-09-2026 | A (Vehicle pricing) | Add-ons & discounts (DEC-073 step 5): workbook shape and import rules
+- **Export `Addon-N-Discounts.xlsx`:** the reference sheets and headers, with only the sheets ticked (all ticked by
+  default). Every applicable group appears. Amounts come from the live rows; a cell is blank where nothing is stored.
+  - **Dealer Charges:** one row per segment, split by permit where the segment sells more than one (for example PV
+    Private / Passenger), plus any stored model-specific rows.
+  - **RSA:** one row per model.
+  - **Shield:** one row per PV / BEV / CV model (pack / transmission / fuel ANY), plus the stored specific rows.
+  - **Exchange:** model × scheme (stored ∪ Exchange, Welcome, Scrappage).
+  - **Corporate:** model × category (stored ∪ the reference's 8 categories).
+- **Import** (queued, one transaction per sheet, recorded for Discard):
+  - Each ticked sheet present in the file expires its group's live rows at the WEF, then inserts the sheet's rows.
+    Groups not ticked are untouched.
+  - Blank = no rule (not written); 0 = an explicit zero rule.
+  - Model names resolve to model codes (`VehicleService::findModel`: canonical code, name or OEM name). "Any" = all.
+    An unknown model rejects that row, which is reported.
+  - Segment and fuel values go through synonyms (PERSONAL / PEROSNAL → PV, COMMERCIAL → CV).
+- **Dealer charges:** an all-zero row is allowed at a specific segment (an explicit "no charges" rule), but still refused
+  at ANY (pitfall: a zero row at ANY overrides everything).
+- **Registry aliases** for the reference labels: Exchange "OEM Model / OEM Variant / Scheme / Bonus OEM / Bonus DLR /
+  Bonus TOTAL"; Corporate "OEM Model / OEM Variant / OEM / DLR / TOTAL".
+- **History:** add-on and discount history rows are written (action insert). BUG-201 extended: the AddonHistory and
+  DiscountHistory models did not match their tables.
+- **BUG-178** (engine: dealer charges and scope) is fixed with the builder in Phase 8, where the engine is rewritten.
+- **Approved-by:** auto (implements the approved DEC-073 step 5) · **Risk:** MED · **Reversal:** revert; the migration rolls back.

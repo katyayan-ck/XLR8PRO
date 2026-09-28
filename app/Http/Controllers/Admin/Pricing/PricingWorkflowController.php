@@ -13,8 +13,6 @@ use App\Models\Vehicle\Pricing\ChangeFlag;
 use App\Models\Vehicle\Pricing\ImportSession;
 use App\Models\Vehicle\Pricing\Pricing;
 use App\Models\Vehicle\Pricing\Profile;
-use App\Services\Vehicle\Pricing\AddonDiscountExportService;
-use App\Services\Vehicle\Pricing\AddonDiscountImportService;
 use App\Services\Vehicle\Pricing\PricingSessionService;
 use App\Services\Vehicle\Pricing\RulesWorkbookService;
 use Illuminate\Http\Request;
@@ -26,8 +24,6 @@ class PricingWorkflowController extends Controller
 {
     public function __construct(
         protected PricingSessionService $sessions,
-        protected AddonDiscountImportService $addonsImport,
-        protected AddonDiscountExportService $addonsExport,
         protected RulesWorkbookService $rules
     ) {}
 
@@ -163,88 +159,6 @@ class PricingWorkflowController extends Controller
             'count' => $failed->count(),
             'vehicles' => $failed,
         ]);
-    }
-
-    public function addonsForm()
-    {
-        if (! backpack_user()->can('PRC_WKFL_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view the pricing workflow.');
-        }
-
-        $session = $this->sessions->activeSession();
-        if (! $session) {
-            return redirect()->route('pricing.workflow.index')
-                ->with('warning', 'No active pricing session.');
-        }
-
-        return view('admin.pricing.workflow.addons', [
-            'title' => 'Addons & Discounts',
-            'session' => $session,
-            'sheetOptions' => [
-                'DEALER_CHARGES' => 'Dealer Charges',
-                'RSA' => 'RSA',
-                'SHIELD' => 'Shield',
-                'EXCHANGE' => 'Exchange',
-                'CORPORATE' => 'Corporate',
-            ],
-        ]);
-    }
-
-    public function addonsExport(int $sessionId)
-    {
-        if (! backpack_user()->can('PRC_WKFL_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view the pricing workflow.');
-        }
-
-        $session = ImportSession::findOrFail($sessionId);
-        $export = $this->addonsExport->exportForSession($session);
-
-        return response()->download($export['path'], $export['filename'])->deleteFileAfterSend(false);
-    }
-
-    public function addonsImport(Request $request)
-    {
-        if (! backpack_user()->can('PRC_WKFL_MANAGE')) {
-            abort(403, 'Unauthorized. You do not have permission to run the pricing workflow.');
-        }
-
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls',
-            'sheet_types' => 'required|array|min:1',
-            'sheet_types.*' => 'string',
-            'wef_date' => 'nullable|date',
-        ]);
-
-        $session = $this->sessions->activeSession();
-        if (! $session) {
-            return response()->json(['success' => false, 'message' => 'No active session.'], 409);
-        }
-
-        $path = $request->file('file')->store('pricing-uploads');
-        $absolute = Storage::path($path);
-        $sheets = array_map('strtoupper', $request->input('sheet_types', []));
-        $wef = $request->input('wef_date', $session->wef_date?->format('Y-m-d') ?? now()->toDateString());
-
-        try {
-            $this->sessions->advance($session, ImportSession::STAGE_IMPORTING_ADDONS);
-            $stats = $this->addonsImport->importFile($absolute, $session, $sheets, $wef, auth()->id());
-            $this->sessions->updateStats($session, ['addons' => $stats]);
-            $this->sessions->advance($session, ImportSession::STAGE_AWAITING_RULES);
-
-            return response()->json([
-                'success' => true,
-                'session_id' => $session->id,
-                'stats' => $stats,
-                'stage' => ImportSession::STAGE_AWAITING_RULES,
-                'message' => 'Addons / discounts imported.',
-                'next_step' => 'rules',
-                'rules_url' => route('pricing.workflow.rules-form'),
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('[PricingWorkflow] addonsImport failed', ['error' => $e->getMessage()]);
-
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
     }
 
     public function rulesForm()

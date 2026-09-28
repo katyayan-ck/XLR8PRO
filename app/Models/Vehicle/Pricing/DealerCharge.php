@@ -6,7 +6,27 @@ use App\Models\BaseModel;
 use App\Services\Vehicle\Pricing\Addons\DealerChargeService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int|null $import_session_id
+ * @property string $segment
+ * @property string|null $permit
+ * @property string|null $model_code
+ * @property string|null $charge_code
+ * @property string|null $charge_name
+ * @property string|null $amount
+ * @property string $incidental
+ * @property string $fastag
+ * @property string $trc
+ * @property string $rto_tape
+ * @property string $cod
+ * @property string $kazam
+ * @property Carbon|null $wef_date
+ * @property Carbon|null $expired_on
+ * @property bool $is_active
+ */
 class DealerCharge extends BaseModel
 {
     use SoftDeletes;

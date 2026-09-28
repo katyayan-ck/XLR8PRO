@@ -236,7 +236,7 @@ Entry format:
 | BUG-198 | Rebuilding the Spatie permission cache takes ~10 s and ~2,900 queries; it happens on the first permission check after any role / permission change or cache clear, so that request (for a non-superadmin) is very slow | Medium | OPEN (performance) | 28-09-2026 | — |
 | BUG-199 | Variant rows imported before DEC-051 store the OEM code **without** the colour suffix (`code` = 16-char stem, colour only in `color_code`; 2,652 rows for 652 codes). Price-list codes carry the colour, so Detect treats those vehicles as new and creates duplicate INCOMPLETE stubs (test copy: 1,859 of 2,782 PV stubs) | High | DECIDED (DEC-074) — purge + re-import per environment | 28-09-2026 | — |
 | BUG-200 | Pricing sheet headers with a hyphen / dot never matched the registry (labels only lower-cased, cells also had `-` `.` `_` → space): "Ex-Showroom Price ORG" and every CV- / OV- scheme column were ignored, so the price import used MM Invoice as ex-showroom and imported no schemes; a hard alias also mapped TZU's pre-subsidy price | Critical | FIXED (DEC-076, 28-09-2026) | 28-09-2026 | — |
-| BUG-201 | `PricingHistory` model does not match its table (fillable `variant_code`, `pricing_snapshot`, `changed_by`… are not columns; timestamps off) — nothing could write price history | Medium | FIXED (DEC-076, 28-09-2026) | 28-09-2026 | — |
+| BUG-201 | `PricingHistory` model does not match its table (fillable `variant_code`, `pricing_snapshot`, `changed_by`… are not columns; timestamps off) — nothing could write price history | Medium | FIXED (DEC-076 / DEC-077, 28-09-2026) | 28-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -2304,11 +2304,12 @@ guessed at.
 
 ### BUG-201 — PricingHistory model does not match its table
 
-- **Status:** FIXED (DEC-076, 28-09-2026)
+- **Status:** FIXED (DEC-076 / DEC-077, 28-09-2026)
 - **Severity:** Medium — price history (spec: every import row) was never written; any write would fail.
 - **Found:** 28-09-2026, DEC-073 Phase 4.
 - **Evidence:** table columns `pricing_id, model_code, channel, wef_date, payload, action` + audit; the model's fillable lists
   `variant_code, expired_on, pricing_snapshot, changed_by, change_reason` and sets `$timestamps = false`.
 - **Proposed solution:** align the model with the table; the new price importer writes one row per imported code.
 - **Resolution (28-09-2026):** PricingHistory aligned with its table (pricing_id, model_code, channel, wef_date, payload, action); the new price import writes one row per code (insert / update / unchanged).
+- **Resolution (28-09-2026):** Same defect in AddonHistory and DiscountHistory (fillable old_data/new_data/changed_by… not in the tables): both aligned (addon_id / discount_id, model_code, payload, action) and registered with the session change observer; the add-on import writes them.
 

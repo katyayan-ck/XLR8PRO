@@ -6,7 +6,29 @@ use App\Models\BaseModel;
 use App\Services\Vehicle\Pricing\Addons\DiscountService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int|null $import_session_id
+ * @property string $discount_type
+ * @property string $model_code
+ * @property string|null $variant_code
+ * @property string|null $scheme_name
+ * @property string|null $category
+ * @property string|null $discount_category
+ * @property string|null $name
+ * @property string $oem_share
+ * @property string $dealer_share
+ * @property string|null $amount
+ * @property string|null $total_discount
+ * @property string|null $allocation_type
+ * @property bool $is_conditional
+ * @property string|null $linked_to
+ * @property Carbon|null $wef_date
+ * @property Carbon|null $expired_on
+ * @property bool $is_active
+ */
 class Discount extends BaseModel
 {
     use SoftDeletes;

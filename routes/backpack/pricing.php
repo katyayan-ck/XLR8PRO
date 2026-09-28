@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\Pricing\HoldController;
 use App\Http\Controllers\Admin\Pricing\InsuranceController;
 use App\Http\Controllers\Admin\Pricing\PricingResetController;
 use App\Http\Controllers\Admin\Pricing\PricingWorkflowController;
+use App\Http\Controllers\Admin\Pricing\Process\AddonsController;
 use App\Http\Controllers\Admin\Pricing\Process\PricesController;
 use App\Http\Controllers\Admin\Pricing\Process\PricingProcessController;
 use App\Http\Controllers\Admin\Pricing\Process\VehicleInfoController;
@@ -55,9 +56,11 @@ Route::group([
     Route::get('workflow/prices-issues/{sessionId}', [PricesController::class, 'issues'])->whereNumber('sessionId')->name('pricing.workflow.prices-issues');
     Route::post('workflow/prices-continue', [PricesController::class, 'continue'])->name('pricing.workflow.prices-continue');
 
-    Route::get('workflow/addons', [PricingWorkflowController::class, 'addonsForm'])->name('pricing.workflow.addons-form');
-    Route::get('workflow/addons-export/{sessionId}', [PricingWorkflowController::class, 'addonsExport'])->name('pricing.workflow.addons-export');
-    Route::post('workflow/addons', [PricingWorkflowController::class, 'addonsImport'])->name('pricing.workflow.addons');
+    Route::get('workflow/addons', [AddonsController::class, 'show'])->name('pricing.workflow.addons-form');
+    Route::get('workflow/addons-export/{sessionId}', [AddonsController::class, 'export'])->whereNumber('sessionId')->name('pricing.workflow.addons-export');
+    Route::post('workflow/addons', [AddonsController::class, 'import'])->name('pricing.workflow.addons');
+    Route::get('workflow/addons-issues/{sessionId}', [AddonsController::class, 'issues'])->whereNumber('sessionId')->name('pricing.workflow.addons-issues');
+    Route::post('workflow/addons-continue', [AddonsController::class, 'continue'])->name('pricing.workflow.addons-continue');
 
     Route::get('workflow/rules', [PricingWorkflowController::class, 'rulesForm'])->name('pricing.workflow.rules-form');
     Route::get('workflow/rules-export/{sessionId}', [PricingWorkflowController::class, 'rulesExport'])->name('pricing.workflow.rules-export');

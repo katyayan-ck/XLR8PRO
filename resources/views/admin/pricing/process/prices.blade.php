@@ -10,7 +10,6 @@
 @php
     $progress = $session->progress ?? [];
     $running = ($progress['step'] ?? null) === 'prices' && ($progress['state'] ?? null) === 'running';
-    $failed = ($progress['step'] ?? null) === 'prices' && ($progress['state'] ?? null) === 'failed';
     $issues = collect($run['issues'] ?? []);
     $checked = old('lists', $selected);
     $source = old('source', 'session');
@@ -86,15 +85,7 @@
         @endif
 
         <div class="col-12 {{ $canManage ? 'col-lg-7' : '' }}">
-            <div class="card {{ $running || $failed ? '' : 'd-none' }} mb-3" id="pr-progress" data-url="{{ route('pricing.workflow.status', $session->id) }}" data-poll="{{ $running ? 1 : 0 }}">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="spinner-border text-primary {{ $failed ? 'd-none' : '' }}" role="status"><span class="visually-hidden">Working…</span></div>
-                    <div>
-                        <div class="fw-medium" id="pr-message">{{ $progress['message'] ?? '' }}</div>
-                        <div class="text-danger small {{ $failed ? '' : 'd-none' }}">{{ $progress['error'] ?? '' }}</div>
-                    </div>
-                </div>
-            </div>
+            @include('admin.pricing.process._progress', ['session' => $session, 'step' => 'prices'])
 
             <div class="card">
                 <div class="card-header">
@@ -170,29 +161,6 @@
             document.getElementById('pr-upload').classList.toggle('d-none', el.value !== 'upload' || !el.checked);
         });
     });
-    const card = document.getElementById('pr-progress');
-    if (!card || card.dataset.poll !== '1') {
-        return;
-    }
-    const msg = document.getElementById('pr-message');
-    const timer = setInterval(async function () {
-        try {
-            const res = await fetch(card.dataset.url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
-            if (!res.ok) {
-                return;
-            }
-            const p = (await res.json()).progress || {};
-            if (p.message) {
-                msg.textContent = p.message;
-            }
-            if (p.state !== 'running') {
-                clearInterval(timer);
-                window.location.reload();
-            }
-        } catch (e) {
-            // transient network error — keep polling
-        }
-    }, 2000);
 })();
 </script>
 @endpush

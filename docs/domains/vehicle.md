@@ -62,6 +62,7 @@ Inject or `app(VehicleService::class)`. All writes go through the entity service
 | `colorOptions(?$variantCode)` | sibling colour rows of the variant: `code` (colour code), `name` (colour), `variant_code` |
 | `colorsOfVariant($oemCode)`, `colorsOfModel($oemModel)`, `colorsOfSegment($seg, ?$sub)` | colour rows for a level |
 | `findByOemCode($oemCode)` | `?Variant` |
+| `findModel($name)` | `?VehicleModel` by canonical / spaced / compact code, custom name or OEM name — never creates ("Bolero Neo +" → BOLERO-NEO-PLUS; memoised per instance, DEC-077) |
 
 ### Completeness — `App\Services\Vehicle\VehicleCompleteness` (the single rule, DEC-073)
 `missing(Variant $v): list<string>` (attribute keys), `missingLabels($v)` (Vehicle Info column names), `isComplete($v)`,

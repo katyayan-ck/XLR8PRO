@@ -732,3 +732,37 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   changes, 10 s).
 - **Plan:** Phase 10b added — the standalone Price List menu (all logged-in users; read-only AG Grid per list, PDF
   layout), requested 28-09.
+
+## Pricing redesign — Phase 5: add-ons & discounts (DEC-073, DEC-077)
+- **New `Import\AddonDiscountWorkbookService` + `ImportAddonsJob` + `AddonsController`:**
+  - **Export:** the reference `Addon-N-Discounts.xlsx` sheets for the ticked groups (all ticked by default). Every
+    segment / model / scheme / category appears, with blanks where nothing is stored.
+  - **Import:** queued. Each ticked sheet is one transaction: its group expires at the WEF and its rows are inserted.
+    Groups not ticked are untouched.
+  - **Before → after:**
+    - Blank = no rule; 0 = an explicit zero rule.
+    - Model names now resolve to model codes through the new `VehicleService::findModel()` ("Bolero Neo +" →
+      BOLERO-NEO-PLUS); unknown models are rejected. Before, free text was stored.
+    - Conflicting duplicate scopes are rejected; identical duplicates count once.
+    - History is written.
+    - Before, the whole workbook was loaded, rows were written without a transaction, and nothing was read by chunk.
+- **Migration** `2026_09_28_232022_pricing_addon_sheet_aliases_dec077` (run on xlrm + xlrm_testing; rollback verified):
+  reference labels for Exchange ("OEM Model", "Scheme", "Bonus OEM / DLR / TOTAL"), Corporate and RSA.
+- **`DealerChargeService`:** an all-zero row is allowed at a specific segment and refused at ANY. The existing test was
+  updated to cover both.
+- **BUG-201 extended and fixed:** `AddonHistory` / `DiscountHistory` now match their tables and are observed by the
+  session change log.
+- **Shared UI:** `process/_progress.blade.php` (running-step card + 2 s polling) replaces three inline copies on the
+  Vehicle Info, Prices and Add-ons screens.
+- **Removed:** `AddonDiscountExportService`, `AddonDiscountImportService`, the legacy add-on actions / view, and the
+  legacy importer test (its assertions moved to `PricingAddonImportTest`).
+- **Real file:** `Addon-N-Discounts.xlsx` imports in 3.6 s:
+  - 4 dealer-charge rows, 125 RSA, 76 Shield, 150 Exchange and 400 Corporate.
+  - 8 Corporate rows rejected: model "3XO REVX" is not in the test master.
+  - 1 identical RSA duplicate.
+  - The export takes 0.2 s, and re-importing it is lossless (same counts, 0 issues).
+- **Tests:** `PricingAddonImportTest` (3):
+  - ticked-group replace, blank / 0 / Any / names / unknown / conflict, history;
+  - export blanks + round trip;
+  - screen export / queued import / continue.
+  Plus the dealer-charge zero-row test updated. Pricing suites: 29 passed.

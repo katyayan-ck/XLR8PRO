@@ -10,7 +10,6 @@
 @php
     $progress = $session->progress ?? [];
     $running = ($progress['step'] ?? null) === 'vehicle_info' && ($progress['state'] ?? null) === 'running';
-    $failed = ($progress['step'] ?? null) === 'vehicle_info' && ($progress['state'] ?? null) === 'failed';
     $issues = collect($round['issues'] ?? []);
     $rejectedTotal = (int) (($round['rejected'] ?? 0) + ($round['unknown'] ?? 0));
 @endphp
@@ -86,17 +85,9 @@
         </div>
 
         <div class="col-12 col-lg-7">
-            <div class="card {{ $running || $failed ? '' : 'd-none' }}" id="vi-progress" data-url="{{ route('pricing.workflow.status', $session->id) }}" data-poll="{{ $running ? 1 : 0 }}">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <div class="spinner-border text-primary {{ $failed ? 'd-none' : '' }}" role="status"><span class="visually-hidden">Working…</span></div>
-                    <div>
-                        <div class="fw-medium" id="vi-message">{{ $progress['message'] ?? '' }}</div>
-                        <div class="text-danger small {{ $failed ? '' : 'd-none' }}" id="vi-error">{{ $progress['error'] ?? '' }}</div>
-                    </div>
-                </div>
-            </div>
+            @include('admin.pricing.process._progress', ['session' => $session, 'step' => 'vehicle_info'])
 
-            <div class="card {{ $running || $failed ? 'mt-3' : '' }}">
+            <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">3 · Result{{ $round ? ' — round '.$round['round'] : '' }}</h3>
                     @if ($round)
@@ -161,33 +152,3 @@
     </div>
 </div>
 @endsection
-
-@push('after_scripts')
-<script>
-(function () {
-    const card = document.getElementById('vi-progress');
-    if (!card || card.dataset.poll !== '1') {
-        return;
-    }
-    const msg = document.getElementById('vi-message');
-    const timer = setInterval(async function () {
-        try {
-            const res = await fetch(card.dataset.url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
-            if (!res.ok) {
-                return;
-            }
-            const p = (await res.json()).progress || {};
-            if (p.message) {
-                msg.textContent = p.message;
-            }
-            if (p.state !== 'running') {
-                clearInterval(timer);
-                window.location.reload();
-            }
-        } catch (e) {
-            // transient network error — keep polling
-        }
-    }, 2000);
-})();
-</script>
-@endpush

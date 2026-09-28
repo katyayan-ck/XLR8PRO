@@ -145,6 +145,34 @@ class VehicleService
      *
      * @return list<string>
      */
+    /** @var array<string, VehicleModel|null> */
+    private array $modelMemo = [];
+
+    /**
+     * An existing model by any of its names (canonical code, spaced / compact code, custom name, OEM name) — never
+     * creates one. Used by the add-on / discount imports to turn "Bolero Neo +" into BOLERO-NEO-PLUS (DEC-077).
+     */
+    public function findModel(string $name): ?VehicleModel
+    {
+        $name = $this->norm($name);
+        if ($name === '') {
+            return null;
+        }
+        if (! array_key_exists($name, $this->modelMemo)) {
+            $candidates = $this->modelCodeCandidates($name);
+            $this->modelMemo[$name] = VehicleModel::query()
+                ->where(function ($q) use ($candidates, $name) {
+                    $q->whereIn('code', $candidates)
+                        ->orWhereRaw('UPPER(TRIM(name)) = ?', [$name])
+                        ->orWhereRaw('UPPER(TRIM(oem_name)) = ?', [$name]);
+                })
+                ->orderByRaw('CASE WHEN code IN ('.implode(',', array_fill(0, count($candidates), '?')).') THEN 0 ELSE 1 END', $candidates)
+                ->first();
+        }
+
+        return $this->modelMemo[$name];
+    }
+
     public function modelCodeCandidates(string $oemModel): array
     {
         return $this->codeCandidates(VehicleModelService::class, $oemModel);

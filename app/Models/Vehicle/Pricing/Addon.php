@@ -6,7 +6,31 @@ use App\Models\BaseModel;
 use App\Services\Vehicle\Pricing\Addons\AddonService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int|null $import_session_id
+ * @property string $addon_type
+ * @property string|null $segment
+ * @property string $model_code
+ * @property string|null $variant_code
+ * @property string|null $permit
+ * @property string|null $shield_pack
+ * @property string|null $transmission
+ * @property string|null $fuel
+ * @property string|null $scheme_name
+ * @property string|null $name
+ * @property int|null $tenure_years
+ * @property string $amount
+ * @property string $oem_share
+ * @property string $dealer_share
+ * @property string|null $default_allocation
+ * @property bool $is_default
+ * @property Carbon|null $wef_date
+ * @property Carbon|null $expired_on
+ * @property bool $is_active
+ */
 class Addon extends BaseModel
 {
     use SoftDeletes;

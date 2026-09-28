@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Models\Vehicle\Pricing\Addon;
+use App\Models\Vehicle\Pricing\AddonHistory;
 use App\Models\Vehicle\Pricing\ChangeFlag;
 use App\Models\Vehicle\Pricing\DealerCharge;
 use App\Models\Vehicle\Pricing\Discount;
+use App\Models\Vehicle\Pricing\DiscountHistory;
 use App\Models\Vehicle\Pricing\Hold;
 use App\Models\Vehicle\Pricing\InsAddonRate;
 use App\Models\Vehicle\Pricing\InsBaseRule;
@@ -148,7 +150,7 @@ class AppServiceProvider extends ServiceProvider
         // DEC-073: a pricing session records every row it writes so Discard can undo exactly its own changes
         foreach ([
             Pricing::class, PricingHistory::class,
-            Addon::class, Discount::class,
+            Addon::class, Discount::class, AddonHistory::class, DiscountHistory::class,
             DealerCharge::class, RtoRule::class,
             InsBaseRule::class, InsIdvSlot::class,
             InsDefault::class, InsAddonRate::class,

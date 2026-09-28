@@ -58,8 +58,11 @@ final class DealerChargeService extends EntityService
         foreach (self::AMOUNTS as $column) {
             $total += abs((float) ($data[$column] ?? 0));
         }
-        if ($total == 0.0) {
-            $this->fail('incidental', 'A dealer charge row needs at least one non-zero amount (zero rows override every scope).');
+        // an explicit all-zero row is a real rule at a specific segment ("no charges"), but at ANY it would silently
+        // override every scope (DEC-077)
+        $segment = strtoupper(trim((string) ($data['segment'] ?? '')));
+        if ($total == 0.0 && in_array($segment, ['', 'ANY', 'ALL', '*'], true)) {
+            $this->fail('incidental', 'An all-zero dealer charge row needs a specific segment (a zero row at ANY overrides every scope).');
         }
     }
 }
