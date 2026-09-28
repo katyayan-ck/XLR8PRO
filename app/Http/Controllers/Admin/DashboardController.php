@@ -2,56 +2,73 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\User;
-use Backpack\CRUD\app\Http\Controllers\CrudController;
+use App\Http\Controllers\Controller;
+use App\Services\Dashboard\DashboardPeriod;
+use App\Services\Dashboard\DashboardService;
+use App\Support\Facades\DataScope;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\View\View;
 
-class DashboardController extends CrudController
+/**
+ * Dynamic dashboard (DEC-072): shows the widgets from config/dashboard.php that the user's permissions allow; each
+ * widget's numbers are fetched separately (JSON), computed inside the user's data scope and cached per user + scope +
+ * period. Designations are never named — permissions decide what appears.
+ */
+class DashboardController extends Controller
 {
-    public function index()
+    public function __construct(private readonly DashboardService $dashboard) {}
+
+    public function index(Request $request): View
     {
         $user = backpack_user();
-
-        if (! $user) {
-            return redirect()->route('backpack.auth.login');
-        }
-
+        abort_unless($user, 403);
         if (! $user->can('admin.dashboard')) {
             abort(403, 'Unauthorized. You do not have permission to view the dashboard.');
         }
 
-        $current_user_details = $this->getCurrentUserDetails($user);
+        $period = DashboardPeriod::make($request->query('period'));
+        $groups = [];
+        foreach ($this->allowedWidgets() as $key => $widget) {
+            $groups[$widget['group']][$key] = $widget;
+        }
 
-        return view('vendor.backpack.ui.dashboard', [
-            'current_user_details' => $current_user_details,
-
+        return view('admin.dashboard.index', [
+            'title' => 'Dashboard',
+            'period' => $period,
+            'periods' => DashboardPeriod::KEYS,
+            'groupNames' => (array) config('dashboard.groups', []),
+            'groups' => $groups,
+            'user' => $user,
         ]);
     }
 
-    private function getCurrentUserDetails(User $user): array
+    public function widget(Request $request, string $key): JsonResponse
     {
-        $employee = $user->employee;
-        $person = $user->person;
+        $user = backpack_user();
+        abort_unless($user && $user->can('admin.dashboard'), 403);
 
-        return [
-            'name' => $user->display_name ?? $user->username,
-            'username' => $user->username,
-            'avatar_initials' => $user->avatar_initials ?? 'U',
-            'designation' => $user->primary_designation ?? ($employee?->designation?->name ?? '—'),
-            'mile_id' => $employee?->mile_id ?? '—',
+        $widget = config("dashboard.widgets.{$key}");
+        abort_unless(is_array($widget), 404);
+        if (! empty($widget['permission']) && ! $user->can($widget['permission'])) {
+            abort(403, 'Unauthorized.');
+        }
 
-            'primary_branch' => $employee?->primary_branch_code ?? '—',
-            'primary_location' => $employee?->primary_loc_code ?? '—',
-            'primary_department' => $employee?->primary_dept_code ?? '—',
-            'primary_division' => $employee?->primary_div_code ?? '—',
-            'primary_vertical' => $employee?->vertical_code ?? '—',
-            'primary_segment' => $employee?->segment_code ?? '—',
-            'primary_sub_segment' => $employee?->sub_segment_code ?? '—',
+        $period = DashboardPeriod::make($request->query('period'));
+        $cacheKey = "dashboard:{$key}:{$user->id}:".DataScope::current()->hash().":{$period->key}:".$period->from->toDateString();
+        $data = Cache::remember($cacheKey, (int) config('dashboard.cache_seconds', 300),
+            fn () => $this->dashboard->{$widget['method']}($period, $user));
 
-            'primary_mobile' => $person?->primary_mobile ?? '—',
-            'primary_email' => $person?->primary_email ?? '—',
-            'primary_address' => $person?->primary_address?->full_address ?? '—',
+        return response()->json(['ok' => true, 'key' => $key, 'type' => $widget['type'], 'period' => $period->label(), 'data' => $data]);
+    }
 
-            'all_scopes' => $user->all_access_scopes ?? [],
-        ];
+    /** @return array<string, array<string, mixed>> */
+    private function allowedWidgets(): array
+    {
+        $user = backpack_user();
+
+        return array_filter((array) config('dashboard.widgets', []),
+            fn (array $w) => empty($w['permission']) || $user->can($w['permission']));
     }
 }

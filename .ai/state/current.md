@@ -29,12 +29,12 @@
 radius / layout), AG-Grid themed via the global hook, and the dev UI kit `/admin/dev/ui`. The resume list and how to verify are in
 `docs/refactor/ui-design-progress.md` (remaining: hex outside Sales, real dashboard).
 **DEC-069 (on stage 0386230):** booking proofs in Docs, AG-Grid pinned in all 87 views, phone toolbars. **DEC-070 (dev/admin, not pushed):** bug-fix wave 1 done (OTP no longer logged, relation keys, VOTF duplicate guard, PAN masking, tracker triage); decisions D1–D29 await the owner — list in `~/.claude/plans/shiny-hopping-sky.md` / the DEC-070 changelog. Mobile OTP login is broken until D1 (BUG-187).
-**DEC-071 (dev/admin, not pushed):** automatic user data scoping is live (`HasDataScope`, `config/data_scope.php`, `DataScope` facade; settings `scope.enabled`, `scope.unassigned_rows` = visible). Bookings carry branch / vehicle codes. Next: add 6 "Location" synonyms, run `php artisan data-scope:backfill --apply`, then flip unassigned to hidden.
+**DEC-071 (on stage 3f38f3e):** automatic user data scoping live; 24,070 enquiries backfilled locally. **DEC-072 (dev/admin, not pushed):** My Account rebuilt (`/admin/edit-account-info`) and the dynamic dashboard (`config/dashboard.php`, `DashboardService`, 23 permission-gated widgets, scoped + cached); guides `docs/domains/dashboard.md`, iam-auth.md. BUG-198: permission-cache rebuild ~10 s.
 
 **Waiting on the owner (DEC-070 decisions, details in the 28-09 changelog):**
 - Security / API: D1 repair mobile login (BUG-187), D2 `random_int` OTP (BUG-188), D3 v1 entity access (BUG-182), D4 lead lookups.
 - Deletions: D5 Brand, D6 ExportController, D7 RBACService, D8 Core graph models, D9 getChassisNumbers, D10 dead Org views, D11 seeder test users, D12 Booking scopes.
-- UAT: D13 52 dead menu links, D14 import permissions (BUG-177), D15 Pricing menu, D16 order-approve permission (BUG-095), D17 avatar.
+- UAT: D13 52 dead menu links, D14 import permissions (BUG-177), D15 Pricing menu, D16 order-approve permission (BUG-095), D17 avatar (done DEC-072).
 - Business / data: D18 pricing (BUG-178), D19 accessory importer, D20 RTO sheet id, D21 BEV SO rule, D23 reports, D24 designations, D25 variant import, D26 mask old KYC rows, D28 Spares (D22 / D27 done in DEC-071; BUG-197 PRSNL division), D29 Google key rotation.
 
 **For the booking team:** 52 dead menu links (D13, incl. BUG-056 / 062), BUG-095 hardcoded user ids (D16), BUG-122 reports (D23), BUG-161 / 092 booking columns (D22), BUG-191 dead scopes (D12).

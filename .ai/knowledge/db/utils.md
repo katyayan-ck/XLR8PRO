@@ -19,7 +19,7 @@ Indexes: (comm_master_id,_lft,_rgt), (action_id), (actor_id), (kind), (parent_id
 id bigint unsigned PK, document_id bigint unsigned, user_id bigint unsigned?, access_type varchar(255)?, access_combo longtext?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (created_by), (deleted_by), (document_id), (updated_by), (user_id)
 
-## `xlr8_utils_docs_document` · ~0 rows · model: App\Models\Utilities\Docs\Document
+## `xlr8_utils_docs_document` · ~91 rows · model: App\Models\Utilities\Docs\Document
 id bigint unsigned PK, documentable_type varchar(255)?, documentable_id bigint unsigned?, kind varchar(20), collection varchar(50), title varchar(255), description text?, category_id bigint unsigned?, expiry_date date?, tags longtext?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?, path_entity varchar(100)?, path_location varchar(100)?, path_category varchar(100)?, path_sub varchar(100)?, path_item varchar(150)?, fy varchar(9)?, info_body text?, owner_id bigint unsigned?
 Indexes: (category_id), (created_by), (deleted_by), (documentable_type,documentable_id), (updated_by), (owner_id)
 
@@ -67,7 +67,7 @@ Indexes: (created_at), (created_by), (deleted_by), (is_read), (priority), (refer
 id bigint unsigned PK, setting_key varchar(191), scope_type varchar(20), scope_code varchar(50), value text?, created_by bigint unsigned?, updated_by bigint unsigned?, created_at timestamp?, updated_at timestamp?
 Indexes: UNIQUE (setting_key,scope_type,scope_code)
 
-## `xlr8_utils_synonyms` · ~24 rows · model: App\Models\Utilities\Synonym
+## `xlr8_utils_synonyms` · ~30 rows · model: App\Models\Utilities\Synonym
 id bigint unsigned PK, entity_type varchar(64), canonical varchar(128), synonym varchar(128), is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
 Indexes: (entity_type,is_active), (entity_type,canonical), UNIQUE (entity_type,synonym)
 

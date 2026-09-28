@@ -58,6 +58,7 @@ Route::group([
 
     Route::get('home', [DashboardController::class, 'index'])->name('backpack.dashboard.home');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('backpack.dashboard');
+    Route::get('dashboard/widget/{key}', [DashboardController::class, 'widget'])->where('key', '[a-z_]+')->name('dashboard.widget');   // DEC-072
 
     // ==================== VEHICLE MODEL (Manual Routes, no Operation traits) ====================
     Route::get('vehicle/model', [VehicleModelCrudController::class, 'index'])->name('vehicle.model.index');

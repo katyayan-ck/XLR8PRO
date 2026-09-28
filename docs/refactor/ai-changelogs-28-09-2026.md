@@ -529,3 +529,39 @@ unscoped, department / division / vertical only where a column exists, bookings 
     unchanged (no source codes). The rest stay unassigned (visible) until consultants' `mile_id` / vehicle masters exist.
   - BUG-197: division PRSNL moved to department SLS (`DivisionService`). Other environments need the same master edit
     and synonyms, then the backfill command.
+
+## My Account rebuild (DEC-072, part 1)
+- **Before:** stock Backpack page reading / writing `users.name` (no such column; the name was silently dropped), no
+  photo, Gravatar avatar that never resolved (users have no email).
+- **After:** `App\Http\Controllers\Admin\Account\MyAccountController` + `App\Services\IAM\MyAccountService` on the same
+  route names (`routes/backpack/account.php`; `setup_my_account_routes = false`); view `admin/account/show.blade.php`:
+  header (photo or initials, display name, designation under it, user type, employee code, primary branch, reporting
+  manager), tabs Profile (personal info; edit display name; upload / remove photo with the shared drop-zone),
+  Organisation & access (primary assignment, add-on scopes, effective data access), Employment history (timeline from
+  `EmployeeJourneyService`), Contact, Security (current password checked; min 8 with letters + numbers; other sessions
+  signed out). Username read-only. Display name / photo written through `PersonRecordService`.
+- Top-bar avatar: `avatar_type = profilePhotoUrl` → `User::profilePhotoUrl()` (person photo, else initials) — D17 done.
+- Shared partial `admin/org/user/_effective_access.blade.php` (User edit screen now uses it too).
+- Removed: `resources/views/vendor/backpack/theme-tabler/my_account.blade.php` (replaced).
+- Tests: `tests/Feature/IAM/MyAccountTest.php` (5). Verified: 200 for users 1, 4, 40; screenshots 1366 light and 390 px.
+
+## Dynamic dashboard (DEC-072, part 2)
+- **Before:** a static "My profile & access" card and a banner (`vendor/backpack/ui/dashboard.blade.php`); an orphan KPI
+  view with every value hard-coded to 0 (`admin/dashboard.blade.php`, `admin/widgets/*`).
+- **After:**
+  - `config/dashboard.php` — 23 widgets in 5 groups (My work, Sales, Bookings & deliveries, Accounts, Vehicles & stock),
+    each gated by a permission (no designation names).
+  - `DashboardController::index()` renders only permitted cards; `widget($key)` (route `dashboard.widget`) re-checks the
+    permission and returns JSON, cached 5 min per user + scope hash + period.
+  - `App\Services\Dashboard\DashboardService` (one method per widget, all through data-scoped models or
+    `DataScope::apply()`), `DashboardPeriod` (today / week / month / quarter / FY Apr–Mar).
+  - Definitions agreed 28-09: open enquiries = stages Enquiry / Test Drive / Quotation / Booking / Postponed; aligned
+    deliveries = invoiced bookings with `del_date` in the period (delivered vs pending).
+  - View `admin/dashboard/index.blade.php` (greeting, period switcher, groups of KPI / chart / list cards, empty and
+    loading states) + `public/js/xl-dashboard.js` (fetch per card, ApexCharts bound to Tabler tokens, rebuilt on theme change).
+  - Migration `2026_09_28_200421_add_dashboard_indexes` (17 indexes on enquiries, follow-ups, test drives, booking
+    satellites `bid`, receipts, booking status/date; reversible; run on both DBs). Follow-up widgets 2.1 s → 0.23 s.
+- Removed (replaced): `vendor/backpack/ui/dashboard.blade.php`, `admin/dashboard.blade.php`, `admin/widgets/{stats-card,activity-feed}.blade.php`.
+- Tests: `tests/Feature/Dashboard/DashboardTest.php` (4). Verified: page 200 for users 1 / 4 / 40; all 23 endpoints
+  200 (catalogue 403 for user 4 without `VEH_VAR_VIEW`), 0.15–0.8 s each; screenshots.
+- Guide: new `docs/domains/dashboard.md`. New BUG-198 (permission cache rebuild ~10 s).

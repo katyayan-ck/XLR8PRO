@@ -28,15 +28,15 @@ Indexes: (mobile,created_at), (user_id,action), (created_by), (deleted_by), (upd
 id bigint unsigned PK, user_id bigint unsigned, mobile varchar(10), otp_hash text, expires_at timestamp, used_at timestamp?, created_by bigint unsigned?, updated_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (expires_at), (mobile), (used_at), (user_id)
 
-## `xlr8_iam_permissions` · ~226 rows · model: —
+## `xlr8_iam_permissions` · ~239 rows · model: —
 id bigint unsigned PK, name varchar(255), guard_name varchar(255), module_code varchar(255)?, process_code varchar(255)?, created_at timestamp?, updated_at timestamp?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, deleted_at timestamp?
 Indexes: (guard_name), UNIQUE (name,guard_name)
 
-## `xlr8_iam_process` · ~37 rows · model: App\Models\IAM\Process
+## `xlr8_iam_process` · ~44 rows · model: App\Models\IAM\Process
 id bigint unsigned PK, module_code varchar(255)?, code varchar(255), name varchar(255), description text?, is_active tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (code,is_active), UNIQUE (code), (created_by), (deleted_by), (is_active), (module_code), (updated_by)
 
-## `xlr8_iam_role_has_permissions` · ~2188 rows · model: —
+## `xlr8_iam_role_has_permissions` · ~2871 rows · model: —
 permission_id bigint unsigned PK, role_id bigint unsigned PK
 Indexes: (role_id)
 
