@@ -121,6 +121,10 @@ class EnquiryCrudController extends CrudController
             $fupTypesMap = collect(OrgService::keywordValueByCode('FOLLOW_UP_TYPE'))->pluck('value', 'code')->toArray();
             $enqStageMap = collect(OrgService::keywordValueByCode('ENQ_STAGE'))->pluck('value', 'code')->toArray();
             $custStageMap = collect(OrgService::keywordValueByCode('CUSTOMER_STAGE'))->pluck('value', 'code')->toArray();
+            $purcTypeMap = collect(OrgService::keywordValueByCode('PURCHASE_TYPE'))
+                ->pluck('value', 'code')
+                ->mapWithKeys(fn($val, $key) => [strtoupper(trim((string)$key)) => $val])
+                ->toArray();
             $purcTypeMap = collect(OrgService::keywordValueByCode('PURCHASE_TYPE'))->pluck('value', 'code')->toArray();
             $lostReasonMap = collect(OrgService::keywordValueByCode('LOST_REASON'))->pluck('value', 'code')->toArray();
 
@@ -148,6 +152,9 @@ class EnquiryCrudController extends CrudController
                 ->pluck('value', 'code')
                 ->mapWithKeys(fn($val, $key) => [strtoupper(trim((string) $key)) => $val])
                 ->toArray();
+            $finModeMap = collect(OrgService::keywordValueByCode('FIN_MODE'))->pluck('value', 'code')->mapWithKeys(fn($val, $key) => [strtoupper(trim((string)$key)) => $val])->toArray();
+            $careOfTypeMap = collect(OrgService::keywordValueByCode('CARE_OF_TYPE'))->pluck('value', 'code')->mapWithKeys(fn($val, $key) => [strtoupper(trim((string)$key)) => $val])->toArray();
+            $referredByMap = collect(OrgService::keywordValueByCode('REFERRED_BY'))->pluck('value', 'code')->mapWithKeys(fn($val, $key) => [strtoupper(trim((string)$key)) => $val])->toArray();
             $usageAreaMap = collect(OrgService::keywordValueByCode('USAGE_AREA'))->pluck('value', 'code')->toArray();
             $kmTravelledMap = collect(OrgService::keywordValueByCode('KM_TRAVELLED_DAILY'))->pluck('value', 'code')->toArray();
             $appTypeMap = collect(OrgService::keywordValueByCode('APPLICATION_TYPE'))->pluck('value', 'code')->toArray();
@@ -207,6 +214,9 @@ class EnquiryCrudController extends CrudController
                 'sourcesMap',
                 'subSourceMap',
                 'enquiryTypeMap',
+                'finModeMap',
+                'careOfTypeMap',
+                'referredByMap',
                 'maritalStatusMap',
                 'ageGroupMap',
                 'lostSubReasonMap',
@@ -248,6 +258,10 @@ class EnquiryCrudController extends CrudController
         };
     }
 
+    // EXACT MODIFIED CODE
+// 1. Refactor getBaseQuery() to enforce global is_active routing
+// Around Line 240
+
     private function getBaseQuery(string $listType)
     {
         if ($listType === 'otf') {
@@ -276,17 +290,29 @@ class EnquiryCrudController extends CrudController
                 ->where('crm_booking.is_active', 1);
         }
 
+        // Start a fresh Query Builder instance
+        $query = Enquiry::query();
+
+        // 1. Enforce Base is_active Routing globally
+        if (in_array($listType, ['lost', 'lost-enquiries', 'lost_enquiries'])) {
+            $query->where('is_active', 3);
+        } else {
+            $query->where('is_active', 1);
+        }
+
+        // 2. Apply Specific List Filters
         $query = match ($listType) {
-            'reference' => Enquiry::reference(),
-            'virtual' => Enquiry::virtual(),
-            'whatsapp' => Enquiry::whatsapp(),
-            'hyperlocal' => Enquiry::hyperlocal(),
-            'xceler8' => Enquiry::xceler8(),
-            'assigned_long' => Enquiry::assignedLong(),
-            'unassigned_long' => Enquiry::unassignedLong(),
-            'assigned_quick' => Enquiry::assignedQuick(),
-            'unassigned_quick' => Enquiry::unassignedQuick(),
-            'exchange' => Enquiry::where(function ($q) {
+            'duplicate' => $query->whereNotNull('duplicate'),
+            'reference' => $query->reference(),
+            'virtual' => $query->virtual(),
+            'whatsapp' => $query->whatsapp(),
+            'hyperlocal' => $query->hyperlocal(),
+            'xceler8' => $query->xceler8(),
+            'assigned_long' => $query->assignedLong(),
+            'unassigned_long' => $query->unassignedLong(),
+            'assigned_quick' => $query->assignedQuick(),
+            'unassigned_quick' => $query->unassignedQuick(),
+            'exchange' => $query->where(function ($q) {
                     $q->whereIn('purchase_type_crm', ['Exchange Buy', 'EXCHANGE_BUY'])
                     ->orWhere(function ($sub) {
                         $sub->where(function ($sub2) {
@@ -294,8 +320,7 @@ class EnquiryCrudController extends CrudController
                         })->whereIn('purchase_type', ['Exchange Buy', 'EXCHANGE_BUY']);
                     });
                 }),
-
-            'scrappage' => Enquiry::where(function ($q) {
+            'scrappage' => $query->where(function ($q) {
                     $q->whereIn('purchase_type_crm', ['Scrappage', 'SCRAPPAGE'])
                     ->orWhere(function ($sub) {
                         $sub->where(function ($sub2) {
@@ -303,8 +328,7 @@ class EnquiryCrudController extends CrudController
                         })->whereIn('purchase_type', ['Scrappage', 'SCRAPPAGE']);
                     });
                 }),
-
-            'exchange_not_interested' => Enquiry::where(function ($q) {
+            'exchange_not_interested' => $query->where(function ($q) {
                     $q->whereIn('purchase_type_crm', [
                     'First Time Buy',
                     'FIRST_TIME_BUY',
@@ -326,19 +350,38 @@ class EnquiryCrudController extends CrudController
                             ]);
                     });
                 }),
-
-            'finance' => Enquiry::where('fin_mode', 'In-house'),
-            'finance_not_interested' => Enquiry::where(function ($q) {
+            'finance' => $query->where('fin_mode', 'In-house'),
+            'finance_not_interested' => $query->where(function ($q) {
                     $q->whereNull('fin_mode')
                     ->orWhere('fin_mode', '')
                     ->orWhere('fin_mode', '!=', 'In-house');
                 }),
-
-            // APPLY NEW SCOPE TO THE DEFAULT MAIN LISTING
-            default => Enquiry::mainListing(),
+            
+            // For Lost Enquiries, the is_active=3 base filter is enough, no extra filters needed
+            'lost', 'lost-enquiries', 'lost_enquiries' => $query,
+            
+            default => $query->mainListing(),
         };
 
         return $query->with(['segment', 'model', 'variant', 'color', 'campaign']);
+    }
+
+    public function duplicateEnquiryList()
+    {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.enquiry-grid', 'Duplicate Enquiries', 'duplicate');
+    }
+
+    public function lostEnquiriesList()
+    {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        return $this->renderGridPage('admin.sales.enquiry.enquiry-grid', 'Lost Enquiries', 'lost-enquiries');
     }
 
     private static array $vehicleFromOemCodeCache = [];
@@ -879,6 +922,9 @@ class EnquiryCrudController extends CrudController
         $lostSubReasonMap = $lookups['lostSubReasonMap'] ?? [];
         $deviationStageMap = $lookups['deviationStageMap'] ?? [];
         $existingQuotations = $lookups['existingQuotations'] ?? [];
+        $finModeMap = $lookups['finModeMap'] ?? [];
+        $careOfTypeMap = $lookups['careOfTypeMap'] ?? [];
+        $referredByMap = $lookups['referredByMap'] ?? [];
         $genderMap = $lookups['genderMap'] ?? [];
         $usageAreaMap = $lookups['usageAreaMap'] ?? [];
         $kmTravelledMap = $lookups['kmTravelledMap'] ?? [];
@@ -919,30 +965,21 @@ class EnquiryCrudController extends CrudController
         }
 
         $editUrl = backpack_url("sales/enquiry/{$e->id}/edit");
-
-        // Extract raw vehicle codes for the pre-quotation validation.
-        // These are checked on the client side before navigation.
         $segmentVal = trim((string) ($e->segment_code ?? ''));
         $modelVal = trim((string) ($e->model_code ?? ''));
         $variantVal = trim((string) ($e->variant_code ?? ''));
         $colorVal = trim((string) ($e->color_code ?? ''));
 
-        if (!empty($existingQuotations[$e->id])) {
-
+        if (! empty($existingQuotations[$e->id])) {
             $quotationId = $existingQuotations[$e->id];
-
             $quotUrl = backpack_url("sales/quotation/{$quotationId}/preview");
-
             $quotBtnText = 'Quote';
             $quotBtnClass = 'btn-success';
         } else {
-
             $quotUrl = backpack_url("sales/quotation/create?id={$e->id}");
-
             $quotBtnText = 'Quote';
             $quotBtnClass = 'btn-success';
         }
-
         $bookUrl = backpack_url("sales/booking/create?enquiry_id={$e->id}");
 
         if ($type === 'hyperlocal') {
@@ -1027,26 +1064,30 @@ class EnquiryCrudController extends CrudController
             ];
         }
 
-        $actionBtns = '<a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>';
-
-        $actionBtns .= '<a href="' . $quotUrl . '"'
-            . ' class="btn ' . $quotBtnClass . ' btn-sm js-quote-link"'
-            . ' title="' . $quotBtnText . '"'
-            . ' data-enquiry-id="' . $e->id . '"'
-            . ' data-segment="' . e($segmentVal) . '"'
-            . ' data-model="' . e($modelVal) . '"'
-            . ' data-variant="' . e($variantVal) . '"'
-            . ' data-color="' . e($colorVal) . '"'
-            . '>' . $quotBtnText . '</a>';
-        $actionBtns .= '<a href="' . $bookUrl . '" class="btn btn-warning btn-sm" title="Convert to Booking">Book</a>';
-
-        // Add context-specific Process buttons
+        $actionBtns = '';
         if (in_array($type, ['exchange', 'scrappage', 'exchange_not_interested'])) {
             $exchUrl = backpack_url("sales/enquiry/exchange/{$e->id}/edit");
-            $actionBtns .= '<a href="' . $exchUrl . '" class="btn btn-sm btn-info">Process</a>';
+            $viewUrl = backpack_url("sales/enquiry/exchange/{$e->id}/view");
+            $actionBtns .= '<a href="'.$exchUrl.'" class="btn btn-sm btn-info">Process</a>';
+            $actionBtns .= '<a href="'.$viewUrl.'" class="btn btn-sm btn-primary ms-1">View</a>';
         } elseif (in_array($type, ['finance', 'finance_not_interested'])) {
             $finUrl = backpack_url("sales/enquiry/finance/{$e->id}/edit");
-            $actionBtns .= '<a href="' . $finUrl . '" class="btn btn-sm btn-info">Process</a>';
+            $viewUrl = backpack_url("sales/enquiry/finance/{$e->id}/view");
+            $actionBtns .= '<a href="'.$finUrl.'" class="btn btn-sm btn-info">Process</a>';
+            $actionBtns .= '<a href="'.$viewUrl.'" class="btn btn-sm btn-primary ms-1">View</a>';
+        } else {
+            // Standard Master Grid Buttons
+            $actionBtns .= '<a href="'.$editUrl.'" class="btn btn-sm btn-primary">Edit</a>';
+            $actionBtns .= '<a href="'.$quotUrl.'"'
+                .' class="btn '.$quotBtnClass.' btn-sm js-quote-link"'
+                .' title="'.$quotBtnText.'"'
+                .' data-enquiry-id="'.$e->id.'"'
+                .' data-segment="'.e($segmentVal).'"'
+                .' data-model="'.e($modelVal).'"'
+                .' data-variant="'.e($variantVal).'"'
+                .' data-color="'.e($colorVal).'"'
+                .'>'.$quotBtnText.'</a>';
+            $actionBtns .= '<a href="'.$bookUrl.'" class="btn btn-warning btn-sm" title="Convert to Booking">Book</a>';
         }
 
         $row = [
@@ -1101,13 +1142,13 @@ class EnquiryCrudController extends CrudController
             $row['oem_quick_enquiry_assign_date'] = $this->formatDate($e->oem_quick_enquiry_assign_date ?? $e->quick_enq_assign_date, 'd-M-Y');
             // $row['x8_enq_source'] = $e->x8_enq_source ?? $e->x8_source_code ?? '—';
             $row['name'] = $e->name ?? '—';
-            $row['care_of_type'] = match ((int) ($e->care_of_type ?? 0)) {
-                1 => 'Son of',
-                2 => 'Daughter of',
-                3 => 'Married to',
-                4 => 'Guardian Name',
-                5 => 'Owned By',
-                default => $e->care_of_type ?? '—',
+            $row['care_of_type'] = match ((string) ($e->care_of_type ?? '')) {
+                '1' => 'Son of',
+                '2' => 'Daughter of',
+                '3' => 'Married to',
+                '4' => 'Guardian Name',
+                '5' => 'Owned By',
+                default => $careOfTypeMap[strtoupper(trim((string)($e->care_of_type ?? '')))] ?? $e->care_of_type ?? '—',
             };
             $row['care_of'] = $e->care_of ?? '—';
             $row['email'] = $e->email ?? '—';
@@ -1150,8 +1191,8 @@ class EnquiryCrudController extends CrudController
             $row['application_type'] = $appTypeMap[$e->application_type ?? ''] ?? $e->application_type ?? '—';
             $row['application'] = $appMap[$e->application ?? ''] ?? $e->application ?? '—';
             $row['has_ev'] = $e->has_ev ?? '—';
-            $row['purchase_type'] = $purcTypeMap[$e->purchase_type ?? ''] ?? $e->purchase_type ?? '—';
-            $row['purchase_type_crm'] = $purcTypeMap[$e->purchase_type_crm ?? ''] ?? $e->purchase_type_crm ?? '—';
+            $row['purchase_type'] = $purcTypeMap[strtoupper(trim((string)($e->purchase_type ?? '')))] ?? $e->purchase_type ?? '—';
+            $row['purchase_type_crm'] = $purcTypeMap[strtoupper(trim((string)($e->purchase_type_crm ?? '')))] ?? $e->purchase_type_crm ?? '—';
             $row['consid_brand'] = $e->consid_brand ?? $e->consider_make ?? '—';
             $row['consid_model'] = $e->consid_model ?? $e->consider_model ?? '—';
             $row['consid_variant'] = $e->consid_variant ?? $e->consider_variant ?? '—';
@@ -1159,7 +1200,7 @@ class EnquiryCrudController extends CrudController
             $row['offered_price'] = $e->offered_price ?? '—';
             $row['exchange_bonus'] = $e->exchange_bonus ?? '—';
             $row['price_gap'] = ($e->expected_price || $e->offered_price || $e->exchange_bonus) ? (($e->expected_price ?? 0) - ($e->offered_price ?? 0) - ($e->exchange_bonus ?? 0)) : '—';
-            $row['fin_mode'] = $e->fin_mode ?? '—';
+            $row['fin_mode'] = $finModeMap[strtoupper(trim((string)($e->fin_mode ?? '')))] ?? $e->fin_mode ?? '—';
             $row['financier_name'] = $finMap[$e->financier] ?? $e->financier ?? '—';
             $row['loan_status'] = $e->loan_status ?? '—';
 
@@ -1198,7 +1239,7 @@ class EnquiryCrudController extends CrudController
         if ($type === 'reference') {
             $row['referee_name'] = $e->referee_name ?? '—';
             $row['referee_phone'] = $e->referee_phone ?? '—';
-            $row['referred_by'] = $e->referred_by ?? '—';
+            $row['referred_by'] = $referredByMap[strtoupper(trim((string)($e->referred_by ?? '')))] ?? $e->referred_by ?? '—';
             $row['name'] = $e->name ?? '—';
         } elseif ($type === 'virtual') {
             $row['virtual_no'] = $e->virtual_no ?? '—';
@@ -2143,8 +2184,10 @@ class EnquiryCrudController extends CrudController
             ->where('remark_type', 1)
             ->orderByDesc('created_at')
             ->get();
+            
+        $finance_modes = OrgService::keywordValueByCode('FIN_MODE');
 
-        return view('admin.sales.enquiry.finance-edit', compact('enquiry', 'finance', 'financiers', 'fups'));
+        return view('admin.sales.enquiry.finance-edit', compact('enquiry', 'finance', 'financiers', 'fups', 'finance_modes'));
     }
 
     // public function financeEnquiryUpdate(Request $request, $id)
@@ -2196,6 +2239,48 @@ class EnquiryCrudController extends CrudController
     //     return redirect(backpack_url('sales/enquiry/finance/int-in-finance'));
     // }
 
+    public function exchangeEnquiryView($id)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
+        $existing_car_oems = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
+        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
+
+        $fups = DB::table('xlr8_finexch_fup')
+            ->where('enq_no', $enqNo)
+            ->where('remark_type', 2)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('admin.sales.enquiry.exchange-view', compact('enquiry', 'existing_car_oems', 'fups'));
+    }
+
+    public function financeEnquiryView($id)
+    {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        $enquiry = Enquiry::with(['segment', 'model', 'variant'])->findOrFail($id);
+        $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
+
+        $finance = XFinance::where('enq_no', $enqNo)->first();
+        $financiers = XlFinancier::select('id', 'name', 'short_name')->get()->toArray();
+
+        $fups = DB::table('xlr8_finexch_fup')
+            ->where('enq_no', $enqNo)
+            ->where('remark_type', 1)
+            ->orderByDesc('created_at')
+            ->get();
+            
+        $finance_modes = OrgService::keywordValueByCode('FIN_MODE');
+
+        return view('admin.sales.enquiry.finance-view', compact('enquiry', 'finance', 'financiers', 'fups', 'finance_modes'));
+    }
+
     public function financeEnquiryUpdate(Request $request, $id)
     {
         if (!backpack_user()->can('SLS_ENQR_EDIT')) {
@@ -2221,8 +2306,14 @@ class EnquiryCrudController extends CrudController
         $finance->case_status = $request->case_status ?? 1;
         $finance->verification_status = $request->verification_status ?? 1;
         $finance->case_lost_reason = $request->case_lost_reason;
+        
+        // Dynamically resolve the submitted keyword code into its readable text for logic
+        $finModes = OrgService::keywordValueByCode('FIN_MODE');
+        $finModeVal = collect($finModes)->firstWhere('code', $request->fin_mode);
+        $finModeText = strtoupper(trim($finModeVal['value'] ?? $request->fin_mode));
+        $notInterestedModes = ['CASH', 'CUSTOMER SELF', 'YET TO DECIDE', 'PURCHASE PLAN CANCELLED'];
 
-        if (!in_array($request->fin_mode, ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled'])) {
+        if (! in_array($finModeText, $notInterestedModes)) {
             $finance->instrument_type = $request->instrument_type;
             $finance->instrument_ref_no = $request->instrument_ref_no;
             $finance->loan_amount = $request->loan_amount;
@@ -2237,7 +2328,7 @@ class EnquiryCrudController extends CrudController
         }
 
         $finance->updated_by = backpack_auth()->id();
-        $finance->status = ($finance->fin_mode === 'In-house' && $finance->case_status == 2) ? 2 : 1;
+        $finance->status = (($finModeText === 'IN-HOUSE' || $finModeText === 'IN HOUSE') && $finance->case_status == 2) ? 2 : 1;
         $finance->save();
 
         if ($request->hasFile('instrument_proof')) {
@@ -2266,7 +2357,7 @@ class EnquiryCrudController extends CrudController
 
         Alert::success('Finance Details Updated successfully.')->flash();
 
-        if (in_array($enquiry->fin_mode, ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled'])) {
+        if (in_array($finModeText, $notInterestedModes)) {
             return redirect(backpack_url('sales/enquiry/finance/not-interested'));
         }
 
@@ -2563,6 +2654,9 @@ class EnquiryCrudController extends CrudController
             'finance_types' => $kw('FINANCE_TYPE'),
             'purchase_reasons' => $kw('PURCHASE_REASON'),
             'financiers' => collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn($f) => (object) $f),
+            'finance_modes' => $kw('FIN_MODE'),
+            'care_of_types' => $kw('CARE_OF_TYPE'),
+            'referred_by_types' => $kw('REFERRED_BY'),
         ];
     }
 
