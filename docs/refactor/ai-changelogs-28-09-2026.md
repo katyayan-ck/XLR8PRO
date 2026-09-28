@@ -717,3 +717,18 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   - LMM / TZU / CSD column choices;
   - queued screen + continue.
   `PriceListDetectServiceTest` (8). Pricing suites: 53 passed.
+
+## Pricing process speed-up (DEC-073)
+- **Cause:** Detect and the Vehicle Info import autocommitted every write (vehicle + change-log row), and each MySQL
+  commit costs about 25–30 ms here. A stub took about 90 ms and a Vehicle Info row about 110 ms, against 9 ms and 15 ms
+  of real work.
+- **Fix:**
+  - `PriceListDetectService` writes each 250-code chunk in one transaction (`createStubs()`).
+  - `VehicleInfoWorkbookService` writes each 100-row batch in one transaction (`importBatch()`).
+  - `VehicleService::kkvId()` memoises key-value lookups for the service instance (one import run).
+  - The price import was already chunked.
+- **Real files (xlrm_testing):** Detect 312–446 s → **57 s**; Vehicle Info 428–434 s → **68 s** (47 s on a re-run).
+  Results are identical: 3,414 stubs; 2,551 complete / 987 incomplete / 265 unknown. Discard is still exact (10,796
+  changes, 10 s).
+- **Plan:** Phase 10b added — the standalone Price List menu (all logged-in users; read-only AG Grid per list, PDF
+  layout), requested 28-09.

@@ -212,6 +212,20 @@ which fills missing keys.
    calculate batch.
 9. **Step 10:** summary, retry failed, complete + reopen.
 10. **Step 11:** `PricingQueryService::getPricing` from snapshots, API route (Sanctum), admin price-lookup screen.
+10b. **Price List screens (user request, 28-09):**
+   - **Menu:** a standalone "Price List" menu, open to every logged-in user (read-only), plus the Admin → Pricing menu
+     wiring (process, holds, TCS, RTO, insurance).
+   - **One page per list:** Price List PV (Private), Taxi, CV, LMM, TZU and CSD. Each is a read-only AG Grid over the
+     published snapshots (default options).
+   - **Columns**, laid out like `docs/reference/XLRM-Pricing-data/pdf/PriceList-*.pdf`:
+     1. Vehicle: Custom Model, Variant Display Name, Colour.
+     2. Ex-showroom.
+     3. Add-on prices: incidental, FASTag + TRC, RSA, insurance and RTO. Insurance and RTO show their bifurcation on
+        hover.
+     4. Standard discounts: cash, accessories, RSA, shield.
+     5. Conditional discounts: exchange, corporate, loyalty, shield options.
+     6. TCS, then on-road price with default values, and invoice amount.
+   - **Built after** snapshots (Phase 8) and `getPricing` (Phase 10), from the same snapshot data.
 11. **Quotation rewire:** getPricing adapter, hold enforcement on quote / booking, server-side gate + TCS re-validation;
     menu; reset hardening; dead code removal.
 12. **Wrap-up:**

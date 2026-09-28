@@ -375,11 +375,24 @@ class VehicleService
         return $row ? $this->norm($row->code ?? $row->value) : null;
     }
 
+    /** @var array<string, int|null> keyword|value => key-value id, for this service instance (one import run) */
+    private array $kkvMemo = [];
+
     public function kkvId(string $keyword, mixed $value, bool $create = false): ?int
     {
         if ($value === null || $value === '') {
             return null;
         }
+        $memoKey = $keyword.'|'.$this->norm((string) $value);
+        if (! $create && array_key_exists($memoKey, $this->kkvMemo)) {
+            return $this->kkvMemo[$memoKey];
+        }
+
+        return $this->kkvMemo[$memoKey] = $this->resolveKkvId($keyword, $value, $create);
+    }
+
+    private function resolveKkvId(string $keyword, mixed $value, bool $create): ?int
+    {
         $code = $this->norm((string) $value);
         $compact = preg_replace('/[^A-Z0-9]/', '', $code) ?: $code;
         $keywords = array_unique([$keyword, str_replace('_', '', $keyword)]);

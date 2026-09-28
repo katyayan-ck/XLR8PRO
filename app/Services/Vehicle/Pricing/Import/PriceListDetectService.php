@@ -6,6 +6,7 @@ namespace App\Services\Vehicle\Pricing\Import;
 
 use App\Models\Vehicle\Variant;
 use App\Services\Vehicle\VehicleService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -161,8 +162,21 @@ class PriceListDetectService
         if ($batch === []) {
             return;
         }
-        $known = Variant::query()->whereIn('code', array_keys($batch))->pluck('code')->map(fn ($c) => strtoupper((string) $c))->flip();
+        $known = Variant::query()->whereIn('code', array_keys($batch))->pluck('code')->map(fn ($c) => strtoupper((string) $c))->flip()->all();
 
+        // one commit per chunk: row-by-row autocommit made each stub cost ~90 ms (vs ~9 ms)
+        DB::transaction(function () use ($batch, $known, $sheet, $sheetCode, &$stats) {
+            $this->createStubs($batch, $known, $sheet, $sheetCode, $stats);
+        });
+    }
+
+    /**
+     * @param  array<string, array{row: int, model: string, variant: string}>  $batch
+     * @param  array<string, int|string>  $known  codes already in the master
+     * @param  array<string, mixed>  $stats
+     */
+    private function createStubs(array $batch, array $known, string $sheet, string $sheetCode, array &$stats): void
+    {
         foreach ($batch as $code => $row) {
             if (isset($known[$code])) {
                 $stats['known']++;

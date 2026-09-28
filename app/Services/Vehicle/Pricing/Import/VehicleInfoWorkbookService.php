@@ -8,6 +8,7 @@ use App\Models\Vehicle\Variant;
 use App\Services\KeywordValueService;
 use App\Services\Vehicle\VehicleCompleteness;
 use App\Services\Vehicle\VehicleService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
@@ -99,6 +100,7 @@ class VehicleInfoWorkbookService
         }
         $map = $header['map'];
         $seen = [];
+        $batch = [];
 
         foreach ($this->reader->rows($path, $sheet, $header['row'] + 1) as $rowNo => $cells) {
             $code = PricingWorkbookReader::code($cells[$map['model_code']] ?? '');
@@ -107,14 +109,35 @@ class VehicleInfoWorkbookService
             }
             $seen[$code] = true;
             $stats['rows']++;
-            $this->importRow($rowNo, $code, $this->mapRow($cells, $map), $stats);
-            if ($onProgress && $stats['rows'] % 100 === 0) {
-                $onProgress(array_diff_key($stats, ['issues' => 1]));
+            $batch[] = [$rowNo, $code, $this->mapRow($cells, $map)];
+            if (count($batch) >= 100) {
+                $this->importBatch($batch, $stats);
+                $batch = [];
+                $onProgress && $onProgress(array_diff_key($stats, ['issues' => 1]));
             }
         }
+        $this->importBatch($batch, $stats);
         Log::info('[Pricing] vehicle info import', array_diff_key($stats, ['issues' => 1]));
 
         return $stats;
+    }
+
+    /**
+     * One commit per batch: row-by-row autocommit made each row cost ~110 ms (vs ~15 ms).
+     *
+     * @param  list<array{0: int, 1: string, 2: array<string, string>}>  $batch
+     * @param  array<string, mixed>  $stats
+     */
+    private function importBatch(array $batch, array &$stats): void
+    {
+        if ($batch === []) {
+            return;
+        }
+        DB::transaction(function () use ($batch, &$stats) {
+            foreach ($batch as [$rowNo, $code, $row]) {
+                $this->importRow($rowNo, $code, $row, $stats);
+            }
+        });
     }
 
     /**
