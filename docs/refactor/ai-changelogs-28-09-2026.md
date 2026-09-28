@@ -804,3 +804,26 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
     the step's gate.
   - `RuleRangeAndFormulaTest` (13).
   - Pricing suites: 70 passed.
+
+## Pricing redesign — Phase 7: impact summary + hold check (DEC-073, DEC-079)
+- **User:** the reference BH band is "1000000 - 2000000"; the source workbook is corrected by the user, and the import
+  keeps what the sheet says.
+- **Migration** `2026_09_29_001155_pricing_price_list_source_dec079` (xlrm + xlrm_testing; rollback verified): a
+  `price_list` column plus index on `xlr8_vehicle_pricing`. The price import sets it, and stamps it on an unchanged live
+  row. `PriceService` gains the field.
+- **New `Session\PricingImpactService`:** computes the summary live from the session change log and the masters:
+  - new and activated vehicles;
+  - price changes new / up / down / other per channel;
+  - add-on groups and rule sets replaced or kept;
+  - what will calculate per list, minus held lists (TAXI = taxi vehicles' Passenger snapshots);
+  - what is skipped;
+  - a downloadable incomplete list.
+- **New `ImpactController` + `process/impact` view:**
+  - Step 7 is always shown before calculating, with a "Reviewed — continue" action.
+  - Step 8, the hold check, holds or reopens lists recorded in the session (Discard undoes them). It is followed by
+    Calculate & publish, which arrives in Phase 8.
+- **Removed:** the legacy `impactSummary` / `impactSummaryView` actions, their view and the JSON route.
+- **Tests:** `PricingImpactTest` (2):
+  - exact counts from the change log;
+  - review → hold check → hold PV removes it → Discard undoes the hold.
+  Plus a `price_list` assertion in the price import test.

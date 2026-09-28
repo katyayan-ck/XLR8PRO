@@ -116,6 +116,7 @@ class PricingPriceImportTest extends TestCase
             'ex-showroom = "Ex-Showroom Price ORG"; schemes "with GST"; OV = the repeated block; margin + handling'
         );
         $this->assertSame(PricingHistory::ACTION_INSERT, PricingHistory::query()->where('model_code', $ok)->value('action'));
+        $this->assertSame('PV', $p->price_list, 'the row remembers its list (DEC-079)');
         $this->assertNull($this->live($stub));
         $this->assertNull($this->live($conflict), 'conflicting duplicates write nothing');
         $this->assertStringContainsString('different amounts', collect($result['issues'])->firstWhere('code', $conflict)['reason']);

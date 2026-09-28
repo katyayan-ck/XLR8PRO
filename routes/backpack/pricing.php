@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\Pricing\InsuranceController;
 use App\Http\Controllers\Admin\Pricing\PricingResetController;
 use App\Http\Controllers\Admin\Pricing\PricingWorkflowController;
 use App\Http\Controllers\Admin\Pricing\Process\AddonsController;
+use App\Http\Controllers\Admin\Pricing\Process\ImpactController;
 use App\Http\Controllers\Admin\Pricing\Process\PricesController;
 use App\Http\Controllers\Admin\Pricing\Process\PricingProcessController;
 use App\Http\Controllers\Admin\Pricing\Process\RulesController;
@@ -71,8 +72,10 @@ Route::group([
 
     Route::post('workflow/discard', [PricingProcessController::class, 'discard'])->name('pricing.workflow.discard');
 
-    Route::get('workflow/impact-summary/{sessionId}', [PricingWorkflowController::class, 'impactSummary'])->name('pricing.workflow.impact-summary');
-    Route::get('workflow/impact-summary-view/{sessionId}', [PricingWorkflowController::class, 'impactSummaryView'])->name('pricing.workflow.impact-summary-view');
+    Route::get('workflow/impact-summary-view/{sessionId}', [ImpactController::class, 'show'])->whereNumber('sessionId')->name('pricing.workflow.impact-summary-view');
+    Route::get('workflow/impact-incomplete/{sessionId}', [ImpactController::class, 'incomplete'])->whereNumber('sessionId')->name('pricing.workflow.impact-incomplete');
+    Route::post('workflow/impact-continue', [ImpactController::class, 'continue'])->name('pricing.workflow.impact-continue');
+    Route::post('workflow/hold-check', [ImpactController::class, 'hold'])->name('pricing.workflow.hold-check');
     Route::post('workflow/calculate/{sessionId}', [PricingWorkflowController::class, 'calculateAndPublish'])->name('pricing.workflow.calculate');
     Route::get('workflow/session-status/{sessionId}', [PricingWorkflowController::class, 'sessionStatus'])->name('pricing.workflow.session-status');
     Route::get('workflow/failed-vehicles/{sessionId}', [PricingWorkflowController::class, 'failedVehicles'])->name('pricing.workflow.failed-vehicles');

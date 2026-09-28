@@ -9,10 +9,7 @@ namespace App\Http\Controllers\Admin\Pricing;
 use App\Http\Controllers\Controller;
 use App\Jobs\Vehicle\Pricing\CalculatePricingSessionJob;
 use App\Models\Vehicle\Pricing\Affected;
-use App\Models\Vehicle\Pricing\ChangeFlag;
 use App\Models\Vehicle\Pricing\ImportSession;
-use App\Models\Vehicle\Pricing\Pricing;
-use App\Models\Vehicle\Pricing\Profile;
 use App\Services\Vehicle\Pricing\PricingSessionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -22,62 +19,6 @@ class PricingWorkflowController extends Controller
     public function __construct(
         protected PricingSessionService $sessions
     ) {}
-
-    public function impactSummary(int $sessionId)
-    {
-        if (! backpack_user()->can('PRC_WKFL_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view the pricing workflow.');
-        }
-
-        $session = ImportSession::findOrFail($sessionId);
-        $flags = ChangeFlag::query()
-            ->where('import_session_id', $sessionId)
-            ->where('is_processed', false)
-            ->get();
-
-        $byType = $flags->groupBy('change_type')->map->count();
-        $flagCodes = $flags->pluck('model_code')->filter()->unique()->values();
-
-        $complete = Profile::query()
-            ->where('is_vehicle_master_complete', true)
-            ->count();
-        $priced = Pricing::query()
-            ->where('is_active', true)
-            ->count();
-
-        $can = $complete > 0 && $priced > 0;
-
-        return response()->json([
-            'success' => true,
-            'session' => [
-                'id' => $session->id,
-                'wef_date' => $session->wef_date?->format('Y-m-d'),
-                'status' => $session->status,
-                'current_stage' => $session->current_stage,
-                'stats' => $session->stats,
-            ],
-            'total_affected' => $flagCodes->count(),
-            'complete_masters' => $complete,
-            'active_price_rows' => $priced,
-            'by_type' => $byType,
-            'can_calculate' => $can,
-            'message' => $can
-                ? "Review impact and run Calculate when ready. Complete masters: {$complete}, active prices: {$priced}."
-                : 'Nothing to calculate — need at least one complete master with an active price row.',
-        ]);
-    }
-
-    public function impactSummaryView(int $sessionId)
-    {
-        if (! backpack_user()->can('PRC_WKFL_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view the pricing workflow.');
-        }
-
-        return view('admin.pricing.workflow.impact-summary', [
-            'title' => 'Impact Summary',
-            'sessionId' => $sessionId,
-        ]);
-    }
 
     public function calculateAndPublish(Request $request, int $sessionId)
     {

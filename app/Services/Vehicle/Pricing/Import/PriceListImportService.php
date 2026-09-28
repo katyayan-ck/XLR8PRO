@@ -102,6 +102,7 @@ class PriceListImportService
             $map = $this->repeatedBlockAsOv($header['cells'], $map);
         }
         $channel = $sheetCode === 'PRICE_LIST_CSD' ? 'csd' : 'normal';
+        $list = substr($sheetCode, strlen('PRICE_LIST_'));
 
         // read the whole sheet once (≤ a few thousand rows) so duplicate codes can be judged before writing
         $rows = [];
@@ -132,8 +133,8 @@ class PriceListImportService
 
         foreach (array_chunk($rows, PricingWorkbookReader::CHUNK, true) as $chunk) {
             // a plain closure: the counters are passed by reference (an arrow fn would count on copies)
-            DB::transaction(function () use ($chunk, $sheet, $channel, $wefDate, &$stats, &$result) {
-                $this->writeChunk($chunk, $sheet, $channel, $wefDate, $stats, $result);
+            DB::transaction(function () use ($chunk, $sheet, $channel, $list, $wefDate, &$stats, &$result) {
+                $this->writeChunk($chunk, $sheet, $channel, $list, $wefDate, $stats, $result);
             });
             $onProgress && $onProgress(['sheet' => $sheet, 'done' => $stats['inserted'] + $stats['updated'] + $stats['unchanged'], 'rows' => $stats['rows']]);
         }
@@ -146,7 +147,7 @@ class PriceListImportService
      * @param  array<string, int>  $stats
      * @param  array<string, mixed>  $result
      */
-    private function writeChunk(array $chunk, string $sheet, string $channel, string $wefDate, array &$stats, array &$result): void
+    private function writeChunk(array $chunk, string $sheet, string $channel, string $list, string $wefDate, array &$stats, array &$result): void
     {
         $codes = array_keys($chunk);
         $variants = Variant::query()->with('vehicleModel')->whereIn('code', $codes)->get()->keyBy(fn (Variant $v) => strtoupper($v->code));
@@ -175,7 +176,7 @@ class PriceListImportService
 
                 continue;
             }
-            $values = array_filter($payload, fn ($v) => $v !== null);
+            $values = array_filter($payload, fn ($v) => $v !== null) + ['price_list' => $list];
 
             try {
                 $row = $sameWef->get($code);
@@ -190,7 +191,8 @@ class PriceListImportService
 
                     continue;
                 } elseif ($previous && ! $this->changed($previous, $values)) {
-                    $row = $previous;
+                    // same price: keep the live row, only stamp the list it belongs to (DEC-079)
+                    $row = $previous->price_list === $list ? $previous : $this->prices->update($previous, ['price_list' => $list]);
                     $action = PricingHistory::ACTION_UNCHANGED;
                     $stats['unchanged']++;
                 } else {
@@ -271,6 +273,9 @@ class PriceListImportService
     private function changed(Pricing $previous, array $values): bool
     {
         foreach ($values as $column => $value) {
+            if ($column === 'price_list') {
+                continue;   // the list a price came from is not a price change
+            }
             if (abs((float) $previous->{$column} - (float) $value) > 0.009) {
                 return true;
             }

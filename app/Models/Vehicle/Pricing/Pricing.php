@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $import_session_id
  * @property string $model_code
  * @property string $channel
+ * @property string|null $price_list PV, CV, BEV, LMM, LMM_TZU, CSD (DEC-079)
  * @property Carbon|null $wef_date
  * @property Carbon|null $expired_on
  * @property bool $is_active
@@ -49,6 +50,7 @@ class Pricing extends BaseModel
         'import_session_id',
         'model_code',
         'channel',
+        'price_list',
         'wef_date',
         'expired_on',
         'is_active',

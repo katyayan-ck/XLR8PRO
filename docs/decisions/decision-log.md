@@ -1103,3 +1103,23 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
      - Otherwise Keep, or download the current rules → edit → re-import.
      - Continue needs both kinds present.
 - **Approved-by:** auto (implements the approved DEC-073 step 6) · **Risk:** MED · **Reversal:** revert; the migration rolls back.
+
+### DEC-079 | 29-09-2026 | A (Vehicle pricing) | Impact summary and hold check (DEC-073 steps 7–8)
+- **User (29-09):** the BH assessable band in the reference RTO sheet is "1000000 - 2000000". The importer keeps what the
+  sheet says; the user corrects the source workbook.
+- **Decision (technical):**
+  1. Each price row stores the list it came from (`price_list`: PV, CV, BEV, LMM, LMM_TZU, CSD; nullable column + index,
+     set by the price import). A vehicle's list is the list of its live normal-channel price. Holds and the impact
+     counts use it; TAXI covers the Passenger snapshots of `taxi_price = YES` vehicles.
+  2. **Impact summary** (`Session\PricingImpactService::summary()`), computed live, always shown before calculation:
+     - new vehicles (inserted in this session) and vehicles made Active in this session (both from the change log);
+     - prices new / up / down / other change (from the change log: a row inserted this session against the row it
+       expired, or a same-WEF update); unchanged comes from the run stats;
+     - add-on groups and rule sets replaced or kept;
+     - Active vehicles with a live price that will calculate, per list, minus held lists;
+     - skipped: incomplete, inactive, Active without a price.
+     The incomplete list is downloadable.
+  3. **Hold check:** hold or reopen lists (through `PricingHoldService`, recorded so Discard undoes them), then
+     Calculate & Publish (Phase 8).
+  4. **Stages:** Rules → Impact (continue) → HoldCheck → Calculating.
+- **Approved-by:** user (band), auto (implements the approved DEC-073 steps 7–8) · **Risk:** LOW · **Reversal:** revert.

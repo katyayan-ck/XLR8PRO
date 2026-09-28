@@ -44,6 +44,7 @@ final class PriceService extends EntityService
             Field::code('model_code', 40)->label('OEM Code')->required()->immutable()
                 ->unique(['channel', 'wef_date'], includeTrashed: true),
             Field::text('channel', 20)->label('Channel')->transform('lowercase')->default('normal')->immutable(),
+            Field::code('price_list', 20)->label('Price List'),   // the list the row came from (DEC-079)
             Field::date('wef_date')->label('WEF')->required()->immutable(),
             Field::date('expired_on')->label('Expired On'),
             Field::flag('is_active', true),
