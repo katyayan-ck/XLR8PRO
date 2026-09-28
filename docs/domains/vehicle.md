@@ -59,6 +59,7 @@ Inject or `app(VehicleService::class)`. All writes go through the entity service
 | `modelOptions(?$segmentCode, $activeOnly = true)` | models of a segment (all when null) |
 | `modelOptionsFor(?$segmentCode)` | active models of exactly that segment; **empty** when none chosen (dependent dropdowns) |
 | `variantOptions(?$modelCode)` | `id, code, name` (custom name), `seating_capacity` |
+| `variantGroupOptions(?$modelCode)` | one row per OEM variant (variant rows are per colour): `code` (a representative colour row — pass to `colorOptions()`), `name` (display / custom / OEM name); used by the quotation picker (DEC-082) |
 | `colorOptions(?$variantCode)` | sibling colour rows of the variant: `code` (colour code), `name` (colour), `variant_code` |
 | `colorsOfVariant($oemCode)`, `colorsOfModel($oemModel)`, `colorsOfSegment($seg, ?$sub)` | colour rows for a level |
 | `findByOemCode($oemCode)` | `?Variant` |
@@ -124,7 +125,7 @@ $variants = $svc->variantOptions($request->model)->pluck('name', 'code');
 $colours  = $svc->colorOptions($request->variant)->pluck('name', 'code');
 ```
 
-**Import a new variant from the OEM price list** — `PriceListVehicleDetector` (pricing) calls
+**Import a new variant from the OEM price list** — `Pricing\Import\PriceListDetectService` (pricing step 2) calls
 `createStubFromPriceList()`; the Vehicle Info import then fills specs through `applyVehicleInfo()`.
 
 **Accessories on a quotation**

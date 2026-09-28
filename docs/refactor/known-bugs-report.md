@@ -212,7 +212,7 @@ Entry format:
 | BUG-174 | `import:rbac-master` silently imported nothing: its sheet classes implement no Maatwebsite `To*` concern (and call an undefined `skip()`), yet the command printed "No errors. All rows processed cleanly" | Medium | FIXED (retired, DEC-052) | 27-09-2026 | 27-09-2026 |
 | BUG-176 | `HasColumnTransformations` re-transformed every attribute on every update: editing any field of a keyword value whose legacy code has spaces rewrote the code (hyphens), orphaning its references — 1,903 such codes exist | High | FIXED (DEC-055) | 27-09-2026 | 27-09-2026 |
 | BUG-177 | Imports menu and the `imports/admin` landing page have no permission check (a user with no import permission opens it; the vehicle import POST itself is gated on `VEH_SEG_CREATE`) | Low | OPEN (permission choice — D14) | 27-09-2026 | — |
-| BUG-178 | Pricing engine ignores imported dealer charges: `dealerCharges()` reads narrow rows (`charge_name`/`amount`) while the importer writes the spec's WIDE columns (CP-06), so the pricing JSON's dealer charges total 0; `scopeHit()` checks a `model` column (table has `model_code`), so model scope is never applied | High | OPEN (price-changing — D18); wider than logged | 27-09-2026 | — |
+| BUG-178 | Pricing engine ignores imported dealer charges: `dealerCharges()` reads narrow rows (`charge_name`/`amount`) while the importer writes the spec's WIDE columns (CP-06), so the pricing JSON's dealer charges total 0; `scopeHit()` checks a `model` column (table has `model_code`), so model scope is never applied | High | FIXED (DEC-080 engine; legacy engine removed DEC-082) | 27-09-2026 | 29-09-2026 |
 | BUG-179 | Two divergent accessory importers: the wired one (`import:vehicle-accessories` → `AccessoryImportService`) reads one sheet without type/discount/permit, soft-disables the whole catalogue and echoes every row; the spec-shaped one (`AccessoryService::importExcel*`: typed sheets, discount, permit, hard purge) has no caller | Medium | OPEN (owner: which importer is authoritative — D19); debug output removed (DEC-070) | 27-09-2026 | — |
 | BUG-180 | `/export/vehicle-data` (`ExportController::vehicleDataExcel`) references `App\Exports\VehicleDataExport`, which does not exist — the route 500s | Low | OPEN (deletion — D6) | 28-09-2026 | — |
 | BUG-181 | `User::getOrCreateNotificationsMaster()` and the `NotificationsMaster` model did not exist, so the v1 notification endpoints (unread count, mark-all-read) and every legacy `NotificationService` send 500'd; the docs models pointed at non-existent tables (`xlr8_docs_*`, pivot `doc_group_documents`) and the v1 add-to-group rule validated against `documents` | High | FIXED (DEC-061) | 28-09-2026 | 28-09-2026 |
@@ -2071,7 +2071,7 @@ guessed at.
 
 ### BUG-178 — Engine ignores WIDE dealer charges
 
-- **Status:** OPEN (price-changing — D18); wider than logged
+- **Status:** FIXED (DEC-080 engine; legacy engine removed DEC-082, 29-09-2026)
 - **Evidence:**
   - `AddonDiscountImportService` writes one WIDE row per scope (`incidental`, `fastag`, `trc`, `rto_tape`, `cod`; `charge_name` / `amount` null), which the Machine Spec requires (CP-06, §Dealer Charges).
   - `PricingEngineService::dealerCharges()` classifies rows by `charge_name` and takes `amount`, so each wide row becomes "other" = 0 and `dealer_charges.total` is 0.
@@ -2081,6 +2081,13 @@ guessed at.
   - Map the scope keys to the real columns (`model_code`, `segment`, `permit`).
   - Add a test with one ANY row and one model row.
 - **Resolution (28-09-2026):** Triage 28-09: besides dealer charges, `scopeHit()` compares `model` / `variant`, but the add-on and discount tables use `model_code` / `variant_code`, so model- or variant-specific add-ons and discounts apply to every vehicle. Proposal D18: fix both, with a before / after price comparison for owner approval before merge.
+- **Fixed (29-09-2026):**
+  - The new engine's `Engine\ComponentResolver::dealerCharges()` reads the WIDE heads (incidental, FASTag, TRC,
+    RTO tape, COD, Kazam). The most specific row wins through `ScopeMatcher`: model (`model_code`) > segment + permit >
+    ANY.
+  - COD is in the total only with `pricing.dealer_charges.include_cod`.
+  - Covered by `PricingCalculationTest` (a model-scoped row → dealer charges ₹2,899).
+  - The legacy `PricingEngineService` that had the bug was deleted (DEC-082).
 
 ### BUG-179 — Two divergent accessory importers
 

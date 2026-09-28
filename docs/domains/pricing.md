@@ -9,7 +9,8 @@ touching importers**.
 |---|---|
 | on-road price for a variant (quotation, booking, API) | `app(PricingQueryService::class)->getPricing($oemCode, ['permit' => 'PRIVATE', 'vin_type' => 'NV', 'channel' => 'normal'])` — the published snapshot (step 11, below) |
 | publish prices after an import | **Pricing → Pricing Process** step 9 (`Engine\PricingCalculationService`, below) |
-| drive the import workflow | `PricingSessionService` + the importers (admin **Pricing → Workflow** screens) |
+| drive the import process | `Session\PricingSessionService` + the step jobs (admin **Pricing → Pricing Process**) |
+| read-only price lists for staff | **Price List** menu (`Engine\PriceListService`, DEC-081) |
 | write a rule / add-on / price row | the entity services under `Pricing\Rules\*`, `Pricing\Addons\*`, `Pricing\Prices\PriceService` (DEC-056/057/058) |
 | a single calculator (admin test screens) | `RtoService::quote()`, `InsuranceService::quote()`; the engine uses `Engine\RtoCalculator` / `Engine\InsuranceCalculator` |
 | quotation prices, gate + TCS re-validation | `App\Services\Sales\Quotation\QuotationPricingService` ([crm-enquiry-quotation.md](crm-enquiry-quotation.md)) |
@@ -29,7 +30,7 @@ contract is `Engine\PricingContract` v2 and consumers read published snapshots t
 
 ---
 
-## DEC-073 redesign — process engine (being rolled out phase by phase; plan `docs/plans/2026-09-28-pricing-redesign-DEC-073.md`)
+## DEC-073 process engine (plan `docs/plans/2026-09-28-pricing-redesign-DEC-073.md`; all phases shipped)
 | Piece | API |
 |---|---|
 | `Session\PricingStage` (enum) | `Started → Detecting → VehicleInfo → Prices → Addons → Rules → Impact → HoldCheck → Calculating → Summary`, terminal `Completed` / `Discarded`; `label()`, `order()`, `isTerminal()`, `steps()`, `fromStored($legacy)`; `ImportSession::stage()` returns it |
@@ -137,26 +138,11 @@ to **every logged-in user** (no permission). The menu is **Price List**; the rou
   - Quick search and CSV download.
   - A held list shows an "On hold" banner.
 
-## The import workflow (legacy flow — replaced step by step by the DEC-073 engine above)
-`ImportSession` stages: `idle → detecting → awaiting_vehicle → importing_prices → awaiting_addons → importing_addons →
-awaiting_rules → calculating → summary → completed` (or `cancelled`). Status `active` / `completed` / `cancelled`.
-
-| Step | Service call | Returns (`stats` merged into the session) |
-|---|---|---|
-| start | **replaced** by `Session\PricingSessionService::start()` + `DetectPriceListsJob` (above) | |
-| detect vehicles from price lists | **replaced** by `Import\PriceListDetectService` (above); `PriceListVehicleDetector` remains only for the legacy price importer until Phase 4 | |
-| Vehicle Info (specs) | **replaced** by `Import\VehicleInfoWorkbookService` + `ImportVehicleInfoJob` (above) | |
-| prices | **replaced** by `Import\PriceListImportService` + `ImportPricesJob` (above) | |
-| add-ons & discounts | **replaced** by `Import\AddonDiscountWorkbookService` + `ImportAddonsJob` (above) | |
-| insurance & RTO rules (keep or import) | **replaced** by `Import\InsuranceWorkbookService` / `Import\RtoWorkbookService` + `ImportRulesJob` (above) | |
-| hold (optional) | `PricingSessionService::setHoldScopes($session, $scopes)`; `Hold::putOnHold($scope, $reason, $userId)`, `Hold::reopen(...)`, `Hold::isHeld($scope = 'ALL')` | |
-| calculate & publish | `RecalculateVehiclePricingJob` → `calculateAndPublish()` per affected variant (`Affected` rows) | `calculated`, `skipped_incomplete` |
-| move on / cancel | `advance($session, $stage, $statsMerge, $userId)`, `updateStats()`, `discard($session, $userId)` | the session |
-| current session | `activeSession()` | `?ImportSession` |
-
+## Shared import helpers
 Sheet recognition: `Import\PriceListDetectService::sheetCode($title)`, `AddonDiscountWorkbookService::groupOf($title)`;
 the Insurance / RTO workbooks match their sheet titles exactly (`SHEETS`, `RtoWorkbookService::SHEET`).
-(`RulesWorkbookService`, `AddonDiscountImportService` and `PriceListVehicleDetector` were removed with DEC-073 phases 4–6.)
+(`RulesWorkbookService`, `AddonDiscountImportService`, `PriceListVehicleDetector`, the legacy workflow controller / jobs /
+session service and `PricingEngineService` were removed during DEC-073 phases 4–11.)
 
 Header mapping for every sheet goes through `SheetHeaderService` (labels / aliases → stable `field_code`; registry labels and sheet cells are normalised the same way by the public `normalizeLabel()` — `-` `.` `_` → space, lower case; when several columns match one field the primary label beats its aliases, then the first column wins — BUG-200):
 `labelMap($sheet)`, `mapHeaderRow($sheet, $cells)`, `findHeaderRow($sheet, $rows, $maxScan = 25)` (→ `[rowIndex,
@@ -167,7 +153,8 @@ fieldMap]`), `val($row, $map, $field, $default)`, `requiredFieldCodes($sheet)`, 
 `info/warning/error/debug($msg, $ctx)`, `dumpSheetPreview(...)` → `pricing_process_session_N.log`.
 
 `PricingResetService::run($afterDate, $flushQueue = true)` **destroys** pricing sessions, profiles, prices, history,
-snapshots … after a date (keeps sheet headers, add-ons, discounts, rules) — **local only**.
+snapshots … after a date (keeps sheet headers, add-ons, discounts, rules) — **local only**; the admin route is a GET
+preview + POST with the typed `RESET` (`pricing.reset` / `pricing.reset.run`, DEC-082).
 
 ---
 
@@ -221,7 +208,7 @@ DB::transaction(function () use ($svc, $rows, $wef) {
 **"Why is this variant not priced?"** → `app(VehicleService::class)->missingFields($variant)`, then
 `Profile::forModel($code)->first()` flags, then `Hold::isHeld($scope)`.
 
-**New rule set for October** → **Pricing → Workflow** (step 6, Insurance & RTO) or `RtoWorkbookService::import($path, $wef)` /
+**New rule set for October** → **Pricing → Pricing Process** (step 6, Insurance & RTO) or `RtoWorkbookService::import($path, $wef)` /
 `InsuranceWorkbookService::import($path, $wef)` inside a session; old rows are expired, not deleted.
 
 ## Gotchas (from production incidents — see the rules file)

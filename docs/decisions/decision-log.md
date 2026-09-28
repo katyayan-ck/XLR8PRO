@@ -1259,3 +1259,9 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
      (on invoice amount) can differ at the edges. The quotation keeps its FRS rule.
 - **Approved-by:** user (DEC-073 scope); auto (1–6, flagged) · **Risk:** HIGH (UAT-visible quotation screen) ·
   **Reversal:** revert the commit (the mock returns).
+- **Confirmed (user, 29-09):** items 3 and 6 as proposed:
+  - the discount types (consumer INV_OE, cash CN1, accessory INV_OE, Shield CN1, RSA discount → other cash discount CN1,
+    corporate INV, exchange CN2);
+  - conditional discounts not auto-applied;
+  - the quotation keeps its FRS TCS rule (rate × invoice amount when ≥ limit).
+  - DEC-082 is now fully user-approved.
