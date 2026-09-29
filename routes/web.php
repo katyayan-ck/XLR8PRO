@@ -30,12 +30,13 @@ Route::middleware(array_merge(
     (array) config('backpack.base.middleware_key', 'admin')
 ))->group(function () {
     Route::prefix('admin/org/user')->group(function () {
-        // Bulk import (DEC-035/036) and the importable users & RBAC workbook (DEC-040). The old
-        // export and import/export history were removed (BUG-043, BUG-158).
+        // Bulk import and the users workbook (DEC-089); the users & RBAC workbook (DEC-040) stays as
+        // export/rbac. The old export and import/export history were removed (BUG-043, BUG-158).
         Route::get('/import', [UserImportExportController::class, 'showImportForm'])->name('org.user.import');
         Route::post('/import', [UserImportExportController::class, 'import'])->name('org.user.import.process');
         Route::get('/import/template', [UserImportExportController::class, 'downloadTemplate'])->name('org.user.import.template');
         Route::get('/export', [UserImportExportController::class, 'export'])->name('org.user.export');
+        Route::get('/export/rbac', [UserImportExportController::class, 'exportRbac'])->name('org.user.export.rbac');
     });
 });
 

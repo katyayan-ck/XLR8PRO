@@ -385,8 +385,8 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W2 | U11 API docs: notifications / alerts / messages, documents, history, webhooks (+ Postman) | ✅ 30-09 (BUG-217 fixed on the way) |
 | W8 | **My Account like the UI demo + a "Permissions & scope" tab** (your request 30-09): emp code, OEM Mile ID, designation, primary department / division / branch / location, add-on departments / divisions / branches / locations, segments, sub-segments, models, variants, verticals — blank when nothing is defined | ✅ 30-09 |
 | W9 | **Vehicle Info export with controlled values** (your request 30-09): every lookup column a dropdown fed from the masters (codes stored, labels shown), so imported rows always relate to existing data | ✅ 30-09 |
-| W10 | **Users bulk export / import redesign** (your request 30-09): headers `Emp Code*, Employee Name*, Personal Mail Id, Official Mail ID, Personal Contact Number*, Official Contact Number, OEM Mile ID, Aadhaar No, Primary Branch*, Addon Branch, Primary Location*, AddOn Location, Primary Department*, Addon Department, Primary Division, Add On Divisions, Designation*, Vertical, Segment, Sub Segment, Models, Reporting Manager`; master dropdowns, dependent lists (primary location ← primary branch, primary division ← primary department, add-on lists = the left-out children of the primaries + all children of the add-ons), multi-select with `All` first and `None` last, employee history kept | 🟡 next |
-| W11 | **Bulk user create / edit screen** (your request 30-09) with the same rules and multi-select filter-like pickers; writes employee history | 🔴 |
+| W10 | **Users bulk export / import redesign** (your request 30-09): headers `Emp Code*, Employee Name*, Personal Mail Id, Official Mail ID, Personal Contact Number*, Official Contact Number, OEM Mile ID, Aadhaar No, Primary Branch*, Addon Branch, Primary Location*, AddOn Location, Primary Department*, Addon Department, Primary Division, Add On Divisions, Designation*, Vertical, Segment, Sub Segment, Models, Reporting Manager`; master dropdowns, dependent lists (primary location ← primary branch, primary division ← primary department, add-on lists = the left-out children of the primaries + all children of the add-ons), multi-select with `All` first and `None` last, employee history kept | ✅ 30-09 (DEC-089 Phase B, DEC-090) |
+| W11 | **Bulk user create / edit screen** (your request 30-09) with the same rules and multi-select filter-like pickers; writes employee history | 🟡 next (Phase C, on `UserRowService`) |
 | W12 | **Org rules as validation** (your request 30-09): no user without a primary branch / location / department / division (`All` / `None` not allowed there); every parent branch / department / segment has a same-name, same-code child location / division / sub-segment; verticals mandatory (multi-select, no `None`); segment / sub-segment / model / variant blank = all; every user has an employee code, FSCs may have a Mile ID | ✅ 30-09 (Phase A: rules in the entity services; legacy gaps → BUG-218) |
 | W3 | Q1 Sales / booking feature tests (enquiry, quotation, booking flows) | 🔴 |
 | W4 | Q5 PHPStan baseline for the legacy controllers | 🔴 |
@@ -899,3 +899,19 @@ are listed in BUG-218 for HR. The user forms mark vertical as required.
 
 **Verified:** 6 new tests; org / IAM / import / vehicle / pricing / booking suites 340 passed; migration up / down / up on
 the test copy. **Left:** filling the legacy gaps (BUG-218) — easiest once the new workbook (W10) is in.
+
+### 11. Users workbook in the owner's layout — W10 (DEC-089 Phase B, DEC-090)
+
+**Delivered:** Org → Users → Bulk import now exports / imports the `Users` sheet with the exact 22 headers. Single values
+are master-code dropdowns (Primary Location follows the row's branch, Primary Division its department); add-on, vertical
+and vehicle columns take comma-separated codes, `ALL` or `NONE` with every valid code listed on the `Lists` sheet. Each
+row creates / updates the person, employee, login, role and scopes in one transaction through the entity services, and
+every change of designation, primaries, manager or scopes is written to the employee history. Aadhaar is masked in the
+file and kept unless a full number is typed. The old RBAC workbook stays as an audit export.
+
+**Why:** owner request 30-09 (to-do W10); DEC-089 answers; DEC-090 for `ALL` / unchanged-cell semantics (no silent
+access changes, legacy values never block a re-import).
+
+**Verified:** 7 new feature tests; Org / IAM suites 106 passed; phpstan clean on the new services; full export →
+unchanged re-import of all 200 users on the test copy = 0 failures, 0 changes; HTTP: superadmin 200 (page + 3
+downloads), scoped user 40 → 403. **Left:** W11 bulk screen on `UserRowService`; filling BUG-218 gaps with the new file.

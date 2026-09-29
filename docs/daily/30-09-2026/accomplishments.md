@@ -104,3 +104,19 @@ are listed in BUG-218 for HR. The user forms mark vertical as required.
 
 **Verified:** 6 new tests; org / IAM / import / vehicle / pricing / booking suites 340 passed; migration up / down / up on
 the test copy. **Left:** filling the legacy gaps (BUG-218) — easiest once the new workbook (W10) is in.
+
+### 11. Users workbook in the owner's layout — W10 (DEC-089 Phase B, DEC-090)
+
+**Delivered:** Org → Users → Bulk import now exports / imports the `Users` sheet with the exact 22 headers. Single values
+are master-code dropdowns (Primary Location follows the row's branch, Primary Division its department); add-on, vertical
+and vehicle columns take comma-separated codes, `ALL` or `NONE` with every valid code listed on the `Lists` sheet. Each
+row creates / updates the person, employee, login, role and scopes in one transaction through the entity services, and
+every change of designation, primaries, manager or scopes is written to the employee history. Aadhaar is masked in the
+file and kept unless a full number is typed. The old RBAC workbook stays as an audit export.
+
+**Why:** owner request 30-09 (to-do W10); DEC-089 answers; DEC-090 for `ALL` / unchanged-cell semantics (no silent
+access changes, legacy values never block a re-import).
+
+**Verified:** 7 new feature tests; Org / IAM suites 106 passed; phpstan clean on the new services; full export →
+unchanged re-import of all 200 users on the test copy = 0 failures, 0 changes; HTTP: superadmin 200 (page + 3
+downloads), scoped user 40 → 403. **Left:** W11 bulk screen on `UserRowService`; filling BUG-218 gaps with the new file.

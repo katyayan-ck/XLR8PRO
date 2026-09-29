@@ -202,13 +202,13 @@ class UserRbacWorkbookTest extends TestCase
     public function test_export_downloads_for_a_permitted_user(): void
     {
         $this->actingAs(User::whereHas('roles', fn ($q) => $q->where('name', 'superadmin'))->firstOrFail(), 'backpack');
-        $this->get('/admin/org/user/export')->assertOk()->assertDownload();
+        $this->get('/admin/org/user/export/rbac')->assertOk()->assertDownload();
     }
 
     public function test_export_download_needs_the_export_permission(): void
     {
         $user = User::where('is_active', 1)->get()->first(fn (User $u) => ! $u->isSuperAdmin() && ! $u->can('ORG_USER_EXPORT'));
         $this->actingAs($user, 'backpack');
-        $this->get('/admin/org/user/export')->assertForbidden();
+        $this->get('/admin/org/user/export/rbac')->assertForbidden();
     }
 }

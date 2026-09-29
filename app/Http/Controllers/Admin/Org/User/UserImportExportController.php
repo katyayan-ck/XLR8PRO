@@ -10,6 +10,8 @@ use App\Imports\Sheets\StandaloneUsersImport;
 use App\Imports\Sheets\UserScopesSheetImport;
 use App\Imports\UsersImportWorkbook;
 use App\Services\IAM\UserRbacExportService;
+use App\Services\Org\UsersWorkbook\UsersWorkbookColumns;
+use App\Services\Org\UsersWorkbook\UsersWorkbookService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -20,9 +22,9 @@ use Throwable;
 
 /**
  * Bulk user onboarding (create/update person, employee, user, scopes, role) through the
- * same importer as `php artisan import:users` (DEC-035/036), and the users & RBAC workbook
- * (DEC-040) whose Users_Import / User_Scopes sheets import back unchanged. The old export
- * and history screens were removed (BUG-043/158).
+ * users workbook (DEC-089: fixed headers, master dropdowns, `UsersWorkbookService`). The users & RBAC
+ * workbook (DEC-040) stays as an audit export; its Users_Import / User_Scopes sheets (and one-sheet
+ * legacy files) still import through `import:users`' importer during the change-over.
  */
 class UserImportExportController extends Controller
 {
@@ -35,7 +37,7 @@ class UserImportExportController extends Controller
         return view('admin.org.user.import', ['result' => null]);
     }
 
-    public function import(Request $request): View
+    public function import(Request $request, UsersWorkbookService $workbook): View
     {
         if (! backpack_user()->can('ORG_USER_IMPORT')) {
             abort(403, 'Unauthorized. You do not have permission to import users.');
@@ -60,7 +62,9 @@ class UserImportExportController extends Controller
             $sheets = IOFactory::createReaderForFile($fullPath)->listWorksheetNames($fullPath);
             $hasScopes = in_array(UserScopesSheetImport::SHEET, $sheets, true);
 
-            if (in_array(UsersImportWorkbook::SHEET, $sheets, true)) {
+            if (in_array(UsersWorkbookColumns::SHEET, $sheets, true)) {
+                $new = $workbook->import($fullPath, (int) backpack_user()->id);
+            } elseif (in_array(UsersImportWorkbook::SHEET, $sheets, true)) {
                 Excel::import(new UsersImportWorkbook($rows, $scopes), $fullPath);
             } elseif (count($sheets) === 1) {
                 Excel::import($rows, $fullPath);
@@ -73,6 +77,12 @@ class UserImportExportController extends Controller
         } finally {
             $log = (string) ob_get_clean();
             @unlink($fullPath);
+        }
+
+        if (isset($new)) {
+            return view('admin.org.user.import', ['result' => [
+                'summary' => $new['summary'], 'scopes' => null, 'issues' => array_slice($new['issues'], 0, 300), 'error' => $error,
+            ]]);
         }
 
         // Row-level problems the importers printed (skipped or failed rows, values not found).
@@ -92,23 +102,41 @@ class UserImportExportController extends Controller
         ]);
     }
 
-    /** Empty workbook with every dropdown, the permission/role reference sheets and instructions. */
-    public function downloadTemplate(UserRbacExportService $data): BinaryFileResponse
+    /** The empty users workbook: headers, dropdowns, Lists and Instructions (DEC-089). */
+    public function downloadTemplate(UsersWorkbookService $workbook): BinaryFileResponse
     {
         if (! backpack_user()->can('ORG_USER_IMPORT')) {
             abort(403, 'Unauthorized. You do not have permission to import users.');
         }
 
-        return Excel::download(new UserRbacWorkbookExport($data, includeUsers: false), 'user_import_template.xlsx');
+        return $this->workbookDownload($workbook, false, 'users-template.xlsx');
     }
 
-    /** All users with roles, permissions and scopes; edit and upload back through the import. */
-    public function export(UserRbacExportService $data): BinaryFileResponse
+    /** Every employee user in the users workbook; edit and upload back through the import (DEC-089). */
+    public function export(UsersWorkbookService $workbook): BinaryFileResponse
+    {
+        if (! backpack_user()->can('ORG_USER_EXPORT')) {
+            abort(403, 'Unauthorized. You do not have permission to export users.');
+        }
+
+        return $this->workbookDownload($workbook, true, 'users-'.now()->format('Ymd-Hi').'.xlsx');
+    }
+
+    /** All users with roles, permissions and scopes (DEC-040 workbook, kept for audit; still importable). */
+    public function exportRbac(UserRbacExportService $data): BinaryFileResponse
     {
         if (! backpack_user()->can('ORG_USER_EXPORT')) {
             abort(403, 'Unauthorized. You do not have permission to export users.');
         }
 
         return Excel::download(new UserRbacWorkbookExport($data), 'users-rbac-'.now()->format('Ymd-Hi').'.xlsx');
+    }
+
+    private function workbookDownload(UsersWorkbookService $workbook, bool $withUsers, string $name): BinaryFileResponse
+    {
+        $path = storage_path('app/users-workbook-'.Str::random(12).'.xlsx');
+        $workbook->export($path, $withUsers);
+
+        return response()->download($path, $name)->deleteFileAfterSend();
     }
 }

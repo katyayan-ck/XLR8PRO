@@ -46,7 +46,7 @@ class UserBulkImportPageTest extends TestCase
         $this->actingAs($this->superadmin(), 'backpack');
 
         $this->get('/admin/org/user/import')->assertOk()->assertSee('Bulk import users');
-        $this->get('/admin/org/user/import/template')->assertOk()->assertDownload('user_import_template.xlsx');
+        $this->get('/admin/org/user/import/template')->assertOk()->assertDownload('users-template.xlsx');
     }
 
     public function test_upload_imports_rows_and_shows_the_summary(): void

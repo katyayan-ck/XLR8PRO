@@ -9764,3 +9764,18 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   `UserOnboardingTest`, `EmployeeUserEntityServicesTest`, `StandaloneUsersImportTest`, `UserBulkImportPageTest`; related
   suites 340 passed.
 - **BUG-218 logged:** legacy employees missing primaries / vertical (data to fill).
+
+## W10 / DEC-089 Phase B — users workbook (DEC-090)
+- **New `app/Services/Org/UsersWorkbook/`:** `UsersWorkbookColumns` (the owner's 22 headers), `UsersWorkbookMasters`
+  (active codes + parent → child maps), `UserRowService` (one row → person, employee, login, role, scopes, history;
+  the single write path for the workbook and the W11 screen), `UsersWorkbookService` (export with dropdowns, dependent
+  Primary Location / Division via `LOC_*` / `DIV_*` named ranges, Lists + Instructions sheets, masked Aadhaar; import).
+- **`UserImportExportController`:** a `Users` sheet imports through the new service; Export / Template give the new
+  workbook; the DEC-040 users & RBAC workbook moved to `exportRbac()` (route `org.user.export.rbac`,
+  `admin/org/user/export/rbac`); older Users_Import files still import. `routes/web.php`, `admin/org/user/import.blade.php`
+  (buttons + help text).
+- **Before → after:** the export was the RBAC workbook (labels, one-row-per-scope sheet) → the owner's fixed layout with
+  codes; `ALL` = unrestricted (no rows), `NONE` = primary only, blank keeps; unchanged cells are no-ops (DEC-090).
+- **Tests:** new `tests/Feature/Org/UsersWorkbookTest.php` (7); `UserBulkImportPageTest` (template name),
+  `UserRbacWorkbookTest` (route `export/rbac`); Org / IAM suites 106 passed. Round trip on `xlrm_testing`: 200 / 200 rows,
+  0 failures, 0 history rows (rolled back).

@@ -12,7 +12,8 @@ with Backpack (username + password); the mobile app logs in with a mobile OTP an
 | permission tree for a screen | `PermissionTreeService::buildTree()` |
 | a user's effective scope / filter rows by it | `DataScope::current()` / `HasDataScope` (automatic, DEC-071) |
 | mobile OTP login | `AuthService` (API v1) |
-| RBAC workbook export | `UserRbacExportService` (+ `php artisan` export command) |
+| users workbook (export / import, DEC-089) | `Org\UsersWorkbook\UsersWorkbookService` → `UserRowService` |
+| RBAC workbook export (audit) | `UserRbacExportService` (+ `php artisan` export command) |
 
 ---
 
@@ -177,6 +178,30 @@ Called by `Api\V1\AuthController`; responses are wrapped in the API envelope by 
 `name` / `email` / `mobile` in the responses are always null (BUG-187, repair awaits approval); the OTP uses `rand()`
 (BUG-188). Logs carry masked numbers and never the OTP (BUG-189 fixed, DEC-070). New OTP flows should use `Sms::otp()` / `Sms::verify()`
 (tech-guides/platform/11-sms.md), which are hashed, rate-limited and never logged.
+
+## Users workbook (DEC-089 / DEC-090)
+`App\Services\Org\UsersWorkbook\*` — Org → Users → Bulk import (`Export users`, `Download template`, upload).
+- `UsersWorkbookColumns`: `HEADERS` (row key → the owner's exact header, in order), `MULTI` (comma-code keys),
+  `SHEET = 'Users'`, `LISTS_SHEET`, `ALL`, `NONE`, `map(array $headers): array<int, key>` (loose header match).
+- `UsersWorkbookMasters`: active codes per type — `names($type)` (CODE → name), `codes()`, `exists()`,
+  `childrenOf($child, $parent, $parents)`, `childMap()` (location ← branch, division ← department, sub_segment ← segment,
+  model ← sub_segment / segment), `employee` = active employee codes.
+- `UserRowService::save(array $row, ?int $actorId = null): array{status: created|updated|failed, emp_code, messages}` —
+  the one write path for the workbook and the bulk screen (W11). One transaction per row: person (`PersonService`),
+  employee (`EmployeeService`, primaries rule), login (`UserService`; new = username emp code lower-case, password =
+  personal mobile), designation role, person user type, scopes (`UserScopeService::sync`), history
+  (`EmployeeJourneyService::recordChange`, reason designation_change / transfer / scope_change / other).
+  Cells: codes (`Name (CODE)` accepted); blank keeps; multi cells = comma codes, `ALL` (= no rows, unrestricted), `NONE`
+  (org add-ons: primary only; vehicle: unrestricted). Org types are stored as primary + add-ons; add-on locations /
+  divisions only under the primary or add-on parents. Held / stored values are not re-checked; an unchanged cell is a
+  no-op. Aadhaar: masked keeps, 12 digits replace.
+  ```php
+  $result = app(UserRowService::class)->save(['emp_code' => 'BMPL-0101', 'addon_branch' => 'SUJ, CHR', 'models' => 'ALL']);
+  // ['status' => 'updated', 'emp_code' => 'BMPL-0101', 'messages' => []]
+  ```
+- `UsersWorkbookService::export(string $path, bool $withUsers = true): array{rows}` (sheets `Users`, `Lists` with named
+  ranges `LST_*`, `LOC_<BRANCH>`, `DIV_<DEPT>`, `Instructions`; Aadhaar masked); `import(string $path, ?int $actorId):
+  array{summary, issues, rows}`; `userRows()` (export rows; inverse of the row rules).
 
 ## UserRbacExportService (DEC-040 workbook)
 `permissionRows()`, `roleRows()`, `userRows()` (editable importer columns + read-only info), `scopeRows()` (one row per

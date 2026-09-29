@@ -1439,3 +1439,20 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   code. The DEC-040 two-sheet workbook stays importable during the change-over.
 - **Approved-by:** owner (30-09) · **Risk:** MEDIUM (bulk writes to users / employees / scopes; covered by tests; history
   kept) · **Reversal:** revert the phases; the gap migration's `down()` removes only the children it created.
+
+### DEC-090 | 30-09-2026 | A (IAM / Org) | Users workbook cell semantics (refines DEC-089 answer 2)
+- **Why:** building W10 showed that "All = all" and an unchanged round trip must not silently change anyone's access,
+  and that legacy values (inactive designations / departments, add-on locations outside today's rule) must not block
+  a re-import (DEC-054). A first unchanged re-import of all 200 users failed 55 rows and would have narrowed access.
+- **Decision:**
+  1. `ALL` = unrestricted, stored as **no scope rows** (the resolver already reads no rows as everything, DEC-071;
+     it also covers codes added later). `NONE` on an org add-on = the primary only; on a vehicle level = unrestricted.
+  2. A value the employee already has (stored or held) is never re-checked; a cell repeating what is stored changes
+     nothing; only new values are validated. An unchanged export re-imports as a no-op (verified: 200 / 200, 0 history).
+  3. A new employee lists vertical codes (`ALL` is refused there so the primary vertical is never guessed); on update
+     `ALL` keeps the stored primary vertical.
+  4. Users set up on the User screen whose scope rows hold add-ons without the primary keep that shape on a blank cell.
+  5. Export / Template now give the DEC-089 workbook; the DEC-040 users & RBAC workbook moves to
+     `admin/org/user/export/rbac` (audit) and its files still import.
+- **Approved-by:** agent (within DEC-089; flagged to the owner in the handoff) · **Risk:** LOW · **Reversal:** change the
+  cell mapping in `UserRowService` / `UsersWorkbookService::cell()`.

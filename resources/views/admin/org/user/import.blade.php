@@ -12,7 +12,10 @@
                 <div class="d-flex gap-2">
                     @if (backpack_user()->can('ORG_USER_EXPORT'))
                         <a href="{{ route('org.user.export') }}" class="btn btn-primary btn-sm">
-                            <i class="la la-file-excel me-1"></i> Export users &amp; RBAC
+                            <i class="la la-file-excel me-1"></i> Export users
+                        </a>
+                        <a href="{{ route('org.user.export.rbac') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="la la-shield-alt me-1"></i> Users &amp; RBAC (audit)
                         </a>
                     @endif
                     <a href="{{ route('org.user.import.template') }}" class="btn btn-outline-primary btn-sm">
@@ -26,16 +29,17 @@
 
             <div class="card-body">
                 <p class="text-body-secondary mb-3">
-                    Creates or updates the person, employee and user account (with contacts, address, bank
-                    details, scopes and designation role) for each row of the <strong>Users_Import</strong> sheet.
-                    Existing employees are matched by <strong>Emp Code</strong>, so re-importing the same file is safe.
-                    Columns marked * are mandatory; designation, department, branch and location must match existing masters.
+                    Creates or updates the person, employee, login, designation role and scopes for each row of the
+                    <strong>Users</strong> sheet, matched by <strong>Emp Code</strong> (re-importing the same file is safe).
+                    Use <strong>Export users</strong> to edit existing users or <strong>Download template</strong> for new
+                    ones: single values are dropdowns of master codes, and Primary Location / Division follow the row's
+                    branch / department. Columns marked * are required for a new employee.
                 </p>
                 <p class="text-body-secondary mb-3">
-                    To change existing users, use <strong>Export users &amp; RBAC</strong>, edit the file (every master
-                    value is a dropdown) and upload it here. In its <strong>User_Scopes</strong> sheet each row is one
-                    branch, location, department, division, vertical, segment, sub segment, model or variant; for every
-                    user listed there, the listed rows replace that user's scopes. The file's Instructions sheet has the details.
+                    Add-on, Vertical, Segment, Sub Segment and Models cells take comma-separated codes from the
+                    <strong>Lists</strong> sheet, <code>ALL</code> or <code>NONE</code>: blank keeps what is stored and
+                    <code>NONE</code> clears it. Every change is kept in the employee history. Files in the older
+                    Users_Import / User_Scopes layout still import.
                 </p>
 
                 <form method="POST" action="{{ route('org.user.import.process') }}" enctype="multipart/form-data" class="row g-2 align-items-end">
