@@ -56,6 +56,18 @@ auth/permission/secret changes · UAT-visible behaviour changes beyond an obviou
 - Code is commented (PHPDoc on every class and public method; inline comments only for non-obvious logic, with the
   DEC/BUG id) and formatted with pint before every commit.
 
+**Continuity — resume from exactly where work stopped (user standing instruction):** a crash, a new session or a
+different model must be able to continue from the files alone, never from memory. So:
+- **On every task completion and every commit** update, in that same commit: the bug files (new / fixed / moved), today's
+  accomplishments, the to-do row, the changelog and the handoff (cumulative + `docs/daily/DD-MM-YYYY/`). No commit leaves
+  them stale; a task is not "done" until they say so.
+- **Before starting a task** mark its to-do row 🟡 in progress and add it to the handoff's *In progress*.
+- **During long tasks** (more than one step, or anything running in the background) keep the handoff's *In progress*
+  current at each checkpoint: the exact next step, files touched, uncommitted changes, commands / jobs running, what was
+  decided and why. Commit or note work in progress before any risky or long operation.
+- **To resume:** read `.ai/state/handoff.md` → the named to-do rows → `git status` / `git log -5` → continue at the
+  recorded next step; verify before redoing anything.
+
 **Quality gates (every change)**
 1. `php -l` on touched files; `vendor/bin/pint --dirty --format agent`.
 2. Scoped `vendor/bin/phpstan analyse <files> --memory-limit=2G`.

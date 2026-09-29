@@ -25,4 +25,7 @@ The loop every agent follows (full rules: `.ai/guidelines/10-workflow.md`, alway
    - the same entries in today's date-wise files `docs/daily/DD-MM-YYYY/{handoff,changelog,accomplishments}.md`
      (create the folder on the day's first commit — `docs/daily/README.md`);
    - `php artisan ai:refresh-context` when bugs, rules or schema changed.
-6. **Commit:** `type(scope): message` on the working branch (never `main`); never push without approval in that turn.
+6. **Continuity:** every task completion and every commit leaves bugs / accomplishments / to-do / changelog / handoff
+   (cumulative + daily) current; mark a task 🟡 and add it to the handoff before starting; keep *In progress* exact at
+   each checkpoint (next step, files, uncommitted work, running jobs) so a crash or another model resumes from the files.
+7. **Commit:** `type(scope): message` on the working branch (never `main`); never push without approval in that turn.

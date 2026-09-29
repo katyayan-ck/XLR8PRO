@@ -9731,3 +9731,8 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   (accordion; super admin = every permission) and the effective data access.
 - **`MyAccountService::access()`** (new) + `MyAccountController::show()` passes it; guide `tech-guides/modules/iam-auth.md`.
 - **Tests:** `MyAccountTest` updated (asserts every requested field); 5 passed. Rendered for users 1 and 40.
+
+## Continuity rule for all agents (owner request 30-09)
+- **`.ai/guidelines/10-workflow.md`** (→ `CLAUDE.md` / `AGENTS.md`): new *Continuity* section — records updated on every
+  task completion and every commit; mark a task in progress in the to-do and handoff before starting; keep the handoff's
+  *In progress* exact at each checkpoint; a resume procedure. Change-workflow card updated.
