@@ -67,7 +67,7 @@ class InsuranceWorkbookService
     ];
 
     /** base-rule numeric column fed by a head when the head is a plain number */
-    private const HEAD_COLUMNS = [
+    public const HEAD_COLUMNS = [
         'od_factor' => 'od_factor', 'tp_basic' => 'tp_basic', 'tp_per_pass' => 'tp_per_passenger', 'tp_bi_fuel' => 'tp_bi_fuel_kit',
         'tp_pa_owner' => 'tp_pa_owner', 'tp_ll_driver' => 'tp_legal_driver', 'tp_ll_non_fare' => 'tp_non_fare_passenger',
     ];
@@ -97,13 +97,18 @@ class InsuranceWorkbookService
 
     // ------------------------------------------------------------------ export
 
-    /** @return array<string, int> rows per sheet */
-    public function export(string $path): array
+    /**
+     * @param  list<string>|null  $parts  companies / premium / permit_map (null = all three)
+     * @return array<string, int> rows per sheet
+     */
+    public function export(string $path, ?array $parts = null): array
     {
         $book = new Spreadsheet;
         $book->removeSheetByIndex(0);
         $counts = [];
-        foreach (['companies' => $this->companyRows(), 'premium' => $this->premiumRows(), 'permit_map' => $this->permitRows()] as $part => [$head, $rows]) {
+        $parts ??= array_keys(self::SHEETS);
+        foreach (array_intersect_key(['companies' => fn () => $this->companyRows(), 'premium' => fn () => $this->premiumRows(), 'permit_map' => fn () => $this->permitRows()], array_flip($parts)) as $part => $build) {
+            [$head, $rows] = $build();
             $sheet = $book->createSheet()->setTitle(self::SHEETS[$part]);
             $sheet->fromArray(array_merge([$head], $rows), null, 'A1', true);
             $sheet->getStyle('A1:'.Coordinate::stringFromColumnIndex(count($head)).'1')->getFont()->setBold(true);
@@ -121,7 +126,8 @@ class InsuranceWorkbookService
     {
         $names = VehicleModel::query()->get(['code', 'name', 'oem_name'])->mapWithKeys(fn (VehicleModel $m) => [strtoupper($m->code) => (string) ($m->oem_name ?: $m->name ?: $m->code)]);
         $rows = [];
-        foreach (InsDefault::query()->where('is_active', true)->orderBy('priority')->get()->groupBy(fn (InsDefault $d) => strtoupper($d->model_code.'|'.$d->permit)) as $group) {
+        // model-level rows only: segment preferences live in the Insurance Preferences master (DEC-083)
+        foreach (InsDefault::query()->where('is_active', true)->whereNull('segment')->orderBy('priority')->get()->groupBy(fn (InsDefault $d) => strtoupper($d->model_code.'|'.$d->permit)) as $group) {
             $first = $group->first();
             $model = in_array(strtoupper((string) $first->model_code), ['ANY', ''], true) ? 'Any' : ($names[strtoupper((string) $first->model_code)] ?? $first->model_code);
             $rows[strtoupper($first->model_code.'|'.$first->permit)] = array_merge([$model, $first->permit], array_pad($group->pluck('insurance_company')->take(3)->all(), 3, ''));
@@ -189,12 +195,12 @@ class InsuranceWorkbookService
      * @param  (callable(array<string, mixed>): void)|null  $onProgress
      * @return array{sheets: array<string, array<string, int>>, issues: list<array{sheet: string, row: int, reason: string}>}
      */
-    public function import(string $path, string $wefDate, ?callable $onProgress = null): array
+    public function import(string $path, string $wefDate, ?callable $onProgress = null, ?array $parts = null): array
     {
         $result = ['sheets' => [], 'issues' => []];
         $titles = [];
         foreach ($this->reader->sheetNames($path) as $title) {
-            foreach (self::SHEETS as $part => $sheet) {
+            foreach (array_intersect_key(self::SHEETS, array_flip($parts ?? array_keys(self::SHEETS))) as $part => $sheet) {
                 if (strtoupper(trim($title)) === strtoupper($sheet)) {
                     $titles[$part] = $title;
                 }
@@ -257,7 +263,7 @@ class InsuranceWorkbookService
             }
 
             return [strtoupper($model.'|'.$get('permit')), $records];
-        }, fn () => $this->defaults->expireActive(now()->toDateString()), fn (array $record) => $this->defaults->create($record));
+        }, fn () => $this->defaults->expireActive(now()->toDateString(), ['segment' => null]), fn (array $record) => $this->defaults->create($record));   // never the segment preferences (DEC-083)
     }
 
     /**

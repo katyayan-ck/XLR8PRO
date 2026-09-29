@@ -8,6 +8,7 @@ use App\Events\Platform\SettingsChanged;
 use App\Models\Utilities\Settings\SystemSetting;
 use App\Models\Utilities\Settings\SystemSettingAudit;
 use App\Support\Result;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -131,6 +132,29 @@ final class SettingsService
 
             return Result::fail('WRITE_FAILED', $e->getMessage());
         }
+    }
+
+    /**
+     * Store an image setting (type `image`, DEC-083): the file goes to the setting row's `setting_image` media collection
+     * (public disk, one file) and the setting's value becomes its public URL — audited like any other change.
+     *
+     *   Settings::setImage('branding.logo', $request->file('file'))->ok;
+     */
+    public function setImage(string $key, UploadedFile $file, ?int $actorId = null): Result
+    {
+        if ($this->typeFor($key, SystemSetting::query()->where('key', $key)->first()) !== 'image') {
+            return Result::fail('NOT_IMAGE', "{$key} is not an image setting.");
+        }
+        try {
+            $row = $this->ensureRow($key, '');
+            $media = $row->addMedia($file)->toMediaCollection('setting_image');
+        } catch (Throwable $e) {
+            report($e);
+
+            return Result::fail('UPLOAD_FAILED', 'The image could not be stored: '.$e->getMessage());
+        }
+
+        return $this->set($key, $media->getUrl(), null, null, $actorId);
     }
 
     /** Reset a global setting to its default (`default_value`, else the config seed). */

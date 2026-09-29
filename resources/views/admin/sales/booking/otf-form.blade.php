@@ -462,7 +462,7 @@ use App\Services\OrgService;
 
                 <div class="row align-items-center">
                     <div class="col-2 text-center">
-                        <img src="{{ asset('images/bikaner_logo.png') }}" style="height:75px;">
+                        <img src="{{ site_logo_url('images/bikaner_logo.png') }}" alt="{{ config('app.name') }}" style="height:75px;">
                     </div>
                     <div class="col-8 text-center">
                         <h3 class="fw-bold mb-1">BIKANER MOTORS PRIVATE LIMITED</h3>

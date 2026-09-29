@@ -134,7 +134,22 @@ One kit serves every master: `MasterController` (routes `pricing.masters.{index,
   - Dealer Charges (`PRC_DLRC`), Discounting Breakup (`PRC_DBRK`, the price rows' NV / OV scheme blocks), RSA
     (`PRC_RSA`), Shield (`PRC_SHLD`);
   - Corporate (`PRC_CORP`), Exchange (`PRC_EXCH`), Loyalty (`PRC_LYLT`).
-  - Insurance, RTO and Accessories masters follow in phases C–D.
+  - RTO Rules (`PRC_RTOR`; import / export = the RTO workbook, replacing every live rule at the WEF).
+  - Insurance Rules (`PRC_INSR`): one form for the base rule, its OD / TP heads (numbers or `RuleFormula` formulas),
+    IDV slots 1–3 and a rate per add-on of the add-on master. Import / export = the "Insu Premium" sheet only
+    (`InsuranceWorkbookService` `$parts`), so preferences are never touched (BUG-205).
+  - Insurance Companies (`PRC_INCO`, new table `xlr8_vehicle_pricing_ins_companies`, `InsCompanyService`; seeded from
+    the companies in use).
+  - Insurance Preferences (`PRC_INPF`, `InsDefault` + new `segment` column): segment + permit (model ANY), or a model
+    override. `InsuranceCalculator::companyOrder()` → the model's rows, else the segment's, else ANY.
+  - Insurance Add-ons (`PRC_INAD`, new table `xlr8_vehicle_pricing_ins_addons`, `InsAddonService`): names + the
+    default combo (`RuleBook::$defaultInsuranceAddons` / `$insuranceAddonNames`; fallback `InsuranceCalculator::DEFAULT_ADDONS`).
+  - Accessories + Accessory Scopes (`PRC_ACCS`; `Accessories\AccessoryItemService` / `AccessoryScopeService`). Import /
+    export = the typed sheets through `AccessoryService::importExcelWithSheetOrder()` (purge + reload). They never
+    recalculate; they bump the sync stamp.
+  - The old RTO / Insurance screens (`pricing.rto.*`, `pricing.insurance.*`) stay by URL for their test calculators;
+    the menu links the masters.
+- **Recalculation log:** `pricing.recalc-log` (`PRC_RCLC_VIEW`): the `RecalcRun` rows, the pending changes and the sync stamp.
 - **Writes:**
   - Refused while a Pricing Process is open.
   - Every change reaches `PricingParamObserver` → automatic recalculation of the affected vehicles + the sync stamp.

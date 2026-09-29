@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 /**
  * @property int $id
  * @property int|null $import_session_id
+ * @property string|null $segment DEC-083: segment + permit preference (model_code ANY); a model row overrides it
  * @property string $model_code
  * @property string|null $permit
  * @property string $insurance_company
@@ -25,6 +26,7 @@ class InsDefault extends BaseModel
 
     protected $fillable = [
         'import_session_id',
+        'segment',
         'model_code',
         'permit',
         'insurance_company',

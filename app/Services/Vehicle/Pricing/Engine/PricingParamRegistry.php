@@ -9,8 +9,10 @@ use App\Models\Vehicle\AccessoryScope;
 use App\Models\Vehicle\Pricing\Addon;
 use App\Models\Vehicle\Pricing\DealerCharge;
 use App\Models\Vehicle\Pricing\Discount;
+use App\Models\Vehicle\Pricing\InsAddon;
 use App\Models\Vehicle\Pricing\InsAddonRate;
 use App\Models\Vehicle\Pricing\InsBaseRule;
+use App\Models\Vehicle\Pricing\InsCompany;
 use App\Models\Vehicle\Pricing\InsDefault;
 use App\Models\Vehicle\Pricing\InsIdvSlot;
 use App\Models\Vehicle\Pricing\PermitMap;
@@ -28,7 +30,7 @@ final class PricingParamRegistry
     public const PRICING_PARAMS = [
         Pricing::class, Addon::class, Discount::class, DealerCharge::class,
         RtoRule::class, InsBaseRule::class, InsIdvSlot::class, InsAddonRate::class, InsDefault::class,
-        PermitMap::class, TcsConfig::class,
+        PermitMap::class, TcsConfig::class, InsCompany::class, InsAddon::class,
     ];
 
     public const VEHICLE_MASTERS = [Segment::class, SubSegment::class, VehicleModel::class, Variant::class];

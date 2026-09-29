@@ -109,11 +109,11 @@ $missing = app(VehicleService::class)->missingFields($variant);   // ['gvw', 'bo
 | `listForVehicle($seg, $model, $variant, $permit)` | the full bundle for a vehicle (excludes `RTO_Tape`, `Kazam`) |
 | `listByType($type, $seg, $model, $variant, $permit)` | one type (use for `RTO_Tape` / `Kazam`) |
 | `exportRows($filters, $activeFirst)` | flat rows, one per accessory × scope |
-| `importExcel($path, $userId)` / `importExcelWithSheetOrder(...)` | **purges and reloads** the catalogue; `['success', 'message', 'total_records', 'imported_count', 'skipped_count', 'errors_count', 'warnings', 'errors']` |
-| `AccessoryImportService::execute($path, $userId, $options)` | the row-by-row importer used by the import screen (`start`, `processRow`, `pushError`, `finish` are its steps) |
+| `importExcelWithSheetOrder($path, $userId)` | **the authoritative importer (DEC-083, BUG-179)**: typed sheets in order Accessories, Maxicare, Ceramic, PPF, GPS VLTD, RTO Tape, Kazam; **purges and reloads** the catalogue + scopes; `['success', 'message', 'total_records', 'imported_count', 'skipped_count', 'errors_count', 'warnings', 'errors']`. `importExcel()` matches sheets by title only (spreadsheet readers hand sheets over by position, so prefer the ordered one) |
+| `Accessories\AccessoryItemService` / `Accessories\AccessoryScopeService` | entity services (write path) of the Accessories / Accessory Scopes masters (Admin → Pricing, `PRC_ACCS_*`) |
 | `AccessoryExportService::rows($activeFirst, $filters)` / `store(?$path, $filters, $activeFirst, ?$userId, $disk)` / `markDownloaded()` | export rows / an xlsx on disk (`['path', 'url', …]`) |
 
-Which accessory importer is authoritative is open (BUG-179); accessories have no entity service yet.
+The one-sheet `import:vehicle-accessories` command / `AccessoryImportService` / `VehicleAccessoriesImport` were retired (DEC-083, BUG-179). Accessory changes bump the app sync stamp (`pricing.last_updated_at`) and never recalculate prices. `AccessoryScope::$fillable` now includes `permit` (BUG-204).
 
 ## Use cases
 **Cascading vehicle picker on a form**

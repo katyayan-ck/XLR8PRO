@@ -16,6 +16,19 @@ use Illuminate\Support\Facades\Cache;
  * - Type casting and validation
  * - Redis caching
  * - Audit trail (inherited from BaseModel via AuditableTrait)
+ *
+ * @property int $id
+ * @property string $key
+ * @property string|null $label
+ * @property string|null $value
+ * @property string|null $default_value
+ * @property string|null $type
+ * @property string|null $topic
+ * @property string|null $description
+ * @property string|null $validation_rules
+ * @property bool $iseditable
+ * @property bool $is_visible
+ * @property \Illuminate\Support\Carbon|null $updated_at
  */
 class SystemSetting extends BaseModel
 {
@@ -42,6 +55,16 @@ class SystemSetting extends BaseModel
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
+
+    /** Image settings (type `image`, e.g. branding.logo — DEC-083) keep their file here; the value is its public URL. */
+    public function registerMediaCollections(): void
+    {
+        parent::registerMediaCollections();
+        $this->addMediaCollection('setting_image')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml', 'image/gif'])
+            ->useDisk('public');
+    }
 
     /**
      * Boot the model

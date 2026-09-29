@@ -36,7 +36,31 @@
                                     <code class="small">{{ $setting['key'] }}</code> <span class="badge bg-secondary-lt">{{ $setting['type'] }}</span>
                                 </td>
                                 <td>
-                                    @if ($canManage && $setting['editable'])
+                                    @if ($setting['type'] === 'image')
+                                        <div class="d-flex flex-wrap align-items-center gap-2">
+                                            @if ($display !== '')
+                                                <img src="{{ $display }}" alt="{{ $setting['label'] }}" class="xl-site-logo border rounded p-1">
+                                            @else
+                                                <span class="text-body-secondary small">Not set — the built-in image is used.</span>
+                                            @endif
+                                        </div>
+                                        @if ($canManage && $setting['editable'])
+                                            <form method="POST" action="{{ route('utils.settings.image') }}" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 mt-2">
+                                                @csrf
+                                                <input type="hidden" name="key" value="{{ $setting['key'] }}">
+                                                <label class="visually-hidden" for="img-{{ $loop->index }}">{{ $setting['label'] }}</label>
+                                                <x-ui.upload name="file" accept="image/*" :id="'img-'.$loop->index" required />
+                                                <button class="btn btn-sm btn-primary">Upload</button>
+                                            </form>
+                                            @if ($display !== '')
+                                                <form method="POST" action="{{ route('utils.settings.reset') }}" class="mt-1">
+                                                    @csrf
+                                                    <input type="hidden" name="key" value="{{ $setting['key'] }}">
+                                                    <button class="btn btn-sm btn-link px-0">Use the built-in image</button>
+                                                </form>
+                                            @endif
+                                        @endif
+                                    @elseif ($canManage && $setting['editable'])
                                         <form method="POST" action="{{ route('utils.settings.update') }}" class="d-flex gap-2">
                                             @csrf @method('PUT')
                                             <input type="hidden" name="key" value="{{ $setting['key'] }}">

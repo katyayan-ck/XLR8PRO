@@ -54,12 +54,20 @@ Indexes: (status), (wef_date)
 id bigint unsigned PK, import_session_id bigint unsigned?, base_rule_id bigint unsigned?, insurance_company varchar(40), permit varchar(30), addon_slug varchar(40), addon_name varchar(80)?, rate_type varchar(20), rate_value decimal(12,4), rate_text varchar(60)?, applies_on varchar(20), wef_date date?, expired_on date?, is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
 Indexes: (import_session_id), (base_rule_id), (insurance_company,permit,is_active)
 
+## `xlr8_vehicle_pricing_ins_addons` · ~17 rows · model: App\Models\Vehicle\Pricing\InsAddon
+id bigint unsigned PK, code varchar(40), name varchar(120), is_default tinyint(1), sort_order int unsigned, is_active tinyint(1), created_at timestamp?, updated_at timestamp?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
+Indexes: UNIQUE (code)
+
 ## `xlr8_vehicle_pricing_ins_base_rules` · ~0 rows · model: App\Models\Vehicle\Pricing\InsBaseRule
 id bigint unsigned PK, import_session_id bigint unsigned?, company varchar(40)?, plan varchar(20)?, od_years tinyint unsigned?, tp_years tinyint unsigned?, permit varchar(30), fuel_type varchar(30)?, wheels tinyint unsigned?, seating varchar(30)?, cc_range varchar(30)?, gvw_range varchar(30)?, od_factor decimal(10,6), od_surcharge decimal(8,4), od_discount_rate decimal(8,2), tp_basic decimal(12,2), tp_per_passenger decimal(12,2), tp_legal_driver decimal(12,2), tp_non_fare_passenger decimal(12,2), tp_bi_fuel_kit decimal(12,2), tp_pa_owner decimal(15,2), heads json?, wef_date date?, expired_on date?, is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
 Indexes: (import_session_id), (permit,is_active)
 
+## `xlr8_vehicle_pricing_ins_companies` · ~0 rows · model: App\Models\Vehicle\Pricing\InsCompany
+id bigint unsigned PK, code varchar(40), name varchar(120), short_name varchar(40)?, sort_order int unsigned, is_active tinyint(1), created_at timestamp?, updated_at timestamp?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
+Indexes: UNIQUE (code)
+
 ## `xlr8_vehicle_pricing_ins_defaults` · ~0 rows · model: App\Models\Vehicle\Pricing\InsDefault
-id bigint unsigned PK, import_session_id bigint unsigned?, model_code varchar(40), permit varchar(30), insurance_company varchar(40), priority smallint unsigned, is_default tinyint(1), is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
+id bigint unsigned PK, segment varchar(20)?, import_session_id bigint unsigned?, model_code varchar(40), permit varchar(30), insurance_company varchar(40), priority smallint unsigned, is_default tinyint(1), is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
 Indexes: (import_session_id), (model_code,permit)
 
 ## `xlr8_vehicle_pricing_ins_idv_slots` · ~0 rows · model: App\Models\Vehicle\Pricing\InsIdvSlot

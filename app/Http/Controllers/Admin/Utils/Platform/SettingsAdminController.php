@@ -53,6 +53,23 @@ class SettingsAdminController extends Controller
         return back();
     }
 
+    /** Upload the image of an image setting (e.g. branding.logo, DEC-083). */
+    public function image(Request $request): RedirectResponse
+    {
+        if (! backpack_user()->can('UTL_SETTINGS_MANAGE')) {
+            abort(403);
+        }
+        $maxKb = (int) setting('docs.max_upload_kb', 5120);
+        $data = $request->validate([
+            'key' => 'required|string|max:150',
+            'file' => "required|file|mimes:png,jpg,jpeg,webp,svg,gif|max:{$maxKb}",
+        ]);
+        $result = $this->settings->setImage($data['key'], $data['file'], backpack_user()->id);
+        $result->ok ? Alert::success("{$data['key']} updated.")->flash() : Alert::error($result->message)->flash();
+
+        return back();
+    }
+
     public function reset(Request $request): RedirectResponse
     {
         if (! backpack_user()->can('UTL_SETTINGS_MANAGE')) {

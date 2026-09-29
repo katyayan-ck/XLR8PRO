@@ -3,6 +3,10 @@
  * safety net. Tabler variables only (light / dark safe). Loaded on every admin page.
  */
 
+/* DEC-083 configurable site logo (setting branding.logo) */
+.xl-site-logo { height: 30px; width: auto; max-width: 180px; object-fit: contain; }
+.xl-site-logo-lg { height: 56px; max-width: 260px; }
+
 :root {
     --xl-radius: var(--tblr-border-radius, 6px);
     --xl-radius-lg: var(--tblr-border-radius-lg, 8px);

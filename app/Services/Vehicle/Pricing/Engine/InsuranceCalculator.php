@@ -22,6 +22,7 @@ use Illuminate\Support\Collection;
  */
 final class InsuranceCalculator
 {
+    /** fallback when the add-on master marks none as default (DEC-080) */
     public const DEFAULT_ADDONS = ['NIL_DEP', 'CONSUMABLES'];
 
     public const OPTIONAL_HEADS = ['tp_pa_passengers'];
@@ -45,7 +46,7 @@ final class InsuranceCalculator
         }
 
         $companies = [];
-        foreach ($this->companyOrder($matching, $modelCode, $permits) as $i => $company) {
+        foreach ($this->companyOrder($matching, $modelCode, $permits, $v->segment) as $i => $company) {
             $plans = [];
             // per plan the most specific row (ScopeMatcher::all() is most specific first)
             foreach ($matching->where('company', $company)->groupBy(fn (InsBaseRule $r) => (string) $r->plan) as $rows) {
@@ -73,18 +74,21 @@ final class InsuranceCalculator
     }
 
     /**
-     * Companies in the model's default order (InsDefault, model rows before ANY), then any other company with a rule.
+     * Companies in the preferred order (InsDefault: the model's rows, else the segment + permit rows, else ANY — DEC-083),
+     * then any other company with a rule.
      *
      * @param  Collection<int, InsBaseRule>  $matching
      * @param  list<string|null>  $permits
      * @return list<string>
      */
-    private function companyOrder(Collection $matching, string $modelCode, array $permits): array
+    private function companyOrder(Collection $matching, string $modelCode, array $permits, ?string $segment = null): array
     {
         $permits = array_filter(array_map(fn ($p) => $p === null ? null : strtoupper($p), $permits));
         $defaults = $this->book->insuranceDefaults->filter(fn ($d) => $d->permit === null || in_array(strtoupper($d->permit), $permits, true));
         $own = $defaults->filter(fn ($d) => strtoupper((string) $d->model_code) === strtoupper($modelCode));
-        $ordered = ($own->isNotEmpty() ? $own : $defaults->filter(fn ($d) => strtoupper((string) $d->model_code) === 'ANY'))
+        $any = $defaults->filter(fn ($d) => strtoupper((string) $d->model_code) === 'ANY');
+        $bySegment = $any->filter(fn ($d) => $segment !== null && strtoupper((string) $d->segment) === strtoupper($segment));
+        $ordered = ($own->isNotEmpty() ? $own : ($bySegment->isNotEmpty() ? $bySegment : $any->filter(fn ($d) => blank($d->segment) || strtoupper((string) $d->segment) === 'ANY')))
             ->sortBy('priority')->pluck('insurance_company')->all();
         $withRules = $matching->pluck('company')->unique()->values()->all();
 
@@ -137,7 +141,9 @@ final class InsuranceCalculator
                 'flat' => round((float) $text),
                 default => $this->value($text, ['OD' => $od, 'IDV' => $idv1, 'SEAT' => $seat]),
             };
-            $addons[] = ['code' => strtoupper($rate->addon_slug), 'name' => (string) $rate->addon_name, 'premium' => $premium, 'default' => in_array(strtoupper($rate->addon_slug), self::DEFAULT_ADDONS, true)];
+            $code = strtoupper($rate->addon_slug);
+            $addons[] = ['code' => $code, 'name' => $this->book->insuranceAddonNames[$code] ?? (string) $rate->addon_name, 'premium' => $premium,
+                'default' => in_array($code, $this->book->defaultInsuranceAddons, true)];   // the add-on master's default combo (DEC-083)
         }
         $odPart = $od + $cng + $imt;
         $baseGst = round($odPart * $this->book->insuranceGstPct / 100) + round($tp * $tpGstPct / 100);

@@ -5,7 +5,8 @@ Service `App\Services\Platform\Settings\SettingsService` · facade `Settings` ·
 
 ## Concepts
 - **Keys are dotted:** `sla.ticket.p1_hours`, `docs.max_upload_kb`, `quote.csd_enabled`.
-- **Types:** `string`, `int`, `decimal`, `bool`, `json`, `encrypted` (stored with `Crypt`, shown masked, never logged).
+- **Types:** `string`, `int`, `decimal`, `bool`, `json`, `encrypted` (stored with `Crypt`, shown masked, never logged),
+  `image` (DEC-083: the file is media on the setting row, collection `setting_image`, public disk; the value is its URL).
 - **Defaults** come from the seed pack in `config/platform.php` → `settings`. A declared seed always wins over
   the fallback you pass to `get()`. An undeclared key takes its type from the first value you `set()`.
 - **Scopes:** a value can be overridden for a `COMPANY`, `BRANCH` or `DESK` (code). Most specific wins:
@@ -19,6 +20,7 @@ Service `App\Services\Platform\Settings\SettingsService` · facade `Settings` ·
 | `Settings::getFor($scope, $key, $default = null)` | mixed | `$scope` = branch code, or `['desk' => 'D1', 'branch' => 'JPR', 'company' => 'BMPL']` |
 | `Settings::flag($key, $default = false)` | bool | feature flags |
 | `Settings::set($key, $value, $scopeType = null, $scopeCode = null, $actorId = null)` | Result | `READ_ONLY`, `INVALID_VALUE`, `INVALID_SCOPE` |
+| `Settings::setImage($key, UploadedFile $file, $actorId = null)` | Result | image settings only (`NOT_IMAGE`, `UPLOAD_FAILED`); stores the file, sets the value to its URL |
 | `Settings::reset($key)` | Result | back to `default_value` / seed |
 | `Settings::clearScope($key, $scopeType, $scopeCode)` | Result | remove one override |
 
@@ -65,7 +67,16 @@ the old value.
 Settings::set('whatsapp.webhook_secret', $secret);   // stored encrypted, audit shows ***
 ```
 
-**6. React to a change**
+**6. An uploaded image** — the site logo `branding.logo` (DEC-083): Settings shows a preview + upload (route
+`utils.settings.image`); "Use the built-in image" resets it. Read it with `site_logo_url($fallback)` — used by both
+admin menu layouts (the logo links to the dashboard), the login page and the quotation / OTF prints (fallback: their
+current image).
+```php
+Settings::setImage('branding.logo', $request->file('file'));
+<img src="{{ site_logo_url('images/bikaner_logo.png') }}" alt="…">
+```
+
+**7. React to a change**
 ```php
 Event::listen(\App\Events\Platform\SettingsChanged::class, fn ($e) => $e->key === 'display.date_format' && cache()->forget('x'));
 ```

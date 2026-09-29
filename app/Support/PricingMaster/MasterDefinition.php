@@ -117,7 +117,12 @@ abstract class MasterDefinition
             'required' => (bool) $field?->required, 'help' => str_starts_with($format, 'Scope') || str_contains($format, 'ANY') ? 'Blank / ANY = all; comma = several.' : ''];
     }
 
-    /** One grid row (plain values; the definition's columns plus `id`). @return array<string, mixed> */
+    /**
+     * One grid row (plain values; the definition's columns plus `id`).
+     *
+     * @param  TModel  $model
+     * @return array<string, mixed>
+     */
     public function row(Model $model): array
     {
         $out = ['id' => $model->getKey()];
@@ -206,7 +211,7 @@ abstract class MasterDefinition
      * Chunked, one transaction per chunk; a rejected row is reported, not fatal.
      *
      * @param  callable(int, int): void|null  $progress  rows done, rows seen so far
-     * @return array{rows: int, created: int, updated: int, rejected: int, issues: list<array{row: int, reason: string}>}
+     * @return array<string, mixed> counts (rows, created / updated or written, rejected …) + issues: list<array{row: int, reason: string}>
      */
     public function import(string $path, ?string $wef = null, ?callable $progress = null): array
     {

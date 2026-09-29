@@ -4,7 +4,8 @@
 <div class="page page-center" style="background-color:#F2F4F7">
     <div class="container container-tight py-4">
         <div class="text-center mb-4 display-6 auth-logo-container">
-            {{-- {!! backpack_theme_config('project_logo') !!} --}}
+            <img src="{{ site_logo_url() }}" alt="{{ backpack_theme_config('project_name') }}" class="xl-site-logo xl-site-logo-lg" style="height:56px;width:auto;max-width:260px">
+   {{-- DEC-083 --}}
         </div>
         <div class="card card-md">
             <div class="card-body pt-0" {{-- style="background-color: burlywood" --}}>

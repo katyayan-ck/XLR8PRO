@@ -31,6 +31,14 @@ if (! function_exists('site_datetime')) {
     }
 }
 
+if (! function_exists('site_logo_url')) {
+    /** The configured site logo (setting branding.logo, DEC-083), else the given image, else the product logo. */
+    function site_logo_url(string $fallback = 'images/Logo-108x75.png'): string
+    {
+        return (string) (setting('branding.logo') ?: asset($fallback));
+    }
+}
+
 if (! function_exists('setting')) {
     /** Effective setting value (FRS SET-10) — alias of Settings::get(). */
     function setting(string $key, mixed $default = null): mixed

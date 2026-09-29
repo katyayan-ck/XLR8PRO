@@ -149,3 +149,48 @@
   - `PricingMasterTest` (5): permissions + every screen renders; CRUD + WEF versioning + recalculation; locked while
     a process is open; one-row-per-record round trip (Discounting Breakup); workbook round trip (Dealer Charges).
   - `LoyaltyDiscountTest` (2).
+
+## Pricing masters — phases C–E: rules + insurance masters, accessories, recalculation log, configurable logo (DEC-083)
+- **Masters:**
+  - `RtoRulesMaster`, `InsuranceRulesMaster` (base rule + heads + IDV slots + add-on rates in one form).
+  - `InsCompaniesMaster`, `InsPreferencesMaster`, `InsAddonsMaster`, `AccessoriesMaster`, `AccessoryScopesMaster`.
+- **Migration `2026_09_29_193500_pricing_insurance_masters_dec083`:**
+  - New tables `xlr8_vehicle_pricing_ins_companies` (seeded from the companies in use) and
+    `xlr8_vehicle_pricing_ins_addons` (17 add-ons; NIL_DEP + CONSUMABLES default).
+  - `segment` on `xlr8_vehicle_pricing_ins_defaults`.
+  - Run on xlrm and xlrm_testing.
+- **New:**
+  - models `InsCompany`, `InsAddon`;
+  - entity services `Rules\InsCompanyService`, `Rules\InsAddonService`, `Accessories\AccessoryItemService`,
+    `Accessories\AccessoryScopeService`.
+  - `InsDefaultService` gains `segment` (model defaults to ANY).
+- **Engine:**
+  - `InsuranceCalculator::companyOrder()` uses the model rows, else the segment rows, else ANY.
+  - Default add-ons and names come from the add-on master (`RuleBook::$defaultInsuranceAddons` /
+    `$insuranceAddonNames`).
+  - `PricingParamRegistry` watches `InsCompany` / `InsAddon`.
+- **`InsuranceWorkbookService`:**
+  - `export()` / `import()` take `$parts`.
+  - The companies sheet exports and expires model-level rows only (BUG-205).
+  - `HEAD_COLUMNS` is now public.
+- **Accessories:**
+  - The typed-sheet import (`importExcelWithSheetOrder`) is authoritative.
+  - Deleted: `ImportVehicleAccessories` command, `AccessoryImportService`, `VehicleAccessoriesImport` (BUG-179 fixed).
+  - `AccessoryScope::$fillable` gains `permit` (BUG-204 fixed).
+- **Recalculation log:** `RecalcLogController` + `admin/pricing/recalc-log.blade.php` (`pricing.recalc-log`,
+  `PRC_RCLC_VIEW`); Menu → Pricing → Masters.
+- **Menu:** the old RTO / Insurance rule links were replaced by the masters.
+- **Logo:**
+  - Setting `branding.logo` (type `image`); `SettingsService::setImage()`; the `SystemSetting` `setting_image` media
+    collection (public disk, single file).
+  - Route `utils.settings.image` (`SettingsAdminController::image`), with an image row on the Settings screen
+    (preview, upload, "use the built-in image").
+  - Helper `site_logo_url($fallback)`.
+  - Used in both menu layouts (the logo now always links to `backpack_url('dashboard')`; the horizontal layout had no
+    link and the vertical one went to the site root), the login page, and the quotation / OTF / OTF-PDF prints
+    (fallback `images/bikaner_logo.png`).
+  - `.xl-site-logo` CSS in `public/css/xl-ui.css`.
+- **`SystemSetting`:** `@property` docs added.
+- **Tests:**
+  - `InsuranceAccessoryMastersTest` (5), `SiteLogoTest` (3), plus a recalculation-log test in `PricingRecalcTest`.
+  - Pricing / utils / platform suites: 126 passed (1 known skip).

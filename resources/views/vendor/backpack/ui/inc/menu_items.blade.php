@@ -194,17 +194,15 @@
                 @foreach ($pricingMasters as $pm)
                     <a class="dropdown-item" href="{{ route('pricing.masters.index', $pm->key()) }}"><i class="la {{ $pm->icon() }} me-2"></i>{{ $pm->label() }}</a>
                 @endforeach
+                @if ($u->can('PRC_RCLC_VIEW'))
+                    <a class="dropdown-item" href="{{ route('pricing.recalc-log') }}"><i class="la la-history me-2"></i>Recalculation Log</a>
+                @endif
                 <div class="dropdown-divider"></div>
             @endif
             @if ($u->can('PRC_TCS_VIEW'))
                 <a class="dropdown-item" href="{{ route('pricing.tcs.index') }}"><i class="la la-percent me-2"></i>TCS</a>
             @endif
-            @if ($u->can('PRC_RTOR_VIEW'))
-                <a class="dropdown-item" href="{{ route('pricing.rto.index') }}"><i class="la la-id-card me-2"></i>RTO Rules</a>
-            @endif
-            @if ($u->can('PRC_INSR_VIEW'))
-                <a class="dropdown-item" href="{{ route('pricing.insurance.base-rules') }}"><i class="la la-shield-alt me-2"></i>Insurance Rules</a>
-            @endif
+            {{-- RTO / Insurance Rules are pricing masters now (DEC-083); the old screens keep their test calculators by URL --}}
         </x-backpack::menu-dropdown>
     @endif
 

@@ -4,12 +4,19 @@ declare(strict_types=1);
 
 namespace App\Support\PricingMaster;
 
+use App\Support\PricingMaster\Masters\AccessoriesMaster;
+use App\Support\PricingMaster\Masters\AccessoryScopesMaster;
 use App\Support\PricingMaster\Masters\CorporateMaster;
 use App\Support\PricingMaster\Masters\DealerChargesMaster;
 use App\Support\PricingMaster\Masters\DiscountBreakupMaster;
 use App\Support\PricingMaster\Masters\ExchangeMaster;
+use App\Support\PricingMaster\Masters\InsAddonsMaster;
+use App\Support\PricingMaster\Masters\InsCompaniesMaster;
+use App\Support\PricingMaster\Masters\InsPreferencesMaster;
+use App\Support\PricingMaster\Masters\InsuranceRulesMaster;
 use App\Support\PricingMaster\Masters\LoyaltyMaster;
 use App\Support\PricingMaster\Masters\RsaMaster;
+use App\Support\PricingMaster\Masters\RtoRulesMaster;
 use App\Support\PricingMaster\Masters\ShieldMaster;
 
 /**
@@ -28,6 +35,13 @@ final class MasterRegistry
         CorporateMaster::class,
         ExchangeMaster::class,
         LoyaltyMaster::class,
+        RtoRulesMaster::class,
+        InsuranceRulesMaster::class,
+        InsCompaniesMaster::class,
+        InsPreferencesMaster::class,
+        InsAddonsMaster::class,
+        AccessoriesMaster::class,
+        AccessoryScopesMaster::class,
     ];
 
     /** @return array<string, MasterDefinition> key => definition */

@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\Pricing\Process\PricesController;
 use App\Http\Controllers\Admin\Pricing\Process\PricingProcessController;
 use App\Http\Controllers\Admin\Pricing\Process\RulesController;
 use App\Http\Controllers\Admin\Pricing\Process\VehicleInfoController;
+use App\Http\Controllers\Admin\Pricing\RecalcLogController;
 use App\Http\Controllers\Admin\Pricing\RtoRuleController;
 use App\Http\Controllers\Admin\Pricing\TcsConfigController;
 use App\Support\PricingMaster\MasterRegistry;
@@ -30,6 +31,8 @@ Route::group([
     Route::put('tcs', [TcsConfigController::class, 'update'])->name('pricing.tcs.update');
 
     Route::get('lookup', [PriceLookupController::class, 'index'])->name('pricing.lookup');
+
+    Route::get('recalculation-log', [RecalcLogController::class, 'index'])->name('pricing.recalc-log');
 
     // DEC-083 pricing masters — list / CRUD / import / export (one controller, a definition per master)
     Route::prefix('masters/{master}')->whereIn('master', MasterRegistry::keys())->name('pricing.masters.')->group(function () {

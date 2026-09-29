@@ -15,8 +15,9 @@
                 </div>
             </ul>
             <h1 class="navbar-brand d-none d-lg-flex align-self-stretch justify-content-center py-3 mb-0">
-                <a class="text-decoration-none" href="{{ url(backpack_theme_config('home_link')) }}" title="{{ backpack_theme_config('project_name') }}">
-                    {!! backpack_theme_config('project_logo') !!}
+                {{-- DEC-083: the configurable site logo always opens the dashboard --}}
+                <a class="text-decoration-none" href="{{ backpack_url('dashboard') }}" title="{{ backpack_theme_config('project_name') }} — Dashboard">
+                    <img src="{{ site_logo_url() }}" alt="{{ backpack_theme_config('project_name') }}" class="xl-site-logo">
                 </a>
             </h1>
             <div class="collapse navbar-collapse" id="mobile-menu">

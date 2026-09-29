@@ -16,7 +16,7 @@ validate or transform themselves, never keep FormRequest rules for these fields,
 `DB::table()` or `Model::create()`. Business rules go in `beforeCreate/beforeUpdate` via `fail()`. The model declares
 `protected string $entityService` so its transform backstop reads the same definition.
 Migrated: `Vehicle\{Segment,SubSegment,VehicleModel,Variant}Service`, `Org\{Branch,Location,Department,Division,Vertical,Designation}Service`, `Person\{PersonRecord,PersonContact,PersonAddress,PersonBanking}Service`, `Org\EmployeeService`, `IAM\{User,UserScope}Service`, `Utils\{KeywordMaster,Keyvalue}Service`, `Vehicle\Pricing\Rules\{RtoRule,TcsConfig,InsBaseRule,InsIdvSlot,InsDefault,InsAddonRate}Service`, `Vehicle\Pricing\Addons\{DealerCharge,Addon,Discount}Service`, `Vehicle\Pricing\Prices\PriceService`; `VehicleService` (price-list stubs, Vehicle Info) delegates to the vehicle services.
-Next: accessories. Engine-written records (sessions, flags, snapshots, history) stay with the engine. The model backstop transforms only changed attributes on update (BUG-176). On update only changed values are validated (stored legacy values never block an edit, DEC-054).
+Accessories: `Vehicle\Accessories\{AccessoryItem,AccessoryScope}Service` (masters, DEC-083); the typed-sheet import stays in `AccessoryService`. Insurance masters: `Vehicle\Pricing\Rules\{InsCompany,InsAddon}Service`. Engine-written records (sessions, flags, snapshots, history) stay with the engine. The model backstop transforms only changed attributes on update (BUG-176). On update only changed values are validated (stored legacy values never block an edit, DEC-054).
 Scopes: grant/revoke/sync only via `UserScopeService` (revoke = deactivate, never delete).
 
 Never re-implement a capability below; open the service, match its contract, extend it if needed.
@@ -37,6 +37,7 @@ Full health notes: `docs/reference/Shared-Services-Utilities-Catalog.md`.
 | OTP login, devices, tokens | `App\Services\AuthService` | Sanctum tokens (User has `HasApiTokens`) |
 | Vehicle completeness/status, dropdown options | `App\Services\Vehicle\VehicleService` | `segmentOptions()`, `modelOptions(For)()`, `variantOptions()`, `colorOptions()` (colour rows, DEC-060) |
 | Pricing pipeline & engine | `App\Services\Vehicle\Pricing\*` (`Engine\PricingQueryService::getPricing($oemCode, $options)`; quotation: `Sales\Quotation\QuotationPricingService`) | see `.ai/rules/modules/vehicle-pricing.md` |
+| Pricing masters (Admin → Pricing) | `App\Support\PricingMaster\{MasterDefinition, MasterRegistry}` + `Admin\Pricing\MasterController` | a new master = one definition class; writes via its entity service; changes auto-recalculate (`PricingParamObserver`) and bump `pricing.last_updated_at` |
 | Accessories | `App\Services\Vehicle\AccessoryService` | |
 | Booking sub-domains | `App\Services\Sales\Booking\Booking{Core,Kyc,Dms,Insurance,Rto,Delivery,Finance,Exchange,Refund,Otf}Service` | each tested |
 | Settings | `App\Services\Platform\Settings\SettingsService` (`Settings` facade, `setting()`, `feature()`, `@setting`, `@feature`) | only write path; dotted keys, typed, scoped (`getFor`), audited; seeds in `config/platform.php` (read by exact key). `SystemSettingService` backs the legacy CRUD screen |

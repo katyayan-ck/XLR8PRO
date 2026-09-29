@@ -1386,7 +1386,7 @@
                     <div class="row align-items-center">
                         <!-- Left Logo -->
                         <div class="col-2 text-center">
-                            <img src="{{ asset('images/bikaner_logo.png') }}" style="height:75px;">
+                            <img src="{{ site_logo_url('images/bikaner_logo.png') }}" alt="{{ config('app.name') }}" style="height:75px;">
                         </div>
 
                         <!-- Center Text -->

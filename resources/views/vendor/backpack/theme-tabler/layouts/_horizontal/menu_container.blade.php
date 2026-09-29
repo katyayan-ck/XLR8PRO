@@ -8,8 +8,9 @@
                 <ul class="navbar-nav">
                     @unless(backpack_theme_config('options.doubleTopBarInHorizontalLayouts'))
                     <li class="nav-brand">
-                        <a class="nav-link" {{-- href="{{ url(backpack_theme_config('home_link')) }}" --}}>
-                            {!! backpack_theme_config('project_logo') !!}
+                        {{-- DEC-083: the configurable site logo always opens the dashboard --}}
+                        <a class="nav-link" href="{{ backpack_url('dashboard') }}" title="{{ backpack_theme_config('project_name') }} — Dashboard">
+                            <img src="{{ site_logo_url() }}" alt="{{ backpack_theme_config('project_name') }}" class="xl-site-logo">
                         </a>
                     </li>
                     @endunless

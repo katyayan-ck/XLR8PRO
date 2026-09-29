@@ -213,7 +213,7 @@ Entry format:
 | BUG-176 | `HasColumnTransformations` re-transformed every attribute on every update: editing any field of a keyword value whose legacy code has spaces rewrote the code (hyphens), orphaning its references — 1,903 such codes exist | High | FIXED (DEC-055) | 27-09-2026 | 27-09-2026 |
 | BUG-177 | Imports menu and the `imports/admin` landing page have no permission check (a user with no import permission opens it; the vehicle import POST itself is gated on `VEH_SEG_CREATE`) | Low | OPEN (permission choice — D14) | 27-09-2026 | — |
 | BUG-178 | Pricing engine ignores imported dealer charges: `dealerCharges()` reads narrow rows (`charge_name`/`amount`) while the importer writes the spec's WIDE columns (CP-06), so the pricing JSON's dealer charges total 0; `scopeHit()` checks a `model` column (table has `model_code`), so model scope is never applied | High | FIXED (DEC-080 engine; legacy engine removed DEC-082) | 27-09-2026 | 29-09-2026 |
-| BUG-179 | Two divergent accessory importers: the wired one (`import:vehicle-accessories` → `AccessoryImportService`) reads one sheet without type/discount/permit, soft-disables the whole catalogue and echoes every row; the spec-shaped one (`AccessoryService::importExcel*`: typed sheets, discount, permit, hard purge) has no caller | Medium | OPEN (owner: which importer is authoritative — D19); debug output removed (DEC-070) | 27-09-2026 | — |
+| BUG-179 | Two divergent accessory importers: the wired one (`import:vehicle-accessories` → `AccessoryImportService`) reads one sheet without type/discount/permit, soft-disables the whole catalogue and echoes every row; the spec-shaped one (`AccessoryService::importExcel*`: typed sheets, discount, permit, hard purge) has no caller | Medium | FIXED (DEC-083: typed-sheet importer authoritative; one-sheet importer retired) | 27-09-2026 | 29-09-2026 |
 | BUG-180 | `/export/vehicle-data` (`ExportController::vehicleDataExcel`) references `App\Exports\VehicleDataExport`, which does not exist — the route 500s | Low | OPEN (deletion — D6) | 28-09-2026 | — |
 | BUG-181 | `User::getOrCreateNotificationsMaster()` and the `NotificationsMaster` model did not exist, so the v1 notification endpoints (unread count, mark-all-read) and every legacy `NotificationService` send 500'd; the docs models pointed at non-existent tables (`xlr8_docs_*`, pivot `doc_group_documents`) and the v1 add-to-group rule validated against `documents` | High | FIXED (DEC-061) | 28-09-2026 | 28-09-2026 |
 | BUG-182 | v1 `docs/upload` and `history/{entityType}/{entityId}` (+ `/thread`) resolve `App\Models\{entityType}` straight from request input and never check the caller may see that record — any signed-in mobile user can read or append history on, or attach files to, any model row | High | OPEN (auth + API contract — D3) | 28-09-2026 | — |
@@ -239,6 +239,8 @@ Entry format:
 | BUG-201 | `PricingHistory` model does not match its table (fillable `variant_code`, `pricing_snapshot`, `changed_by`… are not columns; timestamps off) — nothing could write price history | Medium | FIXED (DEC-076 / DEC-077, 28-09-2026) | 28-09-2026 | — |
 | BUG-202 | `InsDefault::getCompanies()` and `scopeActive()` used columns the table does not have (`default_company`, `company_priority_2/3`, `wef_date`) — any call would fail with an SQL error; it also silently returned USGI when nothing was set | Medium | FIXED (DEC-078, 28-09-2026) | 28-09-2026 | 28-09-2026 |
 | BUG-203 | Quotation create screen auto-loaded a hard-coded mock (enquiry "019", BE6 "bev6Premium" prices) — every new quotation showed fake prices, insurance and RTO; TCS limit/rate hard-coded; save never re-validated the gate or TCS | High | FIXED (DEC-082, 29-09-2026) | 29-09-2026 | 29-09-2026 |
+| BUG-204 | `AccessoryScope::$fillable` lacked `permit`, so the accessory import's `updateOrCreate` silently dropped it — GPS VLTD / RTO Tape rows were never permit-scoped | Medium | FIXED (DEC-083, 29-09-2026) | 29-09-2026 | 29-09-2026 |
+| BUG-205 | Importing the Insurance workbook's "Insurance Co." sheet expired every insurance preference row; with segment preferences (DEC-083) it would have wiped them. The export also folded them into model rows | Medium | FIXED (DEC-083, 29-09-2026; found in design, never shipped broken) | 29-09-2026 | 29-09-2026 |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -2103,6 +2105,11 @@ guessed at.
   - The Machine Spec says "AccessoryService — existing packs/discounts (DO NOT rewrite)".
 - **Decision needed:** which importer (and which purge semantics) is authoritative. Then both entity services (accessory, accessory scope) are added and the chosen importer writes through them, and the other is removed.
 - **Resolution (28-09-2026):** DEC-070 removed the `echo` / `print_r` row dumps from `AccessoryImportService::processRow()`. Recommendation for D19: keep `AccessoryService::importExcelWithSheetOrder()` (sheet types, discount / permit data), make its purge expire rows instead of hard-deleting, retire `AccessoryImportService` and `import:vehicle-accessories`.
+- **Fixed (29-09-2026, DEC-083 — owner decision D19):**
+  - The typed-sheet format (`AccessoryService::importExcelWithSheetOrder`) is authoritative. It is used by the new
+    Accessories master (Admin → Pricing), which also exports it.
+  - `import:vehicle-accessories`, `AccessoryImportService` and `VehicleAccessoriesImport` are deleted.
+  - Found alongside: BUG-204 (scope permit dropped).
 
 ### BUG-180 — Vehicle data export class missing
 
@@ -2341,3 +2348,22 @@ guessed at.
   - The TCS rule comes from the snapshot.
   - `store()` / `update()` refuse a held list, a broken gate or a wrong TCS, and store `standard_data.pricing`.
   - Tests: `tests/Feature/Pricing/QuotationPricingTest.php`.
+
+### BUG-204 — Accessory scopes never stored their permit
+
+- **Status:** FIXED (DEC-083, 29-09-2026)
+- **Severity:** Medium — the GPS VLTD / RTO Tape accessories are sold per permit; every scope row lost it (blank = all permits).
+- **Found:** 29-09-2026, building the Accessory Scopes master: `AccessoryScope::$fillable` omitted `permit`, and
+  `AccessoryService::processRow()` writes it through `updateOrCreate` (mass assignment silently drops it).
+- **Fix:** `permit` is added to the fillable list. Re-import the accessory workbook to fill the permits.
+
+### BUG-205 — Insurance workbook import would wipe segment preferences
+
+- **Status:** FIXED (DEC-083, 29-09-2026; caught in design)
+- **Severity:** Medium.
+- **Found:** 29-09-2026. The "Insurance Co." sheet import expired every `InsDefault` row, and its export grouped rows
+  by model + permit.
+- **Fix:** Segment preferences (DEC-083) are now left alone:
+  - the sheet expires and exports only model-level rows (`segment` null);
+  - the Insurance Rules master imports and exports only the "Insu Premium" sheet (`InsuranceWorkbookService`
+    `$parts`).

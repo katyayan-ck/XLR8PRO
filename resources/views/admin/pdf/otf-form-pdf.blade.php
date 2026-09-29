@@ -349,7 +349,7 @@
 
         {{-- LEFT: BIKANER MOTORS LOGO --}}
         <td style="width:20%; text-align:left; vertical-align:middle;">
-            <img src="{{ asset('images/bikaner_logo.png') }}"
+            <img src="{{ site_logo_url('images/bikaner_logo.png') }}" alt="{{ config('app.name') }}"
                  style="height:55px; max-height:55px; width:auto;">
         </td>
 

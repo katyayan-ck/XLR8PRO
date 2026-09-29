@@ -92,6 +92,7 @@ class InsBaseRule extends BaseModel
         ]);
     }
 
+    /** @return HasMany<InsIdvSlot, $this> */
     public function idvSlots(): HasMany
     {
         return $this->hasMany(InsIdvSlot::class, 'base_rule_id', 'id')->orderBy('year_no');

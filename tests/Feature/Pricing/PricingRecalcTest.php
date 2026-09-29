@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Pricing;
 
+use App\Models\User;
 use App\Models\Vehicle\Accessory;
 use App\Models\Vehicle\Pricing\Addon;
 use App\Models\Vehicle\Pricing\Hold;
@@ -18,6 +19,7 @@ use App\Services\Vehicle\Pricing\PricingSyncStamp;
 use App\Services\Vehicle\Pricing\Session\PricingChangeRecorder;
 use App\Services\Vehicle\VehicleService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 /**
@@ -113,6 +115,16 @@ class PricingRecalcTest extends TestCase
         $this->assertNotSame($before, $stamp->lastUpdated());
         $this->assertFalse($stamp->isPending());
         $this->assertArrayHasKey(PricingSyncStamp::KEY, app(SystemSettingService::class)->getPricingSettings(), 'served by the app settings endpoint');
+    }
+
+    public function test_the_recalculation_log_shows_runs_to_permitted_users(): void
+    {
+        app(PricingRecalcService::class)->run();
+        $user = User::create(['username' => 'rcl_'.uniqid(), 'password' => bcrypt('password'), 'user_type' => 'Emp', 'is_active' => 1]);
+        $this->actingAs($user, backpack_guard_name())->get(route('pricing.recalc-log'))->assertForbidden();
+
+        $user->givePermissionTo(Permission::findOrCreate('PRC_RCLC_VIEW', 'web'));
+        $this->actingAs($user->fresh(), backpack_guard_name())->get(route('pricing.recalc-log'))->assertOk()->assertSee('Done')->assertSee('Triggered by');
     }
 
     private function vehicleModelCode(): string

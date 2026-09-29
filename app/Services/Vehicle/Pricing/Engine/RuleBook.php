@@ -7,6 +7,7 @@ namespace App\Services\Vehicle\Pricing\Engine;
 use App\Models\Vehicle\Pricing\Addon;
 use App\Models\Vehicle\Pricing\DealerCharge;
 use App\Models\Vehicle\Pricing\Discount;
+use App\Models\Vehicle\Pricing\InsAddon;
 use App\Models\Vehicle\Pricing\InsAddonRate;
 use App\Models\Vehicle\Pricing\InsBaseRule;
 use App\Models\Vehicle\Pricing\InsDefault;
@@ -61,6 +62,12 @@ final class RuleBook
 
     public TcsConfig $tcs;
 
+    /** @var array<string, string> insurance add-on code => display name (add-on master, DEC-083) */
+    public array $insuranceAddonNames = [];
+
+    /** @var list<string> add-on codes of the default (frozen) insurance combo */
+    public array $defaultInsuranceAddons = InsuranceCalculator::DEFAULT_ADDONS;
+
     /** @var array<string, array<int, string>> key-value id => code per keyword */
     public array $keyvalueCodes;
 
@@ -92,6 +99,10 @@ final class RuleBook
         $this->addonRates = InsAddonRate::query()->where('is_active', true)->whereIn('base_rule_id', $ids)->orderBy('id')->get()->groupBy('base_rule_id');
         $this->insuranceDefaults = InsDefault::query()->where('is_active', true)->orderBy('priority')->get();
         $this->permitMap = PermitMap::query()->where('is_active', true)->get();
+        $addonMaster = InsAddon::query()->where('is_active', true)->orderBy('sort_order')->get(['code', 'name', 'is_default']);
+        $this->insuranceAddonNames = $addonMaster->mapWithKeys(fn (InsAddon $a) => [strtoupper($a->code) => $a->name])->all();
+        $this->defaultInsuranceAddons = $addonMaster->where('is_default', true)->map(fn (InsAddon $a) => strtoupper($a->code))->values()->all()
+            ?: InsuranceCalculator::DEFAULT_ADDONS;
         $this->tcs = TcsConfig::current();
         $this->keyvalueCodes = VehicleFacts::keyvalueCodes();
         $this->odDiscountPct = (float) setting('pricing.insurance.od_discount_pct', 30);
