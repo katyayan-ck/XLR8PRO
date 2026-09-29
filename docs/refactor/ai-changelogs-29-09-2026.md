@@ -250,3 +250,19 @@
 - **New:** `docs/api/index.md`, `docs/api/pricing.md`, `docs/api/system-settings.md`,
   `docs/api/postman/{pricing,system-settings}.postman_collection.json`.
 - **BUG-207 logged:** the settings API exposes every setting to any app user.
+
+## Form cards + density controller (to-do U1, U3, U4 images)
+- **`public/js/xl-ui.js`:** new `enhanceCards` (collapse chevron, drag grip + Alt+↑/↓, live required filled / total badge,
+  order + collapsed saved per screen in `localStorage` `xl.cards:{path}`, a collapsed card opens when a field inside it
+  is invalid) and `enhanceImages` (`loading="lazy"`, `decoding="async"`), both in `XL.enhance`.
+- **`public/js/xl-theme.js`:** new theme keys `text` / `space` → `<html data-xl-text data-xl-space>`; '' = site default.
+- **`inc/theme_styles.blade.php`:** before-paint density from the user choice, else `App\Support\UiDensity::defaults()`.
+- **`inc/theme_settings.blade.php`:** Appearance → *Text size*, *Spacing*.
+- **`public/css/xl-ui.css`:** density rules (root font size; `--xl-space` on card / form-group / page header padding) and
+  the card tool styles.
+- **New:** `app/Support/UiDensity.php`; settings `ui.density.text` (default `sm`), `ui.density.space` (default
+  `compact`) in `config/platform.php`.
+- **Before → after:** every screen used the Tabler 16 px / standard padding; now the site default is the compact
+  scale the owner asked for (29-09), and users can switch back in Appearance.
+- **Tests:** `tests/Feature/Utils/UiDensityTest.php` (2); the card behaviour was checked in headless Chrome (counter,
+  saved order / collapse restored, invalid field opens its card).

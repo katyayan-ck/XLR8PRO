@@ -10,6 +10,8 @@
     $xlBases = ['' => 'Default', 'slate' => 'Slate', 'gray' => 'Gray', 'zinc' => 'Zinc', 'neutral' => 'Neutral', 'stone' => 'Stone'];
     $xlFonts = ['' => 'Sans', 'serif' => 'Serif', 'monospace' => 'Mono', 'comic' => 'Comic'];
     $xlRadii = ['0' => '0', '0.5' => '0.5', '' => '1', '1.5' => '1.5', '2' => '2'];
+    $xlTexts = ['' => 'Site default', 'xs' => 'XS', 'sm' => 'S', 'md' => 'M', 'lg' => 'L'];
+    $xlSpaces = ['' => 'Site default', 'compact' => 'Compact', 'cozy' => 'Cozy', 'comfortable' => 'Roomy'];
     $xlLayouts = ['horizontal' => ['Top menu', 'la-window-maximize'], 'vertical' => ['Sidebar', 'la-columns'], 'vertical_dark' => ['Dark sidebar', 'la-columns']];
 @endphp
 <div class="offcanvas offcanvas-end xl-theme-panel" tabindex="-1" id="xl-theme-settings" aria-labelledby="xl-theme-settings-title">
@@ -75,6 +77,31 @@
                 @foreach ($xlRadii as $value => $label)
                     <label class="form-selectgroup-item">
                         <input type="radio" name="xl-theme-radius" value="{{ $value }}" class="form-selectgroup-input" data-xl-theme="radius">
+                        <span class="form-selectgroup-label">{{ $label }}</span>
+                    </label>
+                @endforeach
+            </div>
+        </fieldset>
+
+        {{-- To-do U3: density; "Site default" follows Settings ui.density.* --}}
+        <fieldset>
+            <legend class="form-label">Text size</legend>
+            <div class="form-selectgroup">
+                @foreach ($xlTexts as $value => $label)
+                    <label class="form-selectgroup-item">
+                        <input type="radio" name="xl-theme-text" value="{{ $value }}" class="form-selectgroup-input" data-xl-theme="text">
+                        <span class="form-selectgroup-label">{{ $label }}</span>
+                    </label>
+                @endforeach
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend class="form-label">Spacing</legend>
+            <div class="form-selectgroup">
+                @foreach ($xlSpaces as $value => $label)
+                    <label class="form-selectgroup-item">
+                        <input type="radio" name="xl-theme-space" value="{{ $value }}" class="form-selectgroup-input" data-xl-theme="space">
                         <span class="form-selectgroup-label">{{ $label }}</span>
                     </label>
                 @endforeach

@@ -2,10 +2,13 @@
     DEC-067: render-blocking theme bootstrap. Applies the saved colour mode (resolving "system" here, so dark-mode users
     never see a white flash) and the Tabler 1.4 theme attributes chosen in the Appearance panel
     (primary colour, base palette, font, radius — see public/js/xl-theme.js) before the first paint.
+    To-do U3: the density (text size + spacing): the user's own choice, else the site default (App\Support\UiDensity).
 --}}
 <script>
 (function () {
     var root = document.documentElement, mode = null, saved = {};
+    var XL = window.XL = window.XL || {};
+    XL.densityDefaults = @json(\App\Support\UiDensity::defaults());
     try { mode = localStorage.getItem('colorMode'); saved = JSON.parse(localStorage.getItem('xl.theme') || '{}') || {}; } catch (e) {}
     if (!mode || mode === 'system') {
         mode = @json(backpack_theme_config('options.defaultColorMode') ?? 'system');
@@ -15,6 +18,7 @@
     ['primary', 'base', 'font', 'radius'].forEach(function (key) {
         if (saved[key] !== undefined && saved[key] !== null && saved[key] !== '') { root.setAttribute('data-bs-theme-' + key, saved[key]); }
     });
+    ['text', 'space'].forEach(function (key) { root.setAttribute('data-xl-' + key, saved[key] || XL.densityDefaults[key]); });
 })();
 </script>
 

@@ -8,6 +8,9 @@
  *  - uploads: <input type="file"> → drop-zone with previews, remove-before-upload, type/size checks
  *             from Settings, and (with data-xl-upload-url) AJAX upload with per-file progress + errors.
  *  - tables:  bare <table class="table"> gets a .table-responsive wrapper (phones scroll, page doesn't).
+ *  - cards:   .card with a .card-header inside a <form> → collapsible, draggable (order remembered per screen) with a
+ *             required filled / total badge (to-do U1).
+ *  - images:  <img> without a loading attribute → loading="lazy" decoding="async" (to-do U4).
  * Opt out per element or container with data-xl="off". Everything is idempotent; content added later
  * (AJAX, modals) is enhanced by a MutationObserver.
  *
@@ -298,9 +301,201 @@
         });
     }
 
+    // ── Form cards (to-do U1): collapse, drag to reorder, required filled / total ─────────────────
+    // Every .card with a .card-header inside a <form> gets a grip (drag, or Alt+↑/↓ on it), a collapse chevron and a
+    // "filled / total" badge for its required fields. Order and collapsed cards are remembered per screen (record ids
+    // in the URL are ignored, so every edit page of an entity shares one layout) in localStorage "xl.cards:{path}".
+    const CARD_STORE = 'xl.cards:' + location.pathname.replace(/\/\d+(?=\/|$)/g, '/#');
+    const readCards = () => { try { return JSON.parse(localStorage.getItem(CARD_STORE) || '{}') || {}; } catch (e) { return {}; } };
+    const writeCards = (state) => { try { localStorage.setItem(CARD_STORE, JSON.stringify(state)); } catch (e) { /* private mode */ } };
+    const cardsOf = (parent) => Array.from(parent.children).filter((el) => el.classList.contains('xl-card'));
+    const groupKey = (parent) => parent.id || 'g' + Array.from(document.querySelectorAll('.xl-card-group')).indexOf(parent);
+
+    function cardKey(card, used) {
+        const header = card.querySelector(':scope > .card-header');
+        const title = (header.querySelector('.card-title') || header).textContent || 'card';
+        let key = title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'card';
+        let n = 1;
+        while (used.has(key)) key = key.replace(/~\d+$/, '') + '~' + ++n;
+        used.add(key);
+        return key;
+    }
+
+    /** Required fields of a card: Backpack's `.form-group.required` wrappers plus any [required] control outside one. */
+    function requiredCount(card) {
+        const controls = (scope) => Array.from(scope.querySelectorAll('input, select, textarea'))
+            .filter((c) => !c.disabled && c.name !== '_token' && c.name !== '_method');
+        const filled = (list) => list.some((c) => (c.type === 'checkbox' || c.type === 'radio') ? c.checked
+            : (c.multiple ? c.selectedOptions.length > 0 : String(c.value || '').trim() !== ''));
+        let total = 0, done = 0;
+        const wrappers = Array.from(card.querySelectorAll('.form-group.required, [bp-field-wrapper].required'));
+        wrappers.forEach((w) => { const list = controls(w); if (!list.length) return; total++; if (filled(list)) done++; });
+        const seen = new Set();
+        card.querySelectorAll('[required]').forEach((c) => {
+            if (c.disabled || wrappers.some((w) => w.contains(c))) return;
+            const key = (c.type === 'radio' || c.type === 'checkbox') && c.name ? c.name : c;
+            if (seen.has(key)) return;
+            seen.add(key);
+            total++;
+            const group = typeof key === 'string' ? Array.from(card.querySelectorAll(`[name="${CSS.escape(key)}"]`)) : [c];
+            if (filled(group)) done++;
+        });
+        return { total, done };
+    }
+
+    function refreshCount(card) {
+        const badge = card.querySelector(':scope > .card-header .xl-req');
+        if (!badge) return;
+        const { total, done } = requiredCount(card);
+        badge.hidden = total === 0;
+        badge.textContent = done + '/' + total;
+        badge.className = 'badge xl-req ' + (done >= total ? 'bg-success-lt' : 'bg-warning-lt');
+        badge.title = `Required fields filled: ${done} of ${total}`;
+    }
+
+    function saveOrder(parent) {
+        const state = readCards();
+        state.order = state.order || {};
+        state.order[groupKey(parent)] = cardsOf(parent).map((c) => c.dataset.xlCard);
+        writeCards(state);
+    }
+
+    function setCollapsed(card, collapsed, save) {
+        card.classList.toggle('xl-collapsed', collapsed);
+        card.querySelector(':scope > .card-header .xl-card-toggle')?.setAttribute('aria-expanded', String(!collapsed));
+        if (!save) return;
+        const state = readCards();
+        const list = new Set(state.collapsed || []);
+        collapsed ? list.add(card.dataset.xlCard) : list.delete(card.dataset.xlCard);
+        state.collapsed = Array.from(list);
+        writeCards(state);
+    }
+
+    /** Put the cards of one parent in the saved order; other children (buttons, hidden inputs) keep their places. */
+    function restoreOrder(parent, saved) {
+        const cards = cardsOf(parent);
+        if (!saved || cards.length < 2) return;
+        const rank = (c) => { const i = saved.indexOf(c.dataset.xlCard); return i < 0 ? saved.length + cards.indexOf(c) : i; };
+        const sorted = cards.slice().sort((a, b) => rank(a) - rank(b));
+        if (sorted.every((c, i) => c === cards[i])) return;
+        const slots = cards.map((c) => { const mark = document.createComment('xl'); parent.insertBefore(mark, c); return mark; });
+        slots.forEach((mark, i) => { parent.insertBefore(sorted[i], mark); mark.remove(); });
+    }
+
+    let dragged = null;
+    function wireDrag(card, handle) {
+        handle.addEventListener('pointerdown', () => { card.draggable = true; });
+        handle.addEventListener('pointerup', () => { card.draggable = false; });
+        card.addEventListener('dragstart', (e) => {
+            if (!card.draggable) return;
+            e.stopPropagation();
+            dragged = card;
+            card.classList.add('xl-dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            // a private type: Firefox needs data to start a drag, and inputs never accept it as dropped text
+            try { e.dataTransfer.setData('application/x-xl-card', card.dataset.xlCard); } catch (err) { /* old browsers */ }
+        });
+        card.addEventListener('dragover', (e) => {
+            if (!dragged || dragged === card || dragged.parentNode !== card.parentNode) return;
+            e.preventDefault();
+            const box = card.getBoundingClientRect();
+            card.parentNode.insertBefore(dragged, e.clientY > box.top + box.height / 2 ? card.nextSibling : card);
+        });
+        card.addEventListener('drop', (e) => { if (dragged) e.preventDefault(); });
+        card.addEventListener('dragend', () => {
+            card.draggable = false;
+            card.classList.remove('xl-dragging');
+            if (dragged) saveOrder(dragged.parentNode);
+            dragged = null;
+        });
+        handle.addEventListener('keydown', (e) => {
+            if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+            e.preventDefault();
+            const siblings = cardsOf(card.parentNode);
+            const target = siblings[siblings.indexOf(card) + (e.key === 'ArrowUp' ? -1 : 1)];
+            if (!target) return;
+            card.parentNode.insertBefore(card, e.key === 'ArrowUp' ? target : target.nextSibling);
+            saveOrder(card.parentNode);
+            handle.focus();
+        });
+    }
+
+    function enhanceCards(root) {
+        const scope = (root.matches && root.matches('.card') ? [root] : []).concat(Array.from(root.querySelectorAll('form .card')));
+        const fresh = scope.filter((card) => !card.dataset.xlCard && card.closest('form') && !isOff(card)
+            && card.querySelector(':scope > .card-header') && !inGrid(card));
+        if (fresh.length) {
+            const state = readCards();
+            const collapsed = new Set(state.collapsed || []);
+            const used = new Set(Array.from(document.querySelectorAll('[data-xl-card]')).map((c) => c.dataset.xlCard));
+            const parents = new Set();
+            fresh.forEach((card) => {
+                card.dataset.xlCard = cardKey(card, used);
+                card.classList.add('xl-card');
+                card.parentNode.classList.add('xl-card-group');
+                parents.add(card.parentNode);
+                const header = card.querySelector(':scope > .card-header');
+                const tools = document.createElement('div');
+                tools.className = 'xl-card-tools';
+                tools.innerHTML = '<span class="badge xl-req" hidden></span>'
+                    + '<button type="button" class="btn btn-ghost-secondary btn-sm xl-card-toggle" aria-expanded="true" title="Collapse / expand"><i class="la la-angle-down"></i></button>';
+                const actions = header.querySelector(':scope > .card-actions');
+                actions ? actions.prepend(tools) : header.appendChild(tools);
+                tools.querySelector('.xl-card-toggle').addEventListener('click', () => setCollapsed(card, !card.classList.contains('xl-collapsed'), true));
+                if (collapsed.has(card.dataset.xlCard)) setCollapsed(card, true, false);
+                refreshCount(card);
+            });
+            parents.forEach((parent) => {
+                const siblings = cardsOf(parent);
+                if (siblings.length < 2) return;
+                restoreOrder(parent, (state.order || {})[groupKey(parent)]);
+                siblings.forEach((card) => {
+                    const header = card.querySelector(':scope > .card-header');
+                    if (header.querySelector(':scope > .xl-card-handle')) return;
+                    const handle = document.createElement('button');
+                    handle.type = 'button';
+                    handle.className = 'btn btn-ghost-secondary btn-sm xl-card-handle';
+                    handle.title = 'Drag to reorder (or Alt + ↑ / ↓)';
+                    handle.setAttribute('aria-label', 'Move card');
+                    handle.innerHTML = '<i class="la la-grip-vertical"></i>';
+                    header.prepend(handle);
+                    wireDrag(card, handle);
+                });
+            });
+        }
+        // content added inside an existing card (repeatable rows, AJAX) → recount it
+        const host = root.closest && root.closest('.xl-card');
+        if (host) refreshCount(host);
+    }
+
+    // one listener for every card: recount on edits; open a collapsed card when the browser flags an invalid field
+    // in it (a hidden invalid field would otherwise block the submit silently)
+    let recount = null;
+    const queueRecount = (e) => {
+        const card = e.target.closest && e.target.closest('.xl-card');
+        if (!card) return;
+        recount = recount || new Set();
+        recount.add(card);
+        requestAnimationFrame(() => { if (recount) { recount.forEach(refreshCount); recount = null; } });
+    };
+    document.addEventListener('input', queueRecount, true);
+    document.addEventListener('change', queueRecount, true);
+    document.addEventListener('invalid', (e) => {
+        let card = e.target.closest && e.target.closest('.xl-collapsed');
+        while (card) { setCollapsed(card, false, false); card = card.parentElement && card.parentElement.closest('.xl-collapsed'); }
+    }, true);
+
+    // ── Images (to-do U4): lazy + async decode unless the markup says otherwise ────────────────────
+    function enhanceImages(root) {
+        root.querySelectorAll('img:not([loading])').forEach((img) => {
+            img.loading = 'lazy';
+            if (!img.hasAttribute('decoding')) img.decoding = 'async';
+        });
+    }
+
     XL.enhance = function (root) {
         root = root || document;
-        [enhanceDates, enhanceSelects, enhanceUploads, wrapTables].forEach((fn) => {
+        [enhanceDates, enhanceSelects, enhanceUploads, wrapTables, enhanceCards, enhanceImages].forEach((fn) => {
             try { fn(root); } catch (e) { /* one broken widget must not stop the others */ }
         });
     };
@@ -308,6 +503,8 @@
     function start() {
         // grids created before this file loaded: wrap late AG-Grid loads and re-render date cells
         if (window.agGrid && XL.wrapAgGrid && !window.agGrid.__xl) window.agGrid = XL.wrapAgGrid(window.agGrid);
+        // Select2 announces changes through jQuery only, which native listeners never see
+        if (window.jQuery) window.jQuery(document).on('change', 'select', queueRecount);
         (XL.grids || []).forEach((api) => { try { api && api.refreshCells && api.refreshCells({ force: true }); } catch (e) { /* destroyed grid */ } });
         XL.enhance(document);
         let queued = [];

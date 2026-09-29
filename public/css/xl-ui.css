@@ -189,3 +189,36 @@ input.xl-date { background-image: none; cursor: pointer; }
     *:has(> #quickFilter) { flex: 1 1 100%; min-width: 0; }
     #quickFilter { width: auto !important; min-width: 0 !important; flex: 1 1 auto; }
 }
+
+/* ── Density (to-do U3): <html data-xl-text data-xl-space>, set before paint by inc/theme_styles.blade.php from the
+      user's Appearance choice or the site default (Settings ui.density.*). Tabler sizes everything in rem, so the text
+      size scales the root; the spacing scale tightens card / form / page-header padding. md + comfortable = Tabler. ── */
+html[data-xl-text="xs"] { font-size: 14px; }
+html[data-xl-text="sm"] { font-size: 15px; }
+html[data-xl-text="lg"] { font-size: 17px; }
+:root { --xl-space: 1; }
+html[data-xl-space="cozy"] { --xl-space: .75; }
+html[data-xl-space="compact"] { --xl-space: .5; }
+html:is([data-xl-space="cozy"], [data-xl-space="compact"]) .card:not(.card-sm):not(.card-md):not(.card-lg) {
+    --tblr-card-spacer-y: calc(1rem * var(--xl-space));
+    --tblr-card-spacer-x: calc(1.25rem * var(--xl-space) + .25rem);
+    --tblr-card-cap-padding-y: calc(1rem * var(--xl-space));
+    --tblr-card-cap-padding-x: calc(1.25rem * var(--xl-space) + .25rem);
+}
+html:is([data-xl-space="cozy"], [data-xl-space="compact"]) form :is(.mb-3, .form-group) { margin-bottom: calc(1rem * var(--xl-space) + .125rem) !important; }
+html:is([data-xl-space="cozy"], [data-xl-space="compact"]) .page-header { margin-top: calc(1.25rem * var(--xl-space)); margin-bottom: calc(1rem * var(--xl-space)); }
+html:is([data-xl-space="cozy"], [data-xl-space="compact"]) .page-body { margin-top: calc(1.25rem * var(--xl-space)); margin-bottom: calc(1.25rem * var(--xl-space)); }
+html:is([data-xl-space="cozy"], [data-xl-space="compact"]) form .card + .card { margin-top: calc(1rem * var(--xl-space)); }
+
+/* ── Form cards (to-do U1, xl-ui.js enhanceCards): collapse toggle, drag handle, required filled / total ──────── */
+.xl-card-tools { display: inline-flex; align-items: center; gap: .25rem; margin-left: auto; }
+.xl-card-tools .btn { padding: .125rem .375rem; min-height: 0; line-height: 1; }
+.xl-card-handle { cursor: grab; color: var(--xl-muted); margin-right: .375rem; touch-action: none; }
+.xl-card-handle:active { cursor: grabbing; }
+.xl-card-toggle .la { transition: transform .15s ease; }
+.card.xl-collapsed > .card-header { border-bottom: 0; }
+.card.xl-collapsed > .card-header .xl-card-toggle .la { transform: rotate(-90deg); }
+.card.xl-collapsed > :not(.card-header) { display: none !important; }
+.card.xl-dragging { opacity: .55; outline: 2px dashed var(--xl-primary); outline-offset: 2px; }
+.xl-req { font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .xl-card-toggle .la { transition: none; } }

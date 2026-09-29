@@ -1,7 +1,7 @@
 /*!
  * Xceler8 theme layer (DEC-067). Loaded on every admin page after Tabler.
  *
- *  XL.theme.get()                      → {mode, primary, base, font, radius, layout}
+ *  XL.theme.get()                      → {mode, primary, base, font, radius, text, space, layout}
  *  XL.theme.set('primary', 'red')      → applies + saves (mode / layout too: 'mode' → light|dark|system)
  *  XL.theme.reset()                    → Tabler defaults, horizontal layout
  *  XL.theme.onChange(fn)               → fn(state) after any change (mode, colour, font, radius, OS scheme)
@@ -11,6 +11,8 @@
  * (tabler-themes.min.css). They are applied before first paint by inc/theme_styles.blade.php and stored per browser
  * in localStorage "xl.theme". The menu layout is the `xl_layout` cookie, read on the server by
  * App\Http\Middleware\ApplyUiPreferences, so changing it reloads the page.
+ * Density (to-do U3): `text` (xs|sm|md|lg) and `space` (compact|cozy|comfortable) are `data-xl-text` / `data-xl-space` on
+ * <html>; '' means the site default (Settings ui.density.*, XL.densityDefaults from the bootstrap). CSS: xl-ui.css.
  * The Appearance panel (inc/theme_settings.blade.php) is plain markup wired by `[data-xl-theme]` inputs.
  */
 (function () {
@@ -21,6 +23,8 @@
 
     var STORE = 'xl.theme';
     var ATTRS = ['primary', 'base', 'font', 'radius'];
+    var DENSITY = { text: ['xs', 'sm', 'md', 'lg'], space: ['compact', 'cozy', 'comfortable'] };
+    var DENSITY_DEFAULTS = XL.densityDefaults || { text: 'md', space: 'comfortable' };
     var LAYOUTS = ['horizontal', 'vertical', 'vertical_dark'];
     var root = document.documentElement;
     var listeners = [];
@@ -52,13 +56,16 @@
     function get() {
         var saved = readStore();
         var state = { mode: currentMode(), layout: currentLayout() };
-        ATTRS.forEach(function (key) { state[key] = saved[key] || ''; });
+        ATTRS.concat(Object.keys(DENSITY)).forEach(function (key) { state[key] = saved[key] || ''; });
         return state;
     }
 
     function applyAttrs(saved) {
         ATTRS.forEach(function (key) {
             if (saved[key]) { root.setAttribute('data-bs-theme-' + key, saved[key]); } else { root.removeAttribute('data-bs-theme-' + key); }
+        });
+        Object.keys(DENSITY).forEach(function (key) {
+            root.setAttribute('data-xl-' + key, DENSITY[key].indexOf(saved[key]) > -1 ? saved[key] : DENSITY_DEFAULTS[key]);
         });
     }
 
@@ -87,7 +94,7 @@
             if (value !== currentLayoutFromBody()) { window.location.reload(); }
             return;
         }
-        if (ATTRS.indexOf(key) < 0) { return; }
+        if (ATTRS.indexOf(key) < 0 && !DENSITY[key]) { return; }
         var saved = readStore();
         saved[key] = value;
         writeStore(saved);
@@ -117,7 +124,7 @@
         return fn;
     }
 
-    /* ---- Appearance panel: inputs carry data-xl-theme="primary|base|font|radius|mode|layout" ---- */
+    /* ---- Appearance panel: inputs carry data-xl-theme="primary|base|font|radius|text|space|mode|layout" ---- */
     function syncPanel(state) {
         state = state || get();
         document.querySelectorAll('[data-xl-theme]').forEach(function (input) {
@@ -140,7 +147,7 @@
     /* Anything that flips the theme attributes (Backpack's mode button, the OS scheme, another tab) notifies listeners. */
     new MutationObserver(emit).observe(root, {
         attributes: true,
-        attributeFilter: ['data-bs-theme', 'data-bs-theme-primary', 'data-bs-theme-base', 'data-bs-theme-font', 'data-bs-theme-radius'],
+        attributeFilter: ['data-bs-theme', 'data-bs-theme-primary', 'data-bs-theme-base', 'data-bs-theme-font', 'data-bs-theme-radius', 'data-xl-text', 'data-xl-space'],
     });
 
     window.addEventListener('storage', function (event) {

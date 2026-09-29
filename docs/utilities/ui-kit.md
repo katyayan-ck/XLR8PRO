@@ -12,6 +12,8 @@ Project-wide standards (`.ai/rules/ui.md`, DEC-066) and the shared pieces that i
 | `<input type="file">` | drop-zone — drag & drop / browse, thumbnails, name + size, remove before upload, type / size checks from Settings (`docs.allowed_mimes`, `docs.max_upload_kb`) |
 | bare `<table class="table">` | wrapped in `.table-responsive` (scrolls on phones) |
 | AG-Grid date columns (field `*_date`, `*_at`, `dob`, header "… Date") | formatted with the site format |
+| `.card` with a `.card-header` inside a `<form>` | **collapsible + draggable** card with a **required filled / total** badge (to-do U1, below) |
+| `<img>` without a `loading` attribute | `loading="lazy"` + `decoding="async"` (to-do U4) |
 | Backpack `date` / `datetime` columns | site format (Backpack config is set from the setting at boot) |
 
 Opt out for one element or a whole block with `data-xl="off"`. Content added later (AJAX, modals) is enhanced too.
@@ -60,6 +62,37 @@ Helper classes: `.xl-toolbar` (wrapping filter bar), `.xl-empty` (empty state), 
 Chrome DevTools device mode (iPhone 12 Pro 390px, iPad Mini 768px). Desktop Chrome windows can't be narrower than
 ~500px, so resize the browser only for tablet checks.
 
+## Form cards: collapse, reorder, required counter (to-do U1)
+Every `.card` that has a direct `.card-header` and sits inside a `<form>` gets, from `xl-ui.js` (no per-view code):
+- a **collapse chevron** in the header; a collapsed card shows only its header;
+- a **drag grip** when the card has card siblings: drag it, or focus it and press **Alt + ↑ / ↓**;
+- a **required badge** `filled/total` (amber until complete, then green; hidden when the card has no required field). It
+  counts Backpack's `.form-group.required` wrappers plus any `[required]` control outside one (a radio / checkbox group
+  counts once), and updates live on `input` / `change` (Select2's jQuery `change` too).
+
+The order and the collapsed cards are saved per screen in the browser (`localStorage` `xl.cards:{path}`, record ids in the
+path are ignored, so every edit page of an entity shares one layout). When the browser flags an invalid field inside a
+collapsed card on submit, the card opens so the field can be focused.
+
+For the counter to be right, keep each required input inside its card and mark it `required` (or use a Backpack
+FormRequest rule `required`). Opt out a card or a whole form with `data-xl="off"`. A card without a header is left alone.
+
+## Density: text size and spacing (to-do U3)
+| Setting (site default) | Values | Default |
+|---|---|---|
+| `ui.density.text` | `xs` (14 px root) · `sm` (15 px) · `md` (Tabler standard, 16 px) · `lg` (17 px) | `sm` |
+| `ui.density.space` | `compact` (×0.5) · `cozy` (×0.75) · `comfortable` (Tabler standard) | `compact` |
+
+- Each user can override both in the **Appearance** panel (*Text size*, *Spacing*; "Site default" follows Settings).
+  The choice is saved in that browser (`localStorage` `xl.theme`).
+- The render-blocking bootstrap (`inc/theme_styles.blade.php`) sets `<html data-xl-text data-xl-space>` before the first
+  paint, so nothing jumps. `App\Support\UiDensity::defaults()` validates the settings (an unknown value → the Tabler
+  standard).
+- CSS (`xl-ui.css`): the text size scales the root font size (Tabler sizes everything in `rem`); the spacing scale
+  (`--xl-space`) tightens card padding, form-group margins, the page header and the page body. **Style with rem and
+  Tabler variables** so your screen follows both; never hard-code px font sizes or paddings.
+- JS: `XL.theme.set('text', 'lg')`, `XL.theme.set('space', '')` (back to the site default).
+
 ## Theme, layout and the dev UI kit (DEC-067)
 **Appearance panel** — the palette icon in the top bar, or *Appearance* in the user menu. Every user can choose:
 - colour mode: light / dark / system;
@@ -67,13 +100,14 @@ Chrome DevTools device mode (iPhone 12 Pro 390px, iPad Mini 768px). Desktop Chro
 - theme base: slate / gray / zinc / neutral / stone;
 - font: sans / serif / mono / comic;
 - corner radius: 0 – 2;
+- text size: XS / S / M / L, and spacing: compact / cozy / roomy (U3; default = the site setting);
 - menu layout: top menu / sidebar / dark sidebar.
 
 The choice is saved in that browser only. All of it is Tabler 1.4's own theming, so **your screen follows it for free
 as long as you style with tokens** (`bg-*-lt`, `text-secondary`, `var(--tblr-*)`).
 
 ```js
-XL.theme.get();                        // {mode, primary, base, font, radius, layout}
+XL.theme.get();                        // {mode, primary, base, font, radius, text, space, layout}
 XL.theme.set('primary', 'teal');       // also 'mode' → light|dark|system, 'layout' → horizontal|vertical|vertical_dark
 XL.theme.token('--tblr-primary');      // resolved colour, for charts / canvas
 XL.theme.onChange(state => rebuildMyChart());

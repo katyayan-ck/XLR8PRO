@@ -283,10 +283,10 @@ The booking team owns it (DEC-034); these are the items we know of.
 
 | # | Item | Status | Priority | Plan |
 |---|---|---|---|---|
-| U1 | Standard form screens: same header style, minimal spacing, smaller font; every card collapsible + draggable (order remembered) with **required filled / total** in the header | 🔴 → in progress | P1 | See the U1 plan below the table. |
+| U1 | Standard form screens: same header style, minimal spacing, smaller font; every card collapsible + draggable (order remembered) with **required filled / total** in the header | 🟡 shared layer ✅ 29-09 (every form card with a header; compact density default); per-screen header conversion + a browser check left | P1 | See the U1 plan below the table. |
 | U2 | Use the UI-kit elements for the best UX | 🟡 | P1 | Rule added; each screen converges when touched (`ui-design-progress.md` tracks the rest) |
-| U3 | Font size + spacing / margin / padding controller | 🔴 → in progress | P1 | See the U3 plan below the table. |
-| U4 | Caching / optimisation, lazy loading | 🟡 | P1 | See the U4 plan below the table. |
+| U3 | Font size + spacing / margin / padding controller | ✅ 29-09 | P1 | Settings `ui.density.text` / `ui.density.space` + the Appearance panel (`docs/utilities/ui-kit.md`) |
+| U4 | Caching / optimisation, lazy loading | 🟡 lazy images ✅ 29-09 | P1 | See the U4 plan below the table. |
 | U5 | Select2, flatpickr, badges, buttons, tabs, accordions wherever they fit | 🟡 | P1 | Rule added; the shared layer already upgrades native inputs; convert the dense legacy forms screen by screen |
 | U6 | Guides updated on every change | ✅ rule | — | `.ai/rules/app.md` standing rule; the go-live wrap-up audits guides vs code |
 | U7 | Central uniform error / response / exception handling with module-wise codes + messages | 🔴 | P1 | See the U7 plan below the table. |
@@ -300,14 +300,20 @@ The booking team owns it (DEC-034); these are the items we know of.
   (order saved per user + page), and a required-fields counter that updates live.
 - A compact form density.
 - A standard page-header partial.
+- **Done 29-09:** the shared enhancement (collapse, drag + Alt+↑/↓, required badge, order / collapsed per screen, invalid
+  fields open their card) and the compact density default. **Left:** screens whose cards have no header (most Backpack
+  CRUD forms render one header-less card) get headers as they are converted; a real-browser check on the quotation /
+  booking forms.
 
 **U3 plan:**
 - Site defaults in Settings (`ui.density.font_scale`, `ui.density.space_scale`).
 - A per-user override in the Appearance panel (font size S / M / L, spacing compact / cozy / comfortable), applied as
   CSS variables on `<html>`.
+- **Done 29-09** as `ui.density.text` (xs / sm / md / lg, default sm) and `ui.density.space` (compact / cozy /
+  comfortable, default compact).
 
 **U4 plan:**
-- Images: `loading="lazy"` / `decoding="async"` everywhere (shared layer).
+- Images: `loading="lazy"` / `decoding="async"` everywhere (shared layer). ✅ 29-09
 - Deploy: `config:cache` / `route:cache` / `view:cache` (O2).
 - Cache: Redis (O7).
 - Queries: settings / keyword / org caches ✅; add caches for the menu counts and the dashboard widgets ✅; review

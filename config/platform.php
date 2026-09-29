@@ -121,6 +121,8 @@ return [
         'security.screen_lock_enabled' => ['value' => true, 'type' => 'bool', 'label' => 'Show "Lock screen" in the user menu'],
         'security.csp_mode' => ['value' => 'report', 'type' => 'string', 'label' => 'Content Security Policy: off | report (log violations only) | enforce'],
         'security.unlock_max_attempts' => ['value' => 5, 'type' => 'int', 'label' => 'Wrong unlock passwords before the session is signed out'],
+        'ui.density.text' => ['value' => 'sm', 'type' => 'string', 'label' => 'Default text size on every screen: xs | sm | md (Tabler standard) | lg — users can pick their own in Appearance (to-do U3)'],
+        'ui.density.space' => ['value' => 'compact', 'type' => 'string', 'label' => 'Default spacing (padding / margins) on every screen: compact | cozy | comfortable (Tabler standard) — users can pick their own in Appearance (to-do U3)'],
         'branding.logo' => ['value' => '', 'type' => 'image', 'label' => 'Site logo — admin header / sidebar (links to the dashboard), login page and PDFs / prints; upload an image (DEC-083)'],
         'pricing.last_updated_at' => ['value' => '', 'type' => 'string', 'label' => 'Pricing last updated — set automatically on any published-price, vehicle master or accessory change; the app re-syncs its offline data when it moves (DEC-083)'],
     ],

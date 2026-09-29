@@ -4,6 +4,7 @@
 reverts by the booking team).
 
 ## Just done (latest first)
+- U1 / U3 / U4: collapsible + draggable form cards with required badges (`xl-ui.js`), density settings `ui.density.*` + Appearance controls, lazy images; `UiDensityTest`.
 - U11 API docs: `docs/api/index.md`, pricing + system-settings docs and Postman collections; BUG-207 logged (settings API exposure).
 - U8 branded error pages (public + admin in-shell, 500 reference id in logs); the accomplishments log rule + `docs/accomplishments/29-09-2026.md`.
 - BUG-198 fixed:
@@ -26,9 +27,10 @@ reverts by the booking team).
 
 ## In progress / next (to-do `docs/plans/2026-09-29-go-live-todo.md`)
 1. **U11 API docs:** remaining modules: auth, devices, notifications / alerts / messages, documents, history, webhooks.
-2. **U1 / U3:** collapsible + draggable cards with required counters (the `xl-ui.js` enhancement); the density
-   controller (Settings `ui.density.*` + the Appearance panel).
-3. **U7:** the central error pipeline (inventory first, then `withExceptions`).
+2. **U7:** the central error pipeline (inventory first, then `withExceptions`); fix the 422 vs 400 enum mismatch and
+   the unregistered `E002` in `validate_device`.
+3. **U1 per screen:** header-less Backpack form cards get headers when converted; a real-browser check on quotation /
+   booking forms (local MySQL had to be started by hand on 29-09; the web server was not running).
 
 ## Waiting on the owner
 - **Data dictionary:** 5 questions (activity abbreviations, the person-code remap, the keyword clean-up, designations,
