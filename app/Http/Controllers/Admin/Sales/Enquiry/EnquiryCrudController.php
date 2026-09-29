@@ -1241,6 +1241,9 @@ class EnquiryCrudController extends CrudController
             $row['cre_customer_stage'] = $custStageMap[$creFup->cre_customer_stage ?? ''] ?? $creFup->cre_customer_stage ?? '—';
             $row['cre_fup_remarks'] = $creFup->cre_fup_remarks ?? '—';
             $row['cre_next_fup_date'] = $creFup ? $this->formatDate($creFup->cre_next_fup_date, 'd-M-Y H:i') : '—';
+
+            $row['cre_lost_reason'] = $lostReasonMap[$e->cre_lost_reason ?? ''] ?? ($e->cre_lost_reason ?? '—');
+            $row['cre_lost_sub_reason'] = $lostSubReasonMap[$e->cre_lost_sub_reason ?? ''] ?? ($e->cre_lost_sub_reason ?? '—');
         }
 
         if ($type === 'reference') {
