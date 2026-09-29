@@ -681,15 +681,11 @@
                                     <label class="form-label">Referee Type <span class="text-danger">*</span></label>
                                     <select name="referred_by" id="referred_by" class="form-control form-select">
                                         <option value="">Select Referee Type</option>
-                                        <option value="Customer"
-                                            {{ old('referred_by', $enquiry->referred_by ?? '') == 'Customer' ? 'selected' : '' }}>
-                                            Customer</option>
-                                        <option value="Team Member"
-                                            {{ old('referred_by', $enquiry->referred_by ?? '') == 'Team Member' ? 'selected' : '' }}>
-                                            Team Member</option>
-                                        <option value="Promoter"
-                                            {{ old('referred_by', $enquiry->referred_by ?? '') == 'Promoter' ? 'selected' : '' }}>
-                                            Promoter</option>
+                                        @foreach ($referred_by_types as $item)
+                                            <option value="{{ $item['code'] }}"
+                                                {{ old('referred_by', $enquiry->referred_by ?? '') == $item['code'] ? 'selected' : '' }}>
+                                                {{ $item['value'] }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                                 <div class="col-md-4 mb-4">
@@ -880,18 +876,11 @@
                                 <label class="form-label">Care Of <small class="text-muted"></small></label>
                                 <select name="care_of_type" id="care_of_type" class="form-control form-select">
                                     <option value="">Select Care Of</option>
-                                    <option value="1"
-                                        {{ old('care_of_type', $enquiry->care_of_type ?? '') == '1' ? 'selected' : '' }}>
-                                        Son of</option>
-                                    <option value="2"
-                                        {{ old('care_of_type', $enquiry->care_of_type ?? '') == '2' ? 'selected' : '' }}>
-                                        Daughter of</option>
-                                    <option value="3"
-                                        {{ old('care_of_type', $enquiry->care_of_type ?? '') == '3' ? 'selected' : '' }}>
-                                        Married to</option>
-                                    <option value="4"
-                                        {{ old('care_of_type', $enquiry->care_of_type ?? '') == '4' ? 'selected' : '' }}>
-                                        Guardian Name</option>
+                                    @foreach ($care_of_types as $item)
+                                        <option value="{{ $item['code'] }}"
+                                            {{ old('care_of_type', $enquiry->care_of_type ?? '') == $item['code'] ? 'selected' : '' }}>
+                                            {{ $item['value'] }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                             <div class="col-md-5 mb-5">
@@ -1021,18 +1010,11 @@
                                 <label class="form-label">Finance Mode <span class="text-danger">*</span></label>
                                 <select name="fin_mode" id="fin_mode" class="form-control form-select">
                                     <option value="" disabled selected>Select Finance Mode</option>
-                                    <option value="In-house"
-                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'In-house' ? 'selected' : '' }}>
-                                        In-house</option>
-                                    <option value="Customer Self"
-                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Customer Self' ? 'selected' : '' }}>
-                                        Customer Self</option>
-                                    <option value="Cash"
-                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Cash' ? 'selected' : '' }}>Cash
-                                    </option>
-                                    <option value="Yet To Decide"
-                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Yet To Decide' ? 'selected' : '' }}>
-                                        Yet To Decide</option>
+                                    @foreach ($finance_modes as $item)
+                                        <option value="{{ $item['code'] }}"
+                                            {{ old('fin_mode', $enquiry->fin_mode ?? '') == $item['code'] ? 'selected' : '' }}>
+                                            {{ $item['value'] }}</option>
+                                    @endforeach
                                 </select>
                             </div>
 
