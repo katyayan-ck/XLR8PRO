@@ -27,12 +27,13 @@ class UserBulkImportPageTest extends TestCase
         $branch = DB::table('xlr8_admin_branch')->where('is_active', 1)->value('code');
         $location = DB::table('xlr8_admin_location')->where('branch_code', $branch)->value('code');
         $department = DB::table('xlr8_admin_department')->value('code');
+        $vertical = DB::table('xlr8_admin_vertical')->whereNull('deleted_at')->value('code'); // DEC-089: required
         $designation = DB::table('xlr8_admin_designation')->where('name', '!=', 'superadmin')->value('name');
 
         $book = new Spreadsheet;
         $book->getActiveSheet()->setTitle('Users_Import')->fromArray([
-            ['Emp Code*', 'Employee Name*', 'Personal Contact Number*', 'Official Contact Number*', 'Designation*', 'Primary Department*', 'Primary Branch*', 'Primary Location*'],
-            ['BMPL-9911', 'Web Import Tester', '9876500011', '9876500011', $designation, $department, $branch, $location],
+            ['Emp Code*', 'Employee Name*', 'Personal Contact Number*', 'Official Contact Number*', 'Designation*', 'Primary Department*', 'Primary Branch*', 'Primary Location*', 'Vertical'],
+            ['BMPL-9911', 'Web Import Tester', '9876500011', '9876500011', $designation, $department, $branch, $location, $vertical],
         ]);
         $path = tempnam(sys_get_temp_dir(), 'wb').'.xlsx';
         (new Xlsx($book))->save($path);

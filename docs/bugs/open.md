@@ -48,6 +48,7 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-206 | `person_code` (the person business key, referenced by 14 tables incl. users, bookings, enquiries) holds the person's **PAN (51) or Aadhaar (160)** for 211 of 215 people — government IDs as a key spread into every referencing row, URLs and logs (DPDP / UIDAI Aadhaar-storage risk) | High | OPEN (owner decision: surrogate key + remap — data dictionary §person) | 29-09-2026 | — |
 | BUG-207 | v1 `system-settings` read endpoints are open to every signed-in app user and return **all** visible settings (encrypted ones as ciphertext); `GET system-settings/{key}` returns the raw row (validation rules, defaults); update / import go through the legacy `SystemSettingService` | Medium | OPEN (API access change — owner decision; proposed app-facing allow-list) | 29-09-2026 | — |
 | BUG-209 | `BaseController::authorize()` never works: `canPerform()` calls `parent::authorize()`, which `Controller` does not have (always false), and the throw passed its arguments in the wrong order (a `TypeError` → 500). `PUT api/v1/system-settings/{key}` and `POST …/import/json` therefore always fail; there is no `SystemSetting` policy either | Medium | PARTLY FIXED 29-09-2026: the 500 is now the intended 403; making the endpoints work waits on BUG-207 (owner) | 29-09-2026 | — |
+| BUG-218 | Legacy employees without the primaries DEC-089 now requires: of 200 active employees 24 have no branch, 39 no location, 5 no department, 12 no division, 35 no vertical (local `xlrm`, 30-09) | Medium | OPEN — data (HR / owner): fill through the new users workbook (W10) or the bulk screen (W11) | 30-09-2026 | — |
 
 ## Entries
 
@@ -446,3 +447,16 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
     check would still deny everyone but the superadmin.
 - **Fix so far:** the throw passes the ability (`You are not authorized to update.`, 403). Not changed: `canPerform()`
   (fixing it would open the legacy write path that BUG-207 proposes to replace).
+
+### BUG-218 — Legacy employees without the primaries DEC-089 now requires: of 200 active employees 24 have no branch, 39 no location, 5 no department, 12 
+
+- **Status:** OPEN (data; owner / HR to fill).
+- **Severity:** Medium (these employees can't be routed by branch / department scope, approvals or dashboards correctly).
+- **Found:** 30-09-2026, enforcing the DEC-089 rule (every employee has a primary branch, location, department, division
+  and a vertical).
+- **Where:** `xlr8_admin_employee` — counts on local `xlrm`: no branch 24, no location 39, no department 5, no division 12,
+  no vertical 35 (of 200 active). The test copy also had divisions outside their department (e.g. PRSNL under SLS, WD under IT).
+- **Description:** the rule is enforced for new employees and for edits that change a primary; existing rows are left as
+  they are (DEC-050 / DEC-054: no silent correction), so they need filling.
+- **Proposed solution:** HR exports the new users workbook (W10), fills the blanks from the dropdowns and re-imports; or uses
+  the bulk screen (W11). A blank location / division then defaults to the parent's same-code child.

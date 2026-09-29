@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services\Org;
 
+use App\Models\Admin\Division;
 use App\Models\Admin\Employee;
+use App\Models\Admin\Location;
 use App\Rules\EmployeeCode;
 use App\Support\Entity\EntityService;
 use App\Support\Entity\Field;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Employees (xlr8_admin_employee) — their only write path (DEC-050/054). Used by the User
@@ -107,8 +110,61 @@ final class EmployeeService extends EntityService
         return $data;
     }
 
+    /** @var array<string, string> DEC-089: fields every employee must carry */
+    private const REQUIRED_PRIMARIES = [
+        'primary_branch_code' => 'Primary branch', 'primary_loc_code' => 'Primary location',
+        'primary_dept_code' => 'Primary department', 'primary_div_code' => 'Primary division', 'vertical_code' => 'Vertical',
+    ];
+
     protected function beforeCreate(array &$data): void
     {
         $data['code'] ??= $this->nextCode();
+        $this->checkPrimaries($data, null);
+    }
+
+    protected function beforeUpdate(Model $model, array &$data): void
+    {
+        $this->checkPrimaries($data, $model);
+    }
+
+    /**
+     * DEC-089 (owner rule 30-09): the primary location belongs to the primary branch and the primary division to the
+     * primary department (the four primaries and the vertical are required fields). Checked when either side changes.
+     */
+    /** @param  array<string, mixed>  $data */
+    private function checkPrimaries(array &$data, ?Model $model): void
+    {
+        // a blank primary location / division defaults to the parent's same-code child (every parent has one, DEC-089)
+        // — on create, or when the parent itself changes; never on a re-save of an unchanged legacy row (DEC-050: no silent
+        // correction of stored data)
+        foreach (['primary_loc_code' => 'primary_branch_code', 'primary_div_code' => 'primary_dept_code'] as $child => $parent) {
+            $parentChanges = $model === null || (array_key_exists($parent, $data) && (string) $data[$parent] !== (string) $model->getAttribute($parent));
+            if ($parentChanges && ! empty($data[$parent]) && empty($data[$child]) && empty($model?->getAttribute($child))) {
+                $data[$child] = $data[$parent];
+            }
+        }
+        $value = fn (string $key) => array_key_exists($key, $data) ? $data[$key] : $model?->getAttribute($key);
+        // DEC-054: only what this save changes is checked (legacy rows that already break the rule stay editable)
+        $changed = fn (string $key) => $model === null ? true : (array_key_exists($key, $data) && (string) $data[$key] !== (string) $model->getAttribute($key));
+        // required on create; on update only when the edit would clear a value that is set (legacy rows that never had
+        // one stay editable until they get one)
+        foreach (self::REQUIRED_PRIMARIES as $key => $label) {
+            $clearing = $model !== null && array_key_exists($key, $data) && ! empty($model->getAttribute($key));
+            if (($model === null || $clearing) && empty($value($key))) {
+                $this->fail($key, "{$label} is required (DEC-089: every employee has a primary branch, location, department, division and a vertical).");
+            }
+        }
+        if ($changed('primary_branch_code') || $changed('primary_loc_code')) {
+            [$branch, $location] = [$value('primary_branch_code'), $value('primary_loc_code')];
+            if ($branch && $location && Location::query()->where('code', $location)->value('branch_code') !== $branch) {
+                $this->fail('primary_loc_code', "Primary location {$location} does not belong to primary branch {$branch}.");
+            }
+        }
+        if ($changed('primary_dept_code') || $changed('primary_div_code')) {
+            [$department, $division] = [$value('primary_dept_code'), $value('primary_div_code')];
+            if ($department && $division && Division::query()->where('code', $division)->value('dept_code') !== $department) {
+                $this->fail('primary_div_code', "Primary division {$division} does not belong to primary department {$department}.");
+            }
+        }
     }
 }

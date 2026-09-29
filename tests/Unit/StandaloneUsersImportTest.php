@@ -31,25 +31,26 @@ class StandaloneUsersImportTest extends TestCase
         $branch = DB::table('xlr8_admin_branch')->where('is_active', 1)->value('code');
         $location = DB::table('xlr8_admin_location')->where('branch_code', $branch)->value('code');
         $department = DB::table('xlr8_admin_department')->value('code');
+        $vertical = DB::table('xlr8_admin_vertical')->whereNull('deleted_at')->value('code'); // DEC-089: required
         $designation = DB::table('xlr8_admin_designation')->where('name', '!=', 'superadmin')->value('name');
         $existing = DB::table('xlr8_admin_employee')->whereNotNull('person_code')->first();
 
-        if (! $branch || ! $location || ! $department || ! $designation || ! $existing) {
+        if (! $branch || ! $location || ! $department || ! $vertical || ! $designation || ! $existing) {
             $this->markTestSkipped('Test database lacks org/employee reference data.');
         }
 
         $headers = ['Emp Code*', 'Employee Name*', 'Personal Contact Number*', 'Official Contact Number*', 'PAN No.',
-            'Aadhaar No', 'Designation*', 'Primary Department*', 'Primary Branch*', 'Primary Location*', 'Employee Status'];
+            'Aadhaar No', 'Designation*', 'Primary Department*', 'Primary Branch*', 'Primary Location*', 'Employee Status', 'Vertical'];
 
         $book = new Spreadsheet;
         $users = $book->getActiveSheet()->setTitle('Users_Import');
         $users->fromArray([
             $headers,
-            ['BMPL-9901', 'Test Importer One', '9876500001', '9876500001', 'ABCTE9901K', '', $designation, $department, $branch, $location, 'Active'],
+            ['BMPL-9901', 'Test Importer One', '9876500001', '9876500001', 'ABCTE9901K', '', $designation, $department, $branch, $location, 'Active', $vertical],
             // existing employee: must be updated, never re-pointed to another person
-            [$existing->code, 'Existing Employee Renamed', '', '', '', '', $designation, $department, $branch, $location, 'Active'],
+            [$existing->code, 'Existing Employee Renamed', '', '', '', '', $designation, $department, $branch, $location, 'Active', $existing->vertical_code ?: $vertical],
             // missing mandatory name: skipped
-            ['BMPL-9902', '', '9876500002', '', '', '', $designation, $department, $branch, $location, 'Active'],
+            ['BMPL-9902', '', '9876500002', '', '', '', $designation, $department, $branch, $location, 'Active', $vertical],
         ]);
         $reporting = $book->createSheet()->setTitle('Reporting');
         $reporting->fromArray([['Name', 'Emp Code', 'USER ID'], ['', $existing->code, 'x']]);

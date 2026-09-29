@@ -114,3 +114,17 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
   `DRIVETRAIN` (22 vehicles use it).
 - **Tests:** `PricingVehicleInfoTest` +2 (strict import; dropdowns / hidden sheet / named ranges / dependent sub-segment);
   pricing suite 71 passed. Guide `tech-guides/modules/pricing.md`.
+
+## W12 / DEC-089 Phase A — org rules
+- **`app/Services/Org/BranchService.php`, `app/Services/Vehicle/SegmentService.php`:** `afterSave()` creates the same-code,
+  same-name Location / Sub-segment for a new parent (Department already did it for Division).
+- **Migration** `2026_09_30_024855_create_missing_same_code_org_children` (entity services, skip + log on conflicts or bad
+  legacy codes such as `TESTSEG`; `down()` removes only its own rows): run on `xlrm` (no gaps) and `xlrm_testing` (CSD).
+- **`app/Services/Org/EmployeeService.php`:** `checkPrimaries()` in `beforeCreate` / `beforeUpdate` — required primaries +
+  vertical on create, no clearing a set value on update; blank location / division → the parent's same-code child;
+  location ∈ branch, division ∈ department when either changes (DEC-054: unchanged legacy values are not re-checked).
+- **Views:** `admin/org/user/{create,edit}.blade.php` — vertical required (employee users) with a required mark.
+- **Tests:** new `SameCodeChildTest` (2), `EmployeePrimariesRuleTest` (4); fixtures given a vertical / primaries in
+  `UserOnboardingTest`, `EmployeeUserEntityServicesTest`, `StandaloneUsersImportTest`, `UserBulkImportPageTest`; related
+  suites 340 passed.
+- **BUG-218 logged:** legacy employees missing primaries / vertical (data to fill).

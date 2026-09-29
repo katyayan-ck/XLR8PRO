@@ -9,6 +9,7 @@ use App\Models\Admin\Division;
 use App\Models\Admin\Employee;
 use App\Models\Admin\EmployeeHistory;
 use App\Models\Admin\Location;
+use App\Models\Admin\Vertical;
 use App\Models\IAM\Role;
 use App\Models\User;
 use App\Services\HR\EmployeeJourneyService;
@@ -53,7 +54,7 @@ class UserOnboardingTest extends TestCase
         return strtoupper(substr(uniqid(), -6));
     }
 
-    /** @return array{branch: Branch, location: Location, department: Department, division: Division, designation: Designation} */
+    /** @return array{branch: Branch, location: Location, department: Department, division: Division, designation: Designation, vertical: Vertical} */
     private function orgFixture(): array
     {
         $suffix = $this->shortCode();
@@ -62,8 +63,10 @@ class UserOnboardingTest extends TestCase
         $department = Department::create(['code' => 'D'.$suffix, 'name' => 'Test Department']);
         $division = Division::create(['dept_code' => $department->code, 'code' => 'V'.$suffix, 'name' => 'Test Division']);
         $designation = Designation::create(['code' => 'G'.$suffix, 'name' => 'Test Designation', 'rank' => 3]);
+        // DEC-089: every employee needs a vertical
+        $vertical = Vertical::create(['code' => 'T'.$suffix, 'name' => 'Test Vertical']);
 
-        return compact('branch', 'location', 'department', 'division', 'designation');
+        return compact('branch', 'location', 'department', 'division', 'designation', 'vertical');
     }
 
     public function test_user_type_seeder_creates_dsa_and_customer_types(): void
@@ -92,6 +95,7 @@ class UserOnboardingTest extends TestCase
             'primary_branch_code' => $fixture['branch']->code,
             'primary_loc_code' => $fixture['location']->code,
             'primary_dept_code' => $fixture['department']->code,
+            'vertical_code' => $fixture['vertical']->code,
             'primary_div_code' => $fixture['division']->code,
             'is_active' => '1',
         ]);
@@ -131,6 +135,7 @@ class UserOnboardingTest extends TestCase
             'primary_branch_code' => $fixture['branch']->code,
             'primary_loc_code' => $fixture['location']->code,
             'primary_dept_code' => $fixture['department']->code,
+            'vertical_code' => $fixture['vertical']->code,
             'primary_div_code' => $fixture['division']->code,
             'addon_branch_codes' => ['NO-SUCH-BR'],
         ]);
@@ -163,6 +168,7 @@ class UserOnboardingTest extends TestCase
             'primary_branch_code' => $fixture['branch']->code,
             'primary_loc_code' => $fixture['location']->code,
             'primary_dept_code' => $fixture['department']->code,
+            'vertical_code' => $fixture['vertical']->code,
             'primary_div_code' => $fixture['division']->code,
             'is_active' => '1',
             'addon_branch_codes' => [$addonBranch->code],
@@ -194,6 +200,7 @@ class UserOnboardingTest extends TestCase
             'primary_loc_code' => $newLocation->code,
             'primary_dept_code' => $employee->primary_dept_code,
             'primary_div_code' => $employee->primary_div_code,
+            'vertical_code' => $employee->vertical_code,
             'is_active' => '1',
         ]);
 
@@ -220,6 +227,7 @@ class UserOnboardingTest extends TestCase
             'primary_loc_code' => $newLocation->code,
             'primary_dept_code' => $employee->primary_dept_code,
             'primary_div_code' => $employee->primary_div_code,
+            'vertical_code' => $employee->vertical_code,
             'is_active' => '1',
             'change_reason' => 'transfer',
             'effective_date' => now()->toDateString(),
@@ -269,6 +277,7 @@ class UserOnboardingTest extends TestCase
             'primary_branch_code' => $fixture['branch']->code,
             'primary_loc_code' => $fixture['location']->code,
             'primary_dept_code' => $fixture['department']->code,
+            'vertical_code' => $fixture['vertical']->code,
             'primary_div_code' => $fixture['division']->code,
             'employment_type' => 'permanent',
             'employment_status' => 'active',
@@ -292,6 +301,7 @@ class UserOnboardingTest extends TestCase
                 'primary_loc_code' => $employee->primary_loc_code,
                 'primary_dept_code' => $employee->primary_dept_code,
                 'primary_div_code' => $employee->primary_div_code,
+                'vertical_code' => $employee->vertical_code,
             ],
             'other',
             now(),

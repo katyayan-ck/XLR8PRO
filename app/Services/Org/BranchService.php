@@ -65,5 +65,17 @@ class BranchService extends EntityService
         }
 
         $this->syncMedia($model, $input, 'branch_image');
+
+        // DEC-089: every branch has a location with the same code and name (skipped if that code is already taken)
+        if ($created && ! Location::withTrashed()->where('code', $model->code)->exists()) {
+            app(LocationService::class)->create([
+                'branch_code' => $model->code,
+                'code' => $model->code,
+                'name' => $model->name,
+                'city' => $model->city,
+                'state' => $model->state,
+                'is_active' => true,
+            ]);
+        }
     }
 }

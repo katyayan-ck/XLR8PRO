@@ -25,6 +25,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: W12 / DEC-089 Phase A — same-code children (services + migration), employee primaries + vertical enforced (`EmployeeService::checkPrimaries()`), BUG-218 logged.
 - 30-09: W9 — Vehicle Info export with master dropdowns (hidden Lists sheet, dependent sub-segment) and a strict import; `AWD` added to DRIVETRAIN.
 - 30-09: Continuity rule added for all agents (`.ai/guidelines/10-workflow.md`).
 - 30-09: W8 — My Account in the UI-demo layout with Permissions & scope (`MyAccountService::access()`). Next: W9 Vehicle Info export dropdowns.
@@ -46,7 +47,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-0. **Now: W10–W12 (DEC-089, plan `tech-guides/frs-and-workflows/plans/2026-09-30-users-bulk-and-org-rules-DEC-089.md`)** — owner answered the 4 design questions (comma codes + web picker; blank = keep / None = clear; auto-create same-name children; Aadhaar masked). Next step: Phase A — `afterSave()` in Branch / Department / Segment services creates the same-code child; migration for gaps; user rules; tests.
+0. **Now: W10–W12 (DEC-089, plan `tech-guides/frs-and-workflows/plans/2026-09-30-users-bulk-and-org-rules-DEC-089.md`)** — owner answered the 4 design questions (comma codes + web picker; blank = keep / None = clear; auto-create same-name children; Aadhaar masked). Phase A ✅ (org rules, BUG-218 logged). Next step: Phase B — the new users workbook (export: fixed headers, Lists sheet with codes incl. ALL / NONE, dependent primary location / division via named ranges; import: comma codes, blank = keep, None = clear, masked Aadhaar keeps stored, employee history via EmployeeJourneyService; old DEC-040 file still importable). Start by reading `StandaloneUsersImport` (632 lines) to reuse its row pipeline.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.
 3. **U1 per screen:** header-less Backpack form cards get headers when converted; a real-browser check of quotation /

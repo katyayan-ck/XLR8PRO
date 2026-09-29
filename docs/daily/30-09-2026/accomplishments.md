@@ -93,3 +93,14 @@ drivetrain are checked too. `AWD` was added to the drivetrain master because veh
 **Verified:** 2 new tests (strict import, dropdown workbook structure); the pricing suite, 71 passed; migration run on
 both databases. **Left:** duplicate keyword codes (`AUTOMATIC` / `AUTOMATIC_1` …) are collapsed in the dropdowns; the
 real clean-up is F6.
+
+### 10. Org rules enforced everywhere — W12 (DEC-089 Phase A)
+
+**Delivered:** every new branch / department / segment gets its same-code, same-name location / division / sub-segment,
+and existing gaps were filled by a fail-safe migration. Every new employee must have a primary branch, location,
+department, division and a vertical; a blank location / division takes the parent's same-code child; a location must
+belong to its branch and a division to its department. Legacy rows stay editable (never silently corrected); the gaps
+are listed in BUG-218 for HR. The user forms mark vertical as required.
+
+**Verified:** 6 new tests; org / IAM / import / vehicle / pricing / booking suites 340 passed; migration up / down / up on
+the test copy. **Left:** filling the legacy gaps (BUG-218) — easiest once the new workbook (W10) is in.

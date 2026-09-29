@@ -32,6 +32,19 @@ final class SegmentService extends EntityService
         ];
     }
 
+    /** DEC-089: every segment has a sub-segment with the same code and name (skipped if that code is already taken). */
+    protected function afterSave(Model $model, array $input, bool $created): void
+    {
+        if ($created && ! SubSegment::withTrashed()->where('code', $model->code)->exists()) {
+            app(SubSegmentService::class)->create([
+                'segment_code' => $model->code,
+                'code' => $model->code,
+                'name' => $model->name,
+                'is_active' => true,
+            ]);
+        }
+    }
+
     protected function beforeUpdate(Model $model, array &$data): void
     {
         if ($model->is_active && array_key_exists('is_active', $data) && ! $data['is_active']) {

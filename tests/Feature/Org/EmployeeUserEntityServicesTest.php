@@ -40,10 +40,25 @@ class EmployeeUserEntityServicesTest extends TestCase
         $employees = app(EmployeeService::class);
         $expected = $employees->nextCode();
 
-        $employee = $employees->create(['person_code' => $this->personCode(), 'designation_code' => strtolower($designation), 'employment_type' => 'Contract']);
+        $employee = $employees->create(['person_code' => $this->personCode(), 'designation_code' => strtolower($designation), 'employment_type' => 'Contract'] + $this->primaries());
 
         $this->assertSame($expected, $employee->code);
         $this->assertSame([$designation, $designation, 'contract', 'active'], [$employee->designation_code, $employee->desig_code, $employee->employment_type, $employee->employment_status]);
+    }
+
+    /**
+     * Valid primaries from the test copy (DEC-089: every employee has a primary branch, location, department, division
+     * and a vertical — location / division default to the parent's same-code child).
+     *
+     * @return array<string, string>
+     */
+    private function primaries(): array
+    {
+        $branch = DB::table('xlr8_admin_branch')->whereNull('deleted_at')->value('code') ?? $this->markTestSkipped('no branch');
+        $department = DB::table('xlr8_admin_department')->whereNull('deleted_at')->value('code') ?? $this->markTestSkipped('no department');
+        $vertical = DB::table('xlr8_admin_vertical')->whereNull('deleted_at')->value('code') ?? $this->markTestSkipped('no vertical');
+
+        return ['primary_branch_code' => $branch, 'primary_dept_code' => $department, 'vertical_code' => $vertical];
     }
 
     public function test_an_unknown_org_code_is_rejected(): void
@@ -54,7 +69,7 @@ class EmployeeUserEntityServicesTest extends TestCase
 
     public function test_a_bad_stored_value_does_not_block_editing_another_field(): void
     {
-        $employee = app(EmployeeService::class)->create(['person_code' => $this->personCode()]);
+        $employee = app(EmployeeService::class)->create(['person_code' => $this->personCode()] + $this->primaries());
         DB::table('xlr8_admin_employee')->where('id', $employee->id)->update(['designation_code' => 'GONE-DESIG']);
 
         $updated = app(EmployeeService::class)->update($employee->fresh(), ['designation_code' => 'GONE-DESIG', 'mile_id' => 'M-77']);
@@ -113,7 +128,7 @@ class EmployeeUserEntityServicesTest extends TestCase
     public function test_hr_designation_change_goes_through_the_employee_service(): void
     {
         $designation = DB::table('xlr8_admin_designation')->whereNull('deleted_at')->value('code') ?? $this->markTestSkipped('no designation');
-        $employee = app(EmployeeService::class)->create(['person_code' => $this->personCode()]);
+        $employee = app(EmployeeService::class)->create(['person_code' => $this->personCode()] + $this->primaries());
 
         app(HRJourneyService::class)->transfer($employee->code, $designation, now());
 

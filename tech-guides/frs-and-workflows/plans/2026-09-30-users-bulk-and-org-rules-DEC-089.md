@@ -1,6 +1,6 @@
 # Plan: users bulk export / import, bulk create / edit screen, org rules (DEC-089)
 
-> **Status (30-09-2026): 🟡 in progress** — Phase A next. To-do rows W10, W11, W12. Owner answers recorded below.
+> **Status (30-09-2026): 🟡 in progress** — Phase A ✅ (org rules); Phase B (workbook) next. To-do rows W10, W11, W12. Owner answers recorded below.
 
 ## Context
 The owner asked (30-09) for a users workbook with fixed headers, master-fed dropdowns, dependent lists and multi-select

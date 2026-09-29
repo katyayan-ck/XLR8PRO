@@ -188,3 +188,14 @@ $chain = collect(OrgService::getUpline($user->username))->pluck('display_name');
 ## Testing
 Use real org rows from `xlrm_testing` (e.g. `Branch::query()->active()->value('code')`) and the entity services for
 new rows inside `DatabaseTransactions`. Remember `OrgService` caches: tests use the array cache, so each test starts cold.
+
+## Org rules (DEC-089, owner 30-09)
+- **Same-code child:** `BranchService` / `DepartmentService` / `SegmentService` create a Location / Division / Sub-segment with
+  the parent's code and name after a new parent is saved (skipped when that code is already used by another row).
+  Existing gaps: migration `2026_09_30_024855_create_missing_same_code_org_children` (logs and skips codes that break the
+  child's rules).
+- **Employee primaries** (`EmployeeService::checkPrimaries()`): primary branch, location, department, division and vertical
+  are required on create; on update only when an edit would clear a set value (legacy rows stay editable — BUG-218 lists
+  them). A blank location / division takes the parent's same-code child (on create or when the parent changes). The
+  location must belong to the branch and the division to the department, checked only when one of them changes.
+- The user create / edit forms mark vertical required with the other primaries (employee users).

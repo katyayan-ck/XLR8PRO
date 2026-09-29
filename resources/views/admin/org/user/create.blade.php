@@ -161,7 +161,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label>Vertical</label>
+                                    <label>Vertical <span class="required-mark">*</span></label>
                                     <select name="vertical_code" class="form-select">
                                         <option value="">Select</option>
                                         @foreach ($verticals as $v)
@@ -399,7 +399,7 @@ function toggleCards() {
     permissionCard.classList.toggle('hidden-card', !userTypeSelect.value);
     nonEmployeeRoleRow.classList.toggle('hidden-card', emp);
 
-    ['designation_code', 'primary_branch_code', 'primary_loc_code', 'primary_dept_code', 'primary_div_code'].forEach(name => {
+    ['designation_code', 'primary_branch_code', 'primary_loc_code', 'primary_dept_code', 'primary_div_code', 'vertical_code'].forEach(name => {
         const el = document.querySelector(`[name="${name}"]`);
         if (el) emp ? el.setAttribute('required', 'required') : el.removeAttribute('required');
     });
