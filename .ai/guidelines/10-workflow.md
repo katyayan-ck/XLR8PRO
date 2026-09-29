@@ -14,6 +14,16 @@ conflict · auth/permission/secret changes · UAT-visible behaviour changes beyo
 **Logging (mandatory)**
 - Decision → `docs/decisions/decision-log.md` (DEC-NNN, append-only, written before the change).
 - Change → `docs/refactor/ai-changelogs-DD-MM-YYYY.md` (files, before → after, reason, DEC id).
+- **With every commit and every major change (user standing instruction, 29-09-2026):**
+  - update the day's changelog;
+  - update the current task status (`.ai/state/current.md`, plus the go-live to-do
+    `docs/plans/2026-09-29-go-live-todo.md` when an item moves);
+  - rewrite the handoff `.ai/state/handoff.md`: what was just done, what is in progress (exact next step, files touched,
+    uncommitted work), open questions for the owner, and how to verify. A new session or agent must be able to continue
+    from it alone.
+- **Code quality:** code is properly commented (a PHPDoc on every class and public method: purpose, params, return
+  shape, an example where useful; inline comments only for non-obvious logic, with the DEC / BUG id) and formatted
+  (pint, the project style) before every commit.
 - New bug found anywhere → `docs/refactor/known-bugs-report.md` immediately (BUG-NNN; never delete
   entries; update status in place; keep the index table current). Check `.ai/state/bugs-index.md` first.
 

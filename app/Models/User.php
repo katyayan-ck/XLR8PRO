@@ -86,11 +86,25 @@ class User extends Authenticatable
         return $this->hasMany(UserPermissionDenial::class);
     }
 
+    /** @var array<string, true>|null denied permission names, loaded once per user instance (BUG-198) */
+    private ?array $deniedPermissionNames = null;
+
+    /**
+     * Checked by the Gate `before` hook on every `can()` — so the denials are loaded once per user instance (one query)
+     * instead of one EXISTS query per check (BUG-198).
+     */
     public function deniesPermission(string $permissionName): bool
     {
-        return $this->permissionDenials()
-            ->whereHas('permission', fn ($q) => $q->where('name', $permissionName))
-            ->exists();
+        $this->deniedPermissionNames ??= $this->permissionDenials()->with('permission:id,name')->get()
+            ->mapWithKeys(fn ($denial) => [(string) $denial->permission?->name => true])->all();
+
+        return isset($this->deniedPermissionNames[$permissionName]);
+    }
+
+    /** Forget the loaded denials (after granting / revoking an override on this instance). */
+    public function forgetPermissionDenials(): void
+    {
+        $this->deniedPermissionNames = null;
     }
 
     /**

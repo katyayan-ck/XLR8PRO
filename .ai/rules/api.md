@@ -23,3 +23,11 @@ paths:
 - Never log OTPs, tokens or full phone numbers.
 - Errors: every API error is the envelope with a registered `ErrorCodeEnum` code and its HTTP status; unhandled
   exceptions go through the central handler (never a raw HTML page or stack trace to the app).
+- **API documentation (user standing instruction, 29-09-2026)** — module-wise, kept in step with every API change:
+  - `docs/api/{module}.md`, one section per endpoint: method + URI + route name, auth / middleware, path / query /
+    body params with their validation rules, every possible response (success and each error code) as JSON examples
+    with field descriptions, and notes (rate limits, versioning, DEC ids);
+  - `docs/api/postman/{module}.postman_collection.json` — a Postman v2.1 collection with one request per endpoint
+    (`{{base_url}}`, `{{token}}` variables, example bodies, saved example responses);
+  - the OpenAPI annotations on the controller match both;
+  - `docs/api/index.md` lists the modules.

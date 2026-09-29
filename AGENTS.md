@@ -34,7 +34,7 @@ incl. generated DB schema cards in `knowledge/db/`) · `.ai/state/current.md` (a
 # Workflow (all AI tools)
 
 **Git**
-- Never work on `main`. Branches: `feature/*` or `refactor/*` (current integration branch: `feature/integrations`).
+- Never work on `main`. Branches: `feature/*` or `refactor/*` (working branch: `dev/admin`, kept in sync with `stage`, the shared team branch).
 - Commit at checkpoints with `type(scope): message` (feat, fix, refactor, docs, test, chore, security).
   **Never push, force-push or rewrite history without explicit approval in that turn.**
 
@@ -47,6 +47,16 @@ conflict · auth/permission/secret changes · UAT-visible behaviour changes beyo
 **Logging (mandatory)**
 - Decision → `docs/decisions/decision-log.md` (DEC-NNN, append-only, written before the change).
 - Change → `docs/refactor/ai-changelogs-DD-MM-YYYY.md` (files, before → after, reason, DEC id).
+- **With every commit and every major change (user standing instruction, 29-09-2026):**
+  - update the day's changelog;
+  - update the current task status (`.ai/state/current.md`, plus the go-live to-do
+    `docs/plans/2026-09-29-go-live-todo.md` when an item moves);
+  - rewrite the handoff `.ai/state/handoff.md`: what was just done, what is in progress (exact next step, files touched,
+    uncommitted work), open questions for the owner, and how to verify. A new session or agent must be able to continue
+    from it alone.
+- **Code quality:** code is properly commented (a PHPDoc on every class and public method: purpose, params, return
+  shape, an example where useful; inline comments only for non-obvious logic, with the DEC / BUG id) and formatted
+  (pint, the project style) before every commit.
 - New bug found anywhere → `docs/refactor/known-bugs-report.md` immediately (BUG-NNN; never delete
   entries; update status in place; keep the index table current). Check `.ai/state/bugs-index.md` first.
 
@@ -55,7 +65,7 @@ conflict · auth/permission/secret changes · UAT-visible behaviour changes beyo
 2. Scoped `vendor/bin/phpstan analyse <files> --memory-limit=2G`.
 3. `php artisan test --compact` (or the narrowest relevant `--filter`) — runs on `xlrm_testing`.
    Known pre-existing failures are listed in `.ai/state/current.md`; don't add new ones.
-4. HTTP smoke of touched screens as superadmin **and** a scoped non-superadmin user.
+4. HTTP smoke of **only the touched screens** as superadmin **and** a scoped non-superadmin user (seconds). Run the full suite periodically, and the full screen sweep (`php artisan test --group=smoke`, a few minutes) only before merges — never after every change.
 
 **Database**
 - Schema changes are **Laravel migrations** (guarded with `Schema::hasColumn/hasTable`, working `down()`),
@@ -83,10 +93,11 @@ conflict · auth/permission/secret changes · UAT-visible behaviour changes beyo
 - **Data scoping:** `App\Services\IAM\DataScopeService` on `xlr8_admin_user_scopes`; `ScopedQuery`/`ScopedCrud`
   exist but are not yet switched on (decision pending). Jobs must not depend on a user scope.
 - **API envelope:** `{http_status, success, code, message, data}` via `BaseController` helpers.
-- **Dates:** stored UTC; displayed with `site_date()` / `@sitedate` (site setting `display.date_format`).
+- **Dates:** app timezone `Asia/Kolkata`: timestamps are stored and compared in IST (DEC-046; rows before 26-09-2026 are UTC and are intentionally not converted). Displayed with `site_date()` / `@sitedate` (site setting `display.date_format`).
 - **Labels:** `resources/lang/en/{module}.php` is the single source for field labels & validation names.
 - **Money:** new columns `DECIMAL(15,2)`; legacy varchar money is being normalised (DEC-003).
 - **Every job** sets `$timeout`, `$tries`, and implements `failed()`.
+- **Entity writes (DEC-050, mandatory):** every create/edit of an entity (CRUD, import, API, job, seeder) goes through that entity's service (`App\Support\Entity\EntityService` subclass). The service's `fields()` is the **single** definition of each field's format, transformation, validation, label and immutability. Never write entity tables with `DB::table()->insert/update` or `Model::create()` outside the service, never re-declare rules in FormRequests/importers, and never correct data ad hoc: fix the field rule instead.
 
 === foundation rules ===
 

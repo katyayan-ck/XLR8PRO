@@ -233,7 +233,7 @@ Entry format:
 | BUG-195 | `BookingKycService::apply()` recorded the customer's full Aadhaar (and PAN) in the booking history meta, which every booking viewer and the mobile history API can read | Medium | FIXED for new entries (PAN + Aadhaar, DEC-070); existing timeline rows unchanged (D26) | 28-09-2026 | — |
 | BUG-196 | Two insurance policy copies sit in `media` with `model_type = App\Models\Module\Insurance\Xlinsurer` (lower-case i, a class that does not exist); the insurance screen reads `XlInsurance` and never shows them | Low | FIXED by the DEC-069 migration | 28-09-2026 | — |
 | BUG-197 | Division `PRSNL` belongs to department `ADM` in the master, but 42 users hold scopes department `SLS` + division `PRSNL` — the division can't narrow the SLS department, so those users resolve to every SLS division | Low | FIXED (DEC-071, data) — PRSNL moved to SLS | 28-09-2026 | — |
-| BUG-198 | Rebuilding the Spatie permission cache takes ~10 s and ~2,900 queries; it happens on the first permission check after any role / permission change or cache clear, so that request (for a non-superadmin) is very slow | Medium | OPEN (performance) | 28-09-2026 | — |
+| BUG-198 | Rebuilding the Spatie permission cache takes ~10 s and ~2,900 queries; it happens on the first permission check after any role / permission change or cache clear, so that request (for a non-superadmin) is very slow | Medium | FIXED (29-09-2026) | 28-09-2026 | 29-09-2026 |
 | BUG-199 | Variant rows imported before DEC-051 store the OEM code **without** the colour suffix (`code` = 16-char stem, colour only in `color_code`; 2,652 rows for 652 codes). Price-list codes carry the colour, so Detect treats those vehicles as new and creates duplicate INCOMPLETE stubs (test copy: 1,859 of 2,782 PV stubs) | High | DECIDED (DEC-074) — purge + re-import per environment | 28-09-2026 | — |
 | BUG-200 | Pricing sheet headers with a hyphen / dot never matched the registry (labels only lower-cased, cells also had `-` `.` `_` → space): "Ex-Showroom Price ORG" and every CV- / OV- scheme column were ignored, so the price import used MM Invoice as ex-showroom and imported no schemes; a hard alias also mapped TZU's pre-subsidy price | Critical | FIXED (DEC-076, 28-09-2026) | 28-09-2026 | — |
 | BUG-201 | `PricingHistory` model does not match its table (fillable `variant_code`, `pricing_snapshot`, `changed_by`… are not columns; timestamps off) — nothing could write price history | Medium | FIXED (DEC-076 / DEC-077, 28-09-2026) | 28-09-2026 | — |
@@ -2282,7 +2282,7 @@ guessed at.
 
 ### BUG-198 — Permission cache rebuild takes ~10 s
 
-- **Status:** OPEN (performance)
+- **Status:** FIXED (29-09-2026)
 - **Severity:** Medium — every role / permission edit (and every `cache:clear`) makes the next permission check of a
   non-superadmin take ~10 s; tests that grant permissions are slow for the same reason.
 - **Found:** 28-09-2026, DEC-072 dashboard timing (user 4: first `can()` = 9.6 s, 2,886 queries; afterwards 68 ms, 10 queries).
@@ -2291,6 +2291,21 @@ guessed at.
   also 6 `information_schema` column lookups per request.
 - **Proposed solution:** find what makes the load per-row (a custom `Role` / `Permission` model relation, an accessor, or
   `$with` on the Role model) and let Spatie load its cache in its normal few queries; warm the cache after role edits.
+- **Root cause (29-09-2026):**
+  - 2,879 of the 2,887 queries were `information_schema` column lookups.
+  - `App\Models\IAM\Role` uses `$guarded`, and Spatie's `Role` constructor fills attributes **before** it sets the
+    table.
+  - So Laravel's guardable-column check (`GuardsAttributes::isGuardableColumn`) read the columns of the non-existent
+    default `roles` table, got none, never cached the empty result, and re-queried for every role instance.
+- **Fix:**
+  - `Role` declares `protected $table = 'xlr8_admin_designation'`.
+  - `User::deniesPermission()` loads the user's denials once per instance (it ran an EXISTS query on every `can()`
+    through the Gate `before` hook).
+- **Measured:**
+  - Before: a cache rebuild plus a first check took 2,887 queries (≈ 2 s on xlrm_testing, 9.6 s in the original
+    measurement).
+  - After: a rebuild plus 21 checks take **9 queries, 312 ms**.
+- **Tests:** IAM / Org / Dashboard / RBAC suites: 56 passed.
 
 ### BUG-199 — Legacy variant codes lack the colour suffix, so Detect duplicates them
 

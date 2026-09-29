@@ -19,6 +19,13 @@ class Role extends SpatieRole
 {
     use CrudTrait;
 
+    /**
+     * Declared here (not only via Spatie's constructor): Spatie fills attributes before it sets the table, so with
+     * `$guarded` Laravel looked up the columns of the non-existent default `roles` table, got none, never cached that,
+     * and re-queried information_schema for every role instance — ~2,900 queries per permission-cache rebuild (BUG-198).
+     */
+    protected $table = 'xlr8_admin_designation';
+
     protected $guarded = ['id'];
 
     protected $casts = [

@@ -16,7 +16,7 @@ Indexes: (branch_code), (code), UNIQUE (code), (is_active), (parent_department_c
 id bigint unsigned PK, tree_code varchar(20), desig_code varchar(10), dept_code varchar(10), div_code varchar(10)?, reports_to_code varchar(20)?, display_name varchar(100)?, level tinyint, is_active tinyint(1), created_at timestamp?, updated_at timestamp?, deleted_at timestamp?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?
 Indexes: (is_active), (created_by), (dept_code,div_code), (desig_code), (level), (reports_to_code), (tree_code), UNIQUE (tree_code)
 
-## `xlr8_admin_designation` · ~76 rows · model: App\Models\Admin\Designation
+## `xlr8_admin_designation` · ~76 rows · model: App\Models\Admin\Designation, Role
 id bigint unsigned PK, code varchar(255), name varchar(255), guard_name varchar(255), description text?, hierarchy_level int, rank tinyint unsigned, category varchar(30)?, is_top_mgmt tinyint(1), parent_desig_code varchar(50)?, is_active tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (code), UNIQUE (code), (is_active), (is_active), (created_by), (hierarchy_level), (parent_desig_code), (rank), (is_top_mgmt)
 

@@ -218,3 +218,15 @@
   - 6 `account.*` settings.
   - `AccountSelfServiceTest` (2).
   - Full suite before S7: 458 passed (1 known skip).
+
+## BUG-198 fixed + standing rules (29-09)
+- **`app/Models/IAM/Role.php`:** `$table` is now declared. The cause: an `information_schema` lookup per role instance
+  (2,879 queries).
+- **`app/Models/User.php`:** `deniesPermission()` memoises the denials per instance; `forgetPermissionDenials()` is new.
+- **Result:** a permission-cache rebuild takes 9 queries / 312 ms, down from 2,887 queries.
+- **Rules:**
+  - `.ai/guidelines/10-workflow.md`: changelog + status + handoff with every commit, commented and formatted code.
+  - `.ai/rules/ui.md` / `app.md` / `api.md`: dense forms, UI kit, density control, lazy loading, error pages, one
+    error pipeline, guides on every change, module-wise API docs + Postman.
+  - `CLAUDE.md` / `AGENTS.md` regenerated (`CLAUDE.md` had been stale).
+- **New:** `.ai/state/handoff.md`.
