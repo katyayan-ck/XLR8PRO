@@ -50,6 +50,8 @@
         $isReference = isset($enquiry) && strtoupper($enquiry->current_origin ?? '') === 'REFERENCE';
         $isWhatsapp = isset($enquiry) && strtoupper($enquiry->current_origin ?? '') === 'WHATSAPP';
         $isXceler8 = isset($enquiry) && strtoupper($enquiry->current_origin ?? '') === 'XCELER8';
+        $callNatureText = strtoupper(trim(collect($call_nature_virtual ?? [])->firstWhere('code', $enquiry->call_nature ?? '')['value'] ?? ($enquiry->call_nature ?? '')));
+        $isVirtualSales = $isVirtual && $callNatureText === 'SALES';
 
         $enqTypeStr = 'Xceler8 Enquiry';
         if ($isReference) $enqTypeStr = 'Reference Enquiry';
@@ -229,8 +231,8 @@
                     </div>
                 </div>
             @endif
-
-            <div id="full_enquiry_form" class="{{ $isVirtual ? 'd-none' : 'd-flex flex-column' }}">
+            
+            <div id="full_enquiry_form" class="{{ ($isVirtual && !$isVirtualSales) ? 'd-none' : 'd-flex flex-column' }}">
 
                 @if (!empty($comparisonRows))
                     <div class="card enquiry-card" style="order: -1;">
