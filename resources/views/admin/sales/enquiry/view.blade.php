@@ -184,6 +184,70 @@
                 View {{ $enqTypeStr }} : XENQ-{{ $enquiry->id }}
             </h2>
         </div>
+        
+        {{-- =========================== NEW DUPLICATE RECORDS TABLE (COMPACT VIEW) =========================== --}}
+        @php
+            $duplicateData = [];
+            if (!empty($enquiry->duplicate)) {
+                $duplicateData = json_decode($enquiry->duplicate, true);
+                if (!is_array($duplicateData)) {
+                    $duplicateData = [];
+                }
+            }
+        @endphp
+
+        @if (count($duplicateData) > 0)
+            <div class="card enquiry-card mb-4">
+                <div class="card-header py-2 px-3">
+                    <h3 class="mb-0 fw-bold"> Duplicate Records History</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size: 0.8rem; background-color: var(--tblr-bg-surface-secondary);">
+                            <thead class="table-secondary text-uppercase" style="font-size: 0.7rem;">
+                                <tr>
+                                    <th class="px-2 py-1" style="width: 5%;">S.NO.</th>
+                                    <th class="px-2 py-1" style="width: 15%;">RECORDING DATE</th>
+                                    <th class="px-2 py-1" style="width: 15%;">ENQUIRY DATE</th>
+                                    <th class="px-2 py-1" style="width: 15%;">ENQUIRY TYPE</th>
+                                    <th class="px-2 py-1" style="width: 15%;">PRODUCT FAMILY</th>
+                                    <th class="px-2 py-1" style="width: 20%;">VARIANT DESCRIPTION</th>
+                                    <th class="px-2 py-1" style="width: 15%;">COLOR</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($duplicateData as $index => $dup)
+                                    @php 
+                                        $isHidden = $index >= 5; 
+                                    @endphp
+                                    <tr class="{{ $isHidden ? 'hidden-duplicate-row d-none' : '' }}">
+                                        <td class="fw-bold table-secondary text-dark px-2 py-1">{{ $index + 1 }}</td>
+                                        <td class="bg-white px-2 py-1">{{ !empty($dup['recorded_at']) ? \Carbon\Carbon::parse($dup['recorded_at'])->format('d-M-Y H:i') : '—' }}</td>
+                                        <td class="bg-white px-2 py-1">{{ !empty($dup['enquiry_date']) ? \Carbon\Carbon::parse($dup['enquiry_date'])->format('d-M-Y H:i') : '—' }}</td>
+                                        <td class="bg-white text-uppercase px-2 py-1">{{ $dup['enquiry_type'] ?? '—' }}</td>
+                                        <td class="bg-white px-2 py-1">{{ $dup['product_family'] ?? '—' }}</td>
+                                        <td class="bg-white text-wrap px-2 py-1" style="min-width: 150px;">{{ $dup['variant_description'] ?? '—' }}</td>
+                                        <td class="bg-white px-2 py-1">{{ $dup['color'] ?? '—' }}</td>
+                                    </tr>
+                                @endforeach
+                                
+                                {{-- Compact Toggle Button --}}
+                                @if (count($duplicateData) > 5)
+                                    <tr id="toggleDuplicatesRow" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: auto !important;">
+                                        <td colspan="7" class="text-center py-1">
+                                            <button type="button" class="btn btn-sm btn-link text-decoration-none text-muted fw-bold py-0 px-2" style="font-size: 0.75rem;" id="toggleDuplicatesBtn">
+                                                <i class="la la-angle-down"></i> Show All {{ count($duplicateData) }} Records
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        @endif
+        {{-- ================================================================================= --}}
 
         {{-- GLOBAL READ ONLY WRAPPER --}}
         <div class="view-only-wrapper">
@@ -231,7 +295,7 @@
                     </div>
                 </div>
             @endif
-            
+
             <div id="full_enquiry_form" class="{{ ($isVirtual && !$isVirtualSales) ? 'd-none' : 'd-flex flex-column' }}">
 
                 @if (!empty($comparisonRows))
@@ -822,6 +886,15 @@
                             </div>
                             <div class="col-md-2 mb-2"><label class="form-label">Next Fup Date</label><input type="text" class="form-control" value="{{ $enquiry->cre_next_fup_date ?? '' }}"></div>
                             <div class="col-md-2 mb-2"><label class="form-label">CRE Followup Remarks</label><textarea class="form-control" rows="1">{{ $enquiry->cre_fup_remarks ?? '' }}</textarea></div>
+                            {{-- NEW: CONDITIONAL LOST REASONS --}}
+                            <div class="col-md-2 mb-2 cre-lost-fields" style="{{ strtoupper(trim($enquiry->cre_customer_stage ?? '')) === 'LOST' ? '' : 'display: none;' }}">
+                                <label class="form-label">Lost Reason</label>
+                                <input type="text" class="form-control" value="{{ collect($lost_reasons ?? [])->firstWhere('code', $enquiry->lost_reason)['value'] ?? ($enquiry->lost_reason ?? '') }}">
+                            </div>
+                            <div class="col-md-2 mb-2 cre-lost-fields" style="{{ strtoupper(trim($enquiry->cre_customer_stage ?? '')) === 'LOST' ? '' : 'display: none;' }}">
+                                <label class="form-label">Lost Sub Reason</label>
+                                <input type="text" class="form-control" value="{{ collect($lost_sub_reasons ?? [])->firstWhere('code', $enquiry->lost_sub_reason)['value'] ?? ($enquiry->lost_sub_reason ?? '') }}">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -849,7 +922,20 @@
 
 @push('after_scripts')
     <script>
+        
         $(function() {
+            $(document).on('click', '#toggleDuplicatesBtn', function(e) {
+                e.preventDefault();
+                const $hiddenRows = $('.hidden-duplicate-row');
+                if ($hiddenRows.hasClass('d-none')) { 
+                    $hiddenRows.removeClass('d-none'); 
+                    $(this).html('<i class="la la-angle-up"></i> Hide Records'); 
+                } else { 
+                    $hiddenRows.addClass('d-none'); 
+                    $(this).html('<i class="la la-angle-down"></i> Show All ' + ($hiddenRows.length + 5) + ' Records'); 
+                }
+            });
+
             // Only keep the pure interactive buttons alive
             $('#toggleFupsBtn').on('click', function() {
                 const $hiddenRows = $('.hidden-fup-row');

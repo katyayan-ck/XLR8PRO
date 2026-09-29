@@ -1982,6 +1982,25 @@
                                     <label class="form-label">CRE Followup Remarks</label>
                                     <textarea name="cre_fup_remarks" class="form-control" rows="1">{{ old('cre_fup_remarks') }}</textarea>
                                 </div>
+                                {{-- NEW: CONDITIONAL LOST REASONS --}}
+                                <div class="col-md-2 mb-2 cre-lost-fields d-none">
+                                    <label class="form-label">Lost Reason <span class="text-danger">*</span></label>
+                                    <select name="lost_reason" id="lost_reason" class="form-control form-select">
+                                        <option value="">Select Reason</option>
+                                        @foreach ($lost_reasons as $item)
+                                            <option value="{{ $item['code'] }}" {{ old('lost_reason', $enquiry->lost_reason ?? '') == $item['code'] ? 'selected' : '' }}>{{ $item['value'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-2 mb-2 cre-lost-fields d-none">
+                                    <label class="form-label">Lost Sub Reason</label>
+                                    <select name="lost_sub_reason" id="lost_sub_reason" class="form-control form-select">
+                                        <option value="">Select Sub Reason</option>
+                                        @foreach ($lost_sub_reasons as $item)
+                                            <option value="{{ $item['code'] }}" {{ old('lost_sub_reason', $enquiry->lost_sub_reason ?? '') == $item['code'] ? 'selected' : '' }}>{{ $item['value'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2116,7 +2135,9 @@
             district: @json(old('district', $enquiry->district ?? '')),
             city: @json(old('city', $enquiry->city ?? '')),
             territory: @json(old('territory', $enquiry->territory ?? '')),
-            creEnqStage: @json(old('cre_enq_stage', $enquiry->cre_enq_stage ?? ''))
+            creEnqStage: @json(old('cre_enq_stage', $enquiry->cre_enq_stage ?? '')),
+            lostReason: @json(old('lost_reason', $enquiry->lost_reason ?? '')),
+            lostSubReason: @json(old('lost_sub_reason', $enquiry->lost_sub_reason ?? ''))
         };
 
         $(function() {
@@ -2526,6 +2547,15 @@
                             'background-color': '#e9ecef'
                         })
                         .attr('tabindex', '-1');
+                        
+                    // NEW: Show Lost fields if stage is LOST
+                    if (custStageVal === 'LOST' || custStageText === 'LOST') {
+                        $('.cre-lost-fields').removeClass('d-none');
+                        $('#lost_reason').prop('required', true);
+                    } else {
+                        $('.cre-lost-fields').addClass('d-none');
+                        $('#lost_reason').prop('required', false);
+                    }
                 } else {
                     $nextFup.css({
                             'pointer-events': 'auto',
@@ -2533,12 +2563,30 @@
                         })
                         .prop('required', currentEnquiry.isEdit ? true : false)
                         .removeAttr('tabindex');
+                        
+                    $('.cre-lost-fields').addClass('d-none');
+                    $('#lost_reason').prop('required', false);
                 }
             }
 
             // Bind listeners to both Enquiry Stage and Customer Stage
             $('select[name="cre_enq_stage"]').on('change', handleStageRules);
             $('select[name="cre_customer_stage"]').on('change', handleStageRules);
+
+            // Cascading Lost Reason -> Lost Sub Reason
+            $('#lost_reason').on('change', function() {
+                const rawVal = $(this).val() || '';
+                const $subReason = $('#lost_sub_reason');
+                if (rawVal === '') {
+                    $subReason.html('<option value="">Select Sub Reason</option>').val('');
+                    return;
+                }
+                loadKeywordDropdown('LOST_SUBREASON', rawVal, $subReason, 'Select Sub Reason', currentEnquiry.lostSubReason);
+            });
+            
+            if (currentEnquiry.isEdit && currentEnquiry.lostReason) {
+                $('#lost_reason').trigger('change');
+            }
 
             // Trigger check on page load if editing
             if (currentEnquiry.isEdit) {
