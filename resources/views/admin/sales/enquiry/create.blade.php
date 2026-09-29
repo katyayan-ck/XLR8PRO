@@ -22,16 +22,6 @@
             padding: 1.25rem 1.5rem;
         }
 
-        .form-control:focus,
-        .form-select:focus {
-            border-color: var(--tblr-primary);
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
-        }
-
-        .required-mark {
-            color: red;
-        }
-
         /* --- REMOVE NUMBER ARROWS --- */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
@@ -2035,7 +2025,7 @@
 @endsection
 
 @push('after_scripts')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @basset('https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js')
     <script>
         const debounce = (func, delay = 500) => {
             let timer;

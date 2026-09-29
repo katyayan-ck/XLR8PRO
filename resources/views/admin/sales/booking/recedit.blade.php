@@ -168,8 +168,8 @@
 @endsection
 
 @push('after_scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@basset('https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js')
+@basset('https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js')
 
 <script>
     // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
@@ -351,7 +351,7 @@ function openProofPreview(url,type,fileName)
                 }
             },
             error: function() {
-                alert('Error checking receipt number. Please try again.');
+                XL.notify('Error checking receipt number. Please try again.');
             }
         });
     });

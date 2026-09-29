@@ -1116,9 +1116,7 @@ use App\Services\OrgService;
             value="{{ old(
                 'anniversary_date',
                 !empty($otfData['anniversary_date'] ?? $enquiry?->marriage_date)
-                    ? \Carbon\Carbon::parse(
-                        $otfData['anniversary_date'] ?? $enquiry?->marriage_date
-                    )->format('d M Y')
+                    ? site_date($otfData['anniversary_date'] ?? $enquiry?->marriage_date)
                     : ''
             ) }}"
         >
@@ -2933,8 +2931,8 @@ use App\Services\OrgService;
 @endsection
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.5/js/lightbox.min.js"></script>
+@basset('https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js')
+@basset('https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.5/js/lightbox.min.js')
 
 <script>
 // ==========================================================
@@ -3040,7 +3038,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             votfInput.value = '';
 
-            alert(
+            XL.notify(
                 error.message ||
                 'Unable to generate VOTF number.'
             );
@@ -3556,7 +3554,7 @@ $(document).ready(function () {
             }
 
             if (!file.type.startsWith('image/')) {
-                alert('Please select a valid image file.');
+                XL.notify('Please select a valid image file.');
                 this.value = '';
                 return;
             }

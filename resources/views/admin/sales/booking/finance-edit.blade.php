@@ -332,10 +332,6 @@
 @push('after_styles')
 
 <style>
-    .is-valid {
-        border-color: var(--tblr-success) !important;
-        box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
-    }
 
     .text-danger {
         color: var(--tblr-danger);
@@ -426,8 +422,8 @@
 @endpush
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@basset('https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js')
+@basset('https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js')
 
 <script>
     function handleInstrumentProof(input) {
@@ -500,12 +496,12 @@
 
             const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
             if (!validTypes.includes(file.type)) {
-                alert('Only JPG, PNG, PDF allowed');
+                XL.notify('Only JPG, PNG, PDF allowed');
                 input.value = '';
                 return;
             }
             if (file.size > 2 * 1024 * 1024) {
-                alert('Max 2 MB');
+                XL.notify('Max 2 MB');
                 input.value = '';
                 return;
             }

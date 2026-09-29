@@ -37,37 +37,7 @@
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-<style>
-    .required-mark {
-        color: var(--tblr-danger);
-        margin-left: 4px;
-    }
 
-    .form-group.readonly-field {
-        margin-bottom: 1.25rem;
-    }
-
-    .readonly-label {
-        font-weight: 500;
-        color: var(--tblr-body-color);
-        margin-bottom: 0.35rem;
-        display: block;
-    }
-
-    .readonly-value {
-        padding: 0.375rem 0.75rem;
-        background-color: var(--tblr-bg-surface-secondary);
-        border: 1px solid var(--tblr-border-color);
-        border-radius: 0.25rem;
-        min-height: 38px;
-        display: flex;
-        align-items: center;
-    }
-
-    .readonly-value.text-danger {
-        font-weight: 600;
-    }
-</style>
 @endpush
 
 @section('content')
@@ -456,8 +426,8 @@
 {{-- jQuery is already loaded by Backpack's base layout (theme-tabler); loading it again here
      redeclares window.jQuery/$, which can orphan handlers/plugins already bound against the
      original instance. Removed - see BUG-118. --}}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@basset('https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js')
+@basset('https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js')
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {

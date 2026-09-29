@@ -191,7 +191,7 @@
 @endsection
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@basset('https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js')
 <script>
     // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
     // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.

@@ -551,20 +551,6 @@
 
 @push('after_styles')
     <style>
-        .is-valid {
-            border-color: var(--tblr-success) !important;
-            box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
-        }
-
-        .is-invalid {
-            border-color: var(--tblr-danger) !important;
-            box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
-        }
-
-        .required-mark {
-            color: var(--tblr-danger);
-            margin-left: 2px;
-        }
 
         .readonly-field {
             background-color: var(--tblr-bg-surface-secondary);
@@ -589,8 +575,8 @@
 @endpush
 
 @push('after_scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    @basset('https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js')
+    @basset('https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js')
     {{-- Bootstrap 4.6.2's bundle was loaded here with no .modal()/.dropdown()/etc usage anywhere
          in this file, and it conflicts with the Tabler theme's own Bootstrap 5 JS. Removed as
          dead weight - see BUG-118. --}}

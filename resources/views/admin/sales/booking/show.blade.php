@@ -1503,7 +1503,7 @@
 
 @endsection
 @section('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@basset('https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js')
 
 <script>
     function openPaymentProof(url, fileName = 'Proof File') {
@@ -1744,7 +1744,7 @@
 
         function openProofPreview(url, type, fileName) {
         if (!url) {
-            alert('No file available!');
+            XL.notify('No file available!');
             return;
         }
 
@@ -2381,7 +2381,7 @@ modal.show();
                 img.src = URL.createObjectURL(file);
                 container.style.display = 'block';
             } else {
-                alert('Please select an image file.');
+                XL.notify('Please select an image file.');
                 event.target.value = '';
             }
         }

@@ -4,16 +4,14 @@
 
 @push('after_styles')
     <style>
-        .card { border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); }
-        .form-control:focus, .form-select:focus { border-color: #80bdff; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25); }
         .finance-field { display: none; }
         .freezed-input {
-            background-color: #e9ecef !important;
-            color: #6c757d !important;
+            background-color: var(--tblr-bg-surface-secondary) !important;
+            color: var(--tblr-secondary) !important;
             pointer-events: none;
             cursor: not-allowed;
             opacity: 0.8;
-            border-color: #dee2e6 !important;
+            border-color: var(--tblr-border-color) !important;
         }
     </style>
 @endpush
@@ -23,8 +21,8 @@
     <div class="row">
         <div class="col-12">
             
-            <div class="card bg-light border-0 shadow-sm mb-4">
-                <div class="card-header bg-white">
+            <div class="card bg-surface-secondary border-0 shadow-sm mb-4">
+                <div class="card-header bg-surface">
                     <h2 class="mb-0">Enquiry & Customer Information (Read-only)</h2>
                 </div>
                 <div class="card-body">
@@ -54,7 +52,7 @@
                 @method('PUT')
 
                 <div class="card shadow-sm">
-                    <div class="card-header bg-white">
+                    <div class="card-header bg-surface">
                         <h2 class="mb-0">Finance & Loan Details</h2>
                     </div>
 
@@ -198,7 +196,7 @@
                         </div>
                     </div>
 
-                    <div class="card-footer bg-white text-center pb-4 border-0 mt-2">
+                    <div class="card-footer bg-surface text-center pb-4 border-0 mt-2">
                         <button type="submit" class="btn btn-success btn-lg px-5 py-2 shadow-sm fw-bold">
                             <i class="la la-save"></i> Submit Follow-up
                         </button>

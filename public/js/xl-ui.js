@@ -493,6 +493,19 @@
         });
     }
 
+    /**
+     * Non-blocking user message (the rules forbid alert()): a Backpack Noty toast, or alert() when Noty is missing.
+     * XL.notify('Max 2 MB');  XL.notify('Failed to save', 'error');  types: warning (default) | error | success | info
+     */
+    XL.notify = function (text, type) {
+        const message = String(text === undefined || text === null ? '' : text);
+        if (window.Noty) {
+            new window.Noty({ type: type || (/fail|error|unable/i.test(message) ? 'error' : 'warning'), text: message, timeout: 5000 }).show();
+            return;
+        }
+        window.alert(message);
+    };
+
     XL.enhance = function (root) {
         root = root || document;
         [enhanceDates, enhanceSelects, enhanceUploads, wrapTables, enhanceCards, enhanceImages].forEach((fn) => {

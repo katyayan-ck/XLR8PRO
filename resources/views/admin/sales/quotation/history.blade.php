@@ -30,7 +30,7 @@
 
         <table class="table table-bordered table-striped">
 
-            <thead class="table-light">
+            <thead>
 
                 <tr>
 

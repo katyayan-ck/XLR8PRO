@@ -222,3 +222,32 @@ html:is([data-xl-space="cozy"], [data-xl-space="compact"]) form .card + .card { 
 .card.xl-dragging { opacity: .55; outline: 2px dashed var(--xl-primary); outline-offset: 2px; }
 .xl-req { font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) { .xl-card-toggle .la { transition: none; } }
+
+/* ── Sales screens (UI pass 30-09, .ai/rules/ui.md): shared grid look + form bits that ~60 Sales views each carried in
+      their own <style> block. Grids opt in with class "xl-grid" on the grid container (other grids are unchanged). ── */
+.xl-grid .ag-header-cell-label,
+.xl-grid .ag-header-group-cell-label { justify-content: center !important; text-align: center !important; }
+.xl-grid .ag-header-group-cell { text-align: center !important; }
+.xl-grid .ag-header-group-cell-label { width: 100% !important; display: flex !important; align-items: center !important; padding: 0 6px !important; }
+.xl-grid .ag-cell.action-cell { display: flex !important; align-items: center !important; justify-content: center !important; white-space: nowrap !important; padding: 0 10px !important; }
+.xl-grid .ag-cell.action-cell .btn { white-space: nowrap !important; width: max-content !important; }
+.xl-grid-wrap { position: relative; }
+.xl-grid-loader { position: absolute; inset: 0; z-index: 1000; justify-content: center; align-items: center;
+    background: color-mix(in srgb, var(--tblr-bg-surface) 70%, transparent); }
+/* header "Customise Headers" popover (its display is toggled by the page script) */
+.xl-col-bubble { position: absolute; top: 110%; left: 0; width: 300px; max-width: calc(100vw - 32px); z-index: 1050;
+    background: var(--tblr-bg-surface); border: 1px solid var(--tblr-border-color); border-radius: var(--xl-radius);
+    box-shadow: var(--xl-shadow); }
+.xl-col-bubble .xl-col-bubble-body { max-height: 260px; overflow: auto; }
+/* list toolbar search box: a desktop width, full width on phones (see #quickFilter rules above) */
+.xl-toolbar-search { width: 360px; min-width: 260px; }
+/* form bits */
+.required-mark { color: var(--tblr-danger); margin-left: 4px; }
+.readonly-label { font-weight: 500; color: var(--tblr-body-color); margin-bottom: .35rem; display: block; }
+.readonly-value { padding: .375rem .75rem; background-color: var(--tblr-bg-surface-secondary); border: 1px solid var(--tblr-border-color);
+    border-radius: var(--xl-radius); min-height: 2.375rem; display: flex; align-items: center; }
+.readonly-value.text-danger { font-weight: 600; }
+.form-group.readonly-field { margin-bottom: 1.25rem; }
+.field-frozen { background-color: var(--tblr-bg-surface-secondary) !important; pointer-events: none !important; color: var(--tblr-muted) !important; }
+.xl-export-icon { height: 30px; width: auto; }
+label .required-mark { display: inline !important; }

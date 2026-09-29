@@ -20,7 +20,7 @@
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-surface"
                     style="border-radius: 15px">
                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <input type="text" id="quickFilter" class="form-control" style="width: 360px; min-width: 260px;"
+                        <input type="text" id="quickFilter" class="form-control xl-toolbar-search"
                             placeholder="Smart Search...">
                         <button id="resetAll" class="btn btn-outline-danger btn-sm">
                             Reset
@@ -30,20 +30,19 @@
                     <div class="d-flex gap-2 flex-wrap">
                         <button id="exportCsv" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
 
-                            <img src="{{ asset('images/export-excel.png') }}" alt="Excel"
-                                style="height:30px; width:auto;">
+                            <img src="{{ asset('images/export-excel.png') }}" alt="Excel" class="xl-export-icon">
 
                         </button>
 
                         <button id="exportPdf" class="btn btn-sm text-nowrap d-flex align-items-center gap-2">
 
-                            <img src="{{ asset('images/export-pdf.png') }}" alt="PDF" style="height:30px; width:auto;">
+                            <img src="{{ asset('images/export-pdf.png') }}" alt="PDF" class="xl-export-icon">
 
                         </button>
                     </div>
                 </div>
 
-                <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width: 100%;"></div>
+                <div id="myGrid" class="ag-theme-quartz xl-grid" style="height: calc(93vh - 260px); width: 100%;"></div>
             </div>
 
             <div class="card-footer text-center py-4 text-muted">
@@ -57,13 +56,6 @@
 
 @push('after_styles')
 <style>
-    .ag-theme-quartz .center-header .ag-header-cell-label {
-        justify-content: center !important;
-    }
-
-    .ag-theme-quartz .ag-header-group-cell-label {
-        justify-content: center !important;
-    }
 
     .ag-header-cell-label,
     .ag-header-group-cell-label {
@@ -76,9 +68,9 @@
 
 @push('after_scripts')
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+@basset('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')
+@basset('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+@basset('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js')
 
 <script>
     const gridConfig = @json($gridConfig ?? []);

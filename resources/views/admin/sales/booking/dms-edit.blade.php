@@ -4,35 +4,6 @@
 
 @push('after_styles')
 <style>
-    .required-mark {
-        color: var(--tblr-danger);
-        margin-left: 4px;
-    }
-
-    .form-group.readonly-field {
-        margin-bottom: 1.25rem;
-    }
-
-    .readonly-label {
-        font-weight: 500;
-        color: var(--tblr-body-color);
-        margin-bottom: 0.35rem;
-        display: block;
-    }
-
-    .readonly-value {
-        padding: 0.375rem 0.75rem;
-        background-color: var(--tblr-bg-surface-secondary);
-        border: 1px solid var(--tblr-border-color);
-        border-radius: 0.25rem;
-        min-height: 38px;
-        display: flex;
-        align-items: center;
-    }
-
-    .readonly-value.text-danger {
-        font-weight: 600;
-    }
 
     .preview-thumb {
         width: 32px;
@@ -186,8 +157,8 @@
 @endsection
 
 @push('after_scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+@basset('https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js')
+@basset('https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js')
 
 <script>
     $(document).ready(function () {

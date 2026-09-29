@@ -4,18 +4,6 @@
 
 @push('after_styles')
     <style>
-        .card {
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        }
-        .form-control:focus,
-        .form-select:focus {
-            border-color: var(--tblr-primary);
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
-        }
-        .required-mark {
-            color: red;
-        }
         /* Make read-only flatpickr inputs look clickable */
         .flatpickr-input[readonly] {
             background-color: var(--tblr-card-bg);

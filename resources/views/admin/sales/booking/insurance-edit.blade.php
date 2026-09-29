@@ -5,45 +5,6 @@
 @push('after_styles')
 
 <style>
-    .required-mark {
-        color: var(--tblr-danger);
-        margin-left: 4px;
-    }
-
-    .is-valid {
-        border-color: var(--tblr-success) !important;
-        box-shadow: 0 0 4px rgba(40, 167, 69, .4) !important;
-    }
-
-    .is-invalid {
-        border-color: var(--tblr-danger) !important;
-        box-shadow: 0 0 4px rgba(220, 53, 69, .4) !important;
-    }
-
-    .form-group.readonly-field {
-        margin-bottom: 1.25rem;
-    }
-
-    .readonly-label {
-        font-weight: 500;
-        color: var(--tblr-body-color);
-        margin-bottom: 0.35rem;
-        display: block;
-    }
-
-    .readonly-value {
-        padding: 0.375rem 0.75rem;
-        background-color: var(--tblr-bg-surface-secondary);
-        border: 1px solid var(--tblr-border-color);
-        border-radius: 0.25rem;
-        min-height: 38px;
-        display: flex;
-        align-items: center;
-    }
-
-    .readonly-value.text-danger {
-        font-weight: 600;
-    }
 
     .modal-backdrop {
         z-index: 1040 !important;

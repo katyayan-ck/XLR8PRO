@@ -7,7 +7,7 @@
 @push('after_styles')
     <style>
         .enquiry-card {
-            border-radius: 12px;
+            border-radius: var(--xl-radius-lg);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
             border: none;
             margin-bottom: 2rem;
@@ -16,9 +16,9 @@
 
         .enquiry-card .card-header {
             background: var(--tblr-card-bg);
-            border-bottom: 1px solid #edf2f9;
-            border-top-left-radius: 12px;
-            border-top-right-radius: 12px;
+            border-bottom: 1px solid var(--tblr-border-color);
+            border-top-left-radius: var(--xl-radius-lg);
+            border-top-right-radius: var(--xl-radius-lg);
             padding: 1.25rem 1.5rem;
         }
 
@@ -29,12 +29,12 @@
         .view-only-wrapper input[type="text"],
         .view-only-wrapper input[type="number"],
         .view-only-wrapper input[type="email"] {
-            background-color: #e9ecef !important;
-            color: #6c757d !important;
+            background-color: var(--tblr-bg-surface-secondary) !important;
+            color: var(--tblr-secondary) !important;
             pointer-events: none !important;
             cursor: not-allowed !important;
             opacity: 0.8 !important;
-            border-color: #dee2e6 !important;
+            border-color: var(--tblr-border-color) !important;
         }
 
         .manual-mismatch-container { display: none !important; }
@@ -221,13 +221,13 @@
                                         $isHidden = $index >= 5; 
                                     @endphp
                                     <tr class="{{ $isHidden ? 'hidden-duplicate-row d-none' : '' }}">
-                                        <td class="fw-bold table-secondary text-dark px-2 py-1">{{ $index + 1 }}</td>
-                                        <td class="bg-white px-2 py-1">{{ !empty($dup['recorded_at']) ? \Carbon\Carbon::parse($dup['recorded_at'])->format('d-M-Y H:i') : '—' }}</td>
-                                        <td class="bg-white px-2 py-1">{{ !empty($dup['enquiry_date']) ? \Carbon\Carbon::parse($dup['enquiry_date'])->format('d-M-Y H:i') : '—' }}</td>
-                                        <td class="bg-white text-uppercase px-2 py-1">{{ $dup['enquiry_type'] ?? '—' }}</td>
-                                        <td class="bg-white px-2 py-1">{{ $dup['product_family'] ?? '—' }}</td>
-                                        <td class="bg-white text-wrap px-2 py-1" style="min-width: 150px;">{{ $dup['variant_description'] ?? '—' }}</td>
-                                        <td class="bg-white px-2 py-1">{{ $dup['color'] ?? '—' }}</td>
+                                        <td class="fw-bold table-secondary text-body px-2 py-1">{{ $index + 1 }}</td>
+                                        <td class="bg-surface px-2 py-1">{{ !empty($dup['recorded_at']) ? \Carbon\Carbon::parse($dup['recorded_at'])->format('d-M-Y H:i') : '—' }}</td>
+                                        <td class="bg-surface px-2 py-1">{{ !empty($dup['enquiry_date']) ? \Carbon\Carbon::parse($dup['enquiry_date'])->format('d-M-Y H:i') : '—' }}</td>
+                                        <td class="bg-surface text-uppercase px-2 py-1">{{ $dup['enquiry_type'] ?? '—' }}</td>
+                                        <td class="bg-surface px-2 py-1">{{ $dup['product_family'] ?? '—' }}</td>
+                                        <td class="bg-surface text-wrap px-2 py-1" style="min-width: 150px;">{{ $dup['variant_description'] ?? '—' }}</td>
+                                        <td class="bg-surface px-2 py-1">{{ $dup['color'] ?? '—' }}</td>
                                     </tr>
                                 @endforeach
                                 
@@ -322,11 +322,11 @@
                                                 $isAutoMismatch = $d !== $c;
                                             @endphp
                                             <tr>
-                                                <td class="fw-bold align-middle table-secondary text-start px-4 py-2 text-dark">{{ $row['label'] }}</td>
-                                                <td class="align-middle p-2"><div class="form-control bg-white h-auto border-0 text-wrap text-center">{{ $row['cre'] }}</div></td>
-                                                <td class="align-middle p-2"><div class="form-control bg-white h-auto border-0 text-wrap text-center">{{ $row['dump'] }}</div></td>
+                                                <td class="fw-bold align-middle table-secondary text-start px-4 py-2 text-body">{{ $row['label'] }}</td>
+                                                <td class="align-middle p-2"><div class="form-control bg-surface h-auto border-0 text-wrap text-center">{{ $row['cre'] }}</div></td>
+                                                <td class="align-middle p-2"><div class="form-control bg-surface h-auto border-0 text-wrap text-center">{{ $row['dump'] }}</div></td>
                                                 <td class="align-middle p-2">
-                                                    <div class="form-control bg-white h-auto border-0 d-flex justify-content-center align-items-center" style="min-height: 38px;">
+                                                    <div class="form-control bg-surface h-auto border-0 d-flex justify-content-center align-items-center" style="min-height: 38px;">
                                                         @if ($anyEmpty || (isset($row['skip_comparison']) && $row['skip_comparison']))
                                                             <span class="text-secondary fw-bold" style="font-size: 1rem;">—</span>
                                                         @else
@@ -608,7 +608,7 @@
                                         <tbody>
                                             @foreach($exchangeFups as $fup)
                                                 @php $creator = \App\Models\User::find($fup->created_by); $code = $creator ? ($creator->employee_code ?? $creator->person_code) : null; $creatorName = \App\Services\OrgService::getUserNameByCode($code); @endphp
-                                                <tr><td class="fw-bold align-middle table-secondary text-center px-3 text-dark">{{ $fup->fup_count }}</td><td><div class="form-control bg-white h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks }}</div></td><td><div class="form-control bg-white h-auto border-0 text-center">{{ $creatorName }}</div></td><td><div class="form-control bg-white h-auto border-0 text-center">{{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}</div></td></tr>
+                                                <tr><td class="fw-bold align-middle table-secondary text-center px-3 text-body">{{ $fup->fup_count }}</td><td><div class="form-control bg-surface h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks }}</div></td><td><div class="form-control bg-surface h-auto border-0 text-center">{{ $creatorName }}</div></td><td><div class="form-control bg-surface h-auto border-0 text-center">{{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}</div></td></tr>
                                             @endforeach
                                         </tbody>
                                     </table>
@@ -647,7 +647,7 @@
                                         <tbody>
                                             @foreach($financeFups as $fup)
                                                 @php $creator = \App\Models\User::find($fup->created_by); $code = $creator ? ($creator->employee_code ?? $creator->person_code) : null; $creatorName = \App\Services\OrgService::getUserNameByCode($code); @endphp
-                                                <tr><td class="fw-bold align-middle table-secondary text-center px-3 text-dark">{{ $fup->fup_count }}</td><td><div class="form-control bg-white h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks }}</div></td><td><div class="form-control bg-white h-auto border-0 text-center">{{ $creatorName }}</div></td><td><div class="form-control bg-white h-auto border-0 text-center">{{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}</div></td></tr>
+                                                <tr><td class="fw-bold align-middle table-secondary text-center px-3 text-body">{{ $fup->fup_count }}</td><td><div class="form-control bg-surface h-auto border-0 text-wrap text-start" style="min-width: 150px;">{{ $fup->remarks }}</div></td><td><div class="form-control bg-surface h-auto border-0 text-center">{{ $creatorName }}</div></td><td><div class="form-control bg-surface h-auto border-0 text-center">{{ \Carbon\Carbon::parse($fup->created_at)->format('d-M-Y h:i A') }}</div></td></tr>
                                             @endforeach
                                         </tbody>
                                     </table>
@@ -754,16 +754,16 @@
                                                 @foreach ($fups as $index => $fup)
                                                     @php $isHidden = ($fupCount > 4 && $index > 0 && $index < $fupCount - 3); @endphp
                                                     <tr class="{{ $isHidden ? 'hidden-fup-row d-none' : '' }}">
-                                                        <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">{{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }} Fup</td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $fupTypeMap[$fup->followup_type ?? ''] ?? ($fup->followup_type ?? '—') }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $fup->followup_status ?? '—' }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ !empty($fup->planned_followup_date) ? \Carbon\Carbon::parse($fup->planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ !empty($fup->actual_followup_date) ? \Carbon\Carbon::parse($fup->actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $fup->call_duration ?? '—' }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $devMap[$fup->deviation_stage ?? ''] ?? ($fup->deviation_stage ?? '—') }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 120px;">{{ $enqStageMap[$fup->enquiry_status ?? ''] ?? ($fup->enquiry_status ?? '—') }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 120px;">{{ $remTypeMap[$fup->remark_type ?? ''] ?? ($fup->remark_type ?? '—') }}</div></td>
-                                                        <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $fup->comments ?? '—' }}</div></td>
+                                                        <td class="fw-bold align-middle table-secondary text-center px-3 text-body">{{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }} Fup</td>
+                                                        <td><div class="form-control bg-surface h-auto border-0 text-nowrap text-center">{{ $fupTypeMap[$fup->followup_type ?? ''] ?? ($fup->followup_type ?? '—') }}</div></td>
+                                                        <td><div class="form-control bg-surface h-auto border-0 text-nowrap text-center">{{ $fup->followup_status ?? '—' }}</div></td>
+                                                        <td><div class="form-control bg-surface h-auto border-0 text-nowrap text-center">{{ !empty($fup->planned_followup_date) ? \Carbon\Carbon::parse($fup->planned_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-surface h-auto border-0 text-nowrap text-center">{{ !empty($fup->actual_followup_date) ? \Carbon\Carbon::parse($fup->actual_followup_date)->format('d-M-Y') : '—' }}</div></td>
+                                                        <td><div class="form-control bg-surface h-auto border-0 text-nowrap text-center">{{ $fup->call_duration ?? '—' }}</div></td>
+                                                        <td><div class="form-control bg-surface h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $devMap[$fup->deviation_stage ?? ''] ?? ($fup->deviation_stage ?? '—') }}</div></td>
+                                                        <td><div class="form-control bg-surface h-auto border-0 text-wrap text-center" style="min-width: 120px;">{{ $enqStageMap[$fup->enquiry_status ?? ''] ?? ($fup->enquiry_status ?? '—') }}</div></td>
+                                                        <td><div class="form-control bg-surface h-auto border-0 text-wrap text-center" style="min-width: 120px;">{{ $remTypeMap[$fup->remark_type ?? ''] ?? ($fup->remark_type ?? '—') }}</div></td>
+                                                        <td><div class="form-control bg-surface h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $fup->comments ?? '—' }}</div></td>
                                                     </tr>
                                                     @if ($fupCount > 4 && $index == 0)
                                                         <tr id="toggleFupsRow" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: auto !important;">
@@ -774,7 +774,7 @@
                                                     @endif
                                                 @endforeach
                                             @else
-                                                <tr><td colspan="10" class="text-muted py-3 bg-white text-center">No Follow-up Data Found</td></tr>
+                                                <tr><td colspan="10" class="text-muted py-3 bg-surface text-center">No Follow-up Data Found</td></tr>
                                             @endif
                                         </tbody>
                                     </table>
@@ -835,13 +835,13 @@
                                         @foreach ($creFups as $index => $cre)
                                             @php $isHidden = ($creFupCount > 4 && $index > 0 && $index < $creFupCount - 3); @endphp
                                             <tr class="{{ $isHidden ? 'hidden-cre-fup-row d-none' : '' }}">
-                                                <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">{{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }} Fup</td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $cre?->cre_planned_fup_date ? \Carbon\Carbon::parse($cre->cre_planned_fup_date)->format('d-M-Y H:i') : '—' }}</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ $cre?->cre_actual_fup_date ? \Carbon\Carbon::parse($cre->cre_actual_fup_date)->format('d-M-Y H:i') : '—' }}</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-center">{{ $devMap[$cre?->cre_fup_deviation_stage ?? ''] ?? ($cre?->cre_fup_deviation_stage ?: '—') }}</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-center">{{ $custStageMap[$cre?->cre_customer_stage ?? ''] ?? ($cre?->cre_customer_stage ?: '—') }}</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-center">{{ $enqStageMap[$cre?->cre_enq_stage ?? ''] ?? ($cre?->cre_enq_stage ?: '—') }}</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $cre?->cre_fup_remarks ?: '—' }}</div></td>
+                                                <td class="fw-bold align-middle table-secondary text-center px-3 text-body">{{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$index] ?? $index + 1 . 'th' }} Fup</td>
+                                                <td><div class="form-control bg-surface h-auto border-0 text-nowrap text-center">{{ $cre?->cre_planned_fup_date ? \Carbon\Carbon::parse($cre->cre_planned_fup_date)->format('d-M-Y H:i') : '—' }}</div></td>
+                                                <td><div class="form-control bg-surface h-auto border-0 text-nowrap text-center">{{ $cre?->cre_actual_fup_date ? \Carbon\Carbon::parse($cre->cre_actual_fup_date)->format('d-M-Y H:i') : '—' }}</div></td>
+                                                <td><div class="form-control bg-surface h-auto border-0 text-center">{{ $devMap[$cre?->cre_fup_deviation_stage ?? ''] ?? ($cre?->cre_fup_deviation_stage ?: '—') }}</div></td>
+                                                <td><div class="form-control bg-surface h-auto border-0 text-center">{{ $custStageMap[$cre?->cre_customer_stage ?? ''] ?? ($cre?->cre_customer_stage ?: '—') }}</div></td>
+                                                <td><div class="form-control bg-surface h-auto border-0 text-center">{{ $enqStageMap[$cre?->cre_enq_stage ?? ''] ?? ($cre?->cre_enq_stage ?: '—') }}</div></td>
+                                                <td><div class="form-control bg-surface h-auto border-0 text-wrap text-center" style="min-width: 150px;">{{ $cre?->cre_fup_remarks ?: '—' }}</div></td>
                                             </tr>
                                             @if ($creFupCount > 4 && $index == 0)
                                                 <tr id="toggleCreFupsRow" style="background-color: var(--tblr-bg-surface-secondary); pointer-events: auto !important;">
@@ -854,17 +854,17 @@
                                         @php $lastCreFup = is_array($creFups) ? end($creFups) : $creFups->last(); @endphp
                                         @if ($lastCreFup && $lastCreFup->cre_next_fup_date && !in_array(strtoupper($lastCreFup->cre_enq_stage), ['LOST', 'DROPPED']))
                                             <tr>
-                                                <td class="fw-bold align-middle table-secondary text-center px-3 text-dark">{{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$creFupCount] ?? $creFupCount + 1 . 'th' }} Fup</td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">{{ \Carbon\Carbon::parse($lastCreFup->cre_next_fup_date)->format('d-M-Y H:i') }}</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-nowrap text-center">—</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-center text-dark">Open Follow Up</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-center">—</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-center">—</div></td>
-                                                <td><div class="form-control bg-white h-auto border-0 text-center">—</div></td>
+                                                <td class="fw-bold align-middle table-secondary text-center px-3 text-body">{{ ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'][$creFupCount] ?? $creFupCount + 1 . 'th' }} Fup</td>
+                                                <td><div class="form-control bg-surface h-auto border-0 text-nowrap text-center">{{ \Carbon\Carbon::parse($lastCreFup->cre_next_fup_date)->format('d-M-Y H:i') }}</div></td>
+                                                <td><div class="form-control bg-surface h-auto border-0 text-nowrap text-center">—</div></td>
+                                                <td><div class="form-control bg-surface h-auto border-0 text-center text-body">Open Follow Up</div></td>
+                                                <td><div class="form-control bg-surface h-auto border-0 text-center">—</div></td>
+                                                <td><div class="form-control bg-surface h-auto border-0 text-center">—</div></td>
+                                                <td><div class="form-control bg-surface h-auto border-0 text-center">—</div></td>
                                             </tr>
                                         @endif
                                     @else
-                                        <tr><td colspan="7" class="text-muted py-3 bg-white text-center">No CRE Follow-up Data Found</td></tr>
+                                        <tr><td colspan="7" class="text-muted py-3 bg-surface text-center">No CRE Follow-up Data Found</td></tr>
                                     @endif
                                 </tbody>
                             </table>

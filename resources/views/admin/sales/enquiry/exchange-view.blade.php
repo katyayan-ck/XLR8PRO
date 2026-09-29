@@ -4,15 +4,13 @@
 
 @push('after_styles')
     <style>
-        .card { border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); }
-        .form-control:focus, .form-select:focus { border-color: #80bdff; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25); }
         .freezed-input {
-            background-color: #e9ecef !important;
-            color: #6c757d !important;
+            background-color: var(--tblr-bg-surface-secondary) !important;
+            color: var(--tblr-secondary) !important;
             pointer-events: none;
             cursor: not-allowed;
             opacity: 0.8;
-            border-color: #dee2e6 !important;
+            border-color: var(--tblr-border-color) !important;
         }
     </style>
 @endpush
@@ -22,12 +20,12 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header text-black">
+                <div class="card-header text-body">
                     <h2 class="mb-0">View Exchange / Scrappage (Enquiry: XENQ-{{ $enquiry->id }})</h2>
                 </div>
                 
                 <div class="card-body">
-                    <div class="row bg-light p-3 rounded border mb-4">
+                    <div class="row bg-surface-secondary p-3 rounded border mb-4">
                         <div class="col-md-3 mb-2"><label>Customer Name:</label> <input class="form-control freezed-input" disabled value="{{ $enquiry->name ?? 'N/A' }}"></div>
                         <div class="col-md-3 mb-2"><label>Mobile:</label> <input class="form-control freezed-input" disabled value="{{ $enquiry->mobile }}"></div>
                         <div class="col-md-3 mb-2"><label>Segment:</label> <input class="form-control freezed-input" disabled value="{{ $enquiry->segment_code }}"></div>

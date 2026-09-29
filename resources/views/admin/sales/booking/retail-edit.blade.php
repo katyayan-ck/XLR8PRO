@@ -365,7 +365,7 @@
 @endpush
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+@basset('https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js')
 
 <script>
     (function($) {
@@ -645,7 +645,7 @@ document.getElementById('instrumentProofInput')
 
                 if (mode === 'Yet To Decide') {
                     e.preventDefault();
-                    alert('Cannot save with "Yet to Decide". Please select a final finance mode.');
+                    XL.notify('Cannot save with "Yet to Decide". Please select a final finance mode.');
                     return false;
                 }
 

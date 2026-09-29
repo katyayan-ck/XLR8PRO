@@ -2,33 +2,15 @@
 
 @section('title', 'Lead Master')
 
-@push('after_styles')
-
-
-    <style>
-        .card {
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, .08);
-        }
-
-        .ag-theme-quartz .center-header .ag-header-cell-label {
-
-            justify-content: center !important;
-
-        }
-    </style>
-
-@endpush
-
 @push('after_scripts')
 
     <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    @basset('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    @basset('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    @basset('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js')
 
     <script>
 
@@ -869,16 +851,7 @@
 
                                 </button>
 
-                                <div id="columnBubble" style="display:none;
-                                           position:absolute;
-                                           top:110%;
-                                           left:0;
-                                           width:320px;
-                                           background: var(--tblr-card-bg);
-                                           border: 1px solid var(--tblr-border-color);
-                                           border-radius:6px;
-                                           box-shadow:0 8px 20px rgba(0,0,0,.15);
-                                           z-index:9999;">
+                                <div id="columnBubble" class="xl-col-bubble" style="display:none;">
 
                                     <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom">
 
@@ -896,7 +869,7 @@
 
                                     </div>
 
-                                    <div style="max-height:260px;overflow:auto;">
+                                    <div class="xl-col-bubble-body">
 
                                         <table class="table table-sm mb-0">
 
@@ -939,7 +912,7 @@
 
                     <!-- GRID -->
 
-                    <div id="myGrid" class="ag-theme-quartz" style="height:calc(93vh - 260px);width:100%;">
+                    <div id="myGrid" class="ag-theme-quartz xl-grid" style="height:calc(93vh - 260px);width:100%;">
 
                     </div>
 

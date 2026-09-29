@@ -77,6 +77,20 @@ collapsed card on submit, the card opens so the field can be focused.
 For the counter to be right, keep each required input inside its card and mark it `required` (or use a Backpack
 FormRequest rule `required`). Opt out a card or a whole form with `data-xl="off"`. A card without a header is left alone.
 
+## List screens: shared grid look, toolbar, messages (Sales UI pass, 30-09)
+- **Grid container:** `<div id="myGrid" class="ag-theme-quartz xl-grid" …>` — `xl-grid` gives the standard centred
+  headers, group-header padding and `.action-cell` buttons (no per-view `<style>` for these).
+- **Loader:** `<div class="xl-grid-wrap"><div id="gridLoader" class="xl-grid-loader" style="display:none;">…` — the page
+  script shows it with `style.display = 'flex'`.
+- **Header customise popover:** `<div id="columnBubble" class="xl-col-bubble" style="display:none;">` with a
+  `<div class="xl-col-bubble-body">` list; the script toggles `style.display`.
+- **Toolbar:** search `class="form-control … xl-toolbar-search"`, export icons `class="xl-export-icon"`.
+- **Form bits:** `.required-mark`, `.readonly-label`, `.readonly-value`, `.field-frozen`, `.form-group.readonly-field`.
+- **Libraries:** export / validation / mask / SweetAlert libraries load with `@basset('<pinned URL>')` (cached locally);
+  the AG-Grid tag stays the pinned `ag-grid-community@36.2.0` build.
+- **Messages:** `XL.notify(message, type?)` — a Noty toast (types warning (default) | error | success | info; "fail /
+  error / unable" in the text → error). Never `alert()`; `confirm()` stays where the code needs the answer.
+
 ## Density: text size and spacing (to-do U3)
 | Setting (site default) | Values | Default |
 |---|---|---|
@@ -140,4 +154,3 @@ XL.theme.onChange(state => rebuildMyChart());
   page = `@extends('errors.xl')` + the `code` / `title` / `message` sections (optional: `reference`, `actions`).
 - **Admin panel:** `resources/views/vendor/backpack/theme-tabler/errors/layout.blade.php` (in-shell; dashboard + back).
 - **500s** show `App\Support\ErrorRef::get()`; the same id is in the log context of every exception.
-

@@ -113,7 +113,7 @@
 
                             <div id="columnPanel" class="column-panel" style="display:none;">
                                 <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-surface-secondary">
-                                    <strong style="font-size:13px;">Customise Headers</strong>
+                                    <strong class="small">Customise Headers</strong>
                                     <small class="text-muted">drag <i class="la la-arrows-alt"></i> to reorder</small>
                                     <button id="closeColumnPanel" class="btn btn-sm btn-link text-danger p-0" aria-label="Close">✕</button>
                                 </div>
@@ -142,7 +142,7 @@
                      columns x 50 rows at once, which only a table layout
                      supports; "cards" belong on the column-picker above and
                      on the add/edit form, not on tabular data. --}}
-                <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
+                <div id="myGrid" class="ag-theme-quartz xl-grid" style="height: calc(93vh - 260px); width:100%;"></div>
             </div>
 
             @if(session('info'))
@@ -222,13 +222,13 @@
 
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@basset('https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js')
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+@basset('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')
+@basset('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+@basset('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js')
 {{-- SortableJS powers the drag-to-reorder column-group cards below. --}}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+@basset('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js')
 
 <script>
     // =====================================================================

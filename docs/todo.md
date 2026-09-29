@@ -808,3 +808,14 @@ fixed (BUG-214, BUG-215).
 **Verified:** no conflict markers; all Blade views compile; no references to removed classes; full suite green after the
 BUG-215 fix. **Left:** the booking team should create the `SALE_TYPE` / `REGISTRATION_NO_TYPE` keyword masters
 (BUG-215 follow-up); pushing / merging back to `stage` waits on the owner.
+
+### 4. Sales UI/UX pass — shared look without touching logic (to-do U1 / U2 / U5)
+
+**Delivered:** every Sales list and form screen on the shared UI layer: one grid look, one toolbar / popover / loader
+style, token colours (dark-mode safe), cached pinned libraries, toast messages instead of `alert()`, site-format
+dates. 77 views changed, ~1,940 lines of duplicated per-view CSS removed. All ids, JS hooks, AJAX calls and routes are
+unchanged. Guide: `tech-guides/platform/ui-kit.md` (List screens).
+
+**Verified:** views compile; render smoke of 82 Sales screens for users 1 and 40 (no new errors; BUG-122 reports
+unchanged). **Left:** a real-browser pass of the busiest forms (booking add, OTF, quotation); page-header eyebrow on
+forms as they are next edited.

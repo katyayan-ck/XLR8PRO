@@ -283,7 +283,7 @@
 
                                             <div class="table-responsive">
                                                 <table class="table table-bordered table-hover mb-0 align-middle">
-                                                    <thead class="table-light">
+                                                    <thead>
                                                         <tr>
                                                             <th style="width:70px;">S.No</th>
                                                             <th>Instrument No.</th>
@@ -1475,8 +1475,6 @@
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        .required-mark { color: var(--tblr-danger); margin-left: 2px; }
-        label .required-mark { display: inline !important; }
         input.numeric-only { -moz-appearance: textfield; }
         input.numeric-only::-webkit-outer-spin-button,
         input.numeric-only::-webkit-inner-spin-button {
@@ -1495,8 +1493,6 @@
         .proof-chip .file-name {
             max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 12px;
         }
-        .is-valid { border-color: var(--tblr-success) !important; box-shadow: 0 0 5px rgba(40, 167, 69, 0.5); }
-        .is-invalid { border-color: var(--tblr-danger) !important; box-shadow: 0 0 5px rgba(220, 53, 69, 0.5); }
         #modalProofPdf, #modalProofImg { max-height: 100vh; object-fit: contain; }
         .select2-container--bootstrap5 .select2-selection--single .select2-selection__arrow,
         .select2-container--default .select2-selection--single .select2-selection__arrow {
@@ -1552,15 +1548,15 @@
 @endpush
 
 @push('after_scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    @basset('https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js')
+    @basset('https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js')
     {{-- Bootstrap 4.6.2's bundle was loaded here only to provide jQuery's $.fn.modal() plugin
          API, which conflicts with the Tabler theme's own Bootstrap 5 JS. Both .modal('show')
          call sites converted to the vanilla bootstrap.Modal API already used throughout the
          rest of this controller's views (show.blade.php etc.) - see BUG-118. --}}
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @basset('https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js')
     {{-- SortableJS powers the new drag-to-reorder form cards. --}}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+    @basset('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js')
     <script>
         // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
         // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.
@@ -1883,7 +1879,7 @@
                             ) {
                                 window.deliveryPicker.clear();
                                 $('#hiddenexpecteddeldate').val('');
-                                alert('Delivery date cannot be earlier than booking date.');
+                                XL.notify('Delivery date cannot be earlier than booking date.');
                             }
                         }
                     }
@@ -2558,7 +2554,7 @@
             }
 
             function handleAjaxError(message) {
-                return function(xhr) { console.error(message, xhr); alert(message + '. Please try again.'); };
+                return function(xhr) { console.error(message, xhr); XL.notify(message + '. Please try again.'); };
             }
 
             $(document).ready(initBookingForm);

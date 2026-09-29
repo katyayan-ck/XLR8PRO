@@ -2747,7 +2747,7 @@
 @endsection
 
 @push('after_scripts')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @basset('https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js')
 
     <script>
         // ============================================================

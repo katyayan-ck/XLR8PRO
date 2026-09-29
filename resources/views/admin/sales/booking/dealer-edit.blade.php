@@ -2,36 +2,6 @@
 
 @section('title', 'Dealer Invoice - Booking #' . $booking->id)
 
-@push('after_styles')
-<style>
-    .required-mark {
-        color: var(--tblr-danger);
-        margin-left: 4px;
-    }
-
-    .form-group.readonly-field {
-        margin-bottom: 1.25rem;
-    }
-
-    .readonly-label {
-        font-weight: 500;
-        color: var(--tblr-body-color);
-        margin-bottom: 0.35rem;
-        display: block;
-    }
-
-    .readonly-value {
-        padding: 0.375rem 0.75rem;
-        background-color: var(--tblr-bg-surface-secondary);
-        border: 1px solid var(--tblr-border-color);
-        border-radius: 0.25rem;
-        min-height: 38px;
-        display: flex;
-        align-items: center;
-    }
-</style>
-@endpush
-
 @section('content')
 
 <div class="card card-body shadow-sm mb-4" style="border-radius:12px">
@@ -209,8 +179,8 @@
 {{-- jQuery is already loaded by Backpack's base layout (theme-tabler); loading it again here
      redeclares window.jQuery/$, which can orphan handlers/plugins already bound against the
      original instance. Removed - see BUG-118. --}}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+@basset('https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js')
+@basset('https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js')
 <script>
     // Site-wide date display format (see .ai/rules/conventions.md section 13) - flatpickr's
     // token syntax matches PHP's date() tokens, so the PHP-side format string is reused as-is.

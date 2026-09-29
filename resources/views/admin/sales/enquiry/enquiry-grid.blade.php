@@ -15,8 +15,7 @@
                     <div
                         class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-surface">
                         <div class="d-flex align-items-center gap-2 flex-nowrap">
-                            <input type="text" id="quickFilter" class="form-control w-100 w-md-auto"
-                                style="width:360px; min-width:260px;" placeholder="Smart Search...">
+                            <input type="text" id="quickFilter" class="form-control w-100 w-md-auto xl-toolbar-search" placeholder="Smart Search...">
                             <button id="resetAll" class="btn btn-outline-danger btn-sm text-nowrap">Reset</button>
                         </div>
 
@@ -26,10 +25,9 @@
                             <div class="position-relative d-inline-block">
                                 <button id="btnCustomiseHeaders" class="btn btn-red btn-sm text-nowrap">Customise
                                     Headers</button>
-                                <div id="columnBubble"
-                                    style="display:none; position:absolute; top:110%; left:0; width:320px; background: var(--tblr-card-bg); border: 1px solid var(--tblr-border-color); border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.15); z-index:9999;">
+                                <div id="columnBubble" class="xl-col-bubble" style="display:none;">
                                     <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom">
-                                        <strong style="font-size:13px;">Customise Headers</strong>
+                                        <strong class="small">Customise Headers</strong>
                                         <button id="closeColumnBubble"
                                             class="btn btn-sm btn-link text-danger p-0">✕</button>
                                     </div>
@@ -39,7 +37,7 @@
                                             placeholder="Search headers...">
                                     </div>
 
-                                    <div style="max-height:260px; overflow:auto;">
+                                    <div class="xl-col-bubble-body">
                                         <table class="table table-sm mb-0">
                                             <tbody id="columnBubbleBody"></tbody>
                                         </table>
@@ -52,25 +50,23 @@
                         <div class="d-flex gap-2 flex-nowrap">
                             <button id="exportCsv" class="btn btn-sm text-nowrap d-flex align-items-center gap-2"
                                 title="Export Excel">
-                                <img src="{{ asset('images/export-excel.png') }}" alt="Excel"
-                                    style="height:30px; width:auto;">
+                                <img src="{{ asset('images/export-excel.png') }}" alt="Excel" class="xl-export-icon">
                             </button>
                             <button id="exportPdf" class="btn btn-sm text-nowrap d-flex align-items-center gap-2"
                                 title="Export PDF">
-                                <img src="{{ asset('images/export-pdf.png') }}" alt="PDF"
-                                    style="height:30px; width:auto;">
+                                <img src="{{ asset('images/export-pdf.png') }}" alt="PDF" class="xl-export-icon">
                             </button>
                         </div>
                     </div>
 
                     <!-- GRID CONTAINER WITH LOADER WRAPPER -->
-<div style="position: relative;">
-    <div id="gridLoader" style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 1000; justify-content: center; align-items: center;">
+<div class="xl-grid-wrap">
+    <div id="gridLoader" class="xl-grid-loader" style="display:none;">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
     </div>
-    <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
+    <div id="myGrid" class="ag-theme-quartz xl-grid" style="height: calc(93vh - 260px); width:100%;"></div>
 </div>
                 </div>
             </div>
@@ -78,19 +74,11 @@
     </div>
 @endsection
 
-@push('after_styles')
-    <style>
-        .ag-theme-quartz .center-header .ag-header-cell-label {
-            justify-content: center !important;
-        }
-    </style>
-@endpush
-
 @push('after_scripts')
     <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    @basset('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')
+    @basset('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+    @basset('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js')
 
     <script>
         const ALL_COLUMNS = @json($gridConfig['columns'] ?? []);

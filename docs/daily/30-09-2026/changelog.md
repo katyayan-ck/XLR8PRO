@@ -40,3 +40,20 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - **Fixed during the merge:** BUG-214 (OTF invoice date one day early in IST), BUG-215 (RTO rule match broken by the
   stage keyword change); the 3 new routes named (`sales.enquiry.duplicate`, `sales.enquiry.lost`, `sales.enquiry.view`).
 - **Tests:** full suite 473 passed + the 3 RTO tests fixed by BUG-215 (1 known skip).
+
+## Sales UI/UX pass (to-do U1 / U2 / U5; markup + CSS only, logic untouched)
+- **Shared layer:** `public/css/xl-ui.css` gains the Sales grid look (`.xl-grid`), loader / popover / toolbar / export
+  classes and the shared form bits; `public/js/xl-ui.js` gains `XL.notify()` (Noty toast; replaces `alert()`).
+- **77 Sales views (`resources/views/admin/sales/**`):** grid containers `xl-grid`; popover, loader, search box and
+  export icons on classes (inline `display:none` kept — scripts toggle it); `bg-white` / `bg-light` / `text-dark` /
+  `text-black` / `table-light` → tokens; per-view `<style>` rules now covered by the shared CSS (and overrides of the
+  standard card / focus / validation look) removed — 1,942 lines out; raw CDN tags (xlsx, jsPDF, autotable, jQuery mask /
+  validation, SweetAlert2, Sortable, lightbox) → `@basset` with pinned URLs (SweetAlert2 via its explicit dist file);
+  the new enquiry / finance / exchange view pages tokenised (no hex); the OTF anniversary picker value uses
+  `site_date()` (its picker parses the site format); 13 `alert()` → `XL.notify()`.
+- **Kept on purpose:** hex inside `@media print` (quotation / OTF paper sheets), the PDF-file icon SVG in booking show,
+  per-screen token-based accents (coloured pinned-column headers), screen-specific layout rules (quotation sheet, bill
+  tables).
+- **Verified:** all Blade views compile; 82 parameter-free Sales screens rendered as user 1 (only the 8 BUG-122 report
+  pages fail — missing tables, pre-existing) and user 40 (81 × 403 by permission, 0 errors); `@basset` serves the
+  libraries from the local cache.

@@ -26,13 +26,6 @@ $isViewMode = request()->routeIs('finance.view');
         border-radius: 4px;
         padding: 5px;
     }
-
-    /* Custom readonly style for frozen fields */
-    .field-frozen {
-        background-color: var(--tblr-bg-surface-secondary) !important;
-        pointer-events: none !important;
-        color: var(--tblr-muted) !important;
-    }
 </style>
 @endpush
 

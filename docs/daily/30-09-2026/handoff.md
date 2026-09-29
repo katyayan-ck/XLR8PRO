@@ -25,6 +25,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: Sales UI/UX pass — 77 views on the shared layer (xl-grid, toolbar / popover / loader classes, tokens, @basset, XL.notify); logic untouched.
 - 30-09: `origin/stage` merged into `dev/admin` keeping DEC-068…071 and the team's 27-file work (DEC-087); BUG-214 / 215 fixed on the way.
 - 30-09: `dev/admin` history rewritten to drop the pricing workbooks (backup branch `backup/dev-admin-before-rewrite-30-09`).
 - 30-09: `/docs` behind the admin login (BUG-211); deleted the unused `Booking\XlInsurer` (BUG-212) and `Exceptions\Handler`; BUG-213 closed as a false positive (the file is `Pricing.php`, the live model).

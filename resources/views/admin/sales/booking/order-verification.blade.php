@@ -45,8 +45,7 @@
                             p-3 border-bottom bg-surface">
 
                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <input type="text" id="quickFilter" class="form-control w-100 w-md-auto"
-                            style="width:360px; min-width:260px;" placeholder="Smart Search...">
+                        <input type="text" id="quickFilter" class="form-control w-100 w-md-auto xl-toolbar-search" placeholder="Smart Search...">
 
 
 
@@ -70,25 +69,14 @@
                                 Customise Headers
                             </button>
 
-                            <div id="columnBubble" style="
-            display:none;
-            position:absolute;
-            top:110%;
-            left:0;
-            width:260px;
-            background: var(--tblr-card-bg);
-            border: 1px solid var(--tblr-border-color);
-            border-radius:6px;
-            box-shadow:0 8px 20px rgba(0,0,0,.15);
-            z-index:9999;
-        ">
+                            <div id="columnBubble" class="xl-col-bubble" style="display:none;">
                                 <div class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom">
-                                    <strong style="font-size:13px;">Customise Headers</strong>
+                                    <strong class="small">Customise Headers</strong>
                                     <button id="closeColumnBubble"
                                         class="btn btn-sm btn-link text-danger p-0">✕</button>
                                 </div>
 
-                                <div style="max-height:260px; overflow:auto;">
+                                <div class="xl-col-bubble-body">
                                     <table class="table table-sm mb-0">
                                         <tbody id="columnBubbleBody"></tbody>
                                     </table>
@@ -111,7 +99,7 @@
                     </div>
                 </div>
 
-                <div id="myGrid" class="ag-theme-quartz" style="height: calc(110vh - 260px); width:100%;">
+                <div id="myGrid" class="ag-theme-quartz xl-grid" style="height: calc(110vh - 260px); width:100%;">
                 </div>
             </div>
 
@@ -127,14 +115,11 @@
 @endsection
 
 
-@push('after_styles')
-@endpush
-
 @push('after_scripts')
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+@basset('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')
+@basset('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+@basset('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js')
 
 <script>
     const gridConfig = @json($gridConfig);
