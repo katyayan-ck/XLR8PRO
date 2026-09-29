@@ -44,7 +44,7 @@ class OrgServiceCachingTest extends TestCase
 
     public function test_sales_consultants_cache_key_is_scoped_by_branch_code(): void
     {
-        // BUG-108 (known-bugs-report.md): passing a real (non-'ALL') branch
+        // BUG-108 (docs/bugs (open.md / closed.md)): passing a real (non-'ALL') branch
         // code into userQuery()'s branch scope throws, because
         // xlr8_admin_emp_branch_pivot doesn't exist in this database - a
         // pre-existing, previously-undiscovered issue surfaced while

@@ -112,7 +112,7 @@ class BookingCrudController extends CrudController
 
     /**
      * Overrides DeleteOperation/ListOperation/UpdateOperation trait defaults to add permission
-     * gates. See known-bugs-report.md BUG-051: these were the only 4 reachable actions (out of
+     * gates. See docs/bugs (open.md / closed.md) BUG-051: these were the only 4 reachable actions (out of
      * ~100) with zero Spatie-permission enforcement, same root cause as BUG-047 on Enquiry.
      */
     public function destroy($id)
@@ -6256,7 +6256,7 @@ class BookingCrudController extends CrudController
 
         Log::info('Form data after uppercase', $request->except(['_token']));
 
-        // Canonical formats centralized in App\Rules\* (see docs/refactor/ai-findings-22-09-2026.md
+        // Canonical formats centralized in App\Rules\* (see docs/changelog.md (2026-09-22)
         // for the audit that found this flow's Aadhaar/Chassis rules disagreeing with kycUpdate()'s
         // and with real stock data respectively — reconciled here to the one canonical rule).
         $validator = Validator::make($request->all(), [

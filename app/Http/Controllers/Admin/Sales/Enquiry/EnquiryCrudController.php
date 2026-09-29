@@ -49,7 +49,7 @@ class EnquiryCrudController extends CrudController
 
     /**
      * Overrides DeleteOperation's default destroy() to add a permission gate.
-     * See known-bugs-report.md BUG-047: the trait default has no explicit
+     * See docs/bugs (open.md / closed.md) BUG-047: the trait default has no explicit
      * access condition beyond Backpack's own allowAccess('delete') (granted
      * automatically by setupDeleteDefaults()), so without this override any
      * authenticated backpack user could delete any enquiry.
@@ -69,7 +69,7 @@ class EnquiryCrudController extends CrudController
 
     /**
      * Overrides ListOperation's search()/showDetailsRow() to add a permission gate.
-     * See known-bugs-report.md BUG-047: both trait defaults only call
+     * See docs/bugs (open.md / closed.md) BUG-047: both trait defaults only call
      * hasAccessOrFail('list'), which setupListDefaults() grants automatically,
      * so without this override they bypassed every inline check added elsewhere
      * in this controller.

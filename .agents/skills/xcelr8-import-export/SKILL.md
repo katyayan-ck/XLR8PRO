@@ -3,9 +3,8 @@ name: xcelr8-import-export
 description: "Use for any Excel/Sheets import or export in Xceler8: Maatwebsite Excel, PhpSpreadsheet, ImportSession, chunked/queued jobs, SheetHeaderService, SynonymService, rollback/versioning, large workbooks. Triggers: import, export, Excel, spreadsheet, bulk upload, chunk, queue job, header mapping."
 ---
 
-> Ported 26-09-2026 from `.ai/_archive/2026-09-26/.ai/skills/xcelr8-import-export` (DEC-031). Current facts in
-> `.ai/rules/**` win over anything below that conflicts (e.g. dead code removed on 26-09-2026,
-> roles = designations, tests on `xlrm_testing`, migrations not SQL-first).
+> **Read first:** `tech-guides/modules/pricing.md` (shared import helpers) and `.ai/rules/imports.md`. Current facts in `.ai/rules/**` and `tech-guides/` win over anything below that
+> conflicts (the body was ported on 26-09-2026, DEC-031).
 
 # Skill: XCELR8 Import / Export
 

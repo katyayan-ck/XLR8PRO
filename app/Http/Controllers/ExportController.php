@@ -6,7 +6,7 @@ use App\Exports\VehicleDataExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
- * See known-bugs-report.md BUG-044: these routes had no authentication or
+ * See docs/bugs (open.md / closed.md) BUG-044: these routes had no authentication or
  * authorization of any kind (routes/web.php previously registered them with
  * only the default 'web' middleware) — fixed by adding the standard
  * 'web' + 'admin' (CheckIfAdmin) middleware and a vehicles.view permission

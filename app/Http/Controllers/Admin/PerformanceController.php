@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 /**
- * See known-bugs-report.md BUG-044: this route had no authentication or
+ * See docs/bugs (open.md / closed.md) BUG-044: this route had no authentication or
  * authorization of any kind (routes/web.php previously registered it with
  * only the default 'web' middleware) — fixed by adding the standard
  * 'web' + 'admin' (CheckIfAdmin) middleware and a performance.view

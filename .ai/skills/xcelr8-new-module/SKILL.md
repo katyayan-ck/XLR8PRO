@@ -3,9 +3,8 @@ name: xcelr8-new-module
 description: "Use when adding a new module or process, scaffolding CRUD, or creating a controller/service/route file/model that must follow the Xceler8 Module/Process/Activity structure, permission naming and menu gating. Triggers: new module, new process, scaffold, add CRUD, new feature, new controller, new service, new route file."
 ---
 
-> Ported 26-09-2026 from `.ai/_archive/2026-09-26/.ai/skills/xcelr8-new-module` (DEC-031). Current facts in
-> `.ai/rules/**` win over anything below that conflicts (e.g. dead code removed on 26-09-2026,
-> roles = designations, tests on `xlrm_testing`, migrations not SQL-first).
+> **Read first:** `tech-guides/platform/14-cookbook.md` and `.ai/rules/admin-backpack.md`. Current facts in `.ai/rules/**` and `tech-guides/` win over anything below that
+> conflicts (the body was ported on 26-09-2026, DEC-031).
 
 # Skill: XCELR8 New Module Scaffold
 

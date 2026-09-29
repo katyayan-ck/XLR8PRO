@@ -111,7 +111,7 @@ class BookingExchangeServiceTest extends TestCase
 
     public function test_apply_does_not_persist_the_detail_fields_xlr8_booking_exchange_has_no_columns_for(): void
     {
-        // BUG-102 (known-bugs-report.md): xlr8_booking_exchange has no
+        // BUG-102 (docs/bugs (open.md / closed.md)): xlr8_booking_exchange has no
         // offered_price/registration_no/etc. columns at all - the payload
         // silently drops them via HasColumnTransformations. Not a data
         // loss (the same fields correctly persist onto the linked

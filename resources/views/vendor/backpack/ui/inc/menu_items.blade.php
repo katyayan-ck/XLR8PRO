@@ -481,7 +481,7 @@
                     {{-- Pending Quotations hidden: no sales/quotation/pending route (DEC-023). --}}
                     {{-- "Approved Quotations" links to a route that has never existed
                 (backpack_url('quotation-form/approved') before this rename) — see
-                known-bugs-report.md BUG-056. Left as a dead link, not fixed here. --}}
+                docs/bugs (open.md / closed.md) BUG-056. Left as a dead link, not fixed here. --}}
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
                         href="{{ backpack_url('sales/quotation/approved') }}">
                         <span><i class="la la-check-circle me-2"></i>Approved Quotations</span>

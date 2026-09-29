@@ -4,7 +4,7 @@
  * Sales module field labels - single source of truth for validation error
  * messages across Lead, LeadSource, and Campaign (Booking has its own
  * larger resources/lang/en/booking.php; Enquiry/Quotation not yet
- * migrated - see docs/refactor/ai-changelogs for follow-up scope), per
+ * migrated - see docs/changelog.md for follow-up scope), per
  * .ai/rules/conventions.md section 13.
  */
 return [

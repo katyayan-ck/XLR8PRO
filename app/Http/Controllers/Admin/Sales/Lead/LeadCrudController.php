@@ -45,7 +45,7 @@ class LeadCrudController extends CrudController
 
     /**
      * Overrides ListOperation's search()/showDetailsRow() to add a permission gate.
-     * See known-bugs-report.md BUG-054: both trait defaults only check hasAccessOrFail('list'),
+     * See docs/bugs (open.md / closed.md) BUG-054: both trait defaults only check hasAccessOrFail('list'),
      * which is auto-allowed, so they bypassed every other check in this controller.
      */
     public function search()

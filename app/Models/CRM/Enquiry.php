@@ -439,7 +439,7 @@ class Enquiry extends BaseModel
      * store their linked enquiry (enq_no) in any of these three shapes
      * depending on how/when the Booking was created. SSOT for a lookup
      * previously duplicated inline 17 times in BookingCrudController - see
-     * docs/refactor/ai-changelogs-22-09-2026.md.
+     * docs/changelog.md (2026-09-22).
      */
     public static function resolveByAnyReference(mixed $reference): ?self
     {

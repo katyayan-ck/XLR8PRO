@@ -11,7 +11,7 @@ use Spatie\Permission\PermissionRegistrar;
 /**
  * Backfills xlr8_iam_model_has_roles for every existing user, using the same
  * "the Employee's Designation IS the Spatie role" principle applied going
- * forward in StandaloneUsersImport/UserImporter (see known-bugs-report.md
+ * forward in StandaloneUsersImport/UserImporter (see docs/bugs (open.md / closed.md)
  * BUG-071). That fix only covered new/re-imported rows; this seeder is the
  * one-time backfill for users who already existed before it.
  *

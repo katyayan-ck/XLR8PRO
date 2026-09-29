@@ -124,7 +124,7 @@ class BookingDmsServiceTest extends TestCase
         // always null on a freshly-loaded Booking, so the "BEV/Personal ->
         // order 3" branch is unreachable in this flow (matches the
         // original inline behavior exactly, see BUG-101 in
-        // known-bugs-report.md for why this was already dead code before
+        // docs/bugs (open.md / closed.md) for why this was already dead code before
         // this extraction).
         $booking = $this->makeBooking(['order' => 1]);
 

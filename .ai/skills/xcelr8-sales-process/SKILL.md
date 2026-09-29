@@ -3,9 +3,8 @@ name: xcelr8-sales-process
 description: "Use for Enquiry → Quotation → Booking → OTF/VOTF work: EnquiryCrudController, QuotationCrudController, BookingCrudController and the Booking*Service classes, booking status codes, receipts, finance/insurance/RTO/exchange/delivery/refund flows."
 ---
 
-> Ported 26-09-2026 from `.ai/_archive/2026-09-26/.ai/skills/xcelr8-sales-process` (DEC-031). Current facts in
-> `.ai/rules/**` win over anything below that conflicts (e.g. dead code removed on 26-09-2026,
-> roles = designations, tests on `xlrm_testing`, migrations not SQL-first).
+> **Read first:** `tech-guides/frs-and-workflows/workflows/sales-lifecycle.md` → `tech-guides/modules/sales-booking.md`. Current facts in `.ai/rules/**` and `tech-guides/` win over anything below that
+> conflicts (the body was ported on 26-09-2026, DEC-031).
 
 # Skill: XCELR8 Sales Process (Enquiry → Quotation → Booking → Transaction/OTF)
 
@@ -23,7 +22,7 @@ mismatch, sales consultant, DSA, financier, TCS.
 
 ## Context
 
-The full, authoritative business-process spec is `docs/reference/Sales-Combined_FRS.md` (Functional
+The full, authoritative business-process spec is `tech-guides/frs-and-workflows/frs/sales-combined-frs.md` (Functional
 Requirements Specification, consolidated from the Enquiry/Quotation/Booking/Transaction module FRS
 documents). **Read it before making behavioral changes to any Sales module code** — it documents the
 cross-module contract (statuses, required fields, validations, financial formulas, audit behavior)
@@ -83,9 +82,9 @@ check `php artisan route:list --path=sales` before assuming a route's location.
 
 ## Related project rules
 
-Also read `.ai/rules/module-structure.md` (route/permission structure — Booking/Quotation/Enquiry are
+Also read `.ai/rules/admin-backpack.md` (Module / Process / Activity: route/permission structure — Booking/Quotation/Enquiry are
 already migrated, `SLS_BKNG_*`/`SLS_QUOT_*`/`SLS_ENQR_*` permissions) and
-`docs/refactor/known-bugs-report.md` (search for BUG-091, BUG-092, BUG-050, BUG-059 through BUG-062,
+`docs/bugs/open.md` / `closed.md` (search for BUG-091, BUG-092, BUG-050, BUG-059 through BUG-062,
 BUG-093 through BUG-097 — all Booking/Quotation-specific findings already on record; don't
 re-discover them) before starting work in this area.
 
@@ -107,6 +106,6 @@ FormRequest, controller, or importer. Use:
   (Aadhaar-first, PAN-second, `PERS-######` fallback) — never reimplement this in an importer.
 
 Canonical formats and the government-standard-vs-project-convention rationale for each are recorded
-in `docs/refactor/ai-changelogs-22-09-2026.md` ("Phase 1 of Sales-system refactor: Identifier &
+in `docs/changelog.md (2026-09-22)` ("Phase 1 of Sales-system refactor: Identifier &
 Reference Registry"). See BUG-097 (open) for a known VOTF-generation race-condition gap this
 registry didn't fix.

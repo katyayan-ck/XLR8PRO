@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Log;
  * Business logic for the Booking Core CRUD sub-domain (store()/update()),
  * extracted from BookingCrudController as part of the Sales-system
  * refactor (Phase 4, ninth and final sub-domain) - see
- * docs/refactor/ai-changelogs-DD-MM-YYYY.md. This is the largest and
+ * docs/changelog.md. This is the largest and
  * most cross-cutting sub-domain, done last per the plan since every
  * other sub-domain's write path also touches pieces of what store()/
  * update() do inline (XExchange seeding, XFinance creation, etc.).
@@ -43,7 +43,7 @@ class BookingCoreService
      * No file is handled here: receipt proofs are attached from the receipt
      * screens (`$amount->replaceDocument('amount-proof', …)`, DEC-069).
      *
-     * BUG-105 (known-bugs-report.md): fixed as part of this extraction -
+     * BUG-105 (docs/bugs (open.md / closed.md)): fixed as part of this extraction -
      * the original's RTO seed read an undefined $quotationData variable
      * (should have been $quotation->standard_data, matching the adjacent
      * Insurance seed's correct pattern) - see the method body below.

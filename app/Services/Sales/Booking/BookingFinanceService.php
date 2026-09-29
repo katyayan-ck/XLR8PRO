@@ -20,7 +20,7 @@ use Illuminate\Support\Collection;
  * Business logic for the Booking Finance sub-domain (finEdit/finUpdate,
  * RetailEdit, PayoutEdit/PayoutUpdate, financeView), extracted from
  * BookingCrudController as part of the Sales-system refactor (Phase 4) -
- * see docs/refactor/ai-changelogs-DD-MM-YYYY.md.
+ * see docs/changelog.md.
  */
 class BookingFinanceService
 {

@@ -27,7 +27,7 @@ use Illuminate\Validation\ValidationException;
  * Business logic for the Booking OTF/VOTF sub-domain (otfProcess() ->
  * otfSave(), generateVotfNumber()), extracted from BookingCrudController
  * as part of the Sales-system refactor (Phase 4) - see
- * docs/refactor/ai-changelogs-DD-MM-YYYY.md.
+ * docs/changelog.md.
  *
  * downloadOtfPdf()/getOtfPdfData() are deliberately NOT covered here -
  * getOtfPdfData() resolves its quotation via a different fallback order

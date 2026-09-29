@@ -60,3 +60,6 @@ gscreds.json
 
 # local screenshot previews (never commit)
 /public/_preview
+
+# DEC-086: superseded docs / old AI context, kept on disk only
+/_backup

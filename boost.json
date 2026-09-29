@@ -3,7 +3,7 @@
         "claude_code",
         "codex"
     ],
-    "cloud": true,
+    "cloud": false,
     "guidelines": true,
     "mcp": true,
     "nightwatch": false,
@@ -15,10 +15,8 @@
     "sail": false,
     "skills": [
         "infer-conventions",
-        "deploying-to-cloud",
         "laravel-best-practices",
         "testing-best-practices",
-        "tailwindcss-development",
         "backpack-crud",
         "medialibrary-development",
         "laradocs-development",

@@ -246,7 +246,8 @@ return [
     */
 
     'docs' => [
-        'path' => env('LARADOCS_PATH', base_path('docs')),
+        // DEC-086 / BUG-211: the developer guides only — never docs/ (bug tracker, decision log)
+        'path' => env('LARADOCS_PATH', base_path('tech-guides')),
         'extensions' => ['md', 'markdown'],
         'ignored_patterns' => ['.*', '_drafts', 'README.md'],
         'index' => '_index',

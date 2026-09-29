@@ -137,7 +137,7 @@ class RBACService
      * real model is \App\Models\IAM\UserRoleAssignment), and even if that
      * were fixed, that table is a separate temporal-history record that
      * nothing in the permission-checking path reads — see
-     * known-bugs-report.md BUG-071. Now does both: the temporal history
+     * docs/bugs (open.md / closed.md) BUG-071. Now does both: the temporal history
      * record AND the real Spatie grant that actually affects `->can()`.
      *
      * @param  string|Role  $role  Role name or instance

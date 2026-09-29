@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
  * Business logic for the Booking KYC sub-domain (Pending KYC list ->
  * kycEdit() -> kycUpdate()), extracted from BookingCrudController as part
  * of the Sales-system refactor (Phase 4) - see
- * docs/refactor/ai-changelogs-DD-MM-YYYY.md.
+ * docs/changelog.md.
  *
  * Follows this app's current service convention: instance methods, thin
  * constructor, injected via constructor property promotion. Registered as

@@ -152,7 +152,7 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - `dd()` becomes `Log::error` + rethrow, so failures go through Laravel's normal error handling.
 - **Risk:** MED (obvious bug fixes on UAT-critical paths) · **Approved-by:** auto (within the BUG-104 fix the user approved) · **Reversal:** revert.
 
-### DEC-028 | 26-09-2026 18:40 | Track B | Adopt support-utility requirements from `docs/refactor/missing-info-utilities.md`
+### DEC-028 | 26-09-2026 18:40 | Track B | Adopt support-utility requirements from `tech-guides/frs-and-workflows/frs/support-utilities-requirements.md`
 - **Decision:**
   - Add a **Knowledge Base** utility (new phase B2c).
   - Extend Chat into **conversations** (direct/group/team/ticket plus the entity journal, public/internal visibility, read state, idempotent sends).
@@ -1364,3 +1364,26 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
      Laravel's JSON shape; its pages use the branded error pages (U8).
 - **Approved-by:** user (feature request); auto (additive, status codes unchanged) · **Risk:** LOW · **Reversal:** remove
   the `render()` registration in `bootstrap/app.php`.
+
+### DEC-086 | 29-09-2026 | A (docs / AI context) | Repository docs and AI-context clean-up (go-live to-do 10c)
+- **Why:** the user asked (29-09) for a deep clean-up of the files shared and created over many weeks: guides consolidated
+  in `tech-guides/`, AI agents tuned for minimum tokens, bugs split into open / closed after verification, one
+  changelog, one to-do + accomplishments file, and old files moved to a git-ignored backup folder.
+- **Decision:**
+  1. **`tech-guides/`** (new top-level folder, approved by the user) holds every guide: `architecture/`, `modules/`,
+     `platform/`, `api/`, `specs/`, with `README.md` as the load map (task → the few files to read). Each module has a
+     short card first and details after it, so an agent reads the card and opens details only when needed.
+  2. **`docs/`** keeps project records only: `decisions/decision-log.md`, `bugs/open.md`, `bugs/closed.md`,
+     `changelog.md` (all history, chronological), `todo.md` (to-do + accomplishments). New entries are appended to these
+     files until the date-wise scheme is set up.
+  3. **`_backup/`** (git-ignored, kept on disk): superseded context (`.ai/_archive`), the daily changelog / findings files
+     after consolidation, the old audit `knownissues.txt` after verification, completed plans, empty placeholders, old
+     AI-context copies, and the pricing reference workbooks. Git history keeps every tracked version.
+  4. **AI context:** `CLAUDE.md` / `AGENTS.md` stay short and stable (no dates or volatile state, so the prompt prefix is
+     cached); volatile state lives in `.ai/state/handoff.md` (read on demand); rules stay path-scoped; skills not used
+     by this project are dropped from `boost.json`; `.claude/settings.json` denies reads of `_backup/`, `vendor/`,
+     `storage/` and binary workbooks.
+  5. **Laradocs** points at `tech-guides/` instead of `docs/`, so the bug tracker and decision log are no longer served
+     at `/docs` (BUG-211; a login for `/docs` is the owner's call).
+- **Approved-by:** user (request 29-09) · **Risk:** LOW (files move; history keeps them) · **Reversal:** git revert; the
+  backup folder is on disk.

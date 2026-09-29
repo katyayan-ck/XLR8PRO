@@ -19,7 +19,7 @@ use Illuminate\Http\UploadedFile;
  * Business logic for the Booking RTO sub-domain (Pending RTO list ->
  * rtoEdit() -> rtoUpdate()), extracted from BookingCrudController as part
  * of the Sales-system refactor (Phase 4) - see
- * docs/refactor/ai-changelogs-DD-MM-YYYY.md.
+ * docs/changelog.md.
  */
 class BookingRtoService
 {

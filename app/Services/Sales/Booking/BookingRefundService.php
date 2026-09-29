@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
  * Business logic for the Booking Refund sub-domain (requestRefund(),
  * refundView()/refundUpdate(), refundedUpdate(), rejectedView()),
  * extracted from BookingCrudController as part of the Sales-system
- * refactor (Phase 4) - see docs/refactor/ai-changelogs-DD-MM-YYYY.md.
+ * refactor (Phase 4) - see docs/changelog.md.
  */
 class BookingRefundService
 {

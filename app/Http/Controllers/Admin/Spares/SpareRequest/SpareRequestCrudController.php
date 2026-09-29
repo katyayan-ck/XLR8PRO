@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\DB;
  *
  * This controller has THREE independent, pre-existing bugs that make every
  * one of its operations unconditionally broken, regardless of permissions —
- * see known-bugs-report.md:
+ * see docs/bugs (open.md / closed.md):
  *   - BUG-030 (fixed, DEC-060): setupCreateOperation() called XCommonHelper::getServiceBranch(),
  *     which depended on a missing X_Location model; it now uses OrgService::serviceBranches().
  *   - BUG-031: the list view calls route('spare-request.data'), which was

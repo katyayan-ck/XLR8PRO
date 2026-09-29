@@ -11,7 +11,7 @@ paths:
   (`php artisan testing:refresh-db --force`, uses `MYSQL_BIN_DIR`). Never point tests at `xlrm`.
 - Use `DatabaseTransactions` (tests rely on real reference data: RTO rules, org users, settings).
   **Never `RefreshDatabase`** — it would wipe the copy's reference data.
-- Known pre-existing failures: see `.ai/state/current.md` — a change must not add new ones.
+- Known pre-existing failures: see `.ai/state/handoff.md` — a change must not add new ones.
 - Test services directly (`app(SomeService::class)`); set the actor with
   `$this->app['auth']->guard('backpack')->setUser($user)`.
 - Regression tests replace "documents the crash" tests once a bug is fixed.

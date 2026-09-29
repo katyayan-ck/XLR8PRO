@@ -22,7 +22,7 @@ class BookingKycServiceTest extends TestCase
 
         // addHistory() records the acting backpack_user() as the actor -
         // needs a real authenticated user, same pattern as this session's
-        // other tests (see BUG-079 in known-bugs-report.md for why
+        // other tests (see BUG-079 in docs/bugs/closed.md for why
         // actingAs($user, 'backpack') can't be used instead).
         $user = User::create([
             'username' => 'kyc_test_'.uniqid(),

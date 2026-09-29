@@ -12,7 +12,7 @@ use App\Models\User;
  * Business logic for the Booking DMS sub-domain (Pending DMS list ->
  * dmsedit() -> dmsupdate()), extracted from BookingCrudController as part
  * of the Sales-system refactor (Phase 4) - see
- * docs/refactor/ai-changelogs-DD-MM-YYYY.md.
+ * docs/changelog.md.
  */
 class BookingDmsService
 {

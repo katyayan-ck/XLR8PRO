@@ -3,9 +3,8 @@ name: xcelr8-rbac-debug
 description: "Use to debug access problems: 403/unauthorized, missing permissions, a user seeing wrong or no data, role/designation permission issues, data scoping (UserScope/DataScopeService), superadmin bypass, per-user permission denials."
 ---
 
-> Ported 26-09-2026 from `.ai/_archive/2026-09-26/.ai/skills/xcelr8-rbac-debug` (DEC-031). Current facts in
-> `.ai/rules/**` win over anything below that conflicts (e.g. dead code removed on 26-09-2026,
-> roles = designations, tests on `xlrm_testing`, migrations not SQL-first).
+> **Read first:** `tech-guides/modules/iam-auth.md`. Current facts in `.ai/rules/**` and `tech-guides/` win over anything below that
+> conflicts (the body was ported on 26-09-2026, DEC-031).
 
 # Skill: XCELR8 RBAC & Scope Debug
 

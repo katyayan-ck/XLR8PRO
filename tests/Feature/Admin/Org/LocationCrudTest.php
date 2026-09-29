@@ -15,7 +15,7 @@ class LocationCrudTest extends TestCase
 {
     use DatabaseTransactions;
 
-    /** See BUG-079 in known-bugs-report.md for why actingAs($user, 'backpack') can't be used here. */
+    /** See BUG-079 in docs/bugs/closed.md for why actingAs($user, 'backpack') can't be used here. */
     private function actingAsBackpackUser(User $user): static
     {
         $this->app['auth']->guard('backpack')->setUser($user);

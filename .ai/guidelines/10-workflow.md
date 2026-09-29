@@ -1,51 +1,40 @@
 # Workflow (all AI tools)
 
-**Git**
-- Never work on `main`. Branches: `feature/*` or `refactor/*` (working branch: `dev/admin`, kept in sync with `stage`, the shared team branch).
-- Commit at checkpoints with `type(scope): message` (feat, fix, refactor, docs, test, chore, security).
-  **Never push, force-push or rewrite history without explicit approval in that turn.**
+**Git:** never work on `main` (working branch `dev/admin`, synced with the team branch `stage`). Commit at checkpoints as
+`type(scope): message` (feat, fix, refactor, docs, test, chore, security). **Never push, force-push or rewrite history
+without explicit approval in that turn.**
 
-**Stop and ask (never decide alone)** — the user approves high-risk items explicitly:
-history rewrite/push · any non-local DB operation · destructive changes to real data (drop tables/columns
-with rows, irreversible type changes, mass remaps) · deleting tracked files outside an approved list ·
-environment/machine changes · new or major-upgraded dependencies · business-rule ambiguity or locked-spec
-conflict · auth/permission/secret changes · UAT-visible behaviour changes beyond an obvious bug fix.
+**Stop and ask (never decide alone):** history rewrite/push · any non-local DB operation · destructive changes to real
+data (drops with rows, irreversible type changes, mass remaps) · deleting tracked files outside an approved list ·
+environment/machine changes · new or major-upgraded dependencies · business-rule ambiguity or locked-spec conflict ·
+auth/permission/secret changes · UAT-visible behaviour changes beyond an obvious bug fix.
 
-**Logging (mandatory)**
-- Decision → `docs/decisions/decision-log.md` (DEC-NNN, append-only, written before the change).
-- Change → `docs/refactor/ai-changelogs-DD-MM-YYYY.md` (files, before → after, reason, DEC id).
-- **With every commit and every major change (user standing instruction, 29-09-2026):**
-  - update the day's changelog;
-  - update the current task status (`.ai/state/current.md`, plus the go-live to-do
-    `docs/plans/2026-09-29-go-live-todo.md` when an item moves);
-  - rewrite the handoff `.ai/state/handoff.md`: what was just done, what is in progress (exact next step, files touched,
-    uncommitted work), open questions for the owner, and how to verify. A new session or agent must be able to continue
-    from it alone.
-- **Accomplishments log (user standing instruction, 29-09-2026):** whenever a task is **completed**, append an entry
-  to `docs/accomplishments/DD-MM-YYYY.md` (today's file; create it if missing) with full details:
-  - what was delivered and why (the to-do item / DEC / BUG ids);
-  - the files, routes, settings and migrations involved;
-  - how it was verified (tests, smoke, numbers);
-  - what is left or waiting.
-  Mark the item done in the go-live to-do in the same commit.
-- **Code quality:** code is properly commented (a PHPDoc on every class and public method: purpose, params, return
-  shape, an example where useful; inline comments only for non-obvious logic, with the DEC / BUG id) and formatted
-  (pint, the project style) before every commit.
-- New bug found anywhere → `docs/refactor/known-bugs-report.md` immediately (BUG-NNN; never delete
-  entries; update status in place; keep the index table current). Check `.ai/state/bugs-index.md` first.
+**Records — update in the same commit as the change (user standing instruction):**
+- Decision → `docs/decisions/decision-log.md` (DEC-NNN, append-only, before the change).
+- Change → append to `docs/changelog.md` under today's `## YYYY-MM-DD` (files, before → after, reason, DEC/BUG ids).
+- To-do → `docs/todo.md` Part 1: move the item's status. Task **completed** → append an accomplishment to Part 2 under
+  today's date: what and why (to-do/DEC/BUG ids), files/routes/settings/migrations, how verified, what is left.
+- Bugs → check `.ai/state/bugs-index.md` first; a new bug goes to `docs/bugs/open.md` immediately (next BUG-NNN, index
+  row + entry); a fixed bug gets its Fixed line and moves, row and full entry, to `docs/bugs/closed.md`. Never delete an
+  entry. Then `php artisan ai:refresh-context`.
+- Plans → a new approved plan is saved in `tech-guides/frs-and-workflows/plans/` (and its index); when work on a
+  plan moves, update its status header and the index row.
+- Guides → the matching `tech-guides/` file for any change to a model, service, business rule, screen standard or API.
+- Handoff → rewrite `.ai/state/handoff.md`: just done, in progress (exact next step, files, uncommitted work), open
+  questions for the owner, how to verify. A new session must be able to continue from it alone.
+- Code is commented (PHPDoc on every class and public method; inline comments only for non-obvious logic, with the
+  DEC/BUG id) and formatted with pint before every commit.
 
 **Quality gates (every change)**
 1. `php -l` on touched files; `vendor/bin/pint --dirty --format agent`.
 2. Scoped `vendor/bin/phpstan analyse <files> --memory-limit=2G`.
-3. `php artisan test --compact` (or the narrowest relevant `--filter`) — runs on `xlrm_testing`.
-   Known pre-existing failures are listed in `.ai/state/current.md`; don't add new ones.
-4. HTTP smoke of **only the touched screens** as superadmin **and** a scoped non-superadmin user (seconds). Run the full suite periodically, and the full screen sweep (`php artisan test --group=smoke`, a few minutes) only before merges — never after every change.
+3. The narrowest tests: `php artisan test --compact --filter=…` (runs on `xlrm_testing`); known failures are in the
+   handoff — don't add new ones. Full suite periodically; `php artisan test --group=smoke` only before merges.
+4. HTTP smoke of only the touched screens as superadmin **and** a scoped non-superadmin user.
 
-**Database**
-- Schema changes are **Laravel migrations** (guarded with `Schema::hasColumn/hasTable`, working `down()`),
-  run on local only. Never `dropIfExists` a live table. Other environments get migrations via deploy.
-- Refresh the test copy after local schema/data changes: `php artisan testing:refresh-db --force`.
+**Database:** schema changes are Laravel migrations (guarded with `Schema::hasColumn/hasTable`, working `down()`), run
+locally only; never `dropIfExists` a live table; other environments get migrations via deploy. After local schema
+changes migrate the test copy too (`DB_DATABASE=xlrm_testing php artisan migrate`).
 
-**Output**
-- Full files when creating; precise edits when changing. No placeholder "rest unchanged" code.
-- Don't create documentation files unless asked or required by this workflow.
+**Output:** full files when creating; precise edits when changing; no placeholder code. No new documentation files
+unless asked or required by this workflow.

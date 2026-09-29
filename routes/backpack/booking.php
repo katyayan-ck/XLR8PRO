@@ -23,7 +23,7 @@ Route::group([
     // Route::crud() used to set automatically. Without it, Backpack never calls
     // setupListOperation()/setupCreateOperation()/setupUpdateOperation() on the controller, so it
     // falls back to fully-generic rendering (an empty edit form, no custom list columns — see
-    // known-bugs-report.md). Restored here using the same ['uses'=>..,'as'=>..,'operation'=>..]
+    // docs/bugs (open.md / closed.md)). Restored here using the same ['uses'=>..,'as'=>..,'operation'=>..]
     // style already used throughout routes/backpack/core.php.
     Route::get('sales/booking', ['uses' => BookingCrudController::class.'@index', 'as' => 'sales.booking.index', 'operation' => 'list']);
     Route::post('sales/booking', ['uses' => BookingCrudController::class.'@store', 'as' => 'sales.booking.store', 'operation' => 'create']);

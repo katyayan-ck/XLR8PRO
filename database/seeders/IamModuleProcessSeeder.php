@@ -27,7 +27,7 @@ use Illuminate\Database\Seeder;
  *    rather than left as loose ends.
  *  - Genuinely unmapped/dead ones (the wildcard '*', 'foundation.*', 'post.*',
  *    'user_type.*' — all confirmed dead/unreachable controllers per
- *    known-bugs-report.md BUG-015/024) land in a synthetic LEGACY module.
+ *    docs/bugs (open.md / closed.md) BUG-015/024) land in a synthetic LEGACY module.
  */
 class IamModuleProcessSeeder extends Seeder
 {

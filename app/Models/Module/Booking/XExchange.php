@@ -27,7 +27,7 @@ class XExchange extends BaseModel
      * exchange purchase, with the default verification/case status new
      * exchange entries always start at. SSOT for a pattern previously
      * duplicated independently in BookingCrudController's store() and
-     * update() - see docs/refactor/ai-changelogs-22-09-2026.md.
+     * update() - see docs/changelog.md (2026-09-22).
      *
      * BUG-098: store()'s copy additionally tried to set a
      * 'vehicle_oem_code' column that doesn't exist on

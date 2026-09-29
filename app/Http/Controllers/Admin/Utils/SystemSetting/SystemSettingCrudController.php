@@ -31,7 +31,7 @@ class SystemSettingCrudController extends CrudController
 
     /**
      * Overrides DeleteOperation's default destroy() to add a permission gate.
-     * See known-bugs-report.md BUG-063: the trait default was unguarded — setup()'s
+     * See docs/bugs (open.md / closed.md) BUG-063: the trait default was unguarded — setup()'s
      * allowAccess(['list', 'create', 'update', 'show']) deliberately omits 'delete', but
      * DeleteOperation::setupDeleteDefaults() calls $this->crud->allowAccess('delete')
      * unconditionally in its own bootstrap, re-granting it regardless.

@@ -17,7 +17,7 @@ use Illuminate\Http\UploadedFile;
  * Business logic for the Booking Delivery sub-domain (Pending Deliveries
  * list -> PendDeliveryEdit() -> PendDeliveryUpdate()), extracted from
  * BookingCrudController as part of the Sales-system refactor (Phase 4) -
- * see docs/refactor/ai-changelogs-DD-MM-YYYY.md.
+ * see docs/changelog.md.
  */
 class BookingDeliveryService
 {

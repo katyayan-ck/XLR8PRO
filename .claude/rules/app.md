@@ -6,11 +6,11 @@ paths:
 # App
 
 ## Keep developer guides in step with code (models, services, utilities)
-Every change to a model, service, facade, trait, event, job, component or config key must update its developer guide in the same change: docs/domains/*.md for business models and services (and docs/domains/reference.md for new or renamed models), docs/utilities/*.md plus docs/utilities/16-reference.md for platform utilities (result codes, events, settings, permissions), docs/utilities/ui-kit.md for shared UI pieces. New or changed public methods get their signature, return shape and an example; removed methods are removed from the guide; newly found defects are named with their BUG id. A public method that exists in code but not in a guide (or a guide describing behaviour the code no longer has) is a defect in the change.
+Every change to a model, service, facade, trait, event, job, component or config key must update its developer guide in the same change: tech-guides/modules/*.md for business models and services (and tech-guides/architecture/model-reference.md for new or renamed models), tech-guides/platform/*.md plus tech-guides/platform/16-reference.md for platform utilities (result codes, events, settings, permissions), tech-guides/platform/ui-kit.md for shared UI pieces. New or changed public methods get their signature, return shape and an example; removed methods are removed from the guide; newly found defects are named with their BUG id. A public method that exists in code but not in a guide (or a guide describing behaviour the code no longer has) is a defect in the change.
 
 ## Guides are part of every change (user standing instruction, 29-09-2026)
-Keep the developer guides, `docs/utilities/16-reference.md`, the module rules in `.ai/rules/modules/`, the data
-dictionary (`docs/reference/data-dictionary*.md`) and the API docs (OpenAPI annotations) up to date on **every** change
+Keep the developer guides, `tech-guides/platform/16-reference.md`, the module rules in `.ai/rules/modules/`, the data
+dictionary (`tech-guides/architecture/data-dictionary*.md`) and the API docs (`tech-guides/api/`, OpenAPI annotations) up to date on **every** change
 to a model, service, module, business rule or API — in the same commit, not later.
 
 ## One error, response and exception pipeline (user standing instruction, 29-09-2026)

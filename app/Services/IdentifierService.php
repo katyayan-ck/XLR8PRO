@@ -4,7 +4,7 @@ namespace App\Services;
 
 /**
  * SSOT for normalizing the business identifiers catalogued in
- * docs/refactor/ai-findings-22-09-2026.md ("Identifier Validation/Generation
+ * docs/changelog.md (2026-09-22) ("Identifier Validation/Generation
  * Duplication" investigation). Format VALIDATION lives in App\Rules\*
  * (one ValidationRule class per identifier); this service only normalizes
  * raw input into the canonical storage shape - it never rejects input,

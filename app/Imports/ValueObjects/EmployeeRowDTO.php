@@ -265,7 +265,7 @@ final class EmployeeRowDTO
 
     /**
      * Delegates to Person::deriveCode() - the model-level SSOT (Aadhaar-first,
-     * PAN-second, PERS-###### fallback) - see BUG-088 in known-bugs-report.md.
+     * PAN-second, PERS-###### fallback) - see BUG-088 in docs/bugs/closed.md.
      * Previously PAN-first with a 'PERS-<empcode>' fallback, both of which
      * disagreed with the model and with the other 3 importers deriving the
      * same value.
@@ -334,7 +334,7 @@ final class EmployeeRowDTO
      * zero stripping logic (previously reimplemented here with its own
      * unconditional ltrim($str, '0'), a looser variant of the same class of
      * bug found and fixed in EmployeeSheetImport/UsersImportSheet - see
-     * BUG-088-adjacent findings in docs/refactor/ai-findings-22-09-2026.md).
+     * BUG-088-adjacent findings in docs/changelog.md (2026-09-22)).
      */
     private static function cleanMobile(mixed $v): ?string
     {

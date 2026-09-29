@@ -20,8 +20,8 @@ Accessories: `Vehicle\Accessories\{AccessoryItem,AccessoryScope}Service` (master
 Scopes: grant/revoke/sync only via `UserScopeService` (revoke = deactivate, never delete).
 
 Never re-implement a capability below; open the service, match its contract, extend it if needed.
-Developer guides with every public method, response and example: `docs/domains/` (models + services) and `docs/utilities/` (platform).
-Full health notes: `docs/reference/Shared-Services-Utilities-Catalog.md`.
+Developer guides with every public method, response and example: `tech-guides/modules/` (models + services) and `tech-guides/platform/` (platform).
+Full health notes: `tech-guides/frs-and-workflows/frs/shared-services-audit-24-09-2026.md`.
 
 | Capability | Service | Notes |
 |---|---|---|

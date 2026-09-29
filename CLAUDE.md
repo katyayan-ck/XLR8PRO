@@ -3,85 +3,69 @@
 
 # Xceler8 (XLRM) — project context
 
-**What:** BMPL's dealership management system (DMS): enquiries → quotations (with approvals) → bookings
-(KYC, DMS, finance, insurance, RTO, exchange, delivery, refunds, OTF) → accounts, plus vehicle master &
-pricing, org/HR/IAM, spares, and shared platform utilities.
+**What:** BMPL's dealership management system: enquiries → quotations → bookings (KYC, DMS, finance, insurance, RTO,
+exchange, delivery, refunds, OTF) → accounts, plus vehicle master & pricing, org/HR/IAM, spares, platform utilities.
 
-**Two tracks (see `docs/decisions/decision-log.md` DEC-001):**
-- **Track A — this repo (`xlrm`)**: live app, stabilised for UAT. Laravel 12, PHP 8.4, Backpack 7
-  (Tabler, no PRO), MySQL 8.4, Spatie permission/medialibrary, Sanctum API (mobile app consumer).
-  **Do not add Filament here.**
-- **Track B — `D:\laragon\www\xceler8`**: greenfield rebuild (Laravel 13, Filament 5, modular monolith)
-  with an ETL toolkit so this app's data migrates at switch-over.
+**Track A — this repo:** live app for UAT. Laravel 12, PHP 8.4, Backpack 7 (Tabler, no PRO), MySQL 8.4, Spatie
+permission/medialibrary, Sanctum API (mobile app). **Do not add Filament here.** Track B (`D:\laragon\www\xceler8`,
+Laravel 13 + Filament 5) is the rebuild; this app's data migrates to it at switch-over (DEC-001).
 
 **Golden rules**
-1. Read the real file before changing it; match existing contracts. Grep before writing new logic —
-   the SSOT services are listed in `.ai/rules/services.md`.
-2. Models own data access, Services own business logic, Controllers stay thin (validate → service → respond).
-3. Business keys are code-based (`person_code`, `branch_code`, `segment_code`…), not integer FKs.
-4. Never query KeyValue/org tables directly — use `KeywordValueService` / `OrgService` (cached).
-5. Never guess a business rule or override a locked spec — stop and ask. Specs: `.ai/knowledge/specs/index.md`.
-6. Every decision is logged in `docs/decisions/decision-log.md` (DEC-NNN) **before** the change.
-7. Tests never touch `xlrm` — they run on `xlrm_testing` (`php artisan testing:refresh-db`).
+1. Read the real file before changing it; grep before writing new logic (SSOT services: `.ai/rules/services.md`).
+2. Controllers thin (validate → one service → respond); services own logic; models own data access.
+3. Business keys are codes (`person_code`, `branch_code`, `segment_code`…), not integer FKs.
+4. Lookups via `KeywordValueService` / `OrgService` (cached), never direct KeyValue/org queries.
+5. Never guess a business rule or override a locked spec — stop and ask (`tech-guides/frs-and-workflows/`).
+6. Log every decision in `docs/decisions/decision-log.md` (DEC-NNN) **before** the change.
+7. Tests run on `xlrm_testing`, never on `xlrm`.
 
-**Where context lives** (load only what the task needs — see `.ai/README.md`):
-`.ai/rules/` (auto-loaded by path) · `.ai/skills/` (on demand) · `.ai/knowledge/` (read when linked,
-incl. generated DB schema cards in `knowledge/db/`) · `.ai/state/current.md` (active work) ·
-`.ai/state/bugs-index.md` (open bugs; full tracker `docs/refactor/known-bugs-report.md` is grep-only).
+**Load context on demand, not up front:** `tech-guides/README.md` maps each task to the few files to read (project card,
+module cards → module guide → FRS section, workflow cards). Live state: `.ai/state/handoff.md`. Open bugs:
+`.ai/state/bugs-index.md`. Rules in `.ai/rules/` load automatically by path; skills load by description. Never read
+`_backup/` (superseded) and never load `docs/changelog.md` whole (grep it by date or id).
 
 === .ai/10-workflow rules ===
 
 # Workflow (all AI tools)
 
-**Git**
-- Never work on `main`. Branches: `feature/*` or `refactor/*` (working branch: `dev/admin`, kept in sync with `stage`, the shared team branch).
-- Commit at checkpoints with `type(scope): message` (feat, fix, refactor, docs, test, chore, security).
-  **Never push, force-push or rewrite history without explicit approval in that turn.**
+**Git:** never work on `main` (working branch `dev/admin`, synced with the team branch `stage`). Commit at checkpoints as
+`type(scope): message` (feat, fix, refactor, docs, test, chore, security). **Never push, force-push or rewrite history
+without explicit approval in that turn.**
 
-**Stop and ask (never decide alone)** — the user approves high-risk items explicitly:
-history rewrite/push · any non-local DB operation · destructive changes to real data (drop tables/columns
-with rows, irreversible type changes, mass remaps) · deleting tracked files outside an approved list ·
-environment/machine changes · new or major-upgraded dependencies · business-rule ambiguity or locked-spec
-conflict · auth/permission/secret changes · UAT-visible behaviour changes beyond an obvious bug fix.
+**Stop and ask (never decide alone):** history rewrite/push · any non-local DB operation · destructive changes to real
+data (drops with rows, irreversible type changes, mass remaps) · deleting tracked files outside an approved list ·
+environment/machine changes · new or major-upgraded dependencies · business-rule ambiguity or locked-spec conflict ·
+auth/permission/secret changes · UAT-visible behaviour changes beyond an obvious bug fix.
 
-**Logging (mandatory)**
-- Decision → `docs/decisions/decision-log.md` (DEC-NNN, append-only, written before the change).
-- Change → `docs/refactor/ai-changelogs-DD-MM-YYYY.md` (files, before → after, reason, DEC id).
-- **With every commit and every major change (user standing instruction, 29-09-2026):**
-  - update the day's changelog;
-  - update the current task status (`.ai/state/current.md`, plus the go-live to-do
-    `docs/plans/2026-09-29-go-live-todo.md` when an item moves);
-  - rewrite the handoff `.ai/state/handoff.md`: what was just done, what is in progress (exact next step, files touched,
-    uncommitted work), open questions for the owner, and how to verify. A new session or agent must be able to continue
-    from it alone.
-- **Accomplishments log (user standing instruction, 29-09-2026):** whenever a task is **completed**, append an entry
-  to `docs/accomplishments/DD-MM-YYYY.md` (today's file; create it if missing) with full details:
-  - what was delivered and why (the to-do item / DEC / BUG ids);
-  - the files, routes, settings and migrations involved;
-  - how it was verified (tests, smoke, numbers);
-  - what is left or waiting.
-  Mark the item done in the go-live to-do in the same commit.
-- **Code quality:** code is properly commented (a PHPDoc on every class and public method: purpose, params, return
-  shape, an example where useful; inline comments only for non-obvious logic, with the DEC / BUG id) and formatted
-  (pint, the project style) before every commit.
-- New bug found anywhere → `docs/refactor/known-bugs-report.md` immediately (BUG-NNN; never delete
-  entries; update status in place; keep the index table current). Check `.ai/state/bugs-index.md` first.
+**Records — update in the same commit as the change (user standing instruction):**
+- Decision → `docs/decisions/decision-log.md` (DEC-NNN, append-only, before the change).
+- Change → append to `docs/changelog.md` under today's `## YYYY-MM-DD` (files, before → after, reason, DEC/BUG ids).
+- To-do → `docs/todo.md` Part 1: move the item's status. Task **completed** → append an accomplishment to Part 2 under
+  today's date: what and why (to-do/DEC/BUG ids), files/routes/settings/migrations, how verified, what is left.
+- Bugs → check `.ai/state/bugs-index.md` first; a new bug goes to `docs/bugs/open.md` immediately (next BUG-NNN, index
+  row + entry); a fixed bug gets its Fixed line and moves, row and full entry, to `docs/bugs/closed.md`. Never delete an
+  entry. Then `php artisan ai:refresh-context`.
+- Plans → a new approved plan is saved in `tech-guides/frs-and-workflows/plans/` (and its index); when work on a
+  plan moves, update its status header and the index row.
+- Guides → the matching `tech-guides/` file for any change to a model, service, business rule, screen standard or API.
+- Handoff → rewrite `.ai/state/handoff.md`: just done, in progress (exact next step, files, uncommitted work), open
+  questions for the owner, how to verify. A new session must be able to continue from it alone.
+- Code is commented (PHPDoc on every class and public method; inline comments only for non-obvious logic, with the
+  DEC/BUG id) and formatted with pint before every commit.
 
 **Quality gates (every change)**
 1. `php -l` on touched files; `vendor/bin/pint --dirty --format agent`.
 2. Scoped `vendor/bin/phpstan analyse <files> --memory-limit=2G`.
-3. `php artisan test --compact` (or the narrowest relevant `--filter`) — runs on `xlrm_testing`.
-   Known pre-existing failures are listed in `.ai/state/current.md`; don't add new ones.
-4. HTTP smoke of **only the touched screens** as superadmin **and** a scoped non-superadmin user (seconds). Run the full suite periodically, and the full screen sweep (`php artisan test --group=smoke`, a few minutes) only before merges — never after every change.
+3. The narrowest tests: `php artisan test --compact --filter=…` (runs on `xlrm_testing`); known failures are in the
+   handoff — don't add new ones. Full suite periodically; `php artisan test --group=smoke` only before merges.
+4. HTTP smoke of only the touched screens as superadmin **and** a scoped non-superadmin user.
 
-**Database**
-- Schema changes are **Laravel migrations** (guarded with `Schema::hasColumn/hasTable`, working `down()`),
-  run on local only. Never `dropIfExists` a live table. Other environments get migrations via deploy.
-- Refresh the test copy after local schema/data changes: `php artisan testing:refresh-db --force`.
+**Database:** schema changes are Laravel migrations (guarded with `Schema::hasColumn/hasTable`, working `down()`), run
+locally only; never `dropIfExists` a live table; other environments get migrations via deploy. After local schema
+changes migrate the test copy too (`DB_DATABASE=xlrm_testing php artisan migrate`).
 
-**Output**
-- Full files when creating; precise edits when changing. No placeholder "rest unchanged" code.
-- Don't create documentation files unless asked or required by this workflow.
+**Output:** full files when creating; precise edits when changing; no placeholder code. No new documentation files
+unless asked or required by this workflow.
 
 === .ai/20-architecture rules ===
 
@@ -106,93 +90,27 @@ conflict · auth/permission/secret changes · UAT-visible behaviour changes beyo
 - **Every job** sets `$timeout`, `$tries`, and implements `failed()`.
 - **Entity writes (DEC-050, mandatory):** every create/edit of an entity (CRUD, import, API, job, seeder) goes through that entity's service (`App\Support\Entity\EntityService` subclass). The service's `fields()` is the **single** definition of each field's format, transformation, validation, label and immutability. Never write entity tables with `DB::table()->insert/update` or `Model::create()` outside the service, never re-declare rules in FormRequests/importers, and never correct data ad hoc: fix the field rule instead.
 
-=== foundation rules ===
+=== .ai/30-laravel-tools rules ===
 
-# Laravel Boost Guidelines
+# Laravel 12 + Boost tools (compact; replaces Boost's generic sections — DEC-086)
 
-The Laravel Boost guidelines are specifically curated by Laravel maintainers for this application. These guidelines should be followed closely to ensure the best experience when building Laravel applications.
-
-## Foundational Context
-
-This application is a Laravel application running on PHP 8.4. You are an expert with the Laravel ecosystem. Always use the APIs that match the installed major version of each package — do not assume a version.
-
-Before relying on a package's API, confirm its installed version:
-- PHP packages: run `composer show --direct` to list direct dependencies with versions, or `composer show <vendor/package>` for a single package.
-- JS packages: check `package.json` for the installed versions.
-
-## Skills Activation
-
-This project has domain-specific skills available in `**/skills/**`. You MUST activate the relevant skill whenever you work in that domain—don't wait until you're stuck.
-
-## Conventions
-
-- You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, and naming.
-- Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
-- Check for existing components to reuse before writing a new one.
-
-## Verification Scripts
-
-- Do not create verification scripts or tinker when tests cover that functionality and prove they work. Unit and feature tests are more important.
-
-## Application Structure & Architecture
-
-- Stick to existing directory structure; don't create new base folders without approval.
-- Do not change the application's dependencies without approval.
-
-## Frontend Bundling
-
-- If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `npm run build`, `npm run dev`, or `composer run dev`. Ask them.
-
-## Documentation Files
-
-- You must only create documentation files if explicitly requested by the user.
-
-## Replies
-
-- Be concise in your explanations - focus on what's important rather than explaining obvious details.
-
-=== boost rules ===
-
-# Laravel Boost
-
-## Tools
-
-- Laravel Boost is an MCP server with tools designed specifically for this application. Prefer Boost tools over manual alternatives like shell commands or file reads.
-- Use `database-query` to run read-only queries against the database instead of writing raw SQL in tinker.
-- Use `database-schema` to inspect table structure before writing migrations or models.
-- Use `get-absolute-url` to resolve the correct scheme, domain, and port for project URLs. Always use this before sharing a URL with the user.
-- Use `browser-logs` to read browser logs, errors, and exceptions. Only recent logs are useful, ignore old entries.
-
-## Searching Documentation (IMPORTANT)
-
-- Use `search-docs` before changes that depend on Laravel ecosystem APIs, behavior, configuration, or version-specific syntax. Skip it for copy-only edits and other changes where package documentation is irrelevant. Reuse sufficient results already in context instead of searching again.
-- Pass a `packages` array to scope results when you know which packages are relevant.
-- Use multiple broad, topic-based queries: `['rate limiting', 'routing rate limiting', 'routing']`. Expect the most relevant results first.
-- Do not add package names to queries because package info is already shared. Use `test resource table`, not `filament 4 test resource table`.
-
-### Search Syntax
-
-1. Use words for auto-stemmed AND logic: `rate limit` matches both "rate" AND "limit".
-2. Use `"quoted phrases"` for exact position matching: `"infinite scroll"` requires adjacent words in order.
-3. Combine words and phrases for mixed queries: `middleware "rate limit"`.
-4. Use multiple queries for OR logic: `queries=["authentication", "middleware"]`.
-
-## Project Rules
-
-- This project contains committed, area-grouped rules in `.ai/rules` when that directory exists (settled decisions, non-obvious traps, standing constraints). Framework and package guidelines that only apply to specific paths (testing, frontend, components) also live there, under `.ai/rules/boost` — this is not just recorded decisions, it is load-bearing guidance you have not seen inline. Before you enter plan mode or create/edit any file, you MUST first: open @.ai/rules/index.md (it maps file globs to rule files), read every rule file whose globs cover the path(s) in scope, and run `grep -rin 'keyword' .ai/rules` to catch what a path match alone misses. Do not write code until you have read and are following every matching rule. If `.ai/rules` does not exist, continue without it.
-- Record a rule with `record-rule` only when the user explicitly asks for one. Instructions for the work at hand are not rules, no matter how emphatic: "remove this typo", "use X here" are work to do, not rules to record. Never record a rule on your own initiative, as a byproduct of a change, or to summarize what you just did. When the user does ask, pass a `glob` (e.g. `app/Http/Controllers/**`), a short `title`, and a few-line `note`. Use `record-rule` rather than your native memory or notes tool, because native memory is personal and session-scoped, while only `.ai/rules` is shared with the team and persists in the repo.
-
-## Artisan
-
-- Run Artisan commands directly via the command line (e.g., `php artisan route:list`). Use `php artisan list` to discover available commands and `php artisan [command] --help` to check parameters.
-- Inspect routes with `php artisan route:list`. Filter with: `--method=GET`, `--name=users`, `--path=api`, `--except-vendor`, `--only-vendor`.
-- Read configuration values using dot notation: `php artisan config:show app.name`, `php artisan config:show database.default`. Or read config files directly from the `config/` directory.
-
-## Tinker
-
-- Execute PHP in app context for debugging and testing code. Do not create models without user approval, prefer tests with factories instead. Prefer existing Artisan commands over custom tinker code.
-- Always use single quotes to prevent shell expansion: `php artisan tinker --execute 'Your::code();'`
-  - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
+- **Laravel 12 structure:** middleware, exceptions and routing are configured in `bootstrap/app.php`; providers in
+  `bootstrap/providers.php`; console config in `routes/console.php`; commands in `app/Console/Commands` auto-register.
+  No `app/Http/Kernel.php` / `app/Console/Kernel.php`.
+- **Conventions:** follow the sibling files (structure, naming, idiom); descriptive names; reuse existing components; no
+  new top-level folders or dependencies without approval. Create files with `php artisan make:* --no-interaction`.
+  Casts via a `casts()` method where the model family already does. When modifying a column in a migration, restate
+  all its attributes. Prefer named routes and `route()`.
+- **Boost MCP tools** (prefer them over shell equivalents): `database-query` (read-only SQL), `database-schema` (before
+  migrations / models), `search-docs` (before relying on version-specific framework / package APIs — scope with
+  `packages`, use several short topic queries), `get-absolute-url` (before sharing a URL), `browser-logs`,
+  `last-error`, `read-log-entries`.
+- **Artisan / tinker:** `php artisan route:list --path=… --name=…`, `php artisan config:show key`;
+  `php artisan tinker --execute '…'` with single quotes outside, double inside; don't create models in tinker without
+  approval — prefer tests with factories.
+- **Rules:** `.ai/rules/index.md` maps paths to rule files; they also load automatically by path. Record a rule with
+  `record-rule` only when the user explicitly asks for one.
+- If a front-end change doesn't show, the user may need `npm run build` / `npm run dev`.
 
 === php rules ===
 
@@ -205,13 +123,6 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Prefer PHPDoc blocks over inline comments. Only add inline comments for exceptionally complex logic.
 - Use array shape type definitions in PHPDoc blocks.
 
-=== deployments rules ===
-
-# Deployment
-
-- Laravel can be deployed using [Laravel Cloud](https://cloud.laravel.com/), which is the fastest way to deploy and scale production Laravel applications.
-- Activate the `deploying-to-cloud` skill whenever deploying to Laravel Cloud, configuring Cloud environments or resources, using the Cloud CLI, or troubleshooting Cloud deployments.
-
 === tests rules ===
 
 # Test Enforcement
@@ -221,62 +132,6 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - When test coverage applies, run the affected tests and ensure they pass.
 - Test the changed behavior and its important failure modes, but do not add tests beyond them.
 - Read the `testing-best-practices` skill before writing tests.
-
-=== laravel/core rules ===
-
-# Do Things the Laravel Way
-
-- Use `php artisan make:` commands to create new files (i.e. migrations, controllers, models, etc.). You can list available Artisan commands using `php artisan list` and check their parameters with `php artisan [command] --help`.
-- If you're creating a generic PHP class, use `php artisan make:class`.
-- Pass `--no-interaction` to all Artisan commands to ensure they work without user input. You should also pass the correct `--options` to ensure correct behavior.
-
-### Model Creation
-
-- When creating new models, create useful factories and seeders for them too. Ask the user if they need any other things, using `php artisan make:model --help` to check the available options.
-
-## APIs & Eloquent Resources
-
-- For APIs, default to using Eloquent API Resources and API versioning unless existing API routes do not, then you should follow existing application convention.
-
-## URL Generation
-
-- When generating links to other pages, prefer named routes and the `route()` function.
-
-## Testing
-
-- When creating models for tests, use the factories for the models. Check if the factory has custom states that can be used before manually setting up the model.
-- Faker: Use methods such as `$this->faker->word()` or `fake()->randomDigit()`. Follow existing conventions whether to use `$this->faker` or `fake()`.
-- When creating tests, make use of `php artisan make:test [options] {name}` to create a feature test, and pass `--unit` to create a unit test. Most tests should be feature tests.
-
-## Vite Error
-
-- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
-
-=== laravel/v12 rules ===
-
-# Laravel 12
-
-- CRITICAL: ALWAYS use `search-docs` tool for version-specific Laravel documentation and updated code examples.
-- Since Laravel 11, Laravel has a new streamlined file structure which this project uses.
-
-## Laravel 12 Structure
-
-- In Laravel 12, middleware are no longer registered in `app/Http/Kernel.php`.
-- Middleware are configured declaratively in `bootstrap/app.php` using `Application::configure()->withMiddleware()`.
-- `bootstrap/app.php` is the file to register middleware, exceptions, and routing files.
-- `bootstrap/providers.php` contains application specific service providers.
-- The `app/Console/Kernel.php` file no longer exists; use `bootstrap/app.php` or `routes/console.php` for console configuration.
-- Console commands in `app/Console/Commands/` are automatically available and do not require manual registration.
-
-## Database
-
-- When modifying a column, the migration must include all of the attributes that were previously defined on the column. Otherwise, they will be dropped and lost.
-
-- Laravel 12 allows limiting eagerly loaded records natively, without external packages: `$query->latest()->limit(10);`.
-
-### Models
-
-- Casts can and likely should be set in a `casts()` method on a model rather than the `$casts` property. Follow existing conventions from other models.
 
 === pint/core rules ===
 

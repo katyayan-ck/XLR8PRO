@@ -12,7 +12,7 @@ namespace App\Services;
  * Previously reimplemented independently (build and/or parse) in
  * EnquiryCrudController, OrgService, ReceiptCrudController,
  * JournalVoucherCrudController and a raw-SQL CONCAT() in Enquiry.php - see
- * docs/refactor/ai-findings-22-09-2026.md.
+ * docs/changelog.md (2026-09-22).
  *
  * Registered as a singleton in AppServiceProvider. Inject via constructor
  * property promotion, e.g. public function __construct(private

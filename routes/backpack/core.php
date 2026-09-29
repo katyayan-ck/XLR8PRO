@@ -67,7 +67,7 @@ Route::group([
     Route::get('vehicle/model/{id}/edit', [VehicleModelCrudController::class, 'edit'])->name('vehicle.model.edit');
     Route::put('vehicle/model/{id}', [VehicleModelCrudController::class, 'update'])->name('vehicle.model.update');
     // 'destroy' is a dead route — no destroy() method exists, no DeleteOperation trait used. See
-    // known-bugs-report.md BUG-012 (pre-existing, documented, not fixed here — kept registered
+    // docs/bugs (open.md / closed.md) BUG-012 (pre-existing, documented, not fixed here — kept registered
     // under the new URL to preserve exact prior behavior).
     // vehicle.model.destroy removed: no destroy() and no delete button (DEC-020).
     Route::get('vehicle/model/sub-segments/{segmentCode}', [VehicleModelCrudController::class, 'getSubSegmentsBySegment'])->name('vehicle.model.get-sub-segments');
@@ -86,7 +86,7 @@ Route::group([
     // all 5 controllers rely on setupListOperation()/setupCreateOperation()/setupUpdateOperation()
     // hooks (in addition to redundant inline checks in the overridden action methods), and
     // search()/showDetailsRow() have NO inline override at all, relying solely on the hook. See
-    // .ai/rules/module-structure.md §3 and known-bugs-report.md BUG-064.
+    // .ai/rules/module-structure.md §3 and docs/bugs (open.md / closed.md) BUG-064.
     // Brand retired for UAT: no xlr8_vehicle_brand table (BUG-009, DEC-038). Old URLs land on Segment.
     Route::redirect('vehicle/brand', '/'.config('backpack.base.route_prefix').'/vehicle/segment');
     Route::redirect('vehicle/brand/{any}', '/'.config('backpack.base.route_prefix').'/vehicle/segment')->where('any', '.*');
@@ -248,7 +248,7 @@ Route::group([
     // are dispatched based on \Route::getCurrentRoute()->action['operation']. Registering via plain
     // [Controller::class, 'method'] (as done for every other migrated controller in this rollout)
     // omits that key, which Route::crud()/setupXRoutes() always include — silently breaking the
-    // hooks and leaving index()/create() completely unguarded. See known-bugs-report.md BUG-064.
+    // hooks and leaving index()/create() completely unguarded. See docs/bugs (open.md / closed.md) BUG-064.
     Route::get('utils/system-setting', ['uses' => SystemSettingCrudController::class.'@index', 'as' => 'utils.system-setting.index', 'operation' => 'list']);
     Route::post('utils/system-setting', ['uses' => SystemSettingCrudController::class.'@store', 'as' => 'utils.system-setting.store', 'operation' => 'create']);
     Route::get('utils/system-setting/create', ['uses' => SystemSettingCrudController::class.'@create', 'as' => 'utils.system-setting.create', 'operation' => 'create']);
@@ -350,7 +350,7 @@ Route::group([
     // BUG-094: search()/showDetailsRow() delegate to Backpack's own ListOperation trait methods
     // (traitSearch()/traitShowDetailsRow()), which only run setupListOperation() — and therefore
     // only pick up setListView('admin.sales.enquiry.list') — when the route carries the 'operation' key.
-    // Same class of bug as BUG-064/BUG-091; see known-bugs-report.md.
+    // Same class of bug as BUG-064/BUG-091; see docs/bugs (open.md / closed.md).
     Route::post('sales/enquiry/search', ['uses' => EnquiryCrudController::class.'@search', 'as' => 'sales.enquiry.search', 'operation' => 'list']);
     Route::get('sales/enquiry/{id}/details', ['uses' => EnquiryCrudController::class.'@showDetailsRow', 'as' => 'sales.enquiry.details', 'operation' => 'list']);
 
@@ -370,7 +370,7 @@ Route::group([
     Route::get('sales/enquiry/models/{segmentCode}', [EnquiryCrudController::class, 'getModels'])->name('sales.enquiry.get-models');
     Route::get('sales/enquiry/sources', [EnquiryCrudController::class, 'getSources'])->name('sales.enquiry.get-sources');
     Route::get('sales/enquiry/sales-consultants', [EnquiryCrudController::class, 'getSalesConsultants'])->name('sales.enquiry.get-sales-consultants');
-    // See known-bugs-report.md BUG-058: was registered at 'admin/master/{keyword}/{parent}' inside
+    // See docs/bugs (open.md / closed.md) BUG-058: was registered at 'admin/master/{keyword}/{parent}' inside
     // a group already prefixed with 'admin', producing a literal 'admin/admin/master/...' URL —
     // fixed as part of this move since it's the same line being renamed anyway.
     Route::get('sales/enquiry/master/{keyword}/{parent}', [EnquiryCrudController::class, 'getKeywordValues'])->name('sales.enquiry.master-keyword-values');

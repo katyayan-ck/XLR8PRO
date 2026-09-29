@@ -16,7 +16,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  * role) from the users workbook, plus the User_Scopes sheet of `users:export-rbac` (DEC-040). Idempotent: existing employees are matched by Emp Code and
  * keep their person_code (DEC-035).
  *
- *   php artisan import:users docs/reference/pricing/data/userdata.xlsx
+ *   php artisan import:users storage/app/imports/userdata.xlsx   (sample kept locally in _backup/docs/reference/pricing/data/)
  */
 class ImportUsersCommand extends Command
 {

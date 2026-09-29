@@ -88,7 +88,7 @@ class Booking extends BaseModel implements HasMedia
      * Already existed but was never called anywhere in the app - now the
      * SSOT for a calculation that was independently duplicated inline via
      * Bookingamount::where('bid', ...)->sum('amount') at 6 call sites in
-     * BookingCrudController - see docs/refactor/ai-changelogs-22-09-2026.md.
+     * BookingCrudController - see docs/changelog.md (2026-09-22).
      */
     public function totalReceivedAmount(): float
     {

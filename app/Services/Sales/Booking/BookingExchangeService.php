@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\DB;
  * (exchangeEdit()/exchangeUpdate(), covering both "Exchange Buy" and
  * "Scrappage" buyer types), extracted from BookingCrudController as part
  * of the Sales-system refactor (Phase 4) - see
- * docs/refactor/ai-changelogs-DD-MM-YYYY.md.
+ * docs/changelog.md.
  */
 class BookingExchangeService
 {

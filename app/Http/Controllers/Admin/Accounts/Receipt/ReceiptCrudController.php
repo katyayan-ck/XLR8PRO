@@ -20,7 +20,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
  * change. Minted 3 new permissions (receipt.view/create/edit) — no
  * `.delete`, since a `destroy()` route is registered in
  * routes/backpack/booking.php but no `destroy()` method exists on this
- * controller at all (see known-bugs-report.md BUG-033, not fixed here).
+ * controller at all (see docs/bugs (open.md / closed.md) BUG-033, not fixed here).
  *
  * This is a plain Controller, not a Backpack CrudController, so permission
  * checks are placed directly at the top of each public action rather than in
