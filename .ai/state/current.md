@@ -40,6 +40,12 @@ radius / layout), AG-Grid themed via the global hook, and the dev UI kit `/admin
   is a setting (off).
 - Local DBs hold no published snapshots; run the process to fill them. Browser check of the quotation picker is pending.
 
+**MASTER TO-DO (29-09):** `docs/plans/2026-09-29-go-live-todo.md`, with status, P0–P3 priority and suggested order. It
+includes the new central formats / data dictionary / permission rename (`module.process.activity`, e.g. `sls.bkng.cr`)
+work: finalise the formats + dictionary first, then implement. Security (idle logout, screen lock, token expiry, 2FA,
+self-service settings), ops (CI gate, backups, cPanel queue worker) and data readiness are there too. Update it as items
+move.
+
 **Waiting on the owner (DEC-070 decisions, details in the 28-09 changelog):**
 - Security / API: D1 repair mobile login (BUG-187), D2 `random_int` OTP (BUG-188), D3 v1 entity access (BUG-182), D4 lead lookups.
 - Deletions: D5 Brand, D6 ExportController, D7 RBACService, D8 Core graph models, D9 getChassisNumbers, D10 dead Org views, D11 seeder test users, D12 Booking scopes.
