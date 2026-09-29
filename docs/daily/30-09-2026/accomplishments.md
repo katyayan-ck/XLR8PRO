@@ -134,3 +134,12 @@ shown in place and failed rows stay marked with their messages. Filters: search,
 **Verified:** 3 HTTP feature tests (screen, data, save order, 403); headless-Chrome run of the grid script on the 200
 exported rows; HTTP smoke superadmin 200, user 40 → 403. **Not verified:** a visual pass at 390 / 768 px (the toolbar
 wraps with the shared `.xl-toolbar`). **Left:** BUG-218 data gaps (HR can now fix them on this screen).
+
+### 13. Sales / booking HTTP feature tests — W3
+
+**Delivered:** 15 HTTP tests over the enquiry, quotation and booking write flows (list screens were already in the
+smoke sweep; booking step services already had unit tests). The booking sweep proves all 25 write routes refuse a
+user without Sales permissions. Found and fixed BUG-220 (mock customer names in quotation history); logged BUG-219
+(dummy bookings skip base validation) for the owner.
+
+**Verified:** Sales + quotation pricing + booking service suites 77 passed. **Left:** BUG-219 decision.

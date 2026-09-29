@@ -211,6 +211,7 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-215 | RTO apply (stage change 28-09): sale type / registration-no type looked up in keyword masters that do not exist (`SALE_TYPE`, `REGISTRATION_NO_TYPE`) while the form still posts 1 / 2 / 3 — no RTO rule ever matched, so the RTO status was wrong | High | FIXED — keyword masters first, fixed code maps as fallback | 30-09-2026 | 30-09-2026 |
 | BUG-216 | Colour mode flashed dark / light many times a second with two or more admin tabs open — tabs re-set the mode on every `storage` event, and Backpack's `colorMode.set()` rewrites the key each time, so the tabs kept bouncing it | High | FIXED — debounced, compare-then-apply sync | 30-09-2026 | 30-09-2026 |
 | BUG-217 | v1 notification / alert lists passed `sort_by` / `sort_order` straight into orderBy() — an unknown column or direction was a 500 | Medium | FIXED — per-list allow-list, fallback newest first | 30-09-2026 | 30-09-2026 |
+| BUG-220 | Quotation history page kept a hard-coded list of 18 mock customers ("Rajesh Kumar" …) as the name fallback | Low | FIXED — mock block removed; no name shows `-` | 30-09-2026 | 30-09-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2633,3 +2634,13 @@ guessed at.
   → 500.
 - **Fixed:** 30-09-2026 — `sortFor($request, $columns)`: only the list's own columns and asc / desc; anything else sorts
   newest first. Test `tests/Feature/Api/NotificationListSortTest.php` (fails on the old code, passes now).
+
+### BUG-220 — Quotation history page kept a hard-coded list of 18 mock customers ("Rajesh Kumar" …) as the name fallback
+
+- **Final status:** FIXED · **Fixed:** 30-09-2026
+- **Severity:** Low (placeholder data in production code; it matched only `enquiry_no` values `'001'`–`'018'`, which real
+  quotations — numeric enquiry ids — never carry, so fake names could appear only on such legacy / demo rows).
+- **Found:** 30-09-2026, writing the quotation HTTP tests (to-do W3).
+- **Where:** `app/Http/Controllers/Admin/Sales/Quotation/QuotationCrudController.php` `history()`.
+- **Fixed:** 30-09-2026 — the `$mockEnquiries` fallback removed; the name comes from the quotation data or the enquiry,
+  else `-`. Covered by `tests/Feature/Sales/QuotationFlowTest` (history page opens).

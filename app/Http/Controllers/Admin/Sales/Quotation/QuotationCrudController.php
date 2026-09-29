@@ -64,7 +64,6 @@ class QuotationCrudController extends CrudController
             ?->pluck('value', 'code')
             ->toArray() ?? [];
 
-
         $this->crud->setListView('admin.sales.quotation.list');
 
         $quotations = Quotation::with('enquiry')
@@ -75,7 +74,6 @@ class QuotationCrudController extends CrudController
         $bookingMap = DB::table('xlr8_booking_master')
             ->whereNotNull('quotation_id')
             ->pluck('id', 'quotation_id');
-
 
         $gridData = $quotations->map(function ($quotation, $index) use (
             $insurance_type_map,
@@ -1024,7 +1022,7 @@ class QuotationCrudController extends CrudController
         if (! isset($quotationData['insurance_covers'])) {
             $quotationData['insurance_covers'] = [];
         }
-        
+
         $insurance_type_map = OrgService::getKeyValuesByCode('POLICY_TYPE')
             ?->pluck('value', 'code')
             ->toArray() ?? [];
@@ -1684,34 +1682,6 @@ class QuotationCrudController extends CrudController
                 $customerName = $quotation->enquiry->full_name ?? '';
             }
         }
-        if (empty($customerName)) {
-
-            $mockEnquiries = [
-                '001' => ['name' => 'Rajesh Kumar', 'mobile' => '9876543210'],
-                '002' => ['name' => 'Priya Sharma', 'mobile' => '9123456780'],
-                '003' => ['name' => 'Suresh Yadav', 'mobile' => '9988776655'],
-                '004' => ['name' => 'Amit Singh', 'mobile' => '9811223344'],
-                '005' => ['name' => 'Vikram Mehta', 'mobile' => '9765432109'],
-                '006' => ['name' => 'Rohan Verma', 'mobile' => '9876500006'],
-                '007' => ['name' => 'Sneha Gupta', 'mobile' => '9876500007'],
-                '008' => ['name' => 'Vikas Shah', 'mobile' => '9876500008'],
-                '009' => ['name' => 'Priya Mehra', 'mobile' => '9876500009'],
-                '010' => ['name' => 'Karan Joshi', 'mobile' => '9876500010'],
-                '011' => ['name' => 'Manoj Yadav', 'mobile' => '9876500011'],
-                '012' => ['name' => 'Deepak Singh', 'mobile' => '9876500012'],
-                '013' => ['name' => 'Vikram Mehta', 'mobile' => '9876500013'],
-                '014' => ['name' => 'Ananya Sharma', 'mobile' => '9876500014'],
-                '015' => ['name' => 'Vivek Patel', 'mobile' => '9876500015'],
-                '016' => ['name' => 'Kavya Nair', 'mobile' => '9876500016'],
-                '017' => ['name' => 'Arjun Mehta', 'mobile' => '9876500017'],
-                '018' => ['name' => 'Priya Singh', 'mobile' => '9876500018'],
-            ];
-
-            $enquiryNo = $quotation->enquiry_no;
-
-            $customerName = $mockEnquiries[$enquiryNo]['name'] ?? '';
-        }
-
         $customerName = $customerName ?: '-';
 
         $modelCode = $quotationData['model_code']
@@ -2491,8 +2461,6 @@ class QuotationCrudController extends CrudController
                 ];
             })
             ->toArray();
-
-        
 
         /*
     |--------------------------------------------------------------------------

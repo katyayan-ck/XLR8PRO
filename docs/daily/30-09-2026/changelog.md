@@ -154,3 +154,14 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - **Tests:** new `tests/Feature/Org/UserBulkEditTest.php` (3); with `UsersWorkbookTest` 10 passed. Grid behaviour checked
   in headless Chrome against the exported rows (picker ALL / NONE, dependent lists and resets, only edited rows sent,
   failed row kept with its message).
+
+## W3 — Sales / booking HTTP feature tests (BUG-219, BUG-220)
+- **New tests** `tests/Feature/Sales/`: `EnquiryFlowTest` (7: full create with vehicle names + `EN-` DMS prefix, required
+  fields, reference source rules + redirect, virtual-call fast path, duplicate check, edit-only SC / CRE fields, create
+  permission), `QuotationFlowTest` (4: revision + REVISED action only on a real change, booked stays booked BUG-096,
+  history page + enquiry required, edit permission), `BookingFlowTest` (4: every booking POST / PUT / DELETE route → 403
+  without Sales permissions (25 routes), create validation saves nothing, KYC identifiers + save through the service,
+  DMS / OTF formats). Sales + quotation pricing + booking service suites: 77 passed.
+- **Fixed BUG-220:** `QuotationCrudController::history()` — hard-coded mock customer fallback removed (file re-formatted
+  by pint).
+- **Logged BUG-219:** booking `store()` ignores base validation for customer type `Dummy` (owner question).

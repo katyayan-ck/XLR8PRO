@@ -388,7 +388,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W10 | **Users bulk export / import redesign** (your request 30-09): headers `Emp Code*, Employee Name*, Personal Mail Id, Official Mail ID, Personal Contact Number*, Official Contact Number, OEM Mile ID, Aadhaar No, Primary Branch*, Addon Branch, Primary Location*, AddOn Location, Primary Department*, Addon Department, Primary Division, Add On Divisions, Designation*, Vertical, Segment, Sub Segment, Models, Reporting Manager`; master dropdowns, dependent lists (primary location ← primary branch, primary division ← primary department, add-on lists = the left-out children of the primaries + all children of the add-ons), multi-select with `All` first and `None` last, employee history kept | ✅ 30-09 (DEC-089 Phase B, DEC-090) |
 | W11 | **Bulk user create / edit screen** (your request 30-09) with the same rules and multi-select filter-like pickers; writes employee history | ✅ 30-09 (DEC-089 Phase C: Org → Users → Bulk edit) |
 | W12 | **Org rules as validation** (your request 30-09): no user without a primary branch / location / department / division (`All` / `None` not allowed there); every parent branch / department / segment has a same-name, same-code child location / division / sub-segment; verticals mandatory (multi-select, no `None`); segment / sub-segment / model / variant blank = all; every user has an employee code, FSCs may have a Mile ID | ✅ 30-09 (Phase A: rules in the entity services; legacy gaps → BUG-218) |
-| W3 | Q1 Sales / booking feature tests (enquiry, quotation, booking flows) | 🔴 |
+| W3 | Q1 Sales / booking feature tests (enquiry, quotation, booking flows) | ✅ 30-09 (15 HTTP tests; BUG-219 logged, BUG-220 fixed) |
 | W4 | Q5 PHPStan baseline for the legacy controllers | 🔴 |
 | W5 | Q7 UI clean-up outside Sales (hex / inline styles → shared layer, same method as the Sales pass) | 🔴 |
 | W6 | U7 web side: admin flash messages through the error codes / language file (same wording) | 🔴 |
@@ -929,3 +929,12 @@ shown in place and failed rows stay marked with their messages. Filters: search,
 **Verified:** 3 HTTP feature tests (screen, data, save order, 403); headless-Chrome run of the grid script on the 200
 exported rows; HTTP smoke superadmin 200, user 40 → 403. **Not verified:** a visual pass at 390 / 768 px (the toolbar
 wraps with the shared `.xl-toolbar`). **Left:** BUG-218 data gaps (HR can now fix them on this screen).
+
+### 13. Sales / booking HTTP feature tests — W3
+
+**Delivered:** 15 HTTP tests over the enquiry, quotation and booking write flows (list screens were already in the
+smoke sweep; booking step services already had unit tests). The booking sweep proves all 25 write routes refuse a
+user without Sales permissions. Found and fixed BUG-220 (mock customer names in quotation history); logged BUG-219
+(dummy bookings skip base validation) for the owner.
+
+**Verified:** Sales + quotation pricing + booking service suites 77 passed. **Left:** BUG-219 decision.

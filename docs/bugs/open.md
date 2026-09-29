@@ -49,6 +49,7 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-207 | v1 `system-settings` read endpoints are open to every signed-in app user and return **all** visible settings (encrypted ones as ciphertext); `GET system-settings/{key}` returns the raw row (validation rules, defaults); update / import go through the legacy `SystemSettingService` | Medium | OPEN (API access change — owner decision; proposed app-facing allow-list) | 29-09-2026 | — |
 | BUG-209 | `BaseController::authorize()` never works: `canPerform()` calls `parent::authorize()`, which `Controller` does not have (always false), and the throw passed its arguments in the wrong order (a `TypeError` → 500). `PUT api/v1/system-settings/{key}` and `POST …/import/json` therefore always fail; there is no `SystemSetting` policy either | Medium | PARTLY FIXED 29-09-2026: the 500 is now the intended 403; making the endpoints work waits on BUG-207 (owner) | 29-09-2026 | — |
 | BUG-218 | Legacy employees without the primaries DEC-089 now requires: of 200 active employees 24 have no branch, 39 no location, 5 no department, 12 no division, 35 no vertical (local `xlrm`, 30-09) | Medium | OPEN — data (HR / owner): fill through the new users workbook (W10) or the bulk screen (W11) | 30-09-2026 | — |
+| BUG-219 | Booking create: for customer type `Dummy` every base validation failure is only logged, so a dummy booking can be saved without name, mobile, branch, vehicle or sale type | Medium | OPEN — owner: should a dummy booking still need the base fields (only finance mode is relaxed today)? | 30-09-2026 | — |
 
 ## Entries
 
@@ -460,3 +461,17 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
   they are (DEC-050 / DEC-054: no silent correction), so they need filling.
 - **Proposed solution:** HR exports the new users workbook (W10), fills the blanks from the dropdowns and re-imports; or uses
   the bulk screen (W11). A blank location / division then defaults to the parent's same-code child.
+
+### BUG-219 — Booking create: for customer type `Dummy` every base validation failure is only logged, so a dummy booking can be saved without name, mobile, branch, vehicle or sale type
+
+- **Status:** OPEN (business question before a fix — UAT-visible).
+- **Severity:** Medium (incomplete dummy bookings reach lists, dashboards and exports).
+- **Found:** 30-09-2026, writing the booking HTTP tests (to-do W3).
+- **Where:** `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` `store()` — the base `Validator::make()`
+  (customer type / category, branch, location, segment, model, variant, colour, body type, sale type, name, mobile,
+  delivery type …) is checked with `if ($validator->fails())` that only logs; the early return is inside
+  `if ($request->customertype != 'Dummy')`.
+- **Description:** the rule set already relaxes finance mode for Dummy (`$finModeRule`), which suggests the other base
+  fields were meant to apply; today they don't.
+- **Proposed solution:** return on base-validation failure for every customer type (and relax only the fields a dummy
+  booking really doesn't have), after the owner / booking team confirms.

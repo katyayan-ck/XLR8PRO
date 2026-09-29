@@ -22,6 +22,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: W3 — Sales HTTP feature tests (`tests/Feature/Sales/`), BUG-220 fixed, BUG-219 logged.
 - 30-09: W11 / DEC-089 Phase C — Org → Users → Bulk edit (`UserBulkEditController`, `xl-user-bulk.js`, picker editor); DEC-089 plan closed.
 - 30-09: W10 / DEC-089 Phase B — users workbook (`app/Services/Org/UsersWorkbook/`, export / template / import; RBAC workbook at `export/rbac`); DEC-090 cell semantics. Round trip 200/200 no-op.
 - 30-09: W12 / DEC-089 Phase A — same-code children (services + migration), employee primaries + vertical enforced (`EmployeeService::checkPrimaries()`), BUG-218 logged.
@@ -46,13 +47,14 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). Next step: to-do W3 (Sales / booking feature tests), then W4 (PHPStan baseline), W5, W6, W7.
+0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). W3 ✅ (15 Sales HTTP tests; BUG-219 open, BUG-220 fixed). Next step: W4 (PHPStan baseline for the legacy controllers), then W4 (PHPStan baseline), W5, W6, W7.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.
 3. **U1 per screen:** header-less Backpack form cards get headers when converted; a real-browser check of quotation /
    booking forms.
 
 ## Waiting on the owner
+- BUG-219: should a `Dummy` booking still need the base fields (name, mobile, branch, vehicle, sale type)? Today they are skipped.
 - DEC-090 (agent, within DEC-089): workbook `ALL` = unrestricted (no scope rows, so it also covers codes added later); `NONE` on an org add-on = primary only; a new employee must list vertical codes (no `ALL`). Say if `ALL` should mean today's codes only.
 - **Rewrite backup:** delete `backup/dev-admin-before-rewrite-30-09` + `git gc` when confirmed.
 - **Deletions:** D5–D12.
