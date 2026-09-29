@@ -241,6 +241,7 @@ Entry format:
 | BUG-203 | Quotation create screen auto-loaded a hard-coded mock (enquiry "019", BE6 "bev6Premium" prices) — every new quotation showed fake prices, insurance and RTO; TCS limit/rate hard-coded; save never re-validated the gate or TCS | High | FIXED (DEC-082, 29-09-2026) | 29-09-2026 | 29-09-2026 |
 | BUG-204 | `AccessoryScope::$fillable` lacked `permit`, so the accessory import's `updateOrCreate` silently dropped it — GPS VLTD / RTO Tape rows were never permit-scoped | Medium | FIXED (DEC-083, 29-09-2026) | 29-09-2026 | 29-09-2026 |
 | BUG-205 | Importing the Insurance workbook's "Insurance Co." sheet expired every insurance preference row; with segment preferences (DEC-083) it would have wiped them. The export also folded them into model rows | Medium | FIXED (DEC-083, 29-09-2026; found in design, never shipped broken) | 29-09-2026 | 29-09-2026 |
+| BUG-206 | `person_code` (the person business key, referenced by 14 tables incl. users, bookings, enquiries) holds the person's **PAN (51) or Aadhaar (160)** for 211 of 215 people — government IDs as a key spread into every referencing row, URLs and logs (DPDP / UIDAI Aadhaar-storage risk) | High | OPEN (owner decision: surrogate key + remap — data dictionary §person) | 29-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -2367,3 +2368,22 @@ guessed at.
   - the sheet expires and exports only model-level rows (`segment` null);
   - the Insurance Rules master imports and exports only the "Insu Premium" sheet (`InsuranceWorkbookService`
     `$parts`).
+
+### BUG-206 — Person business key is a PAN / Aadhaar number
+
+- **Status:** OPEN (owner decision; see `docs/reference/data-dictionary-draft.md` → person_code)
+- **Severity:** High (privacy / compliance).
+- **Found:** 29-09-2026, the code-family inventory (§2 F1 of the go-live to-do). Of 215 live `xlr8_admin_person` rows:
+  - 160 `person_code` values are 12-digit Aadhaar numbers;
+  - 51 are PANs;
+  - 4 are surrogate codes (`SUP001`, `PRSN00001`, …).
+- **Why it matters:**
+  - The code is copied into `users`, the employee, address, banking, contact and user-type tables, booking master,
+    enquiries and the comms tables (call / consent / OTP / WhatsApp threads).
+  - It appears in URLs, exports and logs, so every mask on the PAN / Aadhaar fields is bypassed through the key.
+  - The Aadhaar Act restricts storing Aadhaar numbers outside a vault.
+- **Proposed fix (needs approval — a mass remap of live data):**
+  1. A surrogate `PRS-` + 6 digits.
+  2. A mapping table.
+  3. A migration that remaps the 14 tables in one transaction, with a backup.
+  4. `PersonService` generates new codes; the ID numbers stay only in their (masked / encrypted) columns.

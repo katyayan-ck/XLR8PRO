@@ -70,9 +70,9 @@ convention and matches our route names (`module.process.activity`), so it is a g
 
 | # | Step | Status | Detail |
 |---|---|---|---|
-| F1 | Inventory every code family | 🔴 P1 | See the inventory list below the table. Each family gets its current formats, counts and offenders (a script, like the audit above). |
-| F2 | **Decide the format per family** | ⏸ P1 | See the proposal below the table. Some choices need you. |
-| F3 | **Data dictionary** | 🔴 P1 | `docs/reference/data-dictionary.md` + a generated JSON. Per family: format regex, examples, owner, where it is stored, where it is used; per module: process list, activity list. Reviewed and signed off by you before any change. |
+| F1 | Inventory every code family | ✅ P1 (29-09) | See the inventory list below the table. Each family gets its current formats, counts and offenders (a script, like the audit above). |
+| F2 | **Decide the format per family** | ⏸ P1 — proposals + 5 questions in `docs/reference/data-dictionary-draft.md` | See the proposal below the table. Some choices need you. |
+| F3 | **Data dictionary** | 🟡 P1 — DRAFT written, awaiting sign-off | `docs/reference/data-dictionary.md` + a generated JSON. Per family: format regex, examples, owner, where it is stored, where it is used; per module: process list, activity list. Reviewed and signed off by you before any change. |
 | F4 | Central SSOT in code | 🔴 P1 | See the SSOT pieces below the table. |
 | F5 | Permission migration plan | 🔴 P1 | See the migration steps below the table. |
 | F6 | Keyword / code clean-up | ⏸ P2 | Merge duplicates (`BODY_MAKE` / `BODY-MAKE`), fix non-conforming codes through `KeyvalueService`, with a mapping table; no data rewritten without your approval (DEC-050: no correcting old data silently) |
@@ -171,7 +171,7 @@ convention and matches our route names (`module.process.activity`), so it is a g
 | S9 | Active sessions / devices page | 🟡 | P2 | API devices exist; add web sessions (DB session driver) + "sign out everywhere" (password change already signs others out) |
 | S10 | Security headers | 🔴 | P1 | None set. Add middleware: HSTS, X-Frame-Options / frame-ancestors, X-Content-Type-Options, Referrer-Policy, a CSP (report-only first; CDN allow-list: jsdelivr, cdnjs, Google Fonts) |
 | S11 | Production config hardening | 🔴 | P0 | `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`, HTTPS only, `LOG_LEVEL=warning`, `.env` not web-readable, `storage` / `bootstrap/cache` permissions, the Backpack registration off (already off outside local) |
-| S12 | PII protection / DPDP Act 2023 | 🟡 | P1 | Aadhaar / PAN masked in history (BUG-195); mask old rows (D26); encrypt Aadhaar / PAN at rest; consent record; retention / erasure policy; export on request |
+| S12 | PII protection / DPDP Act 2023 — **incl. BUG-206: `person_code` = PAN / Aadhaar for 211 of 215 people** | 🟡 | **P0** | Aadhaar / PAN masked in history (BUG-195); mask old rows (D26); encrypt Aadhaar / PAN at rest; consent record; retention / erasure policy; export on request |
 | S13 | Secrets rotation | ⏸ | P0 | Google key (D29); SMS / WA webhook secrets moved to encrypted settings ✅ |
 | S14 | Audit log viewer | 🟡 | P2 | owen-it/auditing is used on 5 models; Settings has its own audit. Add an admin viewer (who changed what) + extend to the masters |
 | S15 | Permission review with the business | ⏸ | P1 | 76 designations × 275 permissions; grant the new `PRC_*` master permissions (DEC-083); remove the `*` permission; RBAC matrix sign-off |
