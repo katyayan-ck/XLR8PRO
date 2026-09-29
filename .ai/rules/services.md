@@ -27,6 +27,7 @@ Full health notes: `tech-guides/frs-and-workflows/frs/shared-services-audit-24-0
 |---|---|---|
 | Org lookups, hierarchy, users by designation/branch | `App\Services\OrgService` (static, cached 3600s) | Branch filter uses `employee.primary_branch_code`; dropdown rows: `branchRows()`, `locationRows()`, `locationsByState()`, `serviceBranches()` |
 | Org entity CRUD | `App\Services\Org\*Service` + `OrgEntityGuard` | |
+| Bulk user rows (workbook, bulk screen) | `App\Services\Org\UsersWorkbook\UserRowService::save()` (+ `UsersWorkbookService` export / import) | one row → person, employee, login, role, scopes, history; `ALL` = no rows, `NONE` = primary only (DEC-089/090) |
 | Person / contacts / addresses / banking | writes: `App\Services\Person\*Service`; lookups + aggregate upsert: `App\Services\PersonService` | never hand-roll phone/PAN/Aadhaar cleanup |
 | Identifier formats & normalisation | `App\Services\IdentifierService` + `App\Rules\*` | Aadhaar, PAN, mobile, GSTIN, chassis, OTF/DMS/invoice |
 | Enquiry references (`XENQ-{id}`) | `EnquiryReferenceService`, `Enquiry::resolveByAnyReference()` | |
