@@ -413,6 +413,10 @@ class ImportEnquiriesJob implements ShouldQueue
                             'followup_type'                => $this->resolveKeyValue('FOLLOW_UP_TYPE', $this->cell($row, $headerMap, 'Followup Type')),
                             'followup_remarks_type'        => $this->resolveKeyValue('SC_FUP_REMARKS_TYPE', $this->cell($row, $headerMap, 'Follow-up Remarks Type')),
                             'fup_count'                    => is_numeric($fupCountRaw) ? (int) $fupCountRaw : null,
+                            'lost_reason'             => $this->resolveKeyValue('LOST_REASON', $this->cell($row, $headerMap, 'Lost-Reason')),
+                            'lost_sub_reason'         => $this->resolveKeyValue('LOST_SUBREASON', $this->cell($row, $headerMap, 'Lost-Sub Reason')),
+                            'lost_detail_reason'      => $this->cleanString($this->cell($row, $headerMap, 'Lost-Detailed Reason'), 255),
+                            'lost_remarks'            => $this->cleanString($this->cell($row, $headerMap, 'Lost remarks by Sales Consultant'), 255),
                         ]);
 
                         // 2. Determine current_origin dynamically
