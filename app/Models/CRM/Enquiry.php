@@ -342,54 +342,73 @@ class Enquiry extends BaseModel
     {
         return $query->where('is_active', 1)->where(function ($q) {
 
-            // CONDITION A: OEM Dump Enquiries (Requires specific OEM fields to be filled)
-            $q->where(function ($oemQuery) {
-                $requiredFields = [
-                    'likely_purchase_days',
-                    'segment_code',
-                    'model_code',
-                    'variant_code',
-                    'color_code',
-                    'name',
-                    'mobile',
-                    'gender',
-                    'zipcode',
-                    'territory',
-                    'tehsil',
-                    'district',
-                    'city',
-                    'purchase_type',
-                    'purchase_type_crm',
-                    'sc_mile_id',
-                    'cre_likely_purchase_days',
-                ];
+            // 1. Mandatory Fields globally applied to ALL enquiries (OEM & CNE)
+            $requiredFields = [
+                'likely_purchase_days',
+                'segment_code',
+                'model_code',
+                'variant_code',
+                'color_code',
+                'name',
+                'mobile',
+                'gender',
+                'zipcode',
+                'tehsil',
+                'district',
+                'city',
+                'purchase_type',
+                'purchase_type_crm',
+                'cre_likely_purchase_days',
+            ];
 
-                foreach ($requiredFields as $field) {
-                    $oemQuery->whereNotNull($field)->where($field, '!=', '');
-                }
+            foreach ($requiredFields as $field) {
+                $q->whereNotNull($field)->where($field, '!=', '');
+            }
 
-                $oemQuery->where(function ($sub) {
-                    $sub->whereNotNull('enq_assign_date')->orWhereNotNull('quick_enq_assign_date');
+            // 2. x8_enq_assign_date with quick_enq_assign_date or enq_assign_date
+            $q->where(function ($sub) {
+                $sub->whereNotNull('x8_enq_assign_date')
+                    ->orWhereNotNull('quick_enq_assign_date')
+                    ->orWhereNotNull('enq_assign_date');
+            });
+
+            // 3. sc_name or sc_mile_id
+            $q->where(function ($sub) {
+                $sub->where(function ($sub1) {
+                    $sub1->whereNotNull('sc_name')->where('sc_name', '!=', '');
+                })->orWhere(function ($sub2) {
+                    $sub2->whereNotNull('sc_mile_id')->where('sc_mile_id', '!=', '');
                 });
+            });
 
-                $oemQuery->whereExists(function ($subquery) {
-                    $subquery->select(DB::raw(1))
-                        ->from('xlr8_cre_enquiry_fup')
-                        ->whereRaw("(xlr8_cre_enquiry_fup.x8_enq_no = CAST(xlr8_crm_enquiries.id AS CHAR) OR xlr8_cre_enquiry_fup.x8_enq_no = CONCAT('XENQ-', xlr8_crm_enquiries.id))")
-                        ->whereNotNull('cre_enq_stage')->where('cre_enq_stage', '!=', '')
-                        ->whereNotNull('cre_customer_stage')->where('cre_customer_stage', '!=', '')
-                        ->whereNotNull('cre_fup_remarks')->where('cre_fup_remarks', '!=', '')
-                        ->whereNotNull('cre_next_fup_date');
+            // 4. x8_sc_mile_id or x8_sc_code
+            $q->where(function ($sub) {
+                $sub->where(function ($sub1) {
+                    $sub1->whereNotNull('x8_sc_mile_id')->where('x8_sc_mile_id', '!=', '');
+                })->orWhere(function ($sub2) {
+                    $sub2->whereNotNull('x8_sc_code')->where('x8_sc_code', '!=', '');
                 });
+            });
 
-                $oemQuery->whereNotNull('id')->where(function ($sub) {
-                    $sub->whereNotNull('enquiry_no')->where('enquiry_no', '!=', '')
+            // 5. CRE FUP checks
+            $q->whereExists(function ($subquery) {
+                $subquery->select(DB::raw(1))
+                    ->from('xlr8_cre_enquiry_fup')
+                    ->whereRaw("(xlr8_cre_enquiry_fup.x8_enq_no = CAST(xlr8_crm_enquiries.id AS CHAR) OR xlr8_cre_enquiry_fup.x8_enq_no = CONCAT('XENQ-', xlr8_crm_enquiries.id))")
+                    ->whereNotNull('cre_enq_stage')->where('cre_enq_stage', '!=', '')
+                    ->whereNotNull('cre_customer_stage')->where('cre_customer_stage', '!=', '')
+                    ->whereNotNull('cre_fup_remarks')->where('cre_fup_remarks', '!=', '')
+                    ->whereNotNull('cre_next_fup_date');
+            });
+
+            // 6. Ensure it either has an OEM Enquiry number OR it is an Xceler8 origin enquiry
+            $q->whereNotNull('id')->where(function ($sub) {
+                $sub->where(function ($oem) {
+                    $oem->whereNotNull('enquiry_no')->where('enquiry_no', '!=', '')
                         ->orWhereNotNull('quick_enquiry_no')->where('quick_enquiry_no', '!=', '');
-                });
-            })
-
-                // CONDITION B: New Enquiries created directly from CRM
-                ->orWhere('current_origin', 'Xceler8');
+                })->orWhere('current_origin', 'Xceler8')
+                  ->orWhere('current_origin', 'XCELER8');
+            });
         });
     }
 
