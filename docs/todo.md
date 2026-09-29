@@ -389,7 +389,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W11 | **Bulk user create / edit screen** (your request 30-09) with the same rules and multi-select filter-like pickers; writes employee history | ✅ 30-09 (DEC-089 Phase C: Org → Users → Bulk edit) |
 | W12 | **Org rules as validation** (your request 30-09): no user without a primary branch / location / department / division (`All` / `None` not allowed there); every parent branch / department / segment has a same-name, same-code child location / division / sub-segment; verticals mandatory (multi-select, no `None`); segment / sub-segment / model / variant blank = all; every user has an employee code, FSCs may have a Mile ID | ✅ 30-09 (Phase A: rules in the entity services; legacy gaps → BUG-218) |
 | W3 | Q1 Sales / booking feature tests (enquiry, quotation, booking flows) | ✅ 30-09 (15 HTTP tests; BUG-219 logged, BUG-220 fixed) |
-| W4 | Q5 PHPStan baseline for the legacy controllers | 🔴 |
+| W4 | Q5 PHPStan baseline for the legacy controllers | ✅ 30-09 (`phpstan-baseline.neon`, 2 511 legacy errors; full run clean; BUG-221) |
 | W5 | Q7 UI clean-up outside Sales (hex / inline styles → shared layer, same method as the Sales pass) | 🔴 |
 | W6 | U7 web side: admin flash messages through the error codes / language file (same wording) | 🔴 |
 | W7 | U4 N+1 review of the big lists (enquiries, bookings, quotations) | 🔴 |
@@ -938,3 +938,12 @@ user without Sales permissions. Found and fixed BUG-220 (mock customer names in 
 (dummy bookings skip base validation) for the owner.
 
 **Verified:** Sales + quotation pricing + booking service suites 77 passed. **Left:** BUG-219 decision.
+
+### 14. PHPStan baseline — W4
+
+**Delivered:** the whole codebase now passes PHPStan level 5 with the legacy errors recorded in `phpstan-baseline.neon`
+(2 511), so every new error fails the gate; the workflow rule says so. Two real defects fixed on the way
+(AuthorizationException import, SystemSettingAudit user relation); the other "class not found" paths logged as BUG-221.
+
+**Verified:** full `phpstan analyse` → No errors (twice, before and after the fixes). **Left:** burn the baseline down
+module by module (largest: legacy admin controllers 567, booking services 475).

@@ -70,7 +70,8 @@ different model must be able to continue from the files alone, never from memory
 
 **Quality gates (every change)**
 1. `php -l` on touched files; `vendor/bin/pint --dirty --format agent`.
-2. Scoped `vendor/bin/phpstan analyse <files> --memory-limit=2G`.
+2. Scoped `vendor/bin/phpstan analyse <files> --memory-limit=2G`; before merges the full `composer analyse` must say
+   "No errors" (`phpstan-baseline.neon` holds the legacy errors, W4 — never regenerate it to hide new ones).
 3. The narrowest tests: `php artisan test --compact --filter=…` (runs on `xlrm_testing`); known failures are in the
    handoff — don't add new ones. Full suite periodically; `php artisan test --group=smoke` only before merges.
 4. HTTP smoke of only the touched screens as superadmin **and** a scoped non-superadmin user.

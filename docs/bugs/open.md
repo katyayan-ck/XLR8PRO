@@ -50,6 +50,7 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-209 | `BaseController::authorize()` never works: `canPerform()` calls `parent::authorize()`, which `Controller` does not have (always false), and the throw passed its arguments in the wrong order (a `TypeError` → 500). `PUT api/v1/system-settings/{key}` and `POST …/import/json` therefore always fail; there is no `SystemSetting` policy either | Medium | PARTLY FIXED 29-09-2026: the 500 is now the intended 403; making the endpoints work waits on BUG-207 (owner) | 29-09-2026 | — |
 | BUG-218 | Legacy employees without the primaries DEC-089 now requires: of 200 active employees 24 have no branch, 39 no location, 5 no department, 12 no division, 35 no vertical (local `xlrm`, 30-09) | Medium | OPEN — data (HR / owner): fill through the new users workbook (W10) or the bulk screen (W11) | 30-09-2026 | — |
 | BUG-219 | Booking create: for customer type `Dummy` every base validation failure is only logged, so a dummy booking can be saved without name, mobile, branch, vehicle or sale type | Medium | OPEN — owner: should a dummy booking still need the base fields (only finance mode is relaxed today)? | 30-09-2026 | — |
+| BUG-221 | Code referencing classes that do not exist (found by the PHPStan baseline, W4): Booking helper, accessory export, spare master, production RBAC seeder | Low | OPEN — each fatals only when reached; fix or delete with the owner's deletion list (D5–D12) | 30-09-2026 | — |
 
 ## Entries
 
@@ -475,3 +476,25 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
   fields were meant to apply; today they don't.
 - **Proposed solution:** return on base-validation failure for every customer type (and relax only the fields a dummy
   booking really doesn't have), after the owner / booking team confirms.
+
+### BUG-221 — Code referencing classes that do not exist (found by the PHPStan baseline, W4): Booking helper, accessory export, spare master, production RBAC seeder
+
+- **Status:** OPEN.
+- **Severity:** Low (each path throws "class not found" only when it runs; none is on a main screen).
+- **Found:** 30-09-2026, generating `phpstan-baseline.neon` (to-do W4; identifier `class.notFound`).
+- **Where / what:**
+  - `app/Models/Module/Booking/Booking.php` — a helper uses `Branches::` / `Location::` (lines ~321–322, no such classes
+    in that namespace) and a relation to `XVehicleMaster` (removed model).
+  - `app/Services/Vehicle/AccessoryExportService.php` — `App\Models\{Segment,Variant,VehicleModel,ExportLog}` and
+    `App\{Segment,Variant,VehicleModel,ExportLog}` (pre-namespace models); used by `php artisan` accessory export and
+    `App\Exports\VehicleAccessoriesExport`.
+  - `app/Models/Module/Spare/XlSpareMaster.php` — `EnumMaster` relations (model removed).
+  - `database/seeders/ProductionRBACSeeder.php` — `App\Models\Core\{Branch,Department,Designation,Employee,Person}`
+    (never existed here); see also the `super_admin` role-name note under BUG-0xx in closed.md.
+  - `config/media-library.php` — `Spatie\MediaLibraryPro\Models\TemporaryUpload` (PRO not installed; only matters if
+    temporary uploads are used).
+  - (`App\Exports\VehicleDataExport` is BUG-180.)
+- **Fixed now (same commit):** `AuthorizationException` (missing `use Exception`, a Throwable `$previous` was a
+  TypeError) and `SystemSettingAudit::user()` (`User` resolved to the wrong namespace).
+- **Proposed solution:** point each at the current model (`Admin\Branch`, `Admin\Location`, `Vehicle\*`) or delete the
+  dead path, then drop its baseline entries.

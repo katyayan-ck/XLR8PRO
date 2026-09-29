@@ -1,5 +1,8 @@
 includes:
     - vendor/larastan/larastan/extension.neon
+    # Known errors in legacy code (to-do W4, 30-09-2026): new code must not add any. Regenerate only after fixing
+    # recorded errors (composer analyse -- --generate-baseline phpstan-baseline.neon), never to hide new ones.
+    - phpstan-baseline.neon
 
 parameters:
     paths:

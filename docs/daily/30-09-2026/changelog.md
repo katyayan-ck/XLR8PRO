@@ -165,3 +165,13 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - **Fixed BUG-220:** `QuotationCrudController::history()` — hard-coded mock customer fallback removed (file re-formatted
   by pint).
 - **Logged BUG-219:** booking `store()` ignores base validation for customer type `Dummy` (owner question).
+
+## W4 — PHPStan baseline (BUG-221)
+- **New `phpstan-baseline.neon`** (level 5, all configured paths: 2 511 legacy errors — 1 230 dynamic-property reads,
+  123 needless nullsafe, 54 unknown relations, 22 missing classes …) included from `phpstan.neon` with a note; the full
+  `composer analyse` now reports **No errors**, so any new error fails.
+- **Fixed:** `app/Exceptions/AuthorizationException.php` (`use Exception;` — a `$previous` Throwable was a TypeError) and
+  `app/Models/Utilities/Settings/SystemSettingAudit.php` (`use App\Models\User;`).
+- **Rule:** `.ai/guidelines/10-workflow.md` quality gate 2 — full `composer analyse` clean before merges; the baseline is
+  never regenerated to hide new errors.
+- **Logged BUG-221:** the remaining missing-class references (Booking helper, accessory export, spare master, RBAC seeder).

@@ -143,3 +143,12 @@ user without Sales permissions. Found and fixed BUG-220 (mock customer names in 
 (dummy bookings skip base validation) for the owner.
 
 **Verified:** Sales + quotation pricing + booking service suites 77 passed. **Left:** BUG-219 decision.
+
+### 14. PHPStan baseline — W4
+
+**Delivered:** the whole codebase now passes PHPStan level 5 with the legacy errors recorded in `phpstan-baseline.neon`
+(2 511), so every new error fails the gate; the workflow rule says so. Two real defects fixed on the way
+(AuthorizationException import, SystemSettingAudit user relation); the other "class not found" paths logged as BUG-221.
+
+**Verified:** full `phpstan analyse` → No errors (twice, before and after the fixes). **Left:** burn the baseline down
+module by module (largest: legacy admin controllers 567, booking services 475).

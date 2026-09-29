@@ -2,12 +2,13 @@
 
 namespace App\Models\Utilities\Settings;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * SystemSettingAudit Model
- * 
+ *
  * Tracks all changes to system settings for compliance and debugging
  */
 class SystemSettingAudit extends Model

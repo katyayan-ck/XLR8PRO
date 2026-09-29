@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use App\Enums\ErrorCodeEnum;
+use Exception;
 
 class AuthorizationException extends ApplicationException
 {
