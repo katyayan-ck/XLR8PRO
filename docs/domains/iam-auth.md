@@ -146,6 +146,23 @@ Organisation & access (primary assignment, add-on scopes, effective access — s
 `admin.org.user._effective_access`), Employment history (timeline), Contact, Security; non-employee accounts see
 Profile, Contact and Security.
 
+## Session security (DEC-084) — `SessionGuardService`, `EnforceIdleSession`, `SecurityHeaders`
+| Piece | API / behaviour |
+|---|---|
+| `App\Services\IAM\SessionGuardService` | `config()` → `{logout, lock, warning, lock_enabled, max_attempts}` from the `security.*` settings · `touch($session)` · `idleSeconds($session)` · `idleExpired($session)` · `idleLockDue($session)` · `isLocked($session)` · `lock($session)` · `unlock($session, $user, $password)` → Result (`WRONG_PASSWORD` with `left`, `TOO_MANY`) |
+| `App\Http\Middleware\EnforceIdleSession` (Backpack `middleware_class`) | Idle expired → sign out (page: login with a notice; AJAX: 401 `IDLE_LOGOUT`). Idle lock due → lock. Locked → pages go to `xl.session.lock-screen`, AJAX 423 `SCREEN_LOCKED`. Activity = a page load or an AJAX call with `X-XL-Activity: 1`. |
+| `Admin\Account\SessionLockController` | `xl.session.lock-screen` (GET), `xl.session.lock` (POST), `xl.session.unlock` (POST, throttled 10 / min, same-site `to` only), `xl.session.activity` (POST heartbeat) |
+| `public/js/xl-idle.js` | Loaded by `header_metas` when a limit or the lock is on (`<meta name="xl-idle">`). It tracks keys / clicks / pointer / scroll across tabs (localStorage), sends a heartbeat at most once a minute, shows the sign-out warning, and locks / signs out on time. `[data-xl-lock]` elements lock on click. |
+| `App\Http\Middleware\SecurityHeaders` (global) | nosniff, `X-Frame-Options: SAMEORIGIN`, a referrer policy, a permissions policy, HSTS on HTTPS; CSP by `security.csp_mode` (report-only by default) |
+
+**Self-service (S5 / S7):**
+- `MyAccountController::passwordRule()` is the settings-driven password rule (`account.password_*`).
+- The `account.can_change_{display_name,photo,password}` switches gate both the forms and the endpoints (403, "managed
+  by your administrator").
+
+Web login: Backpack throttles 5 failed attempts per minute per username + IP (`SessionGuardTest`). There is no
+persistent account lock yet (go-live to-do S4).
+
 ## AuthService (mobile OTP login, API v1)
 Called by `Api\V1\AuthController`; responses are wrapped in the API envelope by the controller.
 

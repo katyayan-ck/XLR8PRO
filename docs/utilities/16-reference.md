@@ -154,6 +154,15 @@ Workers: `php artisan queue:work` must run for sends and push outside tests. The
 | `pricing.insurance.goods_tp_gst_pct` | 12 | int | GST on insurance TP for Goods permits |
 | `pricing.rto.round_up_to` | 1000 | int | the RTO tax base (ESR / BH base) is rounded up to this (₹) |
 | `pricing.dealer_charges.include_cod` | false | bool | add COD charges to the default on-road total; applies at the next Calculate & Publish (snapshots are frozen) |
+| `account.can_change_display_name` / `account.can_change_photo` / `account.can_change_password` | true | bool | My Account self-service switches (403 + "managed by your administrator" when off) |
+| `account.password_min_length` | 8 | int | minimum password length (never below 8; letters + numbers always) |
+| `account.password_require_mixed_case` / `account.password_require_symbols` | false | bool | extra password rules |
+| `security.idle_logout_minutes` | 0 | int | sign out after this many idle minutes (0 = off); server-enforced (`EnforceIdleSession`), warning first (DEC-084) |
+| `security.idle_lock_minutes` | 0 | int | lock the screen after this many idle minutes (0 = off) |
+| `security.idle_warning_seconds` | 60 | int | warning before the automatic sign-out |
+| `security.screen_lock_enabled` | true | bool | "Lock screen" in the user menu |
+| `security.unlock_max_attempts` | 5 | int | wrong unlock passwords before sign-out |
+| `security.csp_mode` | report | string | Content Security Policy: off / report / enforce (`SecurityHeaders`) |
 | `branding.logo` | '' | image | site logo (DEC-083): admin header / sidebar (links to the dashboard), login page, quotation / OTF prints; upload on Settings (`utils.settings.image`); blank = the built-in images (`site_logo_url($fallback)`) |
 | `pricing.last_updated_at` | '' | string | ISO-8601 stamp set automatically (`PricingSyncStamp`, DEC-083) on any published-price, vehicle master or accessory change; the app re-syncs offline data when it moves (served by `v1/settings/category/pricing`) |
 | `scope.enabled` | true | bool | user data scoping master switch (DEC-071) |

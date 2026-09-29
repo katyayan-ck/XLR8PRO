@@ -21,6 +21,16 @@
 <link rel="stylesheet" href="{{ asset('css/xl-ui.css') }}?v={{ @filemtime(public_path('css/xl-ui.css')) }}">
 <script defer src="{{ asset('js/xl-ui.js') }}?v={{ @filemtime(public_path('js/xl-ui.js')) }}"></script>
 <script defer src="{{ asset('js/xl-theme.js') }}?v={{ @filemtime(public_path('js/xl-theme.js')) }}"></script>
+{{-- Idle auto-logout / screen lock (go-live to-do S1 / S2) — signed-in pages only, never on the lock screen itself --}}
+@if (backpack_user() && ! request()->routeIs('xl.session.lock-screen'))
+    @php $xlIdle = app(\App\Services\IAM\SessionGuardService::class)->config(); @endphp
+    @if ($xlIdle['logout'] > 0 || $xlIdle['lock'] > 0 || $xlIdle['lock_enabled'])
+        <meta name="xl-idle" content="{{ json_encode(['logout' => $xlIdle['logout'], 'lock' => $xlIdle['lock'], 'warning' => $xlIdle['warning'],
+            'activity' => route('xl.session.activity'), 'lockUrl' => route('xl.session.lock'), 'lockScreen' => route('xl.session.lock-screen'),
+            'logoutUrl' => backpack_url('logout'), 'login' => route('backpack.auth.login')]) }}">
+        <script defer src="{{ asset('js/xl-idle.js') }}?v={{ @filemtime(public_path('js/xl-idle.js')) }}"></script>
+    @endif
+@endif
 <script>
 /* DEC-066: every AG-Grid date column follows the site date format. Wraps agGrid.createGrid the moment
    AG-Grid loads; date-like columns without their own formatter get XL.formatDate (public/js/xl-ui.js).

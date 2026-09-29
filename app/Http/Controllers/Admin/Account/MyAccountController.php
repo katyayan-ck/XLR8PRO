@@ -35,6 +35,7 @@ class MyAccountController extends Controller
     {
         $user = backpack_user();
         abort_unless($user, 403);
+        $this->allowed('account.can_change_display_name', 'display name');
 
         $validated = $request->validate([
             'display_name' => ['required', 'string', 'max:120'],
@@ -50,6 +51,7 @@ class MyAccountController extends Controller
     {
         $user = backpack_user();
         abort_unless($user, 403);
+        $this->allowed('account.can_change_photo', 'profile photo');
 
         $maxKb = (int) setting('docs.max_upload_kb', 10240);
         $validated = $request->validate([
@@ -77,9 +79,10 @@ class MyAccountController extends Controller
         $user = backpack_user();
         abort_unless($user, 403);
 
+        $this->allowed('account.can_change_password', 'password');
         $validated = $request->validateWithBag('password', [
             'current_password' => ['required', 'string'],
-            'new_password' => ['required', 'string', 'confirmed', Password::min(8)->letters()->numbers()],
+            'new_password' => ['required', 'string', 'confirmed', self::passwordRule()],
         ], [], ['current_password' => 'current password', 'new_password' => 'new password']);
 
         try {
@@ -90,5 +93,30 @@ class MyAccountController extends Controller
         \Alert::success('Your password was changed. Other sessions were signed out.')->flash();
 
         return redirect()->route('backpack.account.info');
+    }
+
+    /**
+     * The password rule from Settings (go-live to-do S5): `account.password_min_length` (8), letters + numbers always,
+     * `account.password_require_mixed_case`, `account.password_require_symbols` (both off by default).
+     */
+    public static function passwordRule(): Password
+    {
+        $rule = Password::min(max(8, (int) setting('account.password_min_length', 8)))->letters()->numbers();
+        if (setting('account.password_require_mixed_case', false)) {
+            $rule->mixedCase();
+        }
+        if (setting('account.password_require_symbols', false)) {
+            $rule->symbols();
+        }
+
+        return $rule;
+    }
+
+    /** Self-service switches (go-live to-do S7); an administrator can always change these on the user record. */
+    private function allowed(string $setting, string $what): void
+    {
+        if (! setting($setting, true)) {
+            abort(403, "Your {$what} is managed by your administrator.");
+        }
     }
 }

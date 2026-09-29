@@ -17,7 +17,7 @@ Indexes: (current_origin), (next_planned_followup_date), (sc_mile_id), (dealer_b
 id bigint unsigned PK, enquiry_no varchar(50)?, sc_code varchar(200)?, sc_mile_id varchar(100)?, followup_type varchar(50)?, remark_type varchar(200)?, planned_followup_date datetime?, actual_followup_date datetime?, followup_status varchar(50)?, call_duration time?, remarks text?, comments text?, enquiry_date datetime?, enquiry_type varchar(50)?, enquiry_source varchar(50)?, enquiry_sub_source varchar(50)?, enquiry_status varchar(50)?, purchase_type varchar(50)?, deviation_stage varchar(100)?, customer_name varchar(200)?, customer_phone varchar(15)?, dealer_location varchar(100)?, is_active tinyint, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (sc_mile_id), (followup_status,planned_followup_date), (enquiry_no)
 
-## `xlr8_crm_import_logs` · ~0 rows · model: —
+## `xlr8_crm_import_logs` · ~1 rows · model: —
 id bigint unsigned PK, file_name varchar(255), stored_path varchar(255)?, status varchar(255), total_rows int unsigned, processed_rows int unsigned, stats json?, error_message text?, is_active tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 
 ## `xlr8_crm_lead_sources` · ~17 rows · model: App\Models\CRM\LeadSource

@@ -194,3 +194,27 @@
 - **Tests:**
   - `InsuranceAccessoryMastersTest` (5), `SiteLogoTest` (3), plus a recalculation-log test in `PricingRecalcTest`.
   - Pricing / utils / platform suites: 126 passed (1 known skip).
+
+## Security baseline (DEC-084, go-live to-do S1 / S2 / S4 / S10) + formats inventory (§2 F1–F3)
+- **Formats:**
+  - `docs/reference/data-dictionary-draft.md` (inventory of 20+ code families, proposed formats, 5 questions for
+    sign-off).
+  - BUG-206 logged: `person_code` holds PAN / Aadhaar for 211 of 215 people.
+- **New:** `IAM\SessionGuardService`, `Middleware\EnforceIdleSession` (Backpack `middleware_class`),
+  `Admin\Account\SessionLockController` + `admin/account/lock-screen.blade.php`, `public/js/xl-idle.js`,
+  `Middleware\SecurityHeaders` (appended globally in `bootstrap/app.php`).
+- **Routes:** `xl.session.lock-screen`, `xl.session.lock`, `xl.session.unlock` (throttle 10 / min), `xl.session.activity`.
+- **Settings:** `security.idle_logout_minutes`, `security.idle_lock_minutes`, `security.idle_warning_seconds`,
+  `security.screen_lock_enabled`, `security.unlock_max_attempts`, `security.csp_mode`.
+- **Views:**
+  - The user menu gains "Lock screen".
+  - The login page shows the `status` notice (idle sign-out).
+  - `header_metas` adds the `xl-idle` config + script for signed-in pages.
+- **Tests:** `SessionGuardTest` (8: off by default, idle sign-out ignores background AJAX, heartbeat, lock / unlock,
+  idle lock, attempt limit, login throttle, no off-site redirect) and `SecurityHeadersTest` (2).
+- **S5 / S7 (DEC-084 addendum):**
+  - `MyAccountController`: `allowed()` gates + `passwordRule()`.
+  - `admin/account/show.blade.php` hides the controls when they are off.
+  - 6 `account.*` settings.
+  - `AccountSelfServiceTest` (2).
+  - Full suite before S7: 458 passed (1 known skip).

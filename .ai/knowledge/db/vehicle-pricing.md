@@ -94,7 +94,7 @@ Indexes: (import_session_id), (permit,is_active)
 id bigint unsigned PK, import_session_id bigint unsigned, table_name varchar(64), row_id bigint unsigned, action varchar(16), before json?, created_at timestamp?, created_by bigint unsigned?
 Indexes: (import_session_id,id)
 
-## `xlr8_vehicle_pricing_sheet_headers` · ~176 rows · model: App\Models\Vehicle\Pricing\SheetHeader
+## `xlr8_vehicle_pricing_sheet_headers` · ~276 rows · model: App\Models\Vehicle\Pricing\SheetHeader
 id bigint unsigned PK, sheet_code varchar(64), field_code varchar(64), label varchar(191), aliases json?, data_type varchar(32), is_required tinyint(1), sort_order int, is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
 Indexes: (sheet_code,is_active), UNIQUE (sheet_code,field_code)
 

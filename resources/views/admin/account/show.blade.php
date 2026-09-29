@@ -102,6 +102,9 @@
                     <div class="col-lg-6">
                         @if ($person)
                             <h3 class="card-title">Display name</h3>
+                            @if (! setting('account.can_change_display_name', true))
+                                <p class="mb-4">{{ $person->display_name }} <span class="text-body-secondary small">— managed by your administrator</span></p>
+                            @else
                             <form method="post" action="{{ route('backpack.account.info.store') }}" class="mb-4">
                                 @csrf
                                 <input type="hidden" name="_tab" value="profile">
@@ -114,8 +117,12 @@
                                 </div>
                                 @error('display_name') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                             </form>
+                            @endif
 
                             <h3 class="card-title">Profile photo</h3>
+                            @if (! setting('account.can_change_photo', true))
+                                <p class="text-body-secondary small">Managed by your administrator.</p>
+                            @else
                             <form method="post" action="{{ route('backpack.account.photo') }}" enctype="multipart/form-data">
                                 @csrf
                                 <input type="hidden" name="_tab" value="profile">
@@ -129,6 +136,7 @@
                                     @endif
                                 </div>
                             </form>
+                            @endif
                         @else
                             <div class="alert alert-warning mb-0">Your account is not linked to a person record, so the name and photo
                                 can't be changed here. Ask an administrator to link one.</div>
@@ -243,6 +251,9 @@
                 <div class="row">
                     <div class="col-lg-6">
                         <h3 class="card-title">Change password</h3>
+                        @if (! setting('account.can_change_password', true))
+                            <p class="text-body-secondary">Your password is managed by your administrator.</p>
+                        @else
                         <form method="post" action="{{ route('backpack.account.password') }}" autocomplete="off">
                             @csrf
                             @foreach (['current_password' => 'Current password', 'new_password' => 'New password', 'new_password_confirmation' => 'Confirm new password'] as $field => $label)
@@ -254,10 +265,11 @@
                                     @error($field, 'password') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                             @endforeach
-                            <p class="text-body-secondary small">At least 8 characters with letters and numbers, different from the current one.
+                            <p class="text-body-secondary small">At least {{ max(8, (int) setting('account.password_min_length', 8)) }} characters with letters and numbers{{ setting('account.password_require_mixed_case', false) ? ', upper- and lower-case' : '' }}{{ setting('account.password_require_symbols', false) ? ', a symbol' : '' }}, different from the current one.
                                 Other sessions are signed out after the change.</p>
                             <button type="submit" class="btn btn-primary">Change password</button>
                         </form>
+                        @endif
                     </div>
                 </div>
             </div>

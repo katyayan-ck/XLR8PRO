@@ -57,6 +57,11 @@
         @endif
 
         <div class="dropdown-divider"></div>
+        @if (setting('security.screen_lock_enabled', true))
+            <a href="{{ route('xl.session.lock-screen') }}" class="dropdown-item" data-xl-lock>
+                <i class="la la-lock dropdown-item-icon"></i> Lock screen
+            </a>
+        @endif
         <a href="{{ backpack_url('logout') }}" class="dropdown-item text-danger">
             <i class="la la-sign-out-alt dropdown-item-icon"></i> {{ trans('backpack::base.logout') }}
         </a>

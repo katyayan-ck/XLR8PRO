@@ -27,6 +27,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
         ]);
+        // Go-live to-do S10: baseline security headers + CSP (report-only by default, setting security.csp_mode).
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
         // DEC-067: the admin layout choice is written by the Appearance panel in the browser (public/js/xl-theme.js).
         $middleware->encryptCookies(except: ['xl_layout']);
     })

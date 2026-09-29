@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\Account\MyAccountController;
+use App\Http\Controllers\Admin\Account\SessionLockController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,4 +19,10 @@ Route::group([
     Route::post('edit-account-info', [MyAccountController::class, 'updateProfile'])->name('backpack.account.info.store');
     Route::post('edit-account-info/photo', [MyAccountController::class, 'updatePhoto'])->name('backpack.account.photo');
     Route::post('change-password', [MyAccountController::class, 'changePassword'])->name('backpack.account.password');
+
+    // Screen lock + idle heartbeat (go-live to-do S1 / S2); EnforceIdleSession lets these through while locked
+    Route::get('session/lock-screen', [SessionLockController::class, 'lockScreen'])->name('xl.session.lock-screen');
+    Route::post('session/lock', [SessionLockController::class, 'lock'])->name('xl.session.lock');
+    Route::post('session/unlock', [SessionLockController::class, 'unlock'])->middleware('throttle:10,1')->name('xl.session.unlock');
+    Route::post('session/activity', [SessionLockController::class, 'activity'])->name('xl.session.activity');
 });

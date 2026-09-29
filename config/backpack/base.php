@@ -123,6 +123,8 @@ return [
         UseBackpackAuthGuardInsteadOfDefaultAuthGuard::class,
         // Applies the per-browser menu layout chosen in the Appearance panel (DEC-067).
         ApplyUiPreferences::class,
+        // Idle auto-logout + screen lock, driven by the security.* settings (go-live to-do S1 / S2).
+        \App\Http\Middleware\EnforceIdleSession::class,
     ],
 
     // Alias for that middleware

@@ -32,7 +32,7 @@ Indexes: (expires_at), (mobile), (used_at), (user_id)
 id bigint unsigned PK, name varchar(255), guard_name varchar(255), module_code varchar(255)?, process_code varchar(255)?, created_at timestamp?, updated_at timestamp?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, deleted_at timestamp?
 Indexes: (guard_name), UNIQUE (name,guard_name)
 
-## `xlr8_iam_process` · ~44 rows · model: App\Models\IAM\Process
+## `xlr8_iam_process` · ~54 rows · model: App\Models\IAM\Process
 id bigint unsigned PK, module_code varchar(255)?, code varchar(255), name varchar(255), description text?, is_active tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (code,is_active), UNIQUE (code), (created_by), (deleted_by), (is_active), (module_code), (updated_by)
 

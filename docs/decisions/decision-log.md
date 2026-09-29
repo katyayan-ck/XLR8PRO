@@ -1305,3 +1305,36 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - Permissions: `PRC_{DLRC,DBRK,RSA,SHLD,CORP,EXCH,LYLT,ACCS,INSR,RTOR,INCO,INPF,INAD}_{VIEW,MANAGE}`.
 - **Approved-by:** user (1–7), auto (technical) · **Risk:** HIGH (price-changing edits outside the process) ·
   **Reversal:** revert per phase commit; migrations have `down()`.
+
+### DEC-084 | 29-09-2026 | A (IAM / platform) | Security baseline: idle auto-logout, screen lock, security headers (go-live to-do S1, S2, S4, S10)
+- **Why:** the user asked for screen lock and auto-logout after inactivity (29-09), and to continue on the pending
+  to-do items while they review the list.
+- **Decision (no behaviour change until switched on):**
+  1. **Idle sign-out and idle lock are Settings-driven and off by default:**
+     - `security.idle_logout_minutes` = 0 and `security.idle_lock_minutes` = 0;
+     - `security.idle_warning_seconds` = 60 and `security.unlock_max_attempts` = 5.
+     - The server enforces them (`EnforceIdleSession` on every admin request), and the browser shows a warning and
+       locks / signs out on time (`public/js/xl-idle.js`).
+     - Only page loads and the activity heartbeat (keys / clicks / pointer, shared across tabs) count as activity.
+       Background AJAX polls never keep an idle session alive.
+  2. **Screen lock:**
+     - There is a "Lock screen" user-menu item (`security.screen_lock_enabled`, default on — manual only).
+     - A locked session renders no application content: pages go to the lock screen, AJAX gets 423.
+     - Unlock with the account password. Too many wrong passwords sign the session out. The `to` target is same-site
+       only.
+  3. **Security headers on every response:** nosniff, `X-Frame-Options: SAMEORIGIN`, a referrer policy, a permissions
+     policy, and HSTS on HTTPS.
+  4. **The CSP starts report-only** (`security.csp_mode` = report) and allows the pinned CDNs and Google Fonts;
+     switch it to `enforce` after the browser console is clean in UAT.
+  5. **Login throttling:** Backpack's 5 failed attempts per minute per username + IP stays, now covered by a test. A
+     persistent account lock after N failures is a separate item (S4) that needs a policy decision.
+- **Approved-by:** user (feature request); auto (defaults off, technical shape) · **Risk:** LOW (off by default;
+  headers are standard) · **Reversal:** revert; or set the settings to 0 / off.
+- **Addendum (29-09, S5 / S7):** My Account self-service follows Settings, with defaults equal to today's behaviour:
+  - `account.can_change_display_name` / `_photo` / `_password` (true); switched off, the form reads "managed by your
+    administrator" and the endpoint returns 403.
+  - The password rule comes from `account.password_min_length` (8, never below 8, letters + numbers always),
+    `account.password_require_mixed_case`, `account.password_require_symbols` (off).
+  - Self-service change of **email / mobile** (OTP to the new value, optional approval) is **not** built: it changes
+    the OTP-login identity (an auth change) and waits for the policy decision N4. Password expiry / history also wait
+    (new columns + policy).
