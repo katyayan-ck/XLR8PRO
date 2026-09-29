@@ -24,7 +24,10 @@ class MyAccountController extends Controller
         $user = backpack_user();
         abort_unless($user, 403);
 
-        return view('admin.account.show', $this->account->profile($user) + [
+        $profile = $this->account->profile($user);
+
+        return view('admin.account.show', $profile + [
+            'access' => $this->account->access($user, $profile['primaries'], $profile['addons']),
             'title' => 'My Account',
             'scopeLevels' => MyAccountService::SCOPE_LEVELS,
             'imageTypes' => 'image/jpeg,image/png,image/webp',

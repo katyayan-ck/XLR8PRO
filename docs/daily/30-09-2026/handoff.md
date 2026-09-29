@@ -25,6 +25,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: W8 — My Account in the UI-demo layout with Permissions & scope (`MyAccountService::access()`). Next: W9 Vehicle Info export dropdowns.
 - 30-09: W1 (merge wrap-up: 476 passed, temp branch deleted) and W2 (last API docs + Postman; BUG-217 fixed). Next: W3 Sales / booking feature tests.
 - 30-09: BUG-216 fixed — colour mode flashed between open tabs (cross-tab sync loop in `xl-theme.js`).
 - 30-09: booking team schema (`booking.sql`) compared; fail-safe migration `2026_09_30_013707_align_crm_enquiries_with_booking_team_schema` run on `xlrm` + `xlrm_testing` (DEC-088).

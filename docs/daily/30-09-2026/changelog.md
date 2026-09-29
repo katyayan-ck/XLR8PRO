@@ -84,3 +84,14 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - **BUG-217 fixed:** `NotificationController::sortFor()` allow-lists `sort_by` / `sort_order` (unknown values were a 500);
   test `tests/Feature/Api/NotificationListSortTest.php`.
 - **Found, not changed:** `sender.name` / `receiver.name` are null (no `users.name`) — added to owner decision D1.
+
+## W8 — My Account in the UI-demo layout + Permissions & scope
+- **`resources/views/admin/account/show.blade.php`:** the dev UI kit "Pages" layout — profile header with a facts footer
+  (employee code, OEM Mile ID, username, designation) and one settings card with a side menu (Profile, Permissions & scope,
+  Employment history, Contact, Security). Forms, routes, field names and `?tab=` keys unchanged.
+- **Permissions & scope** (replaces "Organisation & access", shown to every user): identity (employee code, OEM Mile ID,
+  designation), primary department / division / branch / location, add-on departments / divisions / branches / locations,
+  segments, sub-segments, models, variants, verticals (names, code on hover; "—" when empty), permissions grouped by module
+  (accordion; super admin = every permission) and the effective data access.
+- **`MyAccountService::access()`** (new) + `MyAccountController::show()` passes it; guide `tech-guides/modules/iam-auth.md`.
+- **Tests:** `MyAccountTest` updated (asserts every requested field); 5 passed. Rendered for users 1 and 40.

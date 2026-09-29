@@ -37,7 +37,13 @@ class MyAccountTest extends TestCase
 
         $response->assertOk()
             ->assertSee($user->display_name)
-            ->assertSee('Organisation &amp; access', false)
+            ->assertSee('Permissions &amp; scope', false)
+            // owner request 30-09: the fields the Permissions & scope section always lists (blank → "—")
+            ->assertSeeInOrder(['Employee code', 'OEM Mile ID', 'Designation'])
+            ->assertSeeInOrder(['Primary department', 'Primary division', 'Primary branch', 'Primary location'])
+            ->assertSeeInOrder(['Add-on departments', 'Add-on divisions', 'Add-on branches', 'Add-on locations'])
+            ->assertSeeInOrder(['Segments', 'Sub-segments', 'Models', 'Variants', 'Verticals'])
+            ->assertSee('Permissions')
             ->assertSee('Effective data access')
             ->assertSee('Employment history');
         if ($user->primary_designation) {

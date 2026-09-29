@@ -208,3 +208,11 @@ model and one line to `config/data_scope.php` `entities`; no controller code. Fo
 `$this->actingAs($user, 'backpack')` for admin routes; for the API use a device-bound token (see
 `.ai/rules/testing.md`). Superadmin: `User::role('superadmin')->first()`; a scoped user: any active non-superadmin user
 without the permission under test (see `tests/Feature/Admin/SystemSettingScreensTest`).
+
+## My Account — Permissions & scope (owner request 30-09)
+`/admin/edit-account-info` uses the dev UI kit "Pages" layout (profile header + settings card with a side menu). The
+**Permissions & scope** pane (`?tab=org`) comes from `MyAccountService::access(User, $primaries, $addons)` →
+`{identity {employee_code, mile_id, designation}, primary {department, division, branch, location}, addon {department,
+division, branch, location: [{code, name}]}, vehicle {segment, sub_segment, model, variant}, verticals, superAdmin,
+permissions {MODULE: [names]}}`. Empty parts show "—"; a blank vehicle level means unrestricted; a super admin shows
+"every permission" instead of the list.

@@ -74,3 +74,11 @@ crashed the lists) fixed with a regression test.
 **Verified:** 476 passed; the new test fails on the old code and passes now; collections parse; every documented field
 was read from the controllers, resources and services. **Left:** BUG-182 (documents / history access) and the null names
 wait on D3 / D1.
+
+### 8. My Account redesigned with a Permissions & scope section — W8
+
+**Delivered:** My Account now looks like the UI demo (profile header + side-menu settings card) and has a Permissions &
+scope section listing employee code, OEM Mile ID, designation, the primary and add-on departments / divisions / branches /
+locations, segments, sub-segments, models, variants, verticals and the permissions by module — blank ("—") where nothing
+is defined. **Verified:** `MyAccountTest` (5 passed, every field asserted); rendered for a super admin and a scoped user.
+**Left:** —

@@ -153,6 +153,75 @@ class MyAccountService
         return ['mobiles' => $mobiles, 'emails' => $emails, 'address' => $address !== null && $address !== '' ? $address : null];
     }
 
+    /**
+     * The "Permissions & scope" section (owner request 30-09): identity, the primary assignment, the add-on scopes, the
+     * vehicle scope, verticals and the permission names grouped by module. Empty parts come back empty (the page shows
+     * "—"), never invented. Codes carry their master name.
+     *
+     * @param  array<string, array{code: string, name: string}|null>  $primaries  from profile()
+     * @param  array<string, list<string>>  $addons  from profile()
+     * @return array{
+     *   identity: array{employee_code: ?string, mile_id: ?string, designation: ?string},
+     *   primary: array<string, array{code: string, name: string}|null>,
+     *   addon: array<string, list<array{code: string, name: string}>>,
+     *   vehicle: array<string, list<array{code: string, name: string}>>,
+     *   verticals: list<array{code: string, name: string}>,
+     *   superAdmin: bool,
+     *   permissions: array<string, list<string>>
+     * }
+     */
+    public function access(User $user, array $primaries, array $addons): array
+    {
+        $names = [
+            'branch' => fn ($c) => OrgService::branchName($c), 'location' => fn ($c) => OrgService::locationName($c),
+            'department' => fn ($c) => OrgService::departmentName($c), 'division' => fn ($c) => OrgService::divisionName($c),
+            'vertical' => fn ($c) => OrgService::verticalName($c), 'segment' => fn ($c) => OrgService::segmentName($c),
+            'sub_segment' => fn ($c) => OrgService::subSegmentName($c), 'model' => fn ($c) => OrgService::modelName($c),
+            'variant' => fn ($c) => OrgService::variantName($c),
+        ];
+        $named = fn (string $level, array $codes) => array_values(array_map(
+            fn ($code) => ['code' => (string) $code, 'name' => (string) ($names[$level]($code) ?: $code)],
+            array_unique(array_filter(array_map('strval', $codes)))
+        ));
+        $withPrimary = fn (string $level) => $named($level, array_merge(
+            isset($primaries[$level]) ? [$primaries[$level]['code']] : [],
+            $addons[$level] ?? []
+        ));
+
+        $permissions = [];
+        if (! $user->isSuperAdmin()) {
+            foreach ($user->getAllPermissions()->pluck('name')->sort()->values() as $name) {
+                $module = strtoupper((string) strtok((string) $name, '_.'));
+                $permissions[$module][] = (string) $name;
+            }
+            ksort($permissions);
+        }
+
+        return [
+            'identity' => [
+                'employee_code' => $user->employee?->code,
+                'mile_id' => $user->employee?->mile_id ?: null,
+                'designation' => $user->primary_designation,
+            ],
+            'primary' => array_intersect_key($primaries, array_flip(['department', 'division', 'branch', 'location'])) + ['department' => null, 'division' => null, 'branch' => null, 'location' => null],
+            'addon' => [
+                'department' => $named('department', $addons['department'] ?? []),
+                'division' => $named('division', $addons['division'] ?? []),
+                'branch' => $named('branch', $addons['branch'] ?? []),
+                'location' => $named('location', $addons['location'] ?? []),
+            ],
+            'vehicle' => [
+                'segment' => $withPrimary('segment'),
+                'sub_segment' => $withPrimary('sub_segment'),
+                'model' => $named('model', $addons['model'] ?? []),
+                'variant' => $named('variant', $addons['variant'] ?? []),
+            ],
+            'verticals' => $withPrimary('vertical'),
+            'superAdmin' => $user->isSuperAdmin(),
+            'permissions' => $permissions,
+        ];
+    }
+
     /** @return array<string, array{code: string, name: string}|null> */
     private function primaries(Employee $employee): array
     {

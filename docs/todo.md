@@ -383,7 +383,12 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 |---|---|---|
 | W1 | N2 wrap-up: full suite on the merged tip, delete `merge/stage-30-09` | ✅ 30-09 (476 passed; branch deleted) |
 | W2 | U11 API docs: notifications / alerts / messages, documents, history, webhooks (+ Postman) | ✅ 30-09 (BUG-217 fixed on the way) |
-| W3 | Q1 Sales / booking feature tests (enquiry, quotation, booking flows) | 🟡 next |
+| W8 | **My Account like the UI demo + a "Permissions & scope" tab** (your request 30-09): emp code, OEM Mile ID, designation, primary department / division / branch / location, add-on departments / divisions / branches / locations, segments, sub-segments, models, variants, verticals — blank when nothing is defined | ✅ 30-09 |
+| W9 | **Vehicle Info export with controlled values** (your request 30-09): every lookup column a dropdown fed from the masters (codes stored, labels shown), so imported rows always relate to existing data | 🟡 next |
+| W10 | **Users bulk export / import redesign** (your request 30-09): headers `Emp Code*, Employee Name*, Personal Mail Id, Official Mail ID, Personal Contact Number*, Official Contact Number, OEM Mile ID, Aadhaar No, Primary Branch*, Addon Branch, Primary Location*, AddOn Location, Primary Department*, Addon Department, Primary Division, Add On Divisions, Designation*, Vertical, Segment, Sub Segment, Models, Reporting Manager`; master dropdowns, dependent lists (primary location ← primary branch, primary division ← primary department, add-on lists = the left-out children of the primaries + all children of the add-ons), multi-select with `All` first and `None` last, employee history kept | 🔴 |
+| W11 | **Bulk user create / edit screen** (your request 30-09) with the same rules and multi-select filter-like pickers; writes employee history | 🔴 |
+| W12 | **Org rules as validation** (your request 30-09): no user without a primary branch / location / department / division (`All` / `None` not allowed there); every parent branch / department / segment has a same-name, same-code child location / division / sub-segment; verticals mandatory (multi-select, no `None`); segment / sub-segment / model / variant blank = all; every user has an employee code, FSCs may have a Mile ID | 🔴 |
+| W3 | Q1 Sales / booking feature tests (enquiry, quotation, booking flows) | 🔴 |
 | W4 | Q5 PHPStan baseline for the legacy controllers | 🔴 |
 | W5 | Q7 UI clean-up outside Sales (hex / inline styles → shared layer, same method as the Sales pass) | 🔴 |
 | W6 | U7 web side: admin flash messages through the error codes / language file (same wording) | 🔴 |
@@ -864,3 +869,11 @@ crashed the lists) fixed with a regression test.
 **Verified:** 476 passed; the new test fails on the old code and passes now; collections parse; every documented field
 was read from the controllers, resources and services. **Left:** BUG-182 (documents / history access) and the null names
 wait on D3 / D1.
+
+### 8. My Account redesigned with a Permissions & scope section — W8
+
+**Delivered:** My Account now looks like the UI demo (profile header + side-menu settings card) and has a Permissions &
+scope section listing employee code, OEM Mile ID, designation, the primary and add-on departments / divisions / branches /
+locations, segments, sub-segments, models, variants, verticals and the permissions by module — blank ("—") where nothing
+is defined. **Verified:** `MyAccountTest` (5 passed, every field asserted); rendered for a super admin and a scoped user.
+**Left:** —
