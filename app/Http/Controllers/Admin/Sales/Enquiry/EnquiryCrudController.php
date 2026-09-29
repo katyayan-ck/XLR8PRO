@@ -350,14 +350,13 @@ class EnquiryCrudController extends CrudController
                             ]);
                     });
                 }),
-            'finance' => $query->where('fin_mode', 'In-house'),
+                
+            'finance' => $query->whereIn('fin_mode', ['In-house', 'IN_HOUSE']),
             'finance_not_interested' => $query->where(function ($q) {
                     $q->whereNull('fin_mode')
                     ->orWhere('fin_mode', '')
-                    ->orWhere('fin_mode', '!=', 'In-house');
+                    ->orWhereNotIn('fin_mode', ['In-house', 'IN_HOUSE']);
                 }),
-            
-            // For Lost Enquiries, the is_active=3 base filter is enough, no extra filters needed
             'lost', 'lost-enquiries', 'lost_enquiries' => $query,
             
             default => $query->mainListing(),
@@ -1077,9 +1076,12 @@ class EnquiryCrudController extends CrudController
             $actionBtns .= '<a href="'.$viewUrl.'" class="btn btn-sm btn-primary ms-1">View</a>';
         } else {
             // Standard Master Grid Buttons
-            $actionBtns .= '<a href="'.$editUrl.'" class="btn btn-sm btn-primary">Edit</a>';
+            $viewUrl = backpack_url("sales/enquiry/{$e->id}/view");
+            $actionBtns .= '<a href="'.$viewUrl.'" class="btn btn-sm btn-info">View</a>';
+            $actionBtns .= '<a href="'.$editUrl.'" class="btn btn-sm btn-primary ms-1">Edit</a>';
+            
             $actionBtns .= '<a href="'.$quotUrl.'"'
-                .' class="btn '.$quotBtnClass.' btn-sm js-quote-link"'
+                .' class="btn '.$quotBtnClass.' btn-sm ms-1 js-quote-link"'
                 .' title="'.$quotBtnText.'"'
                 .' data-enquiry-id="'.$e->id.'"'
                 .' data-segment="'.e($segmentVal).'"'
@@ -1087,7 +1089,7 @@ class EnquiryCrudController extends CrudController
                 .' data-variant="'.e($variantVal).'"'
                 .' data-color="'.e($colorVal).'"'
                 .'>'.$quotBtnText.'</a>';
-            $actionBtns .= '<a href="'.$bookUrl.'" class="btn btn-warning btn-sm" title="Convert to Booking">Book</a>';
+            $actionBtns .= '<a href="'.$bookUrl.'" class="btn btn-warning btn-sm ms-1" title="Convert to Booking">Book</a>';
         }
 
         $row = [
@@ -1832,6 +1834,49 @@ class EnquiryCrudController extends CrudController
         $data['financeFups'] = $finExchFups->where('remark_type', 1);
 
         return view('admin.sales.enquiry.create', $data);
+    }
+
+    public function showEnquiry($id)
+    {
+        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
+            abort(403, 'Unauthorized. You do not have permission to view enquiries.');
+        }
+
+        $data = $this->getEnquiryFormData();
+        $enquiry = Enquiry::with(['campaign', 'segment', 'model', 'variant', 'color'])->findOrFail($id);
+
+        $fups = [];
+        if (strtoupper($enquiry->current_origin ?? '') === 'LONG') {
+            $fups = DB::table('xlr8_crm_enquiries_fup')
+                ->where('enquiry_no', $enquiry->enquiry_no)
+                ->orderBy('id', 'asc')
+                ->get();
+        }
+
+        $x8EnqNo = $this->enquiryRef->fromReference($enquiry->id);
+        $legacyEnqNo = 'XENQ-' . $x8EnqNo;
+
+        $creFups = DB::table('xlr8_cre_enquiry_fup')
+            ->whereIn('x8_enq_no', [(string) $x8EnqNo, $legacyEnqNo])
+            ->whereRaw("IFNULL(cre_fup_deviation_stage, '') != 'OPEN_FOLLOW_UP'")
+            ->orderBy('id', 'asc')
+            ->get();
+
+        // Fetch the new Finance & Exchange Follow-ups to prevent view crashes
+        $enqNoFallback = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
+        $finExchFups = DB::table('xlr8_finexch_fup')
+            ->where('enq_no', $enqNoFallback)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $data['title'] = 'View Enquiry';
+        $data['enquiry'] = $enquiry;
+        $data['fups'] = $fups;
+        $data['creFups'] = $creFups;
+        $data['exchangeFups'] = $finExchFups->where('remark_type', 2);
+        $data['financeFups'] = $finExchFups->where('remark_type', 1);
+
+        return view('admin.sales.enquiry.view', $data);
     }
 
     private function saveCreFup($enquiry, $request)

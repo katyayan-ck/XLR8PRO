@@ -389,6 +389,7 @@ Route::group([
     Route::get('sales/enquiry/unassigned-quick', [EnquiryCrudController::class, 'unassignedQuickList'])->name('sales.enquiry.unassigned-quick');
     Route::get('sales/enquiry/duplicate', [EnquiryCrudController::class, 'duplicateEnquiryList']);
     Route::get('crm-sales/verifications/lost-enquiries', [EnquiryCrudController::class, 'lostEnquiriesList']);
+    Route::get('sales/enquiry/{id}/view', [\App\Http\Controllers\Admin\Sales\Enquiry\EnquiryCrudController::class, 'showEnquiry']);
     // 'pending'/'erroneous' point at BUG-046's confirmed-broken pendingList()/erroneousList() methods.
     // sales.enquiry.pending removed: pendingList() never existed and nothing links to it (DEC-020).
     // sales.enquiry.erroneous removed: erroneousList() never existed; hidden until Track B (DEC-023).
