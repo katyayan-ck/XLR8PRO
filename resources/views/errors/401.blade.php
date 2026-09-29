@@ -1,5 +1,6 @@
-@extends('errors::minimal')
+{{-- Branded error page (go-live to-do U8) --}}
+@extends('errors.xl')
 
-@section('title', __('Unauthorized'))
 @section('code', '401')
-@section('message', __('Unauthorized'))
+@section('title', 'Sign-in needed')
+@section('message', 'Your session has ended or you are not signed in. Please sign in again.')

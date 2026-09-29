@@ -230,3 +230,18 @@
     error pipeline, guides on every change, module-wise API docs + Postman.
   - `CLAUDE.md` / `AGENTS.md` regenerated (`CLAUDE.md` had been stale).
 - **New:** `.ai/state/handoff.md`.
+
+## Branded error pages (go-live to-do U8) + accomplishments log rule
+- **New:**
+  - `app/Support/ErrorRef.php`, `public/css/xl-errors.css`, `resources/views/errors/xl.blade.php`;
+  - `resources/views/vendor/backpack/theme-tabler/errors/layout.blade.php` (admin in-shell);
+  - `tests/Feature/Utils/ErrorPagesTest.php` (4).
+- **Replaced:** `resources/views/errors/{401,403,404,419,429,500,503}.blade.php`.
+  - Before: Laravel's plain default pages.
+  - After: branded pages; a 500 hides internals and shows a reference id.
+- **`bootstrap/app.php`:** `withExceptions()->context()` adds `error_ref` to every logged exception.
+- **Rules:**
+  - `.ai/guidelines/10-workflow.md` gains the accomplishments log (`docs/accomplishments/DD-MM-YYYY.md`);
+  - `CLAUDE.md` / `AGENTS.md` regenerated;
+  - `docs/accomplishments/29-09-2026.md` created (today backfilled).
+- **Guide:** `docs/utilities/ui-kit.md` → Error pages.

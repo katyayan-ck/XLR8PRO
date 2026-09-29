@@ -1,0 +1,76 @@
+/*!
+ * Branded error pages (go-live to-do U8). Standalone on purpose: an error page must render even when the app, the
+ * database or the asset pipeline is down, so it needs nothing but this file. Tabler-like tokens, light + dark.
+ */
+:root {
+    --xe-bg: #f6f8fb;
+    --xe-card: #ffffff;
+    --xe-text: #1d273b;
+    --xe-muted: #667382;
+    --xe-border: #e6e7e9;
+    --xe-primary: #066fd1;
+    --xe-primary-text: #ffffff;
+    --xe-code: #cbd2dc;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --xe-bg: #151f2c;
+        --xe-card: #1b2434;
+        --xe-text: #e7ecf3;
+        --xe-muted: #9aa5b5;
+        --xe-border: #2c3a4f;
+        --xe-primary: #4299e1;
+        --xe-code: #34445c;
+    }
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: var(--xe-bg);
+    color: var(--xe-text);
+    font: 14px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.xe-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 32px 28px;
+    text-align: center;
+    background: var(--xe-card);
+    border: 1px solid var(--xe-border);
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, .04);
+}
+
+.xe-logo { height: 40px; width: auto; max-width: 200px; object-fit: contain; margin-bottom: 20px; }
+.xe-code { font-size: 64px; font-weight: 700; line-height: 1; color: var(--xe-code); letter-spacing: -.02em; }
+.xe-title { margin: 12px 0 6px; font-size: 20px; font-weight: 600; }
+.xe-message { margin: 0 0 20px; color: var(--xe-muted); }
+.xe-ref { margin: 0 0 20px; font-size: 12px; color: var(--xe-muted); }
+.xe-ref code { padding: 2px 6px; border: 1px solid var(--xe-border); border-radius: 4px; font-size: 13px; color: var(--xe-text); }
+.xe-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+
+.xe-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 8px 16px;
+    border: 1px solid var(--xe-border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--xe-text);
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.xe-btn-primary { background: var(--xe-primary); border-color: var(--xe-primary); color: var(--xe-primary-text); }
+.xe-btn:focus-visible { outline: 2px solid var(--xe-primary); outline-offset: 2px; }

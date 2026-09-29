@@ -4,6 +4,7 @@
 reverts by the booking team).
 
 ## Just done (latest first)
+- U8 branded error pages (public + admin in-shell, 500 reference id in logs); the accomplishments log rule + `docs/accomplishments/29-09-2026.md`.
 - BUG-198 fixed:
   - `Role` declares its table; `User::deniesPermission()` is memoised;
   - a permission-cache rebuild takes 9 queries / 312 ms (it was 2,887).
@@ -23,12 +24,11 @@ reverts by the booking team).
 - DEC-083 pricing masters, auto recalculation, sync stamp, logo; DEC-073…082 pricing redesign.
 
 ## In progress / next (to-do `docs/plans/2026-09-29-go-live-todo.md`)
-1. **U8 error pages:** `resources/views/errors/{403,404,419,429,500,503}.blade.php`, branded, no stack traces.
-2. **U11 API docs:** `docs/api/pricing.md` + `docs/api/postman/pricing.postman_collection.json` first, then auth /
+1. **U11 API docs:** `docs/api/pricing.md` + `docs/api/postman/pricing.postman_collection.json` first, then auth /
    settings / docs / history / devices.
-3. **U1 / U3:** collapsible + draggable cards with required counters (the `xl-ui.js` enhancement); the density
+2. **U1 / U3:** collapsible + draggable cards with required counters (the `xl-ui.js` enhancement); the density
    controller (Settings `ui.density.*` + the Appearance panel).
-4. **U7:** the central error pipeline (inventory first, then `withExceptions`).
+3. **U7:** the central error pipeline (inventory first, then `withExceptions`).
 
 ## Waiting on the owner
 - **Data dictionary:** 5 questions (activity abbreviations, the person-code remap, the keyword clean-up, designations,

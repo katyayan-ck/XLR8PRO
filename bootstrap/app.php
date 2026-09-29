@@ -36,5 +36,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ImportUsersCommand::class,
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Go-live to-do U8: every logged exception carries the request's reference id, which the branded 500 page shows.
+        $exceptions->context(fn () => ['error_ref' => \App\Support\ErrorRef::get()]);
     })->create();

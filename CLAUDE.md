@@ -54,6 +54,13 @@ conflict · auth/permission/secret changes · UAT-visible behaviour changes beyo
   - rewrite the handoff `.ai/state/handoff.md`: what was just done, what is in progress (exact next step, files touched,
     uncommitted work), open questions for the owner, and how to verify. A new session or agent must be able to continue
     from it alone.
+- **Accomplishments log (user standing instruction, 29-09-2026):** whenever a task is **completed**, append an entry
+  to `docs/accomplishments/DD-MM-YYYY.md` (today's file; create it if missing) with full details:
+  - what was delivered and why (the to-do item / DEC / BUG ids);
+  - the files, routes, settings and migrations involved;
+  - how it was verified (tests, smoke, numbers);
+  - what is left or waiting.
+  Mark the item done in the go-live to-do in the same commit.
 - **Code quality:** code is properly commented (a PHPDoc on every class and public method: purpose, params, return
   shape, an example where useful; inline comments only for non-obvious logic, with the DEC / BUG id) and formatted
   (pint, the project style) before every commit.

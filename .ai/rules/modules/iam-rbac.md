@@ -18,7 +18,8 @@ paths:
 
 ## Model
 - Spatie permission with tables prefixed `xlr8_iam_*`; **roles = designations** (`xlr8_admin_designation`,
-  76 rows). `App\Models\IAM\Role` has no own table — Spatie's constructor applies the configured one (DEC-018).
+  76 rows). `App\Models\IAM\Role` declares `$table = 'xlr8_admin_designation'` (the configured roles table) — required, or the
+  guarded-attribute check re-queries information_schema per role instance (BUG-198); DEC-018.
   Manage roles and their permissions on Org → Designation (permission tree).
 - Permissions `MOD_PROC_ACT`, `guard_name=web`. Never generic names (`create`, `view`).
 - `User::isSuperAdmin()` = role `superadmin` → wildcard via Gate `before` hook (AppServiceProvider), which also

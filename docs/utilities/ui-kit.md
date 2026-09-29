@@ -99,3 +99,11 @@ XL.theme.onChange(state => rebuildMyChart());
 - Linked from the user menu when it is on.
 
 **Legacy screens:** `public/css/xl-theme.css` has a dark-mode safety net for `bg-white`, `bg-light`, `text-black`, `text-dark`, `table-light` and common inline light colours. It is a stop-gap: convert a screen to tokens when you touch it.
+
+## Error pages (go-live to-do U8)
+- **Public / signed-out:** `resources/views/errors/{401,403,404,419,429,500,503}.blade.php` extend
+  `errors/xl.blade.php` (standalone; styles in `public/css/xl-errors.css`; works with the database down). A new code
+  page = `@extends('errors.xl')` + the `code` / `title` / `message` sections (optional: `reference`, `actions`).
+- **Admin panel:** `resources/views/vendor/backpack/theme-tabler/errors/layout.blade.php` (in-shell; dashboard + back).
+- **500s** show `App\Support\ErrorRef::get()`; the same id is in the log context of every exception.
+

@@ -290,7 +290,7 @@ The booking team owns it (DEC-034); these are the items we know of.
 | U5 | Select2, flatpickr, badges, buttons, tabs, accordions wherever they fit | 🟡 | P1 | Rule added; the shared layer already upgrades native inputs; convert the dense legacy forms screen by screen |
 | U6 | Guides updated on every change | ✅ rule | — | `.ai/rules/app.md` standing rule; the go-live wrap-up audits guides vs code |
 | U7 | Central uniform error / response / exception handling with module-wise codes + messages | 🔴 | P1 | See the U7 plan below the table. |
-| U8 | Custom error pages (403 / 404 / 419 / 429 / 500 / 503) | 🔴 → in progress | P1 | Branded pages in `resources/views/errors/`: logo, plain message, a link to the dashboard, a reference id on 500 (no stack traces) |
+| U8 | Custom error pages (403 / 404 / 419 / 429 / 500 / 503) | ✅ 29-09 | P1 | Branded pages in `resources/views/errors/`: logo, plain message, a link to the dashboard, a reference id on 500 (no stack traces) |
 | U9 | These instructions in the project rules for all agents | ✅ 29-09 | — |
 | U10 | Changelog + task status + handoff with every commit; commented + formatted code | ✅ rule (`.ai/guidelines/10-workflow.md`) | — | `.ai/state/handoff.md` |
 | U11 | **Module-wise API docs** (request, params, validation, every response + a Postman v2.1 collection per module) | 🔴 → in progress | P1 | `docs/api/{module}.md` + `docs/api/postman/`; the existing `docs/api/*.md` are empty; start with pricing, auth, settings, docs / history, devices | `.ai/rules/ui.md`, `app.md`, `api.md` (synced to `.claude/rules`) |

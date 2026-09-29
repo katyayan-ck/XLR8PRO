@@ -1,5 +1,6 @@
-@extends('errors::minimal')
+{{-- Branded error page (go-live to-do U8) --}}
+@extends('errors.xl')
 
-@section('title', __('Not Found'))
 @section('code', '404')
-@section('message', __('Not Found'))
+@section('title', 'Page not found')
+@section('message', 'The page or record you asked for doesn\'t exist, or it was moved or removed.')
