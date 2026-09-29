@@ -95,7 +95,9 @@ class NotificationController extends BaseController
     {
         try {
             $validated = $request->validate([
-                'device_id' => 'required|string|max:255|unique:user_device_tokens,device_id,NULL,id,user_id,'.auth('sanctum')->id(),
+                // BUG-210: no unique rule — the table it named did not exist (every call was a 500), and registering the
+                // same device again must refresh its push token (FirebaseService::registerDeviceToken upserts)
+                'device_id' => 'required|string|max:255',
                 'device_name' => 'required|string|max:255',
                 'platform' => 'required|string|in:android,Android,ios,iOS,web,Web',
                 'platform_version' => 'string|max:50',

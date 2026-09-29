@@ -242,6 +242,7 @@ Entry format:
 | BUG-204 | `AccessoryScope::$fillable` lacked `permit`, so the accessory import's `updateOrCreate` silently dropped it — GPS VLTD / RTO Tape rows were never permit-scoped | Medium | FIXED (DEC-083, 29-09-2026) | 29-09-2026 | 29-09-2026 |
 | BUG-205 | Importing the Insurance workbook's "Insurance Co." sheet expired every insurance preference row; with segment preferences (DEC-083) it would have wiped them. The export also folded them into model rows | Medium | FIXED (DEC-083, 29-09-2026; found in design, never shipped broken) | 29-09-2026 | 29-09-2026 |
 | BUG-206 | `person_code` (the person business key, referenced by 14 tables incl. users, bookings, enquiries) holds the person's **PAN (51) or Aadhaar (160)** for 211 of 215 people — government IDs as a key spread into every referencing row, URLs and logs (DPDP / UIDAI Aadhaar-storage risk) | High | OPEN (owner decision: surrogate key + remap — data dictionary §person) | 29-09-2026 | — |
+| BUG-210 | `POST api/v1/devices/register` validated `device_id` as `unique:user_device_tokens…`, a table that does not exist (the model uses `xlr8_iam_user_device_token`): every registration failed with a 500, so no device ever got a push token; the rule would also have blocked refreshing a rotated FCM token | High | FIXED 29-09-2026 | 29-09-2026 | 29-09-2026 |
 | BUG-209 | `BaseController::authorize()` never works: `canPerform()` calls `parent::authorize()`, which `Controller` does not have (always false), and the throw passed its arguments in the wrong order (a `TypeError` → 500). `PUT api/v1/system-settings/{key}` and `POST …/import/json` therefore always fail; there is no `SystemSetting` policy either | Medium | PARTLY FIXED 29-09-2026: the 500 is now the intended 403; making the endpoints work waits on BUG-207 (owner) | 29-09-2026 | — |
 | BUG-208 | API error handling is not central: 401 / 404 / 405 / 429 / 500 on `api/*` bypass the envelope (Laravel default JSON or debug trace); `App\Exceptions\Handler` is never registered (dead); `ErrorCodeEnum::message()` throws `UnhandledMatchError` for the six `POST_*` / `EMP_*` codes; `DomainException` defaults to the missing `VALIDATION_ERROR` case; the enum maps `VALIDATION_*` to 400 while responses send 422 | Medium | FIXED 29-09-2026 (DEC-085) except `E002` (app team) | 29-09-2026 | 29-09-2026 |
 | BUG-207 | v1 `system-settings` read endpoints are open to every signed-in app user and return **all** visible settings (encrypted ones as ciphertext); `GET system-settings/{key}` returns the raw row (validation rules, defaults); update / import go through the legacy `SystemSettingService` | Medium | OPEN (API access change — owner decision; proposed app-facing allow-list) | 29-09-2026 | — |
@@ -2458,3 +2459,16 @@ guessed at.
     check would still deny everyone but the superadmin.
 - **Fix so far:** the throw passes the ability (`You are not authorized to update.`, 403). Not changed: `canPerform()`
   (fixing it would open the legacy write path that BUG-207 proposes to replace).
+
+### BUG-210 — Device (push token) registration always failed
+
+- **Status:** FIXED 29-09-2026.
+- **Severity:** High (push notifications to the app could never work).
+- **Found:** 29-09-2026, writing `docs/api/devices.md` (to-do U11).
+- **Detail:** `NotificationController::registerDevice` validated
+  `unique:user_device_tokens,device_id,NULL,id,user_id,{id}`. The table is `xlr8_iam_user_device_token`, so validation
+  threw a `QueryException` → 500 on every call. Had the table name been right, the rule would still have refused a
+  second registration of the same device, although `FirebaseService::registerDeviceToken()` is written to update the
+  existing row (FCM rotates tokens).
+- **Fix:** the unique rule is removed; the service upserts per user + device. Test:
+  `tests/Feature/Api/DeviceRegistrationTest.php` (register, re-register refreshes the token, `fcm_token` required).

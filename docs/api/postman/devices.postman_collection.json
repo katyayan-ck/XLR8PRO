@@ -1,0 +1,423 @@
+{
+  "info": {
+    "name": "Xceler8 API v1 — Devices",
+    "_postman_id": "xlrm-devices-v1",
+    "description": "Push-token registration. Docs: docs/api/devices.md.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://dev.xceler8.in"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "device_id",
+      "value": "postman-device-1"
+    },
+    {
+      "key": "fcm_token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Register device",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/devices/register",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "devices",
+            "register"
+          ]
+        },
+        "description": "Register or refresh this device's FCM token (re-register when FCM rotates it).",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"device_name\": \"Pixel 8\",\n  \"platform\": \"android\",\n  \"platform_version\": \"15\",\n  \"fcm_token\": \"{{fcm_token}}\",\n  \"metadata\": {}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [
+        {
+          "name": "201",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/devices/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "devices",
+                "register"
+              ]
+            },
+            "description": "Register or refresh this device's FCM token (re-register when FCM rotates it).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"device_name\": \"Pixel 8\",\n  \"platform\": \"android\",\n  \"platform_version\": \"15\",\n  \"fcm_token\": \"{{fcm_token}}\",\n  \"metadata\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Created",
+          "code": 201,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 201,\n  \"success\": true,\n  \"code\": \"S201\",\n  \"message\": \"Device registered\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\",\n  \"data\": {\n    \"id\": 17,\n    \"user_id\": 40,\n    \"device_id\": \"{{device_id}}\",\n    \"device_name\": \"Pixel 8\",\n    \"platform\": \"android\",\n    \"fcm_token\": \"eYk\\u2026\",\n    \"is_active\": true,\n    \"metadata\": {}\n  }\n}"
+        },
+        {
+          "name": "422",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/devices/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "devices",
+                "register"
+              ]
+            },
+            "description": "Register or refresh this device's FCM token (re-register when FCM rotates it).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"device_name\": \"Pixel 8\",\n  \"platform\": \"android\",\n  \"platform_version\": \"15\",\n  \"fcm_token\": \"{{fcm_token}}\",\n  \"metadata\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Unprocessable Entity",
+          "code": 422,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 422,\n  \"success\": false,\n  \"code\": \"VALIDATION_FAILED\",\n  \"message\": \"Validation failed\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\",\n  \"errors\": {\n    \"fcm_token\": [\n      \"The fcm token field is required.\"\n    ]\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "List devices",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/devices",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "devices"
+          ]
+        },
+        "description": ""
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/devices",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "devices"
+              ]
+            },
+            "description": ""
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"User devices retrieved\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\",\n  \"data\": [\n    {\n      \"id\": 17,\n      \"user_id\": 40,\n      \"device_id\": \"{{device_id}}\",\n      \"device_name\": \"Pixel 8\",\n      \"platform\": \"android\",\n      \"fcm_token\": \"eYk\\u2026\",\n      \"is_active\": true,\n      \"metadata\": {}\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "Unregister device",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/devices/{{device_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "devices",
+            "{{device_id}}"
+          ]
+        },
+        "description": "Path = the device_id string."
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/devices/{{device_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "devices",
+                "{{device_id}}"
+              ]
+            },
+            "description": "Path = the device_id string."
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Device unregistered\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\"\n}"
+        },
+        {
+          "name": "404",
+          "originalRequest": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/devices/{{device_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "devices",
+                "{{device_id}}"
+              ]
+            },
+            "description": "Path = the device_id string."
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 404,\n  \"success\": false,\n  \"code\": \"RESOURCE_NOT_FOUND\",\n  \"message\": \"Device not found with ID x\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Revoke all push tokens",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/devices/revoke-all",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "devices",
+            "revoke-all"
+          ]
+        },
+        "description": "Deactivates every push token of the user; does not sign devices out."
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/devices/revoke-all",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "devices",
+                "revoke-all"
+              ]
+            },
+            "description": "Deactivates every push token of the user; does not sign devices out."
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"All devices revoked\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\",\n  \"data\": {\n    \"revoked\": 3\n  }\n}"
+        }
+      ]
+    }
+  ]
+}

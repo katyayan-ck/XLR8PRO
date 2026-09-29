@@ -4,6 +4,7 @@
 reverts by the booking team).
 
 ## Just done (latest first)
+- U11: auth + devices API docs and Postman; BUG-210 fixed (device push-token registration was a 500 on every call).
 - U7 (API side, DEC-085): `ApiExceptionRenderer` gives every `api/*` exception the envelope; messages in `resources/lang/en/errors.php`; BUG-208 fixed; BUG-209 logged (settings API writes always 403; waits on BUG-207).
 - U1 / U3 / U4: collapsible + draggable form cards with required badges (`xl-ui.js`), density settings `ui.density.*` + Appearance controls, lazy images; `UiDensityTest`.
 - U11 API docs: `docs/api/index.md`, pricing + system-settings docs and Postman collections; BUG-207 logged (settings API exposure).
@@ -27,7 +28,7 @@ reverts by the booking team).
 - DEC-083 pricing masters, auto recalculation, sync stamp, logo; DEC-073…082 pricing redesign.
 
 ## In progress / next (to-do `docs/plans/2026-09-29-go-live-todo.md`)
-1. **U11 API docs:** remaining modules: auth, devices, notifications / alerts / messages, documents, history, webhooks.
+1. **U11 API docs:** remaining modules: notifications / alerts / messages, documents, history, webhooks.
 2. **U7 web side:** admin flashes for business errors through the same codes / language file; `E002` rename needs the
    app team; deleting `app/Exceptions/Handler.php` needs approval.
 3. **U1 per screen:** header-less Backpack form cards get headers when converted; a real-browser check on quotation /

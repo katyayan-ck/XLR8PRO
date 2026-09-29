@@ -16,8 +16,8 @@ This is the mobile app contract (DEC-004: v1 stays backward compatible; new shap
 | Module | Endpoints | Doc | Postman | Status |
 |---|---|---|---|---|
 | Pricing (PRC) | `GET vehicle/pricing/{oemCode}` | [pricing.md](pricing.md) | [pricing](postman/pricing.postman_collection.json) | ✅ 29-09 |
-| Auth | `POST auth/request-otp`, `POST auth/verify-otp`, `GET auth/me`, `POST auth/logout` | auth.md (empty) | — | 🔴 — note BUG-187 (mobile login broken) and BUG-188 |
-| Devices | `GET devices`, `POST devices/register`, `POST devices/revoke-all`, `DELETE devices/{id}` | — | — | 🔴 |
+| Auth | `POST auth/request-otp`, `POST auth/verify-otp`, `GET auth/me`, `POST auth/logout` | [auth.md](auth.md) | [auth](postman/auth.postman_collection.json) | ✅ 29-09 — BUG-187 (mobile login broken) and BUG-188 open |
+| Devices (push tokens) | `GET devices`, `POST devices/register`, `POST devices/revoke-all`, `DELETE devices/{device_id}` | [devices.md](devices.md) | [devices](postman/devices.postman_collection.json) | ✅ 29-09 — BUG-210 fixed |
 | System settings | `GET system-settings`, `GET system-settings/{key}`, `PUT system-settings/{key}`, `GET system-settings/topic/{topic}`, `GET system-settings/category/{dealership,pricing,site}`, `GET system-settings/export/json`, `POST system-settings/import/json` | [system-settings.md](system-settings.md) | [system-settings](postman/system-settings.postman_collection.json) | ✅ 29-09 — BUG-207 (exposure) open |
 | Notifications / alerts / messages | `GET notifications`, `GET notifications/unread`, `POST notifications/{id}/read`, `POST notifications/mark-all-read`, `DELETE notifications/{id}`, `GET alerts`, `POST alerts/{id}/read`, `GET/POST messages/user/{user_id}`, `POST messages/{id}/read` | — | — | 🔴 |
 | Documents | `POST docs/upload`, `GET docs/my`, `GET docs/search`, `GET docs/analytics`, `POST docs/groups`, `POST docs/groups/{groupId}/add`, `DELETE docs/groups/{groupId}/remove/{docId}`, `GET docs/groups/{groupId}/zip`, `POST docs/{docId}/approve` | — | — | 🔴 — BUG-182 (entity access) |

@@ -1,0 +1,818 @@
+{
+  "info": {
+    "name": "Xceler8 API v1 — Auth",
+    "_postman_id": "xlrm-auth-v1",
+    "description": "Module IAM. Docs: docs/api/auth.md (note BUG-187: mobile login broken until D1).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://dev.xceler8.in"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "mobile",
+      "value": "9876543210"
+    },
+    {
+      "key": "device_id",
+      "value": "postman-device-1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Request OTP",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/request-otp",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "request-otp"
+          ]
+        },
+        "description": "Send a login OTP. In APP_ENV=local the OTP is returned in data.otp. NOTE BUG-187: today every request ends in 500 (users.mobile does not exist).",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"mobile\": \"{{mobile}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/request-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "request-otp"
+              ]
+            },
+            "description": "Send a login OTP. In APP_ENV=local the OTP is returned in data.otp. NOTE BUG-187: today every request ends in 500 (users.mobile does not exist).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobile\": \"{{mobile}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"OTP sent to your registered mobile and email\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\",\n  \"data\": {\n    \"mobile\": \"9876543210\",\n    \"expires_at\": \"2026-09-29T21:50:00+05:30\",\n    \"expires_in_minutes\": 10,\n    \"otp\": \"123456\"\n  }\n}"
+        },
+        {
+          "name": "422 validation",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/request-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "request-otp"
+              ]
+            },
+            "description": "Send a login OTP. In APP_ENV=local the OTP is returned in data.otp. NOTE BUG-187: today every request ends in 500 (users.mobile does not exist).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobile\": \"{{mobile}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Unprocessable Entity",
+          "code": 422,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 422,\n  \"success\": false,\n  \"code\": \"VALIDATION_FAILED\",\n  \"message\": \"Validation failed\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\",\n  \"errors\": {\n    \"mobile\": [\n      \"The mobile field is required.\"\n    ]\n  }\n}"
+        },
+        {
+          "name": "404 not registered",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/request-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "request-otp"
+              ]
+            },
+            "description": "Send a login OTP. In APP_ENV=local the OTP is returned in data.otp. NOTE BUG-187: today every request ends in 500 (users.mobile does not exist).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobile\": \"{{mobile}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 404,\n  \"success\": false,\n  \"code\": \"AUTH_USER_NOT_FOUND\",\n  \"message\": \"Mobile number not registered in system\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\"\n}"
+        },
+        {
+          "name": "429 rate limit",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/request-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "request-otp"
+              ]
+            },
+            "description": "Send a login OTP. In APP_ENV=local the OTP is returned in data.otp. NOTE BUG-187: today every request ends in 500 (users.mobile does not exist).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobile\": \"{{mobile}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Too Many Requests",
+          "code": 429,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 429,\n  \"success\": false,\n  \"code\": \"AUTH_OTP_RATE_LIMIT\",\n  \"message\": \"Too many OTP requests. Maximum 5 allowed per 15 minutes.\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\"\n}"
+        },
+        {
+          "name": "500 (BUG-187)",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/request-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "request-otp"
+              ]
+            },
+            "description": "Send a login OTP. In APP_ENV=local the OTP is returned in data.otp. NOTE BUG-187: today every request ends in 500 (users.mobile does not exist).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobile\": \"{{mobile}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Internal Server Error",
+          "code": 500,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 500,\n  \"success\": false,\n  \"code\": \"SYSTEM_ERROR\",\n  \"message\": \"An unexpected error occurred\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\",\n  \"error_ref\": \"K7Q2M9XA\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Verify OTP",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/verify-otp",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "verify-otp"
+          ]
+        },
+        "description": "Verify the OTP; returns a Sanctum token bound to device_id (valid 30 days). Tests script saves it to {{token}}.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"mobile\": \"{{mobile}}\",\n  \"otp\": \"123456\",\n  \"device_id\": \"{{device_id}}\",\n  \"device_name\": \"Pixel 8\",\n  \"platform\": \"android\",\n  \"platform_version\": \"15\",\n  \"fcm_token\": \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const j = pm.response.json();",
+              "if (j.success && j.data && j.data.token) { pm.collectionVariables.set('token', j.data.token); }"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            },
+            "description": "Verify the OTP; returns a Sanctum token bound to device_id (valid 30 days). Tests script saves it to {{token}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobile\": \"{{mobile}}\",\n  \"otp\": \"123456\",\n  \"device_id\": \"{{device_id}}\",\n  \"device_name\": \"Pixel 8\",\n  \"platform\": \"android\",\n  \"platform_version\": \"15\",\n  \"fcm_token\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"OTP verified\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\",\n  \"data\": {\n    \"token\": \"12|Qm9ndXM\\u2026\",\n    \"expires_at\": \"2026-10-29T21:41:00+05:30\",\n    \"user\": {\n      \"id\": 40,\n      \"name\": \"Asha Verma\",\n      \"email\": \"asha@example.com\",\n      \"mobile\": \"9876543210\",\n      \"role\": \"Sales Consultant\"\n    }\n  }\n}"
+        },
+        {
+          "name": "401 invalid OTP",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            },
+            "description": "Verify the OTP; returns a Sanctum token bound to device_id (valid 30 days). Tests script saves it to {{token}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobile\": \"{{mobile}}\",\n  \"otp\": \"123456\",\n  \"device_id\": \"{{device_id}}\",\n  \"device_name\": \"Pixel 8\",\n  \"platform\": \"android\",\n  \"platform_version\": \"15\",\n  \"fcm_token\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Unauthorized",
+          "code": 401,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 401,\n  \"success\": false,\n  \"code\": \"AUTH_OTP_INVALID\",\n  \"message\": \"Invalid OTP\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\"\n}"
+        },
+        {
+          "name": "401 expired",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            },
+            "description": "Verify the OTP; returns a Sanctum token bound to device_id (valid 30 days). Tests script saves it to {{token}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobile\": \"{{mobile}}\",\n  \"otp\": \"123456\",\n  \"device_id\": \"{{device_id}}\",\n  \"device_name\": \"Pixel 8\",\n  \"platform\": \"android\",\n  \"platform_version\": \"15\",\n  \"fcm_token\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Unauthorized",
+          "code": 401,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 401,\n  \"success\": false,\n  \"code\": \"AUTH_OTP_EXPIRED\",\n  \"message\": \"OTP has expired. Request a new one.\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\"\n}"
+        },
+        {
+          "name": "403 locked",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            },
+            "description": "Verify the OTP; returns a Sanctum token bound to device_id (valid 30 days). Tests script saves it to {{token}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobile\": \"{{mobile}}\",\n  \"otp\": \"123456\",\n  \"device_id\": \"{{device_id}}\",\n  \"device_name\": \"Pixel 8\",\n  \"platform\": \"android\",\n  \"platform_version\": \"15\",\n  \"fcm_token\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Forbidden",
+          "code": 403,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 403,\n  \"success\": false,\n  \"code\": \"AUTH_FORBIDDEN\",\n  \"message\": \"Too many failed OTP attempts\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\"\n}"
+        },
+        {
+          "name": "403 device limit",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/verify-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "verify-otp"
+              ]
+            },
+            "description": "Verify the OTP; returns a Sanctum token bound to device_id (valid 30 days). Tests script saves it to {{token}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobile\": \"{{mobile}}\",\n  \"otp\": \"123456\",\n  \"device_id\": \"{{device_id}}\",\n  \"device_name\": \"Pixel 8\",\n  \"platform\": \"android\",\n  \"platform_version\": \"15\",\n  \"fcm_token\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Forbidden",
+          "code": 403,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 403,\n  \"success\": false,\n  \"code\": \"AUTH_DEVICE_BINDING_FAILED\",\n  \"message\": \"Device limit exceeded. Maximum 5 devices allowed.\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Me",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/me",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "me"
+          ]
+        },
+        "description": "The signed-in user with role and permissions."
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "The signed-in user with role and permissions."
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"User profile retrieved\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\",\n  \"data\": {\n    \"id\": 40,\n    \"name\": \"Asha Verma\",\n    \"email\": \"asha@example.com\",\n    \"mobile\": \"9876543210\",\n    \"role\": \"Sales Consultant\",\n    \"permissions\": [\n      \"SLS_ENQ_VIEW\",\n      \"SLS_QUOT_CREATE\"\n    ]\n  }\n}"
+        },
+        {
+          "name": "401 no token",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "The signed-in user with role and permissions."
+          },
+          "status": "Unauthorized",
+          "code": 401,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 401,\n  \"success\": false,\n  \"code\": \"AUTH_UNAUTHORIZED\",\n  \"message\": \"Unauthenticated.\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\"\n}"
+        },
+        {
+          "name": "401 no device session",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "The signed-in user with role and permissions."
+          },
+          "status": "Unauthorized",
+          "code": 401,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 401,\n  \"success\": false,\n  \"code\": \"E002\",\n  \"message\": \"Unauthorized: Invalid device session\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Logout",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/logout",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "auth",
+            "logout"
+          ]
+        },
+        "description": "Revokes the current token only."
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Revokes the current token only."
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Logged out successfully\",\n  \"timestamp\": \"2026-09-29T21:40:00+05:30\"\n}"
+        }
+      ]
+    }
+  ]
+}

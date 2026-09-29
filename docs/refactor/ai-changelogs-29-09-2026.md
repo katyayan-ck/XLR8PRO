@@ -283,3 +283,11 @@
   `api/*` route: Laravel 404 (trace under debug) → the envelope. Status codes unchanged.
 - **Docs:** `docs/api/index.md` (common errors), `pricing.md`, `system-settings.md`.
 - **Tests:** `tests/Feature/Api/ApiErrorEnvelopeTest.php` (6).
+
+## API docs: auth + devices (to-do U11); BUG-210 fixed
+- **New:** `docs/api/auth.md`, `docs/api/devices.md`, `docs/api/postman/{auth,devices}.postman_collection.json`
+  (Verify OTP saves `{{token}}` via a test script); `docs/api/index.md` rows updated.
+- **`app/Http/Controllers/Api/V1/NotificationController.php`:** `registerDevice` drops the `unique:user_device_tokens`
+  rule (a missing table → a 500 on every call; the service upserts). **Before → after:** 500 → 201, re-registering
+  refreshes the FCM token.
+- **Tests:** `tests/Feature/Api/DeviceRegistrationTest.php` (2).
