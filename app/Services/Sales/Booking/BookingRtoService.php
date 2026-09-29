@@ -23,12 +23,6 @@ use Illuminate\Http\UploadedFile;
  */
 class BookingRtoService
 {
-    private const SALE_TYPE_MAP = ['1' => 'Within State', '2' => 'Outside State'];
-
-    private const BODY_TYPE_MAP = ['1' => 'Complete', '2' => 'CBC'];
-
-    private const REG_NO_TYPE_MAP = ['1' => 'Regular', '2' => 'BH', '3' => 'Special'];
-
     /** Form field => XlRtoRules column, for the "is this field required by the matching rule" check. */
     private const RULE_FIELD_MAP = [
         'trc_number' => 'trc_number',
@@ -152,10 +146,22 @@ class BookingRtoService
     ): XlRto {
         $permitMap = $this->permitMap();
 
-        $saleText = self::SALE_TYPE_MAP[$validated['sale_type']] ?? '';
+        $saleTypeMap = OrgService::getKeyValuesByCode('SALE_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+
+        $bodyTypeMap = OrgService::getKeyValuesByCode('BODY_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+
+        $regNoTypeMap = OrgService::getKeyValuesByCode('REGISTRATION_NO_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+
+        $saleText = $saleTypeMap[(string) $validated['sale_type']] ?? '';
         $permitText = $permitMap[$validated['permit']] ?? '';
-        $bodyText = self::BODY_TYPE_MAP[$validated['body_type']] ?? '';
-        $regNoTypeText = self::REG_NO_TYPE_MAP[$validated['reg_no_type']] ?? '';
+        $bodyText = $bodyTypeMap[(string) $validated['body_type']] ?? '';
+        $regNoTypeText = $regNoTypeMap[(string) $validated['reg_no_type']] ?? '';
 
         $matchingRule = null;
 

@@ -509,15 +509,22 @@ class BookingCoreService
         }
 
         if ($booking->sale_type != ($input['sale_type'] ?? null)) {
-            $rem[] = 'Sale Type Changed from '.($booking->sale_type ?? 'null').' to '.($input['sale_type'] ?? null);
+            $saleTypeMap = OrgService::getKeyValuesByCode('SALE_TYPE')
+                ?->pluck('value', 'code')
+                ->toArray() ?? [];
+
+            $rem[] = 'Sale Type Changed from '
+                .($saleTypeMap[(string) ($booking->sale_type ?? '')] ?? ($booking->sale_type ?? 'null'))
+                .' to '
+                .($saleTypeMap[(string) ($input['sale_type'] ?? '')] ?? ($input['sale_type'] ?? 'null'));
+
             $booking->sale_type = $input['sale_type'] ?? null;
         }
         
         if ($booking->body_type != ($input['body_type'] ?? null)) {
-            $bodyTypeMap = [
-                '1' => 'Complete',
-                '2' => 'CBC',
-            ];
+            $bodyTypeMap = OrgService::getKeyValuesByCode('BODY_TYPE')
+                ?->pluck('value', 'code')
+                ->toArray() ?? [];
 
             $rem[] = 'Body Type Changed from '
                 .($bodyTypeMap[$booking->body_type ?? ''] ?? ($booking->body_type ?? 'null'))

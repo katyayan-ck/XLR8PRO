@@ -1615,8 +1615,8 @@
                                             @endphp
 
                                             @foreach ($careOfTypes as $careOf)
-                                                <option value="{{ $careOf->id }}"
-                                                    {{ old('careof', $quotationData['careof'] ?? '') == $careOf->id ? 'selected' : '' }}>
+                                                <option value="{{ $careOf->code }}"
+                                                    {{ (string) old('careof', $quotationData['careof'] ?? '') === (string) $careOf->code ? 'selected' : '' }}>
                                                     {{ $careOf->value }}
                                                 </option>
                                             @endforeach
