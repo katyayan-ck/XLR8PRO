@@ -77,7 +77,7 @@ class RoleCrudController extends CrudController
             $role->permissions()->sync($validated['permissions']);
         }
 
-        \Alert::success('Role created successfully!')->flash();
+        \Alert::success(__('iam.flash.role_created_successfully'))->flash();
 
         return redirect(backpack_url('iam/role'));
     }
@@ -116,7 +116,7 @@ class RoleCrudController extends CrudController
 
         $role->permissions()->sync($validated['permissions'] ?? []);
 
-        \Alert::success('Role updated successfully!')->flash();
+        \Alert::success(__('iam.flash.role_updated_successfully'))->flash();
 
         return redirect(backpack_url('iam/role'));
     }

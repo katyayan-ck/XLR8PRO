@@ -56,6 +56,7 @@ class ModulesCrudController extends CrudController
                     <a href="'.$editUrl.'" class="btn btn-sm btn-primary py-1 px-2">Edit</a>
                 </div>
             ';
+
             return $mapped;
         })->values();
 
@@ -96,11 +97,11 @@ class ModulesCrudController extends CrudController
         }
 
         $this->crud->setEditView('admin.iam.modules.form');
-        
+
         $module = Module::findOrFail($id);
-        
+
         return view('admin.iam.modules.form', [
-            'title' => 'Edit Module - ' . $module->name,
+            'title' => 'Edit Module - '.$module->name,
             'module' => $module,
             'activeProcesses' => $rbacService->getActiveProcessNamesByModule($module->code),
         ]);
@@ -117,11 +118,11 @@ class ModulesCrudController extends CrudController
 
         Module::create($validated);
 
-        \Alert::success('Module created successfully!')->flash();
+        \Alert::success(__('iam.flash.module_created_successfully'))->flash();
 
         return redirect(backpack_url('iam/module'));
     }
-    
+
     public function update(ModulesRequest $request, $id, RbacService $rbacService)
     {
         if (! backpack_user()->can('IAM_RBAC_MANAGE')) {
@@ -129,7 +130,7 @@ class ModulesCrudController extends CrudController
         }
 
         $module = Module::findOrFail($id);
-        
+
         $validated = $request->validated();
         $validated['is_active'] = $request->boolean('is_active');
 
@@ -137,10 +138,11 @@ class ModulesCrudController extends CrudController
             $rbacService->updateModule($module, $validated);
         } catch (Exception $e) {
             \Alert::error($e->getMessage())->flash();
+
             return redirect()->back()->withInput();
         }
 
-        \Alert::success('Module updated successfully!')->flash();
+        \Alert::success(__('iam.flash.module_updated_successfully'))->flash();
 
         return redirect(backpack_url('iam/module'));
     }

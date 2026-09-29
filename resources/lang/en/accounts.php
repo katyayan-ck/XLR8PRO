@@ -38,4 +38,16 @@ return [
         'transaction_date' => 'Transaction Date',
     ],
 
+    // Flash messages shown on admin screens (to-do W6): wording lives here, controllers call __('accounts.flash.key').
+    'flash' => [
+        'error_creating_receipt' => 'Error creating receipt: :message',
+        'error_creating_voucher' => 'Error creating voucher: :message',
+        'error_updating_receipt' => 'Error updating receipt: :message',
+        'error_updating_voucher' => 'Error updating voucher: :message',
+        'receipt_created_successfully' => 'Receipt :receipt_no created successfully.',
+        'receipt_updated_successfully' => 'Receipt :type_number updated successfully.',
+        'voucher_created_successfully' => 'Voucher :voucher_no created successfully.',
+        'voucher_updated_successfully' => 'Voucher :type_number updated successfully.',
+    ],
+
 ];

@@ -45,7 +45,7 @@ class MyAccountController extends Controller
         ], [], ['display_name' => __('org.fields.display_name')]);
 
         $this->account->updateDisplayName($user, $validated['display_name']);
-        \Alert::success('Your display name was updated.')->flash();
+        \Alert::success(__('iam.flash.display_name_updated'))->flash();
 
         return redirect()->route('backpack.account.info');
     }
@@ -72,7 +72,7 @@ class MyAccountController extends Controller
         if ($request->expectsJson()) {
             return response()->json(['ok' => true, 'url' => $this->account->photoUrl($person)]);
         }
-        \Alert::success($photo ? 'Your profile photo was updated.' : 'Your profile photo was removed.')->flash();
+        \Alert::success(__($photo ? 'iam.flash.profile_photo_updated' : 'iam.flash.profile_photo_removed'))->flash();
 
         return redirect()->route('backpack.account.info');
     }
@@ -93,7 +93,7 @@ class MyAccountController extends Controller
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors(), 'password');
         }
-        \Alert::success('Your password was changed. Other sessions were signed out.')->flash();
+        \Alert::success(__('iam.flash.password_changed_other_sessions_were_signed'))->flash();
 
         return redirect()->route('backpack.account.info');
     }

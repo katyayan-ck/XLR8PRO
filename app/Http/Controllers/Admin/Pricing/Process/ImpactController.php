@@ -36,7 +36,7 @@ class ImpactController extends Controller
         }
         $session = ImportSession::findOrFail($sessionId);
         if ($session->stage()->order() < PricingStage::Impact->order()) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'The impact summary opens after insurance & RTO.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.impact_summary_opens_after_insurance_rto'));
         }
 
         return view('admin.pricing.process.impact', [
@@ -75,11 +75,11 @@ class ImpactController extends Controller
         }
         $session = $this->sessions->gate();
         if (! $session || $session->stage() !== PricingStage::Impact) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'The process is not at the impact summary.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.process_not_at_impact_summary'));
         }
         $this->sessions->advance($session, PricingStage::HoldCheck, ['impact' => ['reviewed_at' => now()->toIso8601String(), 'reviewed_by' => backpack_user()->id]], backpack_user()->id);
 
-        return redirect()->route('pricing.workflow.impact-summary-view', $session->id)->with('success', 'Impact reviewed — hold or reopen lists, then calculate.');
+        return redirect()->route('pricing.workflow.impact-summary-view', $session->id)->with('success', __('pricing.flash.impact_reviewed_hold_or_reopen_lists'));
     }
 
     /** Step 8: hold or reopen lists (recorded in the session, so Discard undoes it). */
@@ -95,7 +95,7 @@ class ImpactController extends Controller
         ], [], __('pricing.fields'));
         $session = $this->sessions->gate();
         if (! $session || ! in_array($session->stage(), [PricingStage::Impact, PricingStage::HoldCheck], true)) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'Holds are set at the hold check.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.holds_are_set_at_hold_check'));
         }
         $userId = backpack_user()->id;
         $this->sessions->record($session, fn () => $data['action'] === 'hold'
@@ -103,6 +103,6 @@ class ImpactController extends Controller
             : $this->holds->reopen($data['hold_lists'], "Reopened in pricing process #{$session->id}", $userId));
 
         return redirect()->route('pricing.workflow.impact-summary-view', $session->id)
-            ->with('success', ($data['action'] === 'hold' ? 'On hold: ' : 'Reopened: ').implode(', ', $data['hold_lists']).'.');
+            ->with('success', __($data['action'] === 'hold' ? 'pricing.flash.lists_on_hold' : 'pricing.flash.lists_reopened', ['lists' => implode(', ', $data['hold_lists'])]));
     }
 }

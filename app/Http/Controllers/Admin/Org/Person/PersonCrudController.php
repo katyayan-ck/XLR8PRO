@@ -158,7 +158,7 @@ class PersonCrudController extends CrudController
 
         $person = $this->persons->create($request->all());
 
-        \Alert::success('Person created successfully! Add more contacts, addresses, or banking details below.')->flash();
+        \Alert::success(__('org.flash.person_created_successfully_add_more_contacts'))->flash();
 
         return redirect(backpack_url("org/person/{$person->id}/edit"));
     }
@@ -183,7 +183,7 @@ class PersonCrudController extends CrudController
 
         $this->persons->update(Person::findOrFail($id), $request->all());
 
-        \Alert::success('Person updated successfully!')->flash();
+        \Alert::success(__('org.flash.person_updated_successfully'))->flash();
 
         return redirect(backpack_url("org/person/{$id}/edit"));
     }
@@ -206,7 +206,7 @@ class PersonCrudController extends CrudController
         $person = Person::findOrFail($id);
         $this->contacts->upsert(['person_code' => $person->person_code] + $request->all());
 
-        \Alert::success('Contact saved.')->flash();
+        \Alert::success(__('org.flash.contact_saved'))->flash();
 
         return redirect(backpack_url("org/person/{$id}/edit").'#contacts');
     }
@@ -219,7 +219,7 @@ class PersonCrudController extends CrudController
         $contact = PersonContact::where('person_code', $person->person_code)->findOrFail($contactId);
         $this->contacts->update($contact, $request->all());
 
-        \Alert::success('Contact updated.')->flash();
+        \Alert::success(__('org.flash.contact_updated'))->flash();
 
         return redirect(backpack_url("org/person/{$id}/edit").'#contacts');
     }
@@ -231,7 +231,7 @@ class PersonCrudController extends CrudController
         $person = Person::findOrFail($id);
         $this->contacts->delete(PersonContact::where('person_code', $person->person_code)->findOrFail($contactId));
 
-        \Alert::success('Contact removed.')->flash();
+        \Alert::success(__('org.flash.contact_removed'))->flash();
 
         return redirect(backpack_url("org/person/{$id}/edit").'#contacts');
     }
@@ -243,7 +243,7 @@ class PersonCrudController extends CrudController
         $person = Person::findOrFail($id);
         PersonContact::where('person_code', $person->person_code)->findOrFail($contactId)->makesPrimary();
 
-        \Alert::success('Primary contact updated.')->flash();
+        \Alert::success(__('org.flash.primary_contact_updated'))->flash();
 
         return redirect(backpack_url("org/person/{$id}/edit").'#contacts');
     }
@@ -255,7 +255,7 @@ class PersonCrudController extends CrudController
         $person = Person::findOrFail($id);
         $this->addresses->upsert(['person_code' => $person->person_code] + $request->all());
 
-        \Alert::success('Address saved.')->flash();
+        \Alert::success(__('org.flash.address_saved'))->flash();
 
         return redirect(backpack_url("org/person/{$id}/edit").'#addresses');
     }
@@ -268,7 +268,7 @@ class PersonCrudController extends CrudController
         $address = PersonAddress::where('person_code', $person->person_code)->findOrFail($addressId);
         $this->addresses->update($address, $request->all());
 
-        \Alert::success('Address updated.')->flash();
+        \Alert::success(__('org.flash.address_updated'))->flash();
 
         return redirect(backpack_url("org/person/{$id}/edit").'#addresses');
     }
@@ -280,7 +280,7 @@ class PersonCrudController extends CrudController
         $person = Person::findOrFail($id);
         $this->addresses->delete(PersonAddress::where('person_code', $person->person_code)->findOrFail($addressId));
 
-        \Alert::success('Address removed.')->flash();
+        \Alert::success(__('org.flash.address_removed'))->flash();
 
         return redirect(backpack_url("org/person/{$id}/edit").'#addresses');
     }
@@ -292,7 +292,7 @@ class PersonCrudController extends CrudController
         $person = Person::findOrFail($id);
         PersonAddress::where('person_code', $person->person_code)->findOrFail($addressId)->makePrimary();
 
-        \Alert::success('Primary address updated.')->flash();
+        \Alert::success(__('org.flash.primary_address_updated'))->flash();
 
         return redirect(backpack_url("org/person/{$id}/edit").'#addresses');
     }
@@ -304,7 +304,7 @@ class PersonCrudController extends CrudController
         $person = Person::findOrFail($id);
         $this->banking->upsert(['person_code' => $person->person_code] + $request->all());
 
-        \Alert::success('Banking detail saved.')->flash();
+        \Alert::success(__('org.flash.banking_detail_saved'))->flash();
 
         return redirect(backpack_url("org/person/{$id}/edit").'#banking');
     }
@@ -317,7 +317,7 @@ class PersonCrudController extends CrudController
         $banking = PersonBankingDetail::where('person_code', $person->person_code)->findOrFail($bankingId);
         $this->banking->update($banking, $request->all());
 
-        \Alert::success('Banking detail updated.')->flash();
+        \Alert::success(__('org.flash.banking_detail_updated'))->flash();
 
         return redirect(backpack_url("org/person/{$id}/edit").'#banking');
     }
@@ -329,7 +329,7 @@ class PersonCrudController extends CrudController
         $person = Person::findOrFail($id);
         $this->banking->delete(PersonBankingDetail::where('person_code', $person->person_code)->findOrFail($bankingId));
 
-        \Alert::success('Banking detail removed.')->flash();
+        \Alert::success(__('org.flash.banking_detail_removed'))->flash();
 
         return redirect(backpack_url("org/person/{$id}/edit").'#banking');
     }
@@ -341,7 +341,7 @@ class PersonCrudController extends CrudController
         $person = Person::findOrFail($id);
         PersonBankingDetail::where('person_code', $person->person_code)->findOrFail($bankingId)->makePrimary();
 
-        \Alert::success('Primary bank account updated.')->flash();
+        \Alert::success(__('org.flash.primary_bank_account_updated'))->flash();
 
         return redirect(backpack_url("org/person/{$id}/edit").'#banking');
     }

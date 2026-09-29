@@ -391,7 +391,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W3 | Q1 Sales / booking feature tests (enquiry, quotation, booking flows) | ✅ 30-09 (15 HTTP tests; BUG-219 logged, BUG-220 fixed) |
 | W4 | Q5 PHPStan baseline for the legacy controllers | ✅ 30-09 (`phpstan-baseline.neon`, 2 511 legacy errors; full run clean; BUG-221) |
 | W5 | Q7 UI clean-up outside Sales (hex / inline styles → shared layer, same method as the Sales pass) | 🔴 |
-| W6 | U7 web side: admin flash messages through the error codes / language file (same wording) | 🔴 |
+| W6 | U7 web side: admin flash messages through the error codes / language file (same wording) | ✅ 30-09 (225 calls → `{module}.flash.*`) |
 | W7 | U4 N+1 review of the big lists (enquiries, bookings, quotations) | 🔴 |
 
 **Needs you (not started):** D1–D29, N1, N3 / F2 formats, N4 security values (S3, S4, S5, S7), S6 / O3 / O6 / Q3 package
@@ -947,3 +947,13 @@ user without Sales permissions. Found and fixed BUG-220 (mock customer names in 
 
 **Verified:** full `phpstan analyse` → No errors (twice, before and after the fixes). **Left:** burn the baseline down
 module by module (largest: legacy admin controllers 567, booking services 475).
+
+### 15. Admin flash messages from the language files — W6 (U7 web side)
+
+**Delivered:** every typed success / error / warning message on the admin screens (225 calls in 55 controllers) now
+comes from `resources/lang/en/{module}.php` → `flash`, with the same wording, so copy changes need no code change.
+Converted by script (literal, interpolated and concatenated strings; the few ternaries by hand), then checked: every
+key resolves and every placeholder is passed; a unit test keeps it so.
+
+**Verified:** `FlashMessagesLangTest`; full suite 511 passed, 1 skipped; full PHPStan clean. **Left:** validator / Result messages already
+come from their own sources; exception texts appended to some error flashes (`:message`) are unchanged behaviour.

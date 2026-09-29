@@ -302,7 +302,7 @@ class UserCrudController extends CrudController
 
         Log::warning('User suspended', ['suspended_by' => backpack_user()->id, 'user_id' => $user->id]);
 
-        \Alert::success('User suspended. Their role is preserved — use Activate to restore access.')->flash();
+        \Alert::success(__('org.flash.user_suspended_their_role_preserved_use'))->flash();
 
         return redirect(backpack_url('org/user'));
     }
@@ -334,7 +334,7 @@ class UserCrudController extends CrudController
 
         Log::warning('User access revoked', ['revoked_by' => backpack_user()->id, 'user_id' => $user->id]);
 
-        \Alert::success('User access revoked — role and all permission overrides cleared.')->flash();
+        \Alert::success(__('org.flash.user_access_revoked_role_all_permission'))->flash();
 
         return redirect(backpack_url('org/user'));
     }
@@ -354,7 +354,7 @@ class UserCrudController extends CrudController
 
         Log::info('User activated', ['activated_by' => backpack_user()->id, 'user_id' => $user->id]);
 
-        \Alert::success('User activated.')->flash();
+        \Alert::success(__('org.flash.user_activated'))->flash();
 
         return redirect(backpack_url('org/user'));
     }
@@ -572,7 +572,7 @@ class UserCrudController extends CrudController
             'username' => $user->username,
         ]);
 
-        \Alert::success('User created successfully!')->flash();
+        \Alert::success(__('org.flash.user_created_successfully'))->flash();
 
         return redirect(backpack_url('org/user/'.$user->id.'/show'));
     }
@@ -690,7 +690,7 @@ class UserCrudController extends CrudController
 
         Log::info('User updated', ['updated_by' => backpack_user()->id, 'user_id' => $user->id]);
 
-        \Alert::success('User updated successfully!')->flash();
+        \Alert::success(__('org.flash.user_updated_successfully'))->flash();
 
         return redirect(backpack_url('org/user/'.$user->id.'/show'));
     }

@@ -29,3 +29,6 @@ to a model, service, module, business rule or API — in the same commit, not la
   - Log with context (ids only, no PII).
 - **API responses:** always the envelope `{http_status, success, code, message, data}`. The web shows `Result->message`
   in the page alert.
+- **Admin flash messages** (`Alert::*`, `->with('success'|'error'|'warning'|'info', …)`) never carry typed wording: use
+  `__('{module}.flash.{key}', [...])` from `resources/lang/en/{module}.php` (`utils.php` for Utilities / imports), or a
+  `Result->message` (to-do W6). `tests/Unit/Lang/FlashMessagesLangTest` checks every key and placeholder.

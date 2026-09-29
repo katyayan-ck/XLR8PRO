@@ -53,7 +53,7 @@ class ApprovalAdminController extends Controller
         $input['is_active'] = $request->boolean('is_active');
         $id = $request->integer('id');
         $id ? $this->topicWriter->update(ApprovalTopic::query()->findOrFail($id), $input) : $this->topicWriter->create($input);
-        Alert::success('Topic saved.')->flash();
+        Alert::success(__('utils.flash.topic_saved'))->flash();
 
         return redirect()->route('utils.approvals.admin.topics');
     }
@@ -92,7 +92,7 @@ class ApprovalAdminController extends Controller
         $input['is_active'] = $request->boolean('is_active');
         $input['levels'] = array_values(array_filter((array) $request->input('levels', []), fn ($l) => is_array($l) && trim((string) ($l['level_no'] ?? '')) !== ''));
         $rule = $id ? $this->ruleWriter->update(ApprovalRule::query()->findOrFail($id), $input) : $this->ruleWriter->create($input);
-        Alert::success("Rule #{$rule->id} saved.")->flash();
+        Alert::success(__('utils.flash.rule_saved', ['rule' => $rule->id]))->flash();
 
         return redirect()->route('utils.approvals.admin.rules', ['topic' => $rule->topic_id]);
     }
@@ -103,7 +103,7 @@ class ApprovalAdminController extends Controller
         $rule = ApprovalRule::query()->findOrFail($id);
         $this->ruleWriter->update($rule, ['is_active' => false]);
         $rule->delete();
-        Alert::success("Rule #{$id} removed (open requests keep their snapshot).")->flash();
+        Alert::success(__('utils.flash.rule_removed_open_requests_keep_their', ['id' => $id]))->flash();
 
         return back();
     }
@@ -123,7 +123,7 @@ class ApprovalAdminController extends Controller
         $result = $importer->import($request->file('file')->getRealPath(), $apply);
         $data = $result->data + ['ok' => $result->ok, 'message' => $result->message, 'apply' => $apply];
         session(['powersheet_errors' => $data['errors'] ?? []]);
-        $result->ok ? Alert::success($apply ? ($data['applied'] ? 'Power sheet applied.' : 'Nothing applied — fix the errors.') : 'Dry run complete — nothing written.')->flash() : Alert::error($result->message)->flash();
+        $result->ok ? Alert::success(__($apply ? ($data['applied'] ? 'utils.flash.power_sheet_applied' : 'utils.flash.power_sheet_nothing_applied') : 'utils.flash.power_sheet_dry_run'))->flash() : Alert::error($result->message)->flash();
 
         return redirect()->route('utils.approvals.admin.import')->with('powersheet_result', $data);
     }

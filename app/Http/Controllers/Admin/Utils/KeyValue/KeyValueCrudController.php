@@ -160,7 +160,7 @@ class KeyValueCrudController extends CrudController
         app(KeyvalueService::class)->create($request->all());
 
         \Alert::success(
-            'Key Value created successfully!'
+            __('utils.flash.key_value_created_successfully')
         )->flash();
 
         return redirect(
@@ -214,7 +214,7 @@ class KeyValueCrudController extends CrudController
         app(KeyvalueService::class)->update($keyValue, $request->all());
 
         \Alert::success(
-            'Key Value updated successfully!'
+            __('utils.flash.key_value_updated_successfully')
         )->flash();
 
         return redirect(

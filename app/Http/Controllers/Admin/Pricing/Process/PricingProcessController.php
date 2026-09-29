@@ -58,7 +58,7 @@ class PricingProcessController extends Controller
         }
         if ($active = $this->sessions->gate()) {
             return redirect()->route('pricing.workflow.index')
-                ->with('warning', "Pricing process #{$active->id} is still open — resume or discard it first.");
+                ->with('warning', __('pricing.flash.pricing_process_still_open_resume_or', ['active' => $active->id]));
         }
 
         return view('admin.pricing.process.start', [
@@ -101,7 +101,7 @@ class PricingProcessController extends Controller
         }
         DetectPriceListsJob::dispatch($result->get('session')->id);
 
-        return redirect()->route('pricing.workflow.index')->with('success', $result->message.' Detecting new vehicles…');
+        return redirect()->route('pricing.workflow.index')->with('success', __('pricing.flash.detecting_new_vehicles', ['message' => $result->message]));
     }
 
     /** Polled by the process screen: stage + the running step's progress. */
@@ -139,7 +139,7 @@ class PricingProcessController extends Controller
         }
         $session = $this->sessions->gate();
         if (! $session) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'No open pricing process to discard.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.no_open_pricing_process_discard'));
         }
         $result = $this->sessions->discard($session, backpack_user()->id);
 

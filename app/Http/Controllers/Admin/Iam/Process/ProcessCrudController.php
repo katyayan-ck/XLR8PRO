@@ -23,7 +23,7 @@ class ProcessCrudController extends CrudController
     public function setup()
     {
         CRUD::setModel(Process::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/iam/process');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/iam/process');
         CRUD::setEntityNameStrings('process', 'processes');
     }
 
@@ -57,6 +57,7 @@ class ProcessCrudController extends CrudController
                     <a href="'.$editUrl.'" class="btn btn-sm btn-primary py-1 px-2">Edit</a>
                 </div>
             ';
+
             return $mapped;
         })->values();
 
@@ -103,7 +104,7 @@ class ProcessCrudController extends CrudController
         $process = Process::findOrFail($id);
 
         return view('admin.iam.process.form', [
-            'title' => 'Edit Process - ' . $process->name,
+            'title' => 'Edit Process - '.$process->name,
             'process' => $process,
             'modules' => $rbacService->getActiveModules(),
             'activePermissions' => $rbacService->getPermissionNamesByProcess($process->code),
@@ -121,7 +122,7 @@ class ProcessCrudController extends CrudController
 
         Process::create($validated);
 
-        \Alert::success('Process created successfully!')->flash();
+        \Alert::success(__('iam.flash.process_created_successfully'))->flash();
 
         return redirect(backpack_url('iam/process'));
     }
@@ -133,7 +134,7 @@ class ProcessCrudController extends CrudController
         }
 
         $process = Process::findOrFail($id);
-        
+
         $validated = $request->validated();
         $validated['is_active'] = $request->boolean('is_active');
 
@@ -141,10 +142,11 @@ class ProcessCrudController extends CrudController
             $rbacService->updateProcess($process, $validated);
         } catch (Exception $e) {
             \Alert::error($e->getMessage())->flash();
+
             return redirect()->back()->withInput();
         }
 
-        \Alert::success('Process updated successfully!')->flash();
+        \Alert::success(__('iam.flash.process_updated_successfully'))->flash();
 
         return redirect(backpack_url('iam/process'));
     }

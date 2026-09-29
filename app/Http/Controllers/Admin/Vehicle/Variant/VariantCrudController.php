@@ -152,7 +152,7 @@ class VariantCrudController extends CrudController
 
         app(VariantService::class)->create($request->all());
 
-        \Alert::success('Variant created successfully!')->flash();
+        \Alert::success(__('vehicle.flash.variant_created_successfully'))->flash();
 
         return redirect(backpack_url('vehicle/variant'));
     }
@@ -226,7 +226,7 @@ class VariantCrudController extends CrudController
 
         app(VariantService::class)->update(Variant::findOrFail($id), $request->all());
 
-        \Alert::success('Variant updated successfully!')->flash();
+        \Alert::success(__('vehicle.flash.variant_updated_successfully'))->flash();
 
         return redirect(backpack_url('vehicle/variant'));
     }

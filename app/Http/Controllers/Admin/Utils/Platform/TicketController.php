@@ -79,7 +79,7 @@ class TicketController extends Controller
         if ($request->hasFile('file')) {
             $this->tickets->remark((int) $result->get('id'), backpack_user()->id, 'Attachment', $request->file('file'));
         }
-        Alert::success("Ticket {$result->get('number')} opened.")->flash();
+        Alert::success(__('utils.flash.ticket_opened', ['number' => $result->get('number')]))->flash();
 
         return redirect()->route('utils.tickets.show', $result->get('id'));
     }
@@ -103,7 +103,7 @@ class TicketController extends Controller
     {
         $data = $request->validate(['to' => 'required|string|max:20', 'remark' => 'nullable|string|max:5000']);
         $result = $this->tickets->transition($id, backpack_user()->id, $data['to'], $data['remark'] ?? null);
-        $result->ok ? Alert::success("Ticket moved to {$result->get('status')}.")->flash() : Alert::error($result->message)->flash();
+        $result->ok ? Alert::success(__('utils.flash.ticket_moved', ['status' => $result->get('status')]))->flash() : Alert::error($result->message)->flash();
 
         return back();
     }
@@ -123,7 +123,7 @@ class TicketController extends Controller
             'snoopers.*' => 'integer',
         ]);
         $result = $this->tickets->update($id, $data + ['owner_id' => null, 'assignees' => [], 'followers' => [], 'snoopers' => []], backpack_user()->id);
-        $result->ok ? Alert::success('Ticket updated.')->flash() : Alert::error($result->message)->flash();
+        $result->ok ? Alert::success(__('utils.flash.ticket_updated'))->flash() : Alert::error($result->message)->flash();
 
         return back();
     }
@@ -132,7 +132,7 @@ class TicketController extends Controller
     {
         $data = $request->validate(['body' => 'nullable|string|max:5000', 'file' => 'nullable|file']);
         $result = $this->tickets->remark($id, backpack_user()->id, (string) ($data['body'] ?? ''), $request->file('file'));
-        $result->ok ? Alert::success('Remark posted.')->flash() : Alert::error($result->message)->flash();
+        $result->ok ? Alert::success(__('utils.flash.remark_posted'))->flash() : Alert::error($result->message)->flash();
 
         return back();
     }

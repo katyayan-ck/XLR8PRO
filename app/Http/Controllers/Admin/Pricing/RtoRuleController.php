@@ -53,7 +53,7 @@ class RtoRuleController extends Controller
         // Every field rule (scope synonyms, ANY wheels, amounts) lives in RtoRuleService (DEC-056).
         app(RtoRuleService::class)->create($request->all() + ['is_active' => $request->boolean('is_active', true)]);
 
-        \Alert::success('RTO Rule created successfully.')->flash();
+        \Alert::success(__('pricing.flash.rto_rule_created_successfully'))->flash();
 
         return redirect()->route('pricing.rto.index');
     }
@@ -80,7 +80,7 @@ class RtoRuleController extends Controller
 
         app(RtoRuleService::class)->update(RtoRule::findOrFail($id), ['is_active' => $request->boolean('is_active', true)] + $request->all());
 
-        \Alert::success('RTO Rule updated successfully.')->flash();
+        \Alert::success(__('pricing.flash.rto_rule_updated_successfully'))->flash();
 
         return redirect()->route('pricing.rto.index');
     }

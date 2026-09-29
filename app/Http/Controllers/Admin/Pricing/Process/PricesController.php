@@ -38,7 +38,7 @@ class PricesController extends Controller
         }
         $session = $this->sessions->gate();
         if (! $session || $session->stage()->order() < PricingStage::Prices->order()) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'Price import opens after Vehicle Info.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.price_import_opens_after_vehicle_info'));
         }
 
         return view('admin.pricing.process.prices', [
@@ -66,13 +66,13 @@ class PricesController extends Controller
 
         $session = $this->sessions->gate();
         if (! $session || $session->stage()->order() < PricingStage::Prices->order()) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'Price import opens after Vehicle Info.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.price_import_opens_after_vehicle_info'));
         }
         if ($session->isPublished()) {
-            return redirect()->route('pricing.workflow.prices-form')->with('warning', 'Prices are already published in this process.');
+            return redirect()->route('pricing.workflow.prices-form')->with('warning', __('pricing.flash.prices_are_already_published_in_process'));
         }
         if (($session->progress['state'] ?? null) === 'running') {
-            return redirect()->route('pricing.workflow.prices-form')->with('warning', 'A step is still running — wait for it to finish.');
+            return redirect()->route('pricing.workflow.prices-form')->with('warning', __('pricing.flash.step_still_running_wait_it_finish'));
         }
 
         $path = $data['source'] === 'upload'
@@ -91,7 +91,7 @@ class PricesController extends Controller
         $this->sessions->progress($session, ['step' => 'prices', 'state' => 'running', 'message' => 'Queued — waiting for the queue worker…', 'error' => null]);
         ImportPricesJob::dispatch($session->id, $path, array_values($match['found']), $data['wef_date']);
 
-        return redirect()->route('pricing.workflow.prices-form')->with('success', 'Price import started.');
+        return redirect()->route('pricing.workflow.prices-form')->with('success', __('pricing.flash.price_import_started'));
     }
 
     /** The run's row issues (skipped / rejected) as a workbook. */
@@ -123,17 +123,17 @@ class PricesController extends Controller
         }
         $session = $this->sessions->gate();
         if (! $session || $session->stage() !== PricingStage::Prices) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'The process is not at the price import step.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.process_not_at_price_import_step'));
         }
         if (($session->progress['state'] ?? null) === 'running') {
-            return redirect()->route('pricing.workflow.prices-form')->with('warning', 'A step is still running — wait for it to finish.');
+            return redirect()->route('pricing.workflow.prices-form')->with('warning', __('pricing.flash.step_still_running_wait_it_finish'));
         }
         if (! data_get($session->stats, 'prices')) {
-            return redirect()->route('pricing.workflow.prices-form')->with('warning', 'Import the prices first.');
+            return redirect()->route('pricing.workflow.prices-form')->with('warning', __('pricing.flash.import_prices_first'));
         }
         $this->sessions->advance($session, PricingStage::Addons, [], backpack_user()->id);
 
-        return redirect()->route('pricing.workflow.addons-form')->with('success', 'Prices imported — add-ons & discounts next.');
+        return redirect()->route('pricing.workflow.addons-form')->with('success', __('pricing.flash.prices_imported_add_ons_discounts_next'));
     }
 
     /**

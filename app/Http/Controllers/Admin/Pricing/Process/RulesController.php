@@ -38,7 +38,7 @@ class RulesController extends Controller
         }
         $session = $this->sessions->gate();
         if (! $session || $session->stage()->order() < PricingStage::Rules->order()) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'Insurance & RTO open after add-ons & discounts.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.insurance_rto_open_after_add_ons'));
         }
 
         return view('admin.pricing.process.rules', [
@@ -77,20 +77,20 @@ class RulesController extends Controller
 
         $session = $this->sessions->gate();
         if (! $session || $session->stage()->order() < PricingStage::Rules->order()) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'Insurance & RTO open after add-ons & discounts.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.insurance_rto_open_after_add_ons'));
         }
         if ($session->isPublished()) {
-            return redirect()->route('pricing.workflow.rules-form')->with('warning', 'Prices are already published in this process.');
+            return redirect()->route('pricing.workflow.rules-form')->with('warning', __('pricing.flash.prices_are_already_published_in_process'));
         }
         if (($session->progress['state'] ?? null) === 'running') {
-            return redirect()->route('pricing.workflow.rules-form')->with('warning', 'A step is still running — wait for it to finish.');
+            return redirect()->route('pricing.workflow.rules-form')->with('warning', __('pricing.flash.step_still_running_wait_it_finish'));
         }
 
         $path = $this->sessions->storeUpload($session, $request->file('file'), $data['kind']);
         $this->sessions->progress($session, ['step' => 'rules', 'state' => 'running', 'message' => 'Queued — waiting for the queue worker…', 'error' => null]);
         ImportRulesJob::dispatch($session->id, $data['kind'], $path, $data['wef_date']);
 
-        return redirect()->route('pricing.workflow.rules-form')->with('success', ($data['kind'] === 'rto' ? 'RTO' : 'Insurance').' import started.');
+        return redirect()->route('pricing.workflow.rules-form')->with('success', __('pricing.flash.rules_import_started', ['kind' => $data['kind'] === 'rto' ? 'RTO' : 'Insurance']));
     }
 
     public function issues(string $kind, int $sessionId): BinaryFileResponse
@@ -122,18 +122,18 @@ class RulesController extends Controller
         }
         $session = $this->sessions->gate();
         if (! $session || $session->stage() !== PricingStage::Rules) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'The process is not at the insurance & RTO step.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.process_not_at_insurance_rto_step'));
         }
         if (($session->progress['state'] ?? null) === 'running') {
-            return redirect()->route('pricing.workflow.rules-form')->with('warning', 'A step is still running — wait for it to finish.');
+            return redirect()->route('pricing.workflow.rules-form')->with('warning', __('pricing.flash.step_still_running_wait_it_finish'));
         }
         $missing = array_keys(array_filter($this->presence(), fn (bool $ready) => ! $ready));
         if ($missing !== []) {
-            return redirect()->route('pricing.workflow.rules-form')->with('warning', 'Import the '.implode(' and ', array_map('strtoupper', $missing)).' rules first — none are stored.');
+            return redirect()->route('pricing.workflow.rules-form')->with('warning', __('pricing.flash.import_rules_first', ['kinds' => implode(' and ', array_map('strtoupper', $missing))]));
         }
         $this->sessions->advance($session, PricingStage::Impact, [], backpack_user()->id);
 
-        return redirect()->route('pricing.workflow.impact-summary-view', $session->id)->with('success', 'Insurance & RTO ready — review the impact summary.');
+        return redirect()->route('pricing.workflow.impact-summary-view', $session->id)->with('success', __('pricing.flash.insurance_rto_ready_review_impact_summary'));
     }
 
     /** @return array{insurance: bool, rto: bool} kind => rules stored (insurance needs premium rules and companies) */

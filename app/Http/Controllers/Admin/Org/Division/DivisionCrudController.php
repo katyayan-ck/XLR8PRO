@@ -162,7 +162,7 @@ class DivisionCrudController extends CrudController
 
         $this->divisions->create($request->all());
 
-        \Alert::success('Division created successfully!')->flash();
+        \Alert::success(__('org.flash.division_created_successfully'))->flash();
 
         return redirect(backpack_url('org/division'));
     }
@@ -174,7 +174,7 @@ class DivisionCrudController extends CrudController
 
         $this->divisions->update(Division::findOrFail($id), $request->all());
 
-        \Alert::success('Division updated successfully!')->flash();
+        \Alert::success(__('org.flash.division_updated_successfully'))->flash();
 
         return redirect(backpack_url('org/division'));
     }

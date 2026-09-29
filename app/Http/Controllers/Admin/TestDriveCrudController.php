@@ -4,22 +4,26 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\CRM\TestDrive;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Prologue\Alerts\Facades\Alert;
-use Carbon\Carbon;
 
 class TestDriveCrudController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+    use CreateOperation;
+    use DeleteOperation;
+    use ListOperation;
+    use UpdateOperation;
 
     public function setup()
     {
         CRUD::setModel(TestDrive::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/testdrive');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/testdrive');
         CRUD::setEntityNameStrings('test drive', 'test drives');
     }
 
@@ -32,7 +36,7 @@ class TestDriveCrudController extends CrudController
 
         $gridData = $testdrives->map(function ($td, $index) {
             $editUrl = backpack_url("testdrive/{$td->id}/edit");
-            
+
             return [
                 'serial_no' => $index + 1,
                 'test_drive_no' => $td->test_drive_no ?? '—',
@@ -45,7 +49,7 @@ class TestDriveCrudController extends CrudController
                 'sc_code' => $td->sc_code ?? '—',
                 'scheduled_td_start_time' => $td->scheduled_td_start_time ? Carbon::parse($td->scheduled_td_start_time)->format('d-M-Y H:i') : '—',
                 'actual_td_start_time' => $td->actual_td_start_time ? Carbon::parse($td->actual_td_start_time)->format('d-M-Y H:i') : '—',
-                'action' => '<a href="' . $editUrl . '" class="btn btn-sm btn-primary">Process / Edit</a>'
+                'action' => '<a href="'.$editUrl.'" class="btn btn-sm btn-primary">Process / Edit</a>',
             ];
         })->values();
 
@@ -61,21 +65,22 @@ class TestDriveCrudController extends CrudController
             ['field' => 'sc_code', 'headerName' => 'SC Code', 'width' => 140],
             ['field' => 'scheduled_td_start_time', 'headerName' => 'Scheduled Start', 'width' => 160],
             ['field' => 'actual_td_start_time', 'headerName' => 'Actual Start', 'width' => 160],
-            ['field' => 'action', 'headerName' => 'Action', 'pinned' => 'right', 'width' => 140, 'cellRenderer' => 'htmlRenderer', 'sortable' => false, 'filter' => false]
+            ['field' => 'action', 'headerName' => 'Action', 'pinned' => 'right', 'width' => 140, 'cellRenderer' => 'htmlRenderer', 'sortable' => false, 'filter' => false],
         ];
 
         return view('admin.testdrive.list', [
             'title' => 'Test Drive Dashboard',
             'gridConfig' => [
                 'data' => $gridData,
-                'columns' => $columns
-            ]
+                'columns' => $columns,
+            ],
         ]);
     }
 
     public function create()
     {
         $this->crud->hasAccessOrFail('create');
+
         return view('admin.testdrive.create', ['title' => 'Schedule Test Drive']);
     }
 
@@ -83,21 +88,23 @@ class TestDriveCrudController extends CrudController
     {
         $this->crud->hasAccessOrFail('update');
         $entry = TestDrive::findOrFail($id);
+
         return view('admin.testdrive.create', [
             'title' => 'Update Test Drive',
-            'entry' => $entry
+            'entry' => $entry,
         ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate($this->getValidationRules());
-        $validated['test_drive_no'] = 'TD-' . strtoupper(uniqid());
+        $validated['test_drive_no'] = 'TD-'.strtoupper(uniqid());
         $validated['td_created_date'] = now()->toDateString();
         $validated['created_by'] = backpack_user()->id;
 
         TestDrive::create($validated);
-        Alert::success('Test Drive Scheduled successfully.')->flash();
+        Alert::success(__('sales.flash.test_drive_scheduled_successfully'))->flash();
+
         return redirect(backpack_url('testdrive'));
     }
 
@@ -108,7 +115,8 @@ class TestDriveCrudController extends CrudController
         $validated['updated_by'] = backpack_user()->id;
 
         $testDrive->update($validated);
-        Alert::success('Test Drive Updated successfully.')->flash();
+        Alert::success(__('sales.flash.test_drive_updated_successfully'))->flash();
+
         return redirect(backpack_url('testdrive'));
     }
 

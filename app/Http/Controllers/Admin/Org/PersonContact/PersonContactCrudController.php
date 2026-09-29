@@ -152,7 +152,7 @@ class PersonContactCrudController extends CrudController
 
         $this->contacts->create($request->all());
 
-        \Alert::success('Person Contact created successfully!')->flash();
+        \Alert::success(__('org.flash.person_contact_created_successfully'))->flash();
 
         return redirect(backpack_url('org/person-contact'));
     }
@@ -189,7 +189,7 @@ class PersonContactCrudController extends CrudController
 
         $this->contacts->update(PersonContact::findOrFail($id), $request->all());
 
-        \Alert::success('Person Contact updated successfully!')->flash();
+        \Alert::success(__('org.flash.person_contact_updated_successfully'))->flash();
 
         return redirect(backpack_url('org/person-contact'));
     }

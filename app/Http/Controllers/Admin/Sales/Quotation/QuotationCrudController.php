@@ -662,7 +662,7 @@ class QuotationCrudController extends CrudController
             DB::commit();
 
             \Alert::success(
-                'Quotation created successfully.'
+                __('sales.flash.quotation_created_successfully')
             )->flash();
 
             return redirect(
@@ -685,8 +685,7 @@ class QuotationCrudController extends CrudController
             );
 
             \Alert::error(
-                'Error saving quotation: '.
-                    $e->getMessage()
+                __('sales.flash.error_saving_quotation', ['message' => $e->getMessage()])
             )->flash();
 
             return back()->withInput();
@@ -706,7 +705,7 @@ class QuotationCrudController extends CrudController
             if (! $required) {
                 return [];
             }
-            \Alert::error('Choose the vehicle and its colour — prices come from the published price list.')->flash();
+            \Alert::error(__('sales.flash.choose_vehicle_its_colour_prices_come'))->flash();
 
             return back()->withInput();
         }
@@ -1635,14 +1634,14 @@ class QuotationCrudController extends CrudController
 
             DB::commit();
 
-            \Alert::success('Quotation updated successfully.')->flash();
+            \Alert::success(__('sales.flash.quotation_updated_successfully'))->flash();
 
             return redirect(backpack_url('sales/quotation/'.$quotation->id.'/edit').'?saved=1');
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Quotation Update Error: '.$e->getMessage());
             \Log::error($e->getTraceAsString());
-            \Alert::error('Error updating quotation: '.$e->getMessage())->flash();
+            \Alert::error(__('sales.flash.error_updating_quotation', ['message' => $e->getMessage()]))->flash();
 
             return back()->withInput();
         }

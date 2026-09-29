@@ -138,7 +138,7 @@ class ColorCrudController extends CrudController
         Color::create($validated);
 
         \Alert::success(
-            'Color created successfully!'
+            __('vehicle.flash.color_created_successfully')
         )->flash();
 
         return redirect(
@@ -181,7 +181,7 @@ class ColorCrudController extends CrudController
 
         $color->update($validated);
 
-        \Alert::success('Color updated successfully!')
+        \Alert::success(__('vehicle.flash.color_updated_successfully'))
             ->flash();
 
         return redirect(backpack_url('vehicle/color'));

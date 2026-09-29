@@ -43,12 +43,12 @@ class SettingsAdminController extends Controller
             'scope_code' => 'nullable|string|max:50|required_with:scope_type',
         ]);
         if ($request->boolean('keep_if_blank') && ($data['value'] ?? '') === '') {
-            Alert::info("{$data['key']} left unchanged.")->flash();
+            Alert::info(__('utils.flash.left_unchanged', ['key' => $data['key']]))->flash();
 
             return back();
         }
         $result = $this->settings->set($data['key'], $data['value'] ?? '', $data['scope_type'] ?? null, $data['scope_code'] ?? null, backpack_user()->id);
-        $result->ok ? Alert::success("{$data['key']} saved.")->flash() : Alert::error($result->message)->flash();
+        $result->ok ? Alert::success(__('utils.flash.saved', ['key' => $data['key']]))->flash() : Alert::error($result->message)->flash();
 
         return back();
     }
@@ -65,7 +65,7 @@ class SettingsAdminController extends Controller
             'file' => "required|file|mimes:png,jpg,jpeg,webp,svg,gif|max:{$maxKb}",
         ]);
         $result = $this->settings->setImage($data['key'], $data['file'], backpack_user()->id);
-        $result->ok ? Alert::success("{$data['key']} updated.")->flash() : Alert::error($result->message)->flash();
+        $result->ok ? Alert::success(__('utils.flash.updated', ['key' => $data['key']]))->flash() : Alert::error($result->message)->flash();
 
         return back();
     }
@@ -83,7 +83,7 @@ class SettingsAdminController extends Controller
         $result = ! empty($data['scope_type'])
             ? $this->settings->clearScope($data['key'], $data['scope_type'], $data['scope_code'])
             : $this->settings->reset($data['key'], backpack_user()->id);
-        $result->ok ? Alert::success("{$data['key']} reset.")->flash() : Alert::error($result->message)->flash();
+        $result->ok ? Alert::success(__('utils.flash.reset', ['key' => $data['key']]))->flash() : Alert::error($result->message)->flash();
 
         return back();
     }

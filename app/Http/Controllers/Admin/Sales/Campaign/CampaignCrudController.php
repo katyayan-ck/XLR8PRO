@@ -128,7 +128,7 @@ class CampaignCrudController extends CrudController
         $campaign->created_by = backpack_user()->id;
         $campaign->save();
 
-        \Alert::success('Campaign created successfully.')->flash();
+        \Alert::success(__('sales.flash.campaign_created_successfully'))->flash();
 
         return redirect()->route('sales.campaign.index');
     }
@@ -166,7 +166,7 @@ class CampaignCrudController extends CrudController
         $campaign->updated_by = backpack_user()->id;
         $campaign->save();
 
-        \Alert::success('Campaign updated successfully.')->flash();
+        \Alert::success(__('sales.flash.campaign_updated_successfully'))->flash();
 
         return redirect()->route('sales.campaign.index');
     }

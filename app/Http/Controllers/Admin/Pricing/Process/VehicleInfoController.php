@@ -37,7 +37,7 @@ class VehicleInfoController extends Controller
         }
         $session = $this->sessions->gate();
         if (! $session || $session->stage()->order() < PricingStage::VehicleInfo->order()) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'Vehicle Info opens after Detect has finished.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.vehicle_info_opens_after_detect_finished'));
         }
 
         return view('admin.pricing.process.vehicle-info', [
@@ -72,13 +72,13 @@ class VehicleInfoController extends Controller
         $request->validate(['file' => ['required', 'file', 'mimes:xlsx', 'max:20480']], [], ['file' => __('pricing.fields.vehicle_info_file')]);
         $session = $this->sessions->gate();
         if (! $session || $session->stage()->order() < PricingStage::VehicleInfo->order()) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'Vehicle Info opens after Detect has finished.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.vehicle_info_opens_after_detect_finished'));
         }
         if ($session->isPublished()) {
-            return redirect()->route('pricing.workflow.vehicle-info-form')->with('warning', 'Prices are already published — Vehicle Info can no longer change in this process.');
+            return redirect()->route('pricing.workflow.vehicle-info-form')->with('warning', __('pricing.flash.prices_are_already_published_vehicle_info'));
         }
         if (($session->progress['state'] ?? null) === 'running') {
-            return redirect()->route('pricing.workflow.vehicle-info-form')->with('warning', 'A step is still running — wait for it to finish.');
+            return redirect()->route('pricing.workflow.vehicle-info-form')->with('warning', __('pricing.flash.step_still_running_wait_it_finish'));
         }
 
         $path = $this->sessions->storeUpload($session, $request->file('file'), 'vehicle-info');
@@ -87,7 +87,7 @@ class VehicleInfoController extends Controller
         $this->sessions->progress($session, ['step' => 'vehicle_info', 'state' => 'running', 'message' => 'Queued — waiting for the queue worker…', 'error' => null]);
         ImportVehicleInfoJob::dispatch($session->id, $path);
 
-        return redirect()->route('pricing.workflow.vehicle-info-form')->with('success', 'Vehicle Info import started.');
+        return redirect()->route('pricing.workflow.vehicle-info-form')->with('success', __('pricing.flash.vehicle_info_import_started'));
     }
 
     /** This round's row issues (incomplete + rejected) as a workbook. */
@@ -119,13 +119,13 @@ class VehicleInfoController extends Controller
         }
         $session = $this->sessions->gate();
         if (! $session || $session->stage() !== PricingStage::VehicleInfo) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'The process is not at the Vehicle Info step.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.process_not_at_vehicle_info_step'));
         }
         if (($session->progress['state'] ?? null) === 'running') {
-            return redirect()->route('pricing.workflow.vehicle-info-form')->with('warning', 'A step is still running — wait for it to finish.');
+            return redirect()->route('pricing.workflow.vehicle-info-form')->with('warning', __('pricing.flash.step_still_running_wait_it_finish'));
         }
         $this->sessions->advance($session, PricingStage::Prices, [], backpack_user()->id);
 
-        return redirect()->route('pricing.workflow.prices-form')->with('success', 'Vehicle Info done — import the prices next. Incomplete vehicles are skipped.');
+        return redirect()->route('pricing.workflow.prices-form')->with('success', __('pricing.flash.vehicle_info_done_import_prices_next'));
     }
 }

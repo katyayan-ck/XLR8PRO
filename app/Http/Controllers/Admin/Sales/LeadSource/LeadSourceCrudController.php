@@ -160,7 +160,7 @@ class LeadSourceCrudController extends CrudController
 
         $leadSource = LeadSource::create($validated);
 
-        \Alert::success('Lead Source created successfully!')->flash();
+        \Alert::success(__('sales.flash.lead_source_created_successfully'))->flash();
 
         LeadSource::clearCache();
 
@@ -195,7 +195,7 @@ class LeadSourceCrudController extends CrudController
 
         $leadSource->update($validated);
 
-        \Alert::success('Lead Source updated successfully!')->flash();
+        \Alert::success(__('sales.flash.lead_source_updated_successfully'))->flash();
 
         LeadSource::clearCache();
 

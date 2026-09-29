@@ -43,4 +43,25 @@ return [
         'wheels' => 'Number of Wheels',
     ],
 
+    // Flash messages shown on admin screens (to-do W6): wording lives here, controllers call __('vehicle.flash.key').
+    'flash' => [
+        'import_failed' => 'Import failed: :message',
+        'brand_updated_successfully' => 'Brand updated successfully!',
+        'color_created_successfully' => 'Color created successfully!',
+        'color_updated_successfully' => 'Color updated successfully!',
+        'excel_file_empty' => 'Excel file is empty.',
+        'import_completed' => 'Import Completed → :summary',
+        'import_done_with_errors_br_check' => 'Import done with errors → :summary<br>Check laravel.log for failed rows.',
+        'no_file_uploaded' => 'No file uploaded!',
+        'only_excel_files_xlsx_xls_allowed' => 'Only Excel files (.xlsx, .xls) allowed',
+        'segment_created_successfully' => 'Segment created successfully!',
+        'segment_updated_successfully' => 'Segment updated successfully!',
+        'sub_segment_created_successfully' => 'Sub Segment created successfully!',
+        'sub_segment_updated_successfully' => 'Sub Segment updated successfully!',
+        'variant_created_successfully' => 'Variant created successfully!',
+        'variant_updated_successfully' => 'Variant updated successfully!',
+        'vehicle_model_created_successfully' => 'Vehicle Model created successfully!',
+        'vehicle_model_updated_successfully' => 'Vehicle Model updated successfully!',
+    ],
+
 ];

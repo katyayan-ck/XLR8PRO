@@ -2,20 +2,19 @@
 
 namespace App\Http\Controllers\Admin\Import;
 
+use App\Http\Controllers\Controller;
 use App\Models\Utilities\KeyValue\Keyvalue;
-use App\Services\Utils\KeyvalueService;
-use Illuminate\Validation\ValidationException;
-use App\Services\Vehicle\VariantService;
-use App\Services\Vehicle\VehicleModelService;
-use App\Services\Vehicle\SubSegmentService;
-use App\Services\Vehicle\SegmentService;
+use App\Models\Vehicle\Segment;
+use App\Models\Vehicle\SubSegment;
 use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
-use App\Models\Vehicle\SubSegment;
-use App\Models\Vehicle\Segment;
-use App\Http\Controllers\Controller;
-
+use App\Services\Utils\KeyvalueService;
+use App\Services\Vehicle\SegmentService;
+use App\Services\Vehicle\SubSegmentService;
+use App\Services\Vehicle\VariantService;
+use App\Services\Vehicle\VehicleModelService;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 use Revolution\Google\Sheets\Facades\Sheets;
 
 class AdminImportController extends Controller
@@ -25,6 +24,7 @@ class AdminImportController extends Controller
     {
         return view('admin.import.admin');
     }
+
     /**
      * Bulk Google-Sheets import of vehicle master data (segments/sub-segments/
      * models/variants/colors). Reachable via routes/backpack/core.php's
@@ -78,7 +78,7 @@ class AdminImportController extends Controller
                 ->all();
 
             if (empty($values) || count($values) < 2) {
-                \Alert::error('Sheet is empty.')->flash();
+                \Alert::error(__('utils.flash.sheet_empty'))->flash();
 
                 return redirect()->back();
             }
@@ -263,13 +263,13 @@ class AdminImportController extends Controller
 
             $summary = "Segments: {$stats['segment']} | Subsegments: {$stats['subsegment']} | Models: {$stats['model']} | Variants: {$stats['variant']} | Skipped: {$stats['skipped']} | Rejected: {$stats['errors']}";
 
-            \Alert::success("Import Completed → {$summary}")->flash();
+            \Alert::success(__('utils.flash.import_completed', ['summary' => $summary]))->flash();
             if ($errors !== []) {
-                \Alert::warning('Rejected rows: '.implode(' · ', array_slice($errors, 0, 10)).(count($errors) > 10 ? ' …' : ''))->flash();
+                \Alert::warning(__('utils.flash.rejected_rows', ['rows' => implode(' · ', array_slice($errors, 0, 10)).(count($errors) > 10 ? ' …' : '')]))->flash();
             }
         } catch (\Exception $e) {
             \Log::error('Vehicle Import (Google Sheet) failed', ['error' => $e->getMessage()]);
-            \Alert::error('Import failed: ' . $e->getMessage())->flash();
+            \Alert::error(__('utils.flash.import_failed', ['message' => $e->getMessage()]))->flash();
         }
 
         return redirect()->back();

@@ -38,7 +38,7 @@ class CalculateController extends Controller
         }
         $session = $this->sessions->gate();
         if (! $session) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'No open pricing process.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.no_open_pricing_process'));
         }
         $result = $this->calculation->start($session, backpack_user()->id);
         if (! $result->ok) {
@@ -102,7 +102,7 @@ class CalculateController extends Controller
         }
         $session = $this->sessions->gate();
         if (! $session) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'No open pricing process.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.no_open_pricing_process'));
         }
         $result = $this->calculation->retryFailed($session);
 
@@ -120,13 +120,13 @@ class CalculateController extends Controller
         ], [], __('pricing.fields'));
         $session = $this->sessions->gate();
         if (! $session) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'No open pricing process.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.no_open_pricing_process'));
         }
         $result = $this->sessions->complete($session, $data['reopen_lists'] ?? [], backpack_user()->id);
         if (! $result->ok) {
             return redirect()->route('pricing.workflow.summary', $session->id)->with('warning', $result->message);
         }
 
-        return redirect()->route('pricing.workflow.index')->with('success', $result->message.(($data['reopen_lists'] ?? []) !== [] ? ' Reopened: '.implode(', ', $data['reopen_lists']).'.' : ''));
+        return redirect()->route('pricing.workflow.index')->with('success', $result->message.(($data['reopen_lists'] ?? []) !== [] ? ' '.__('pricing.flash.lists_reopened', ['lists' => implode(', ', $data['reopen_lists'])]) : ''));
     }
 }

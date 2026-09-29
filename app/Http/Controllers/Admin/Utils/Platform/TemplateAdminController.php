@@ -9,8 +9,8 @@ use App\Services\Platform\Templates\TemplateService;
 use App\Support\Result;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Response;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 use Prologue\Alerts\Facades\Alert;
 
@@ -84,7 +84,7 @@ class TemplateAdminController extends Controller
 
             return back()->withInput();
         }
-        Alert::success("Draft v{$result->get('version')} saved.")->flash();
+        Alert::success(__('utils.flash.draft_v_saved', ['version' => $result->get('version')]))->flash();
 
         return redirect()->route('utils.templates.edit', ['id' => $result->get('template_id'), 'version' => $result->get('version_id')]);
     }
@@ -137,12 +137,12 @@ class TemplateAdminController extends Controller
         $request->validate(['file' => 'required|file|max:2048']);
         $items = json_decode((string) file_get_contents($request->file('file')->getRealPath()), true);
         if (! is_array($items)) {
-            Alert::error('The file is not a template export.')->flash();
+            Alert::error(__('utils.flash.file_not_template_export'))->flash();
 
             return back();
         }
         $result = $this->templates->import($items, backpack_user()->id);
-        Alert::success("{$result->get('drafts')} draft(s) imported.".($result->get('errors') ? ' Errors: '.implode('; ', $result->get('errors')) : ''))->flash();
+        Alert::success(__('utils.flash.drafts_imported', ['count' => $result->get('drafts')]).($result->get('errors') ? ' '.__('utils.flash.import_errors', ['errors' => implode('; ', $result->get('errors'))]) : ''))->flash();
 
         return back();
     }

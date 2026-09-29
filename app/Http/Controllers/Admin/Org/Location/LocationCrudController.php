@@ -191,7 +191,7 @@ class LocationCrudController extends CrudController
 
         $this->locations->create($request->all());
 
-        \Alert::success('Location created successfully!')->flash();
+        \Alert::success(__('org.flash.location_created_successfully'))->flash();
 
         return redirect(backpack_url('org/location'));
     }
@@ -203,7 +203,7 @@ class LocationCrudController extends CrudController
 
         $this->locations->update(Location::findOrFail($id), $request->all());
 
-        \Alert::success('Location updated successfully!')->flash();
+        \Alert::success(__('org.flash.location_updated_successfully'))->flash();
 
         return redirect(backpack_url('org/location'));
     }

@@ -22,6 +22,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: W6 — admin flash messages from `resources/lang/en/{module}.php` 'flash' groups (+ new `utils.php`), same wording.
 - 30-09: W4 — `phpstan-baseline.neon` (2 511 legacy errors), full analyse clean, 2 missing imports fixed, BUG-221 logged.
 - 30-09: W3 — Sales HTTP feature tests (`tests/Feature/Sales/`), BUG-220 fixed, BUG-219 logged.
 - 30-09: W11 / DEC-089 Phase C — Org → Users → Bulk edit (`UserBulkEditController`, `xl-user-bulk.js`, picker editor); DEC-089 plan closed.
@@ -48,7 +49,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). W3 ✅ (15 Sales HTTP tests; BUG-219 open, BUG-220 fixed). W4 ✅ (baseline, full analyse clean; BUG-221). Next step: W6 — flash messages into `resources/lang/en/{module}.php` 'flash' groups with the same wording (script `flash_convert.py` in the scratchpad did a dry run: 196 literal / simple-interpolated calls in 49 controllers; 88 left: variables, Result messages, concatenations); then W5, W7. Then W4 (PHPStan baseline), W5, W6, W7.
+0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). W3 ✅ (15 Sales HTTP tests; BUG-219 open, BUG-220 fixed). W4 ✅ (baseline, full analyse clean; BUG-221). W6 ✅ (225 flash calls → lang `flash` groups; FlashMessagesLangTest). Next step: W5 (UI clean-up outside Sales: hex / inline styles → shared layer, same method as the Sales pass), then W7 (N+1 review). Then W4 (PHPStan baseline), W5, W6, W7.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.
 3. **U1 per screen:** header-less Backpack form cards get headers when converted; a real-browser check of quotation /

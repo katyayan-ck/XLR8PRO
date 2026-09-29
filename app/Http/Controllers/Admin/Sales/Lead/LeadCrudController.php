@@ -179,7 +179,7 @@ class LeadCrudController extends CrudController
 
         Lead::create($validated);
 
-        \Alert::success('Lead created successfully!')->flash();
+        \Alert::success(__('sales.flash.lead_created_successfully'))->flash();
 
         return redirect(backpack_url('sales/lead'));
     }
@@ -225,7 +225,7 @@ class LeadCrudController extends CrudController
 
         $lead->update($validated);
 
-        \Alert::success('Lead updated successfully!')->flash();
+        \Alert::success(__('sales.flash.lead_updated_successfully'))->flash();
 
         return redirect(backpack_url('sales/lead'));
     }

@@ -36,7 +36,7 @@ class TcsConfigController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
-        \Alert::success('TCS configuration updated successfully.')->flash();
+        \Alert::success(__('pricing.flash.tcs_configuration_updated_successfully'))->flash();
 
         return redirect()->route('pricing.tcs.index');
     }

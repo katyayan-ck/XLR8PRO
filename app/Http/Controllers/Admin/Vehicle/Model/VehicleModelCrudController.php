@@ -104,7 +104,7 @@ class VehicleModelCrudController extends CrudController
 
         app(VehicleModelService::class)->create($request->all());
 
-        \Alert::success('Vehicle Model created successfully!')->flash();
+        \Alert::success(__('vehicle.flash.vehicle_model_created_successfully'))->flash();
 
         return redirect(backpack_url('vehicle/model'));
     }
@@ -145,7 +145,7 @@ class VehicleModelCrudController extends CrudController
 
         app(VehicleModelService::class)->update(VehicleModel::findOrFail($id), $request->all());
 
-        \Alert::success('Vehicle Model updated successfully!')->flash();
+        \Alert::success(__('vehicle.flash.vehicle_model_updated_successfully'))->flash();
 
         return redirect(backpack_url('vehicle/model'));
     }

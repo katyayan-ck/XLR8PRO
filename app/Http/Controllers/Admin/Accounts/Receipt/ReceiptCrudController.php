@@ -5,15 +5,15 @@ namespace App\Http\Controllers\Admin\Accounts\Receipt;
 use App\Http\Controllers\Controller;
 use App\Models\CRM\Enquiry;
 use App\Models\Module\Booking\Bookingamount;
+use App\Models\Module\Booking\XlFinancier;
 use App\Services\EnquiryReferenceService;
 use App\Services\OrgService;
-use App\Models\Module\Booking\XlFinancier;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Prologue\Alerts\Facades\Alert;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * No "receipt.*" permission existed in xlr8_iam_permissions before this
@@ -203,13 +203,13 @@ class ReceiptCrudController extends Controller
             $receipt->save();
             DB::commit();
 
-            Alert::success("Receipt {$receiptNo} created successfully.")->flash();
+            Alert::success(__('accounts.flash.receipt_created_successfully', ['receipt_no' => $receiptNo]))->flash();
 
             return redirect()->route('accounts.receipt.index');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Alert::error('Error creating receipt: '.$e->getMessage())->flash();
+            Alert::error(__('accounts.flash.error_creating_receipt', ['message' => $e->getMessage()]))->flash();
 
             return redirect()->back()->withInput();
         }
@@ -268,7 +268,7 @@ class ReceiptCrudController extends Controller
             $receipt->enq_id = $cleanEnqId;
             $bookingNo = str_replace('XB-', '', strtoupper(trim($request->xceler8_booking_no)));
 
-$receipt->bid = is_numeric($bookingNo) ? (int) $bookingNo : null;
+            $receipt->bid = is_numeric($bookingNo) ? (int) $bookingNo : null;
             $receipt->otf_no = $request->votf_no;
             $receipt->inv_no = $request->invoice_no;
 
@@ -297,13 +297,13 @@ $receipt->bid = is_numeric($bookingNo) ? (int) $bookingNo : null;
             $receipt->save();
             DB::commit();
 
-            Alert::success("Receipt {$receipt->type_number} updated successfully.")->flash();
+            Alert::success(__('accounts.flash.receipt_updated_successfully', ['type_number' => $receipt->type_number]))->flash();
 
             return redirect()->route('accounts.receipt.index');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Alert::error('Error updating receipt: '.$e->getMessage())->flash();
+            Alert::error(__('accounts.flash.error_updating_receipt', ['message' => $e->getMessage()]))->flash();
 
             return redirect()->back()->withInput();
         }
@@ -484,7 +484,7 @@ $receipt->bid = is_numeric($bookingNo) ? (int) $bookingNo : null;
 
     public function printReceipt($id)
     {
-        if (!backpack_user()->can('ACC_RCPT_VIEW')) {
+        if (! backpack_user()->can('ACC_RCPT_VIEW')) {
             abort(403, 'Unauthorized to print receipt.');
         }
 
@@ -508,12 +508,13 @@ $receipt->bid = is_numeric($bookingNo) ? (int) $bookingNo : null;
         ]);
 
         return $pdf->stream(
-            'Receipt-' . $receipt->type_number . '.pdf'
+            'Receipt-'.$receipt->type_number.'.pdf'
         );
     }
+
     public function browserPrintReceipt($id)
     {
-        if (!backpack_user()->can('ACC_RCPT_VIEW')) {
+        if (! backpack_user()->can('ACC_RCPT_VIEW')) {
             abort(403, 'Unauthorized to print receipt.');
         }
 

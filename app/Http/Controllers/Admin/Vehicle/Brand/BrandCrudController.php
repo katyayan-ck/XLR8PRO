@@ -115,7 +115,7 @@ class BrandCrudController extends CrudController
 
         $brand->update($validated);
 
-        \Alert::success('Brand updated successfully!')->flash();
+        \Alert::success(__('vehicle.flash.brand_updated_successfully'))->flash();
 
         return redirect(backpack_url('vehicle/brand'));
     }
@@ -165,14 +165,14 @@ class BrandCrudController extends CrudController
         ini_set('max_execution_time', 300);
 
         if (! $request->hasFile('excel_file')) {
-            \Alert::error('No file uploaded!')->flash();
+            \Alert::error(__('vehicle.flash.no_file_uploaded'))->flash();
 
             return redirect()->back();
         }
 
         $file = $request->file('excel_file');
         if (! in_array($file->getClientOriginalExtension(), ['xlsx', 'xls'])) {
-            \Alert::error('Only Excel files (.xlsx, .xls) allowed')->flash();
+            \Alert::error(__('vehicle.flash.only_excel_files_xlsx_xls_allowed'))->flash();
 
             return redirect()->back();
         }
@@ -183,7 +183,7 @@ class BrandCrudController extends CrudController
             $rows = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
 
             if (count($rows) < 2) {
-                \Alert::error('Excel file is empty.')->flash();
+                \Alert::error(__('vehicle.flash.excel_file_empty'))->flash();
 
                 return redirect()->back();
             }
@@ -520,16 +520,16 @@ class BrandCrudController extends CrudController
             ]);
 
             if ($stats['skipped'] > 0) {
-                \Alert::warning("Import done with errors → {$summary}<br>Check laravel.log for failed rows.")->flash();
+                \Alert::warning(__('vehicle.flash.import_done_with_errors_br_check', ['summary' => $summary]))->flash();
             } else {
-                \Alert::success("Import Completed → {$summary}")->flash();
+                \Alert::success(__('vehicle.flash.import_completed', ['summary' => $summary]))->flash();
             }
         } catch (\Exception $e) {
             \Log::error('Vehicle Import — fatal error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            \Alert::error('Import failed: '.$e->getMessage())->flash();
+            \Alert::error(__('vehicle.flash.import_failed', ['message' => $e->getMessage()]))->flash();
         }
 
         return redirect()->back();

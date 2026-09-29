@@ -153,7 +153,7 @@ class DesignationCrudController extends CrudController
 
         $this->designations->create($request->all());
 
-        \Alert::success('Designation created successfully!')->flash();
+        \Alert::success(__('org.flash.designation_created_successfully'))->flash();
 
         return redirect(backpack_url('org/designation'));
     }
@@ -165,7 +165,7 @@ class DesignationCrudController extends CrudController
 
         $this->designations->update(Designation::findOrFail($id), $request->all());
 
-        \Alert::success('Designation updated successfully!')->flash();
+        \Alert::success(__('org.flash.designation_updated_successfully'))->flash();
 
         return redirect(backpack_url('org/designation'));
     }

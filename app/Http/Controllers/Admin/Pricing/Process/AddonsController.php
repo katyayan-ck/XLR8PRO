@@ -36,7 +36,7 @@ class AddonsController extends Controller
         }
         $session = $this->sessions->gate();
         if (! $session || $session->stage()->order() < PricingStage::Addons->order()) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'Add-ons & discounts open after the price import.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.add_ons_discounts_open_after_price'));
         }
 
         return view('admin.pricing.process.addons', [
@@ -79,20 +79,20 @@ class AddonsController extends Controller
 
         $session = $this->sessions->gate();
         if (! $session || $session->stage()->order() < PricingStage::Addons->order()) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'Add-ons & discounts open after the price import.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.add_ons_discounts_open_after_price'));
         }
         if ($session->isPublished()) {
-            return redirect()->route('pricing.workflow.addons-form')->with('warning', 'Prices are already published in this process.');
+            return redirect()->route('pricing.workflow.addons-form')->with('warning', __('pricing.flash.prices_are_already_published_in_process'));
         }
         if (($session->progress['state'] ?? null) === 'running') {
-            return redirect()->route('pricing.workflow.addons-form')->with('warning', 'A step is still running — wait for it to finish.');
+            return redirect()->route('pricing.workflow.addons-form')->with('warning', __('pricing.flash.step_still_running_wait_it_finish'));
         }
 
         $path = $this->sessions->storeUpload($session, $request->file('file'), 'addons');
         $this->sessions->progress($session, ['step' => 'addons', 'state' => 'running', 'message' => 'Queued — waiting for the queue worker…', 'error' => null]);
         ImportAddonsJob::dispatch($session->id, $path, $data['groups'], $data['wef_date']);
 
-        return redirect()->route('pricing.workflow.addons-form')->with('success', 'Add-ons & discounts import started.');
+        return redirect()->route('pricing.workflow.addons-form')->with('success', __('pricing.flash.add_ons_discounts_import_started'));
     }
 
     public function issues(int $sessionId): BinaryFileResponse
@@ -123,17 +123,17 @@ class AddonsController extends Controller
         }
         $session = $this->sessions->gate();
         if (! $session || $session->stage() !== PricingStage::Addons) {
-            return redirect()->route('pricing.workflow.index')->with('warning', 'The process is not at the add-ons step.');
+            return redirect()->route('pricing.workflow.index')->with('warning', __('pricing.flash.process_not_at_add_ons_step'));
         }
         if (($session->progress['state'] ?? null) === 'running') {
-            return redirect()->route('pricing.workflow.addons-form')->with('warning', 'A step is still running — wait for it to finish.');
+            return redirect()->route('pricing.workflow.addons-form')->with('warning', __('pricing.flash.step_still_running_wait_it_finish'));
         }
         // either imported in this process, or the stored add-ons are kept as they are
         if (! data_get($session->stats, 'addons') && array_sum($this->workbook->presence()) === 0) {
-            return redirect()->route('pricing.workflow.addons-form')->with('warning', 'No add-ons or discounts are stored yet — import the workbook first.');
+            return redirect()->route('pricing.workflow.addons-form')->with('warning', __('pricing.flash.no_add_ons_or_discounts_are'));
         }
         $this->sessions->advance($session, PricingStage::Rules, [], backpack_user()->id);
 
-        return redirect()->route('pricing.workflow.rules-form')->with('success', 'Add-ons & discounts done — insurance & RTO next.');
+        return redirect()->route('pricing.workflow.rules-form')->with('success', __('pricing.flash.add_ons_discounts_done_insurance_rto'));
     }
 }

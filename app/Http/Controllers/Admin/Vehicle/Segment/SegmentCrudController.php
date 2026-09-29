@@ -116,7 +116,7 @@ class SegmentCrudController extends CrudController
 
         app(SegmentService::class)->update(Segment::findOrFail($id), $request->all());
 
-        \Alert::success('Segment updated successfully!')->flash();
+        \Alert::success(__('vehicle.flash.segment_updated_successfully'))->flash();
 
         return redirect(backpack_url('vehicle/segment'));
     }
@@ -143,7 +143,7 @@ class SegmentCrudController extends CrudController
 
         app(SegmentService::class)->create($request->all());
 
-        \Alert::success('Segment created successfully!')->flash();
+        \Alert::success(__('vehicle.flash.segment_created_successfully'))->flash();
 
         return redirect(backpack_url('vehicle/segment'));
     }

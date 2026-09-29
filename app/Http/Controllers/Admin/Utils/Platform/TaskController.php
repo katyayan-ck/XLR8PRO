@@ -59,7 +59,7 @@ class TaskController extends Controller
         if (! $result->ok) {
             return $this->failed($result);
         }
-        Alert::success('Task created.')->flash();
+        Alert::success(__('utils.flash.task_created'))->flash();
 
         return redirect()->route('utils.tasks.show', $result->get('id'));
     }
@@ -90,7 +90,7 @@ class TaskController extends Controller
         if (! $result->ok) {
             return $this->failed($result);
         }
-        Alert::success('Task updated.')->flash();
+        Alert::success(__('utils.flash.task_updated'))->flash();
 
         return redirect()->route('utils.tasks.show', $id);
     }
@@ -103,7 +103,7 @@ class TaskController extends Controller
             'file' => 'nullable|file',
         ]);
         $result = $this->tasks->followUp($id, backpack_user()->id, $data['remark'] ?? null, $data['status'] ?? null, $request->file('file'));
-        $result->ok ? Alert::success('Follow-up saved.')->flash() : Alert::error($result->message)->flash();
+        $result->ok ? Alert::success(__('utils.flash.follow_up_saved'))->flash() : Alert::error($result->message)->flash();
 
         return back();
     }
@@ -116,7 +116,7 @@ class TaskController extends Controller
 
             return back();
         }
-        Alert::success('Task deleted.')->flash();
+        Alert::success(__('utils.flash.task_deleted'))->flash();
 
         return redirect()->route('utils.tasks.index', ['box' => 'CREATED']);
     }

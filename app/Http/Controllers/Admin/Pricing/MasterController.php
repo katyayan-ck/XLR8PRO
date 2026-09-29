@@ -66,7 +66,7 @@ class MasterController extends Controller
         }
         $definition->save($this->input($request, $definition));
 
-        return redirect()->route('pricing.masters.index', $definition->key())->with('success', $definition->label().' saved.'.$this->recalcNote($definition));
+        return redirect()->route('pricing.masters.index', $definition->key())->with('success', __('pricing.flash.master_saved', ['label' => $definition->label()]).$this->recalcNote($definition));
     }
 
     public function edit(string $master, int $id): View|RedirectResponse
@@ -86,7 +86,7 @@ class MasterController extends Controller
         }
         $definition->save($this->input($request, $definition), $definition->query()->findOrFail($id));
 
-        return redirect()->route('pricing.masters.index', $definition->key())->with('success', $definition->label().' updated.'.$this->recalcNote($definition));
+        return redirect()->route('pricing.masters.index', $definition->key())->with('success', __('pricing.flash.master_updated', ['label' => $definition->label()]).$this->recalcNote($definition));
     }
 
     public function destroy(string $master, int $id): RedirectResponse
@@ -97,7 +97,7 @@ class MasterController extends Controller
         }
         $definition->remove($definition->query()->findOrFail($id));
 
-        return redirect()->route('pricing.masters.index', $definition->key())->with('success', $definition->label().' row removed.'.$this->recalcNote($definition));
+        return redirect()->route('pricing.masters.index', $definition->key())->with('success', __('pricing.flash.master_row_removed', ['label' => $definition->label()]).$this->recalcNote($definition));
     }
 
     public function export(string $master): BinaryFileResponse
@@ -127,7 +127,7 @@ class MasterController extends Controller
         ]);
         ImportPricingMasterJob::dispatch($import->id);
 
-        return redirect()->route('pricing.masters.index', $definition->key())->with('success', 'Import queued — progress shows below.');
+        return redirect()->route('pricing.masters.index', $definition->key())->with('success', __('pricing.flash.import_queued_progress_shows_below'));
     }
 
     public function importStatus(string $master, int $id): JsonResponse
@@ -157,7 +157,7 @@ class MasterController extends Controller
     {
         if ($definition->recalculates() && $this->sessions->gate()) {
             return redirect()->route('pricing.masters.index', $definition->key())
-                ->with('warning', 'A Pricing Process is open — pricing masters are read-only until it completes or is discarded.');
+                ->with('warning', __('pricing.flash.pricing_process_open_pricing_masters_are'));
         }
 
         return null;
@@ -185,6 +185,6 @@ class MasterController extends Controller
 
     private function recalcNote(MasterDefinition $definition): string
     {
-        return $definition->recalculates() ? ' Affected vehicles are recalculated in the background within a few minutes.' : '';
+        return $definition->recalculates() ? ' '.__('pricing.flash.master_recalc_note') : '';
     }
 }

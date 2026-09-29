@@ -136,7 +136,7 @@ class KeywordMasterCrudController extends CrudController
         app(KeywordMasterService::class)->create($request->all());
 
         \Alert::success(
-            'Keyword created successfully!'
+            __('utils.flash.keyword_created_successfully')
         )->flash();
 
         return redirect(
@@ -181,7 +181,7 @@ class KeywordMasterCrudController extends CrudController
         app(KeywordMasterService::class)->update($keyword, $request->all());
 
         \Alert::success(
-            'Keyword updated successfully!'
+            __('utils.flash.keyword_updated_successfully')
         )->flash();
 
         return redirect(

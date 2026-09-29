@@ -146,7 +146,7 @@ class BranchCrudController extends CrudController
 
         $this->branches->update(Branch::where('code', $code)->firstOrFail(), $request->all());
 
-        \Alert::success('Branch updated successfully!')->flash();
+        \Alert::success(__('org.flash.branch_updated_successfully'))->flash();
 
         return redirect(backpack_url('org/branch'));
     }
@@ -189,7 +189,7 @@ class BranchCrudController extends CrudController
 
         $this->branches->create($request->all());
 
-        \Alert::success('Branch created successfully!')->flash();
+        \Alert::success(__('org.flash.branch_created_successfully'))->flash();
 
         return redirect(backpack_url('org/branch'));
     }

@@ -123,7 +123,7 @@ class EnquiryCrudController extends CrudController
             $custStageMap = collect(OrgService::keywordValueByCode('CUSTOMER_STAGE'))->pluck('value', 'code')->toArray();
             $purcTypeMap = collect(OrgService::keywordValueByCode('PURCHASE_TYPE'))
                 ->pluck('value', 'code')
-                ->mapWithKeys(fn($val, $key) => [strtoupper(trim((string)$key)) => $val])
+                ->mapWithKeys(fn ($val, $key) => [strtoupper(trim((string) $key)) => $val])
                 ->toArray();
             $purcTypeMap = collect(OrgService::keywordValueByCode('PURCHASE_TYPE'))->pluck('value', 'code')->toArray();
             $lostReasonMap = collect(OrgService::keywordValueByCode('LOST_REASON'))->pluck('value', 'code')->toArray();
@@ -152,9 +152,9 @@ class EnquiryCrudController extends CrudController
                 ->pluck('value', 'code')
                 ->mapWithKeys(fn ($val, $key) => [strtoupper(trim((string) $key)) => $val])
                 ->toArray();
-            $finModeMap = collect(OrgService::keywordValueByCode('FIN_MODE'))->pluck('value', 'code')->mapWithKeys(fn($val, $key) => [strtoupper(trim((string)$key)) => $val])->toArray();
-            $careOfTypeMap = collect(OrgService::keywordValueByCode('CARE_OF_TYPE'))->pluck('value', 'code')->mapWithKeys(fn($val, $key) => [strtoupper(trim((string)$key)) => $val])->toArray();
-            $referredByMap = collect(OrgService::keywordValueByCode('REFERRED_BY'))->pluck('value', 'code')->mapWithKeys(fn($val, $key) => [strtoupper(trim((string)$key)) => $val])->toArray();
+            $finModeMap = collect(OrgService::keywordValueByCode('FIN_MODE'))->pluck('value', 'code')->mapWithKeys(fn ($val, $key) => [strtoupper(trim((string) $key)) => $val])->toArray();
+            $careOfTypeMap = collect(OrgService::keywordValueByCode('CARE_OF_TYPE'))->pluck('value', 'code')->mapWithKeys(fn ($val, $key) => [strtoupper(trim((string) $key)) => $val])->toArray();
+            $referredByMap = collect(OrgService::keywordValueByCode('REFERRED_BY'))->pluck('value', 'code')->mapWithKeys(fn ($val, $key) => [strtoupper(trim((string) $key)) => $val])->toArray();
             $usageAreaMap = collect(OrgService::keywordValueByCode('USAGE_AREA'))->pluck('value', 'code')->toArray();
             $kmTravelledMap = collect(OrgService::keywordValueByCode('KM_TRAVELLED_DAILY'))->pluck('value', 'code')->toArray();
             $appTypeMap = collect(OrgService::keywordValueByCode('APPLICATION_TYPE'))->pluck('value', 'code')->toArray();
@@ -260,8 +260,8 @@ class EnquiryCrudController extends CrudController
     }
 
     // EXACT MODIFIED CODE
-// 1. Refactor getBaseQuery() to enforce global is_active routing
-// Around Line 240
+    // 1. Refactor getBaseQuery() to enforce global is_active routing
+    // Around Line 240
 
     private function getBaseQuery(string $listType)
     {
@@ -314,23 +314,23 @@ class EnquiryCrudController extends CrudController
             'assigned_quick' => $query->assignedQuick(),
             'unassigned_quick' => $query->unassignedQuick(),
             'exchange' => $query->where(function ($q) {
-                    $q->whereIn('purchase_type_crm', ['Exchange Buy', 'EXCHANGE_BUY'])
+                $q->whereIn('purchase_type_crm', ['Exchange Buy', 'EXCHANGE_BUY'])
                     ->orWhere(function ($sub) {
                         $sub->where(function ($sub2) {
                             $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
                         })->whereIn('purchase_type', ['Exchange Buy', 'EXCHANGE_BUY']);
                     });
-                }),
+            }),
             'scrappage' => $query->where(function ($q) {
-                    $q->whereIn('purchase_type_crm', ['Scrappage', 'SCRAPPAGE'])
+                $q->whereIn('purchase_type_crm', ['Scrappage', 'SCRAPPAGE'])
                     ->orWhere(function ($sub) {
                         $sub->where(function ($sub2) {
                             $sub2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
                         })->whereIn('purchase_type', ['Scrappage', 'SCRAPPAGE']);
                     });
-                }),
+            }),
             'exchange_not_interested' => $query->where(function ($q) {
-                    $q->whereIn('purchase_type_crm', [
+                $q->whereIn('purchase_type_crm', [
                     'First Time Buy',
                     'FIRST_TIME_BUY',
                     'Additional Buy',
@@ -350,16 +350,16 @@ class EnquiryCrudController extends CrudController
                             'NO_CONSIDERATION',
                         ]);
                     });
-                }),
-                
+            }),
+
             'finance' => $query->whereIn('fin_mode', ['In-house', 'IN_HOUSE']),
             'finance_not_interested' => $query->where(function ($q) {
-                    $q->whereNull('fin_mode')
+                $q->whereNull('fin_mode')
                     ->orWhere('fin_mode', '')
                     ->orWhereNotIn('fin_mode', ['In-house', 'IN_HOUSE']);
-                }),
+            }),
             'lost', 'lost-enquiries', 'lost_enquiries' => $query,
-            
+
             default => $query->mainListing(),
         };
 
@@ -368,7 +368,7 @@ class EnquiryCrudController extends CrudController
 
     public function duplicateEnquiryList()
     {
-        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -377,7 +377,7 @@ class EnquiryCrudController extends CrudController
 
     public function lostEnquiriesList()
     {
-        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -1085,7 +1085,7 @@ class EnquiryCrudController extends CrudController
             $viewUrl = backpack_url("sales/enquiry/{$e->id}/view");
             $actionBtns .= '<a href="'.$viewUrl.'" class="btn btn-sm btn-info">View</a>';
             $actionBtns .= '<a href="'.$editUrl.'" class="btn btn-sm btn-primary ms-1">Edit</a>';
-            
+
             $actionBtns .= '<a href="'.$quotUrl.'"'
                 .' class="btn '.$quotBtnClass.' btn-sm ms-1 js-quote-link"'
                 .' title="'.$quotBtnText.'"'
@@ -1156,7 +1156,7 @@ class EnquiryCrudController extends CrudController
                 '3' => 'Married to',
                 '4' => 'Guardian Name',
                 '5' => 'Owned By',
-                default => $careOfTypeMap[strtoupper(trim((string)($e->care_of_type ?? '')))] ?? $e->care_of_type ?? '—',
+                default => $careOfTypeMap[strtoupper(trim((string) ($e->care_of_type ?? '')))] ?? $e->care_of_type ?? '—',
             };
             $row['care_of'] = $e->care_of ?? '—';
             $row['email'] = $e->email ?? '—';
@@ -1199,8 +1199,8 @@ class EnquiryCrudController extends CrudController
             $row['application_type'] = $appTypeMap[$e->application_type ?? ''] ?? $e->application_type ?? '—';
             $row['application'] = $appMap[$e->application ?? ''] ?? $e->application ?? '—';
             $row['has_ev'] = $e->has_ev ?? '—';
-            $row['purchase_type'] = $purcTypeMap[strtoupper(trim((string)($e->purchase_type ?? '')))] ?? $e->purchase_type ?? '—';
-            $row['purchase_type_crm'] = $purcTypeMap[strtoupper(trim((string)($e->purchase_type_crm ?? '')))] ?? $e->purchase_type_crm ?? '—';
+            $row['purchase_type'] = $purcTypeMap[strtoupper(trim((string) ($e->purchase_type ?? '')))] ?? $e->purchase_type ?? '—';
+            $row['purchase_type_crm'] = $purcTypeMap[strtoupper(trim((string) ($e->purchase_type_crm ?? '')))] ?? $e->purchase_type_crm ?? '—';
             $row['consid_brand'] = $e->consid_brand ?? $e->consider_make ?? '—';
             $row['consid_model'] = $e->consid_model ?? $e->consider_model ?? '—';
             $row['consid_variant'] = $e->consid_variant ?? $e->consider_variant ?? '—';
@@ -1208,7 +1208,7 @@ class EnquiryCrudController extends CrudController
             $row['offered_price'] = $e->offered_price ?? '—';
             $row['exchange_bonus'] = $e->exchange_bonus ?? '—';
             $row['price_gap'] = ($e->expected_price || $e->offered_price || $e->exchange_bonus) ? (($e->expected_price ?? 0) - ($e->offered_price ?? 0) - ($e->exchange_bonus ?? 0)) : '—';
-            $row['fin_mode'] = $finModeMap[strtoupper(trim((string)($e->fin_mode ?? '')))] ?? $e->fin_mode ?? '—';
+            $row['fin_mode'] = $finModeMap[strtoupper(trim((string) ($e->fin_mode ?? '')))] ?? $e->fin_mode ?? '—';
             $row['financier_name'] = $finMap[$e->financier] ?? $e->financier ?? '—';
             $row['loan_status'] = $e->loan_status ?? '—';
 
@@ -1250,7 +1250,7 @@ class EnquiryCrudController extends CrudController
         if ($type === 'reference') {
             $row['referee_name'] = $e->referee_name ?? '—';
             $row['referee_phone'] = $e->referee_phone ?? '—';
-            $row['referred_by'] = $referredByMap[strtoupper(trim((string)($e->referred_by ?? '')))] ?? $e->referred_by ?? '—';
+            $row['referred_by'] = $referredByMap[strtoupper(trim((string) ($e->referred_by ?? '')))] ?? $e->referred_by ?? '—';
             $row['name'] = $e->name ?? '—';
         } elseif ($type === 'virtual') {
             $row['virtual_no'] = $e->virtual_no ?? '—';
@@ -1847,7 +1847,7 @@ class EnquiryCrudController extends CrudController
 
     public function showEnquiry($id)
     {
-        if (!backpack_user()->can('SLS_ENQR_VIEW')) {
+        if (! backpack_user()->can('SLS_ENQR_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view enquiries.');
         }
 
@@ -1863,7 +1863,7 @@ class EnquiryCrudController extends CrudController
         }
 
         $x8EnqNo = $this->enquiryRef->fromReference($enquiry->id);
-        $legacyEnqNo = 'XENQ-' . $x8EnqNo;
+        $legacyEnqNo = 'XENQ-'.$x8EnqNo;
 
         $creFups = DB::table('xlr8_cre_enquiry_fup')
             ->whereIn('x8_enq_no', [(string) $x8EnqNo, $legacyEnqNo])
@@ -1996,7 +1996,7 @@ class EnquiryCrudController extends CrudController
 
             $this->saveCreFup($enquiry, $request);
 
-            Alert::success('Enquiry created successfully.')->flash();
+            Alert::success(__('sales.flash.enquiry_created_successfully'))->flash();
 
             $source = strtoupper($enquiry->source_code ?? '');
             $origin = strtoupper($enquiry->current_origin ?? '');
@@ -2081,7 +2081,7 @@ class EnquiryCrudController extends CrudController
 
         $this->saveCreFup($enquiry, $request);
 
-        Alert::success('Enquiry updated successfully.')->flash();
+        Alert::success(__('sales.flash.enquiry_updated_successfully'))->flash();
 
         // --- DYNAMIC REDIRECT LOGIC ---
         // 1. Try to return to the exact previous list using http_referrer
@@ -2150,7 +2150,7 @@ class EnquiryCrudController extends CrudController
     //         'offered_price',
     //         'exchange_bonus'
     //     ]));
-    //     Alert::success('Exchange Details Updated successfully.')->flash();
+    //     Alert::success(__('sales.flash.exchange_details_updated_successfully'))->flash();
 
     //     if ($enquiry->purchase_type === 'Scrappage') {
     //         return redirect(backpack_url('sales/enquiry/exchange/int-in-scrappage'));
@@ -2199,7 +2199,7 @@ class EnquiryCrudController extends CrudController
             ]);
         }
 
-        Alert::success('Exchange Details Updated successfully.')->flash();
+        Alert::success(__('sales.flash.exchange_details_updated_successfully'))->flash();
 
         if ($enquiry->purchase_type === 'Scrappage') {
             return redirect(backpack_url('sales/enquiry/exchange/int-in-scrappage'));
@@ -2237,7 +2237,7 @@ class EnquiryCrudController extends CrudController
             ->where('remark_type', 1)
             ->orderByDesc('created_at')
             ->get();
-            
+
         $finance_modes = OrgService::keywordValueByCode('FIN_MODE');
 
         return view('admin.sales.enquiry.finance-edit', compact('enquiry', 'finance', 'financiers', 'fups', 'finance_modes'));
@@ -2284,7 +2284,7 @@ class EnquiryCrudController extends CrudController
     //         $finance->addMediaFromRequest('instrument_proof')->toMediaCollection('instrument_proof');
     //     }
 
-    //     Alert::success('Finance Details Updated successfully.')->flash();
+    //     Alert::success(__('sales.flash.finance_details_updated_successfully'))->flash();
 
     //     if (in_array($enquiry->fin_mode, ['Cash', 'Customer Self', 'Yet To Decide', 'Purchase Plan Cancelled'])) {
     //         return redirect(backpack_url('sales/enquiry/finance/not-interested'));
@@ -2328,7 +2328,7 @@ class EnquiryCrudController extends CrudController
             ->where('remark_type', 1)
             ->orderByDesc('created_at')
             ->get();
-            
+
         $finance_modes = OrgService::keywordValueByCode('FIN_MODE');
 
         return view('admin.sales.enquiry.finance-view', compact('enquiry', 'finance', 'financiers', 'fups', 'finance_modes'));
@@ -2359,7 +2359,7 @@ class EnquiryCrudController extends CrudController
         $finance->case_status = $request->case_status ?? 1;
         $finance->verification_status = $request->verification_status ?? 1;
         $finance->case_lost_reason = $request->case_lost_reason;
-        
+
         // Dynamically resolve the submitted keyword code into its readable text for logic
         $finModes = OrgService::keywordValueByCode('FIN_MODE');
         $finModeVal = collect($finModes)->firstWhere('code', $request->fin_mode);
@@ -2407,7 +2407,7 @@ class EnquiryCrudController extends CrudController
             ]);
         }
 
-        Alert::success('Finance Details Updated successfully.')->flash();
+        Alert::success(__('sales.flash.finance_details_updated_successfully'))->flash();
 
         if (in_array($finModeText, $notInterestedModes)) {
             return redirect(backpack_url('sales/enquiry/finance/not-interested'));
@@ -2469,7 +2469,7 @@ class EnquiryCrudController extends CrudController
 
             Enquiry::create($validated);
 
-            Alert::success('Reference Enquiry created successfully.')->flash();
+            Alert::success(__('sales.flash.reference_enquiry_created_successfully'))->flash();
 
             return redirect(backpack_url('sales/enquiry/reference'));
         } catch (Throwable $e) {
@@ -2705,7 +2705,7 @@ class EnquiryCrudController extends CrudController
             'transmission_types' => $kw('TRANSMISSION_TYPE'),
             'finance_types' => $kw('FINANCE_TYPE'),
             'purchase_reasons' => $kw('PURCHASE_REASON'),
-            'financiers' => collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn($f) => (object) $f),
+            'financiers' => collect(XlFinancier::select('id', 'name', 'short_name')->get()->toArray())->map(fn ($f) => (object) $f),
             'finance_modes' => $kw('FIN_MODE'),
             'care_of_types' => $kw('CARE_OF_TYPE'),
             'referred_by_types' => $kw('REFERRED_BY'),

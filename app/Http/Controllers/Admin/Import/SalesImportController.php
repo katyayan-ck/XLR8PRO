@@ -28,7 +28,7 @@ class SalesImportController extends Controller
         }
 
         if (! $request->hasFile('excel_file') || ! in_array($request->file('excel_file')->getClientOriginalExtension(), ['xlsx', 'xls'])) {
-            Alert::error('Invalid or missing file! Only Excel files (.xlsx, .xls) allowed')->flash();
+            Alert::error(__('sales.flash.invalid_or_missing_file_only_excel'))->flash();
 
             return redirect()->back();
         }
@@ -44,7 +44,7 @@ class SalesImportController extends Controller
         ]);
 
         ImportEnquiriesJob::dispatch($importLogId, $absolutePath);
-        Alert::success("File uploaded and queued for processing (Import #{$importLogId}).")->flash();
+        Alert::success(__('sales.flash.file_uploaded_queued_processing_import', ['import_log_id' => $importLogId]))->flash();
 
         return redirect()->back();
     }

@@ -1,0 +1,45 @@
+<?php
+
+/*
+| Utilities / platform admin screens (Settings, Tasks, Tickets, Approvals, Templates, Comms, imports): user-facing
+| wording by key. Controllers call __('utils.flash.key').
+*/
+
+return [
+
+    // Flash messages shown on admin screens (to-do W6): wording lives here, controllers call __('utils.flash.key').
+    'flash' => [
+        'drafts_imported' => ':count draft(s) imported.',
+        'import_errors' => 'Errors: :errors',
+        'power_sheet_applied' => 'Power sheet applied.',
+        'power_sheet_dry_run' => 'Dry run complete — nothing written.',
+        'power_sheet_nothing_applied' => 'Nothing applied — fix the errors.',
+        'queued_again' => 'Queued again as #:id.',
+        'rejected_rows' => 'Rejected rows: :rows',
+        'import_failed' => 'Import failed: :message',
+        'draft_v_saved' => 'Draft v:version saved.',
+        'file_not_template_export' => 'The file is not a template export.',
+        'follow_up_saved' => 'Follow-up saved.',
+        'import_completed' => 'Import Completed → :summary',
+        'key_value_created_successfully' => 'Key Value created successfully!',
+        'key_value_updated_successfully' => 'Key Value updated successfully!',
+        'keyword_created_successfully' => 'Keyword created successfully!',
+        'keyword_updated_successfully' => 'Keyword updated successfully!',
+        'left_unchanged' => ':key left unchanged.',
+        'remark_posted' => 'Remark posted.',
+        'reset' => ':key reset.',
+        'rule_removed_open_requests_keep_their' => 'Rule #:id removed (open requests keep their snapshot).',
+        'rule_saved' => 'Rule #:rule saved.',
+        'saved' => ':key saved.',
+        'sheet_empty' => 'Sheet is empty.',
+        'task_created' => 'Task created.',
+        'task_deleted' => 'Task deleted.',
+        'task_updated' => 'Task updated.',
+        'ticket_moved' => 'Ticket moved to :status.',
+        'ticket_opened' => 'Ticket :number opened.',
+        'ticket_updated' => 'Ticket updated.',
+        'topic_saved' => 'Topic saved.',
+        'updated' => ':key updated.',
+    ],
+
+];

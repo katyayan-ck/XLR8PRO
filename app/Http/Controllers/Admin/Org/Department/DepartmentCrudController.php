@@ -145,7 +145,7 @@ class DepartmentCrudController extends CrudController
 
         $this->departments->create($request->all());
 
-        \Alert::success('Department created successfully!')->flash();
+        \Alert::success(__('org.flash.department_created_successfully'))->flash();
 
         return redirect(backpack_url('org/department'));
     }
@@ -157,7 +157,7 @@ class DepartmentCrudController extends CrudController
 
         $this->departments->update(Department::findOrFail($id), $request->all());
 
-        \Alert::success('Department updated successfully!')->flash();
+        \Alert::success(__('org.flash.department_updated_successfully'))->flash();
 
         return redirect(backpack_url('org/department'));
     }

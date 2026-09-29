@@ -123,12 +123,12 @@ class JournalVoucherCrudController extends Controller
             $voucher->save();
             DB::commit();
 
-            Alert::success("Voucher {$voucherNo} created successfully.")->flash();
+            Alert::success(__('accounts.flash.voucher_created_successfully', ['voucher_no' => $voucherNo]))->flash();
 
             return redirect()->route('accounts.journal-voucher.index');
         } catch (\Exception $e) {
             DB::rollBack();
-            Alert::error('Error creating voucher: '.$e->getMessage())->flash();
+            Alert::error(__('accounts.flash.error_creating_voucher', ['message' => $e->getMessage()]))->flash();
 
             return redirect()->back()->withInput();
         }
@@ -170,12 +170,12 @@ class JournalVoucherCrudController extends Controller
             $voucher->save();
             DB::commit();
 
-            Alert::success("Voucher {$voucher->type_number} updated successfully.")->flash();
+            Alert::success(__('accounts.flash.voucher_updated_successfully', ['type_number' => $voucher->type_number]))->flash();
 
             return redirect()->route('accounts.journal-voucher.index');
         } catch (\Exception $e) {
             DB::rollBack();
-            Alert::error('Error updating voucher: '.$e->getMessage())->flash();
+            Alert::error(__('accounts.flash.error_updating_voucher', ['message' => $e->getMessage()]))->flash();
 
             return redirect()->back()->withInput();
         }

@@ -9811,3 +9811,13 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
 - **Rule:** `.ai/guidelines/10-workflow.md` quality gate 2 — full `composer analyse` clean before merges; the baseline is
   never regenerated to hide new errors.
 - **Logged BUG-221:** the remaining missing-class references (Booking helper, accessory export, spare master, RBAC seeder).
+
+## W6 — admin flash messages from the language files (same wording)
+- **55 admin controllers:** 225 flash calls (`Alert::success/error/warning/info`, `->with('success'|…)`) now read
+  `__('{module}.flash.{key}', [...])`; interpolated values became `:placeholders` (e.g. `Booking #:booking_id`).
+  Left as they are: `Result->message`, validator messages and variables that already hold server text.
+- **Lang:** new `'flash'` groups in `resources/lang/en/{accounts,booking,iam,org,pricing,sales,vehicle}.php`; new
+  `resources/lang/en/utils.php` (Utilities / imports).
+- **Rule:** `.ai/rules/app.md` — admin flash wording only from the lang files or a Result.
+- **Test:** new `tests/Unit/Lang/FlashMessagesLangTest.php` (every key exists, placeholders passed, wording kept).
+  Full suite: 511 passed, 1 skipped. Full `phpstan analyse`: No errors.

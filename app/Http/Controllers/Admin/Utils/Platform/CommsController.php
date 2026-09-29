@@ -74,7 +74,7 @@ class CommsController extends Controller
 
             return back();
         }
-        Alert::success('Queued again as #'.$result->get('outbox_id').'.')->flash();
+        Alert::success(__('utils.flash.queued_again', ['id' => $result->get('outbox_id')]))->flash();
 
         return redirect()->route('utils.comms.outbox.show', $result->get('outbox_id'));
     }

@@ -127,7 +127,7 @@ class SubSegmentCrudController extends CrudController
 
         app(SubSegmentService::class)->update(SubSegment::findOrFail($id), $request->all());
 
-        \Alert::success('Sub Segment updated successfully!')->flash();
+        \Alert::success(__('vehicle.flash.sub_segment_updated_successfully'))->flash();
 
         return redirect(backpack_url('vehicle/sub-segment'));
     }
@@ -155,7 +155,7 @@ class SubSegmentCrudController extends CrudController
 
         app(SubSegmentService::class)->create($request->all());
 
-        \Alert::success('Sub Segment created successfully!')->flash();
+        \Alert::success(__('vehicle.flash.sub_segment_created_successfully'))->flash();
 
         return redirect(backpack_url('vehicle/sub-segment'));
     }

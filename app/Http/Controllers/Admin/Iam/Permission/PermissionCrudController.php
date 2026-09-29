@@ -50,13 +50,14 @@ class PermissionCrudController extends CrudController
             $mapped['serial_no'] = $index + 1;
             $mapped['module_name'] = $permission->module?->name ?? '—';
             $mapped['process_name'] = $permission->process?->name ?? '—';
-            
+
             $editUrl = backpack_url("iam/permission/{$permission->id}/edit");
             $mapped['action'] = '
             <div class="d-flex gap-2 justify-content-center">
                 <a href="'.$editUrl.'" class="btn btn-sm btn-primary py-1 px-2" title="Edit">Edit</a>
             </div>
             ';
+
             return $mapped;
         })->values();
 
@@ -121,7 +122,7 @@ class PermissionCrudController extends CrudController
 
         Permission::create($validated);
 
-        \Alert::success('Permission created successfully!')->flash();
+        \Alert::success(__('iam.flash.permission_created_successfully'))->flash();
 
         return redirect(backpack_url('iam/permission'));
     }
@@ -133,12 +134,12 @@ class PermissionCrudController extends CrudController
         }
 
         $permission = Permission::findOrFail($id);
-        
+
         $validated = $request->validated();
-        
+
         $permission->update($validated);
 
-        \Alert::success('Permission updated successfully!')->flash();
+        \Alert::success(__('iam.flash.permission_updated_successfully'))->flash();
 
         return redirect(backpack_url('iam/permission'));
     }

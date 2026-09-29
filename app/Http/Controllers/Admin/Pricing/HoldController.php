@@ -36,7 +36,7 @@ class HoldController extends Controller
         ]);
 
         Hold::putOnHold($request->scope, $request->reason);
-        \Alert::success("Pricelist [{$request->scope}] has been put on Hold.")->flash();
+        \Alert::success(__('pricing.flash.pricelist_put_on_hold', ['scope' => $request->scope]))->flash();
 
         return redirect()->route('pricing.hold.index');
     }
@@ -53,7 +53,7 @@ class HoldController extends Controller
         ]);
 
         Hold::reopen($request->scope, $request->reason);
-        \Alert::success("Pricelist [{$request->scope}] has been Reopened.")->flash();
+        \Alert::success(__('pricing.flash.pricelist_reopened', ['scope' => $request->scope]))->flash();
 
         return redirect()->route('pricing.hold.index');
     }

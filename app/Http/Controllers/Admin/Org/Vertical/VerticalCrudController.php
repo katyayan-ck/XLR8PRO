@@ -147,7 +147,7 @@ class VerticalCrudController extends CrudController
 
         $this->verticals->create($request->all());
 
-        \Alert::success('Vertical created successfully!')->flash();
+        \Alert::success(__('org.flash.vertical_created_successfully'))->flash();
 
         return redirect(backpack_url('org/vertical'));
     }
@@ -159,7 +159,7 @@ class VerticalCrudController extends CrudController
 
         $this->verticals->update(Vertical::findOrFail($id), $request->all());
 
-        \Alert::success('Vertical updated successfully!')->flash();
+        \Alert::success(__('org.flash.vertical_updated_successfully'))->flash();
 
         return redirect(backpack_url('org/vertical'));
     }
