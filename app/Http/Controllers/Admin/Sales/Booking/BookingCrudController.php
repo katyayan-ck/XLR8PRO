@@ -137,10 +137,9 @@ class BookingCrudController extends CrudController
 
         $this->data['customer_categories'] = OrgService::keywordValueByCode('CUSTOMER_TYPE');
 
-        $this->data['body_type_map'] = [
-            '1' => 'Complete',
-            '2' => 'CBC',
-        ];
+        $this->data['body_type_map'] = OrgService::getKeyValuesByCode('BODY_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
         $this->data['occupation_types'] = OrgService::keywordValueByCode('OCCUPATION_TYPE');
         $booking = Booking::findOrFail($id);
@@ -258,14 +257,34 @@ class BookingCrudController extends CrudController
         
         $customer_categories = OrgService::keywordValueByCode('CUSTOMER_TYPE');
         $occupation_types = OrgService::keywordValueByCode('OCCUPATION_TYPE');
-        $body_type_map = [
-            '1' => 'Complete',
-            '2' => 'CBC',
-        ];
+        $body_type_map = OrgService::getKeyValuesByCode('BODY_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+        $care_of_type_map = OrgService::getKeyValuesByCode('CARE_OF_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+
+        $saleTypeMap = collect(
+                OrgService::keywordValueByCode('SALE_TYPE')
+            )->sortBy('id')
+            ->values()
+            ->mapWithKeys(function ($item, $index) {
+                return [
+                    (string) ($index + 1) => $item['value'],
+                ];
+            })
+            ->toArray();
+
+        $purchase_type_map = OrgService::getKeyValuesByCode('PURCHASE_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
         $this->data['customer_categories'] = $customer_categories;
         $this->data['occupation_types'] = $occupation_types;
         $this->data['body_type_map'] = $body_type_map;
+        $this->data['care_of_type_map'] = $care_of_type_map;
+        $this->data['sale_type_map'] = $saleTypeMap;
+        $this->data['purchase_type_map'] = $purchase_type_map;
 
         return $this->traitCreate();
     }
@@ -286,6 +305,21 @@ class BookingCrudController extends CrudController
         $finModeRule = $request->customertype === 'Dummy'
             ? 'nullable|string|max:255'
             : 'required|string|max:255';
+
+        $saleTypeMap = collect(
+                OrgService::keywordValueByCode('SALE_TYPE')
+            )->sortBy('id')
+            ->values()
+            ->mapWithKeys(function ($item, $index) {
+                return [
+                    (string) ($index + 1) => $item['value'],
+                ];
+            })
+            ->toArray();
+
+        $bodyTypeMap = OrgService::getKeyValuesByCode('BODY_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
         // Friendly field names for validation messages, sourced from the same
         // centralized label registry the Blade form uses (resources/lang/en/booking.php)
@@ -353,8 +387,8 @@ class BookingCrudController extends CrudController
             'model' => 'required|string|max:255',
             'variant' => 'required|string|max:255',
             'color' => 'required|string|max:255',
-            'body_type' => 'required|in:1,2',
-            'sale_type' => 'required|in:1,2',
+            'body_type' => ['required', Rule::in(array_keys($bodyTypeMap))],
+            'sale_type' => ['required', Rule::in(array_keys($saleTypeMap))],
             'name' => 'required|string|max:255',
             'careof' => 'nullable|string|max:255',
             'careofname' => 'nullable|string|max:255',
@@ -430,10 +464,18 @@ class BookingCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
         }
 
+        $saleTypeMap = collect(
+                OrgService::keywordValueByCode('SALE_TYPE')
+            )->pluck('value', 'code')->toArray();
+
+        $bodyTypeMap = OrgService::getKeyValuesByCode('BODY_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+
         $booking = Booking::findOrFail($id);
 
         $rules = [
-            'sale_type' => 'required|in:1,2',
+            'sale_type' => ['required', Rule::in(array_keys($saleTypeMap))],
             'customercat' => 'required|string|max:255',
             'name' => 'required|string|max:255',
             'care_of' => 'nullable|string|max:255',
@@ -455,7 +497,7 @@ class BookingCrudController extends CrudController
             'model' => 'required|string|max:255',
             'variant' => 'required|string|max:255',
             'color' => 'required|string|max:255',
-            'body_type' => 'required|in:1,2',
+            'body_type' => ['required', Rule::in(array_keys($bodyTypeMap))],
             'accessories' => 'nullable|array',
             'accessories.*' => 'string',
             'apack_amount' => 'required|numeric',
@@ -699,37 +741,29 @@ class BookingCrudController extends CrudController
                 '5' => 'BKN LMM L5 (RJ07C0056TC)',
                 '6' => 'BKN LMM L3 (RJ07TC0322)',
             ],
-            'sale_type_map' => [
-                '1' => 'Within State',
-                '2' => 'Outside State',
-            ],
-            'permit_map' => [
-                '1' => 'Private - U/C (4 Wheeler)',
-                '2' => 'Private - BH (4 Wheeler)',
-                '3' => 'Private - EV (4 Wheeler)',
-                '4' => 'Goods - G (4 Wheeler)',
-                '5' => 'Goods - G 3 Ton+ (4 Wheeler)',
-                '6' => 'Goods - G (3 Wheeler)',
-                '7' => 'Goods - G EV (3 Wheeler)',
-                '8' => 'Taxi - T (4 Wheeler)',
-                '9' => 'Passenger - P (3 Wheeler)',
-                '10' => 'Passenger - P EV (3 Wheeler)',
-                '11' => 'Ambulance (Misc.)',
-            ],
-            'body_type_map' => [
-                '1' => 'Complete',
-                '2' => 'CBC',
-            ],
-            'reg_no_type_map' => [
-                '1' => 'Regular',
-                '2' => 'BH',
-                '3' => 'Special',
-            ],
-            'registration_type_map' => [
-                '1' => 'Type 1',
-                '2' => 'Type 2',
-                '3' => 'Type 3',
-            ],
+            'sale_type_map' => OrgService::getKeyValuesByCode('SALE_TYPE')
+                ?->pluck('value', 'code')
+                ->toArray() ?? [],
+
+            'permit_map' => OrgService::getKeyValuesByCode('RTO_PERMIT')
+                ->sortBy('id')
+                ->values()
+                ->mapWithKeys(fn ($permit, $index) => [
+                    (string) ($index + 1) => $permit->value
+                ])
+                ->toArray(),
+
+            'body_type_map' => OrgService::getKeyValuesByCode('BODY_TYPE')
+                ?->pluck('value', 'code')
+                ->toArray() ?? [],
+
+            'reg_no_type_map' => OrgService::getKeyValuesByCode('REGISTRATION_NO_TYPE')
+                ?->pluck('value', 'code')
+                ->toArray() ?? [],
+
+            'registration_type_map' => OrgService::getKeyValuesByCode('REGISTRATION_TYPE')
+                ?->pluck('value', 'code')
+                ->toArray() ?? [],
         ];
 
         $data['total_amount'] = $data['receiptLogs']->sum('amount');
@@ -1243,19 +1277,17 @@ class BookingCrudController extends CrudController
         $policy_no = $booking->policy_no ?? 'N/A';
         $policy_date = site_date($booking->policy_date);
 
-        $policy_type = match ((int) ($booking->policy_type ?? 0)) {
-            1 => 'Standard',
-            2 => 'Nil Dep',
-            3 => 'Base(Nil Dep + Consumables)',
-            4 => 'Higher(Nil Dep + Consumables + Add Ons)',
-            default => 'N/A'
-        };
+        $policyTypeMap = OrgService::getKeyValuesByCode('POLICY_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
-        $rto_sale_type = match ((int) ($booking->sale_type ?? 0)) {
-            1 => 'Within State',
-            2 => 'Outside State',
-            default => 'N/A'
-        };
+        $policy_type = $policyTypeMap[(string) ($booking->policy_type ?? '')] ?? 'N/A';
+
+        $saleTypeMap = OrgService::getKeyValuesByCode('SALE_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+
+        $rto_sale_type = $saleTypeMap[(string) ($booking->sale_type ?? '')] ?? 'N/A';
 
         // Was refetched from OrgService on every single row before; now
         // resolved once per page in preloadGridLookups() and passed in.
@@ -1267,26 +1299,23 @@ class BookingCrudController extends CrudController
 
         $rto_permit = $permit_map[(string) ($booking->permit ?? '')] ?? 'N/A';
 
-        $rto_body_type = match ((int) ($booking->body_type ?? 0)) {
-            1 => 'Complete',
-            2 => 'CBC',
-            default => 'N/A'
-        };
+        $bodyTypeMap = OrgService::getKeyValuesByCode('BODY_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
-        $registration_type = match ((int) ($booking->registration_type ?? 0)) {
-            0 => 'Exempted (Reg & Hypo Fee Only)',
-            1 => 'TRC Only',
-            2 => 'Tax Only',
-            3 => 'TRC + Tax',
-            default => 'N/A'
-        };
+        $rto_body_type = $bodyTypeMap[(string) ($booking->body_type ?? '')] ?? 'N/A';
 
-        $registration_no_type = match ((int) ($booking->registration_no_type ?? 0)) {
-            1 => 'Regular',
-            2 => 'BH',
-            3 => 'Special',
-            default => 'N/A'
-        };
+        $registrationTypeMap = OrgService::getKeyValuesByCode('REGISTRATION_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+
+        $registration_type = $registrationTypeMap[(string) ($booking->registration_type ?? '')] ?? 'N/A';
+
+        $registrationNoTypeMap = OrgService::getKeyValuesByCode('REGISTRATION_NO_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+
+        $registration_no_type = $registrationNoTypeMap[(string) ($booking->registration_no_type ?? '')] ?? 'N/A';
 
         $trc_number = $booking->trc_number ?? 'N/A';
 
@@ -1297,17 +1326,12 @@ class BookingCrudController extends CrudController
         $tax_payment_bank_ref_no = $booking->tax_payment_bank_ref_no ?? 'N/A';
 
         $vehicle_registration_no = $booking->vehicle_registration_no ?? 'N/A';
-        $instrument_type = match ((int) ($booking->instrument_type ?? 0)) {
-            1 => 'Financier Payment',
-            2 => 'Delivery Order',
-            3 => 'Sanction Letter',
-            4 => 'Mail Communication',
-            5 => 'Whatsapp Communication',
-            6 => 'Banker Cheque',
-            7 => 'Demand Graph',
-            8 => 'Customer Cheque',
-            default => 'N/A'
-        };
+        $instrumentTypeMap = OrgService::getKeyValuesByCode('INSTRUMENT_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+
+        $instrument_type =
+            $instrumentTypeMap[(string) ($booking->instrument_type ?? '')] ?? 'N/A';
 
         $loan_amount_dealer_entry = (float) ($booking->loan_amount_dealer_entry ?? 0);
         $margin_money = (float) ($booking->margin_money ?? 0);
@@ -1902,19 +1926,31 @@ class BookingCrudController extends CrudController
         if (empty($value)) {
             return 'N/A';
         }
-        $map = ['1' => 'Complete', '2' => 'CBC'];
+        $map = OrgService::getKeyValuesByCode('BODY_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
-        return $map[$value] ?? 'N/A';
+        return $map[(string) $value] ?? 'N/A';
     }
 
-    private function getSaleTypeLabel($value)
+    private function getSaleTypeLabel($code): string
     {
-        if (empty($value)) {
-            return 'N/A';
+        if ($code === null || $code === '') {
+            return '';
         }
-        $map = ['1' => 'Within State', '2' => 'Outside State'];
 
-        return $map[$value] ?? 'N/A';
+        $map = collect(
+            OrgService::keywordValueByCode('SALE_TYPE')
+        )->sortBy('id')
+        ->values()
+        ->mapWithKeys(function ($item, $index) {
+            return [
+                (string) ($index + 1) => $item['value'],
+            ];
+        })
+        ->toArray();
+
+        return $map[(string) $code] ?? (string) $code;
     }
 
     private function getPermitLabel($value)
@@ -1944,9 +1980,11 @@ class BookingCrudController extends CrudController
         if (empty($value)) {
             return 'N/A';
         }
-        $map = ['1' => 'Regular', '2' => 'BH', '3' => 'Special'];
+        $map = OrgService::getKeyValuesByCode('REGISTRATION_NO_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
-        return $map[$value] ?? 'N/A';
+        return $map[(string) $value] ?? 'N/A';
     }
 
     private function getInsuranceTypeLabel($value)
@@ -1954,14 +1992,11 @@ class BookingCrudController extends CrudController
         if (empty($value)) {
             return 'N/A';
         }
-        $map = [
-            '1' => 'Standard',
-            '2' => 'Nil Dep',
-            '3' => 'Base (Nil Dep + Consumables)',
-            '4' => 'Higher (Nil Dep + Consumables + Add Ons)',
-        ];
+        $map = OrgService::getKeyValuesByCode('POLICY_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
-        return $map[$value] ?? 'N/A';
+        return $map[(string) $value] ?? 'N/A';
     }
 
     private function getRegistrationTypeLabel($value)
@@ -1970,12 +2005,9 @@ class BookingCrudController extends CrudController
             return '—';
         }
 
-        $map = [
-            '0' => 'Tax Only',
-            '1' => 'TRC + Tax',
-            '2' => 'TRC Only',
-            '3' => 'Exempted',
-        ];
+        $map = OrgService::getKeyValuesByCode('REGISTRATION_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
         return $map[(string) $value] ?? (string) $value;
     }
