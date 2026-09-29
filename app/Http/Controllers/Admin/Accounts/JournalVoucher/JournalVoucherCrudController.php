@@ -187,9 +187,16 @@ class JournalVoucherCrudController extends Controller
             abort(403, 'Unauthorized. You do not have permission to look up journal voucher customer details.');
         }
 
+        // Convert XB-123 -> 123 before sending to OrgService
+        $bookingNo = trim((string) $request->booking_no);
+
+        if ($bookingNo !== '') {
+            $bookingNo = preg_replace('/^XB-/i', '', $bookingNo);
+        }
+
         $data = OrgService::getCustomerByTransactionIds(
             $request->enq_no,
-            $request->booking_no,
+            $bookingNo,
             $request->votf_no
         );
 

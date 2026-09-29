@@ -1606,25 +1606,23 @@
 
                                 <!-- CARE OF LABEL CELL -->
                                 <td class="title cell-label" style="width: 18%; padding: 0 !important;">
-                                    <!-- Screen par sirf Dropdown dikhega -->
                                     <div class="no-print" style="width: 100%; height: 100%;">
                                         <select name="careof" id="careof" class="group-select">
                                             <option value="">Care Of</option>
-                                            <option value="1"
-                                                {{ old('careof', $quotationData['careof'] ?? '') == '1' ? 'selected' : '' }}>
-                                                Son of</option>
-                                            <option value="2"
-                                                {{ old('careof', $quotationData['careof'] ?? '') == '2' ? 'selected' : '' }}>
-                                                Daughter of</option>
-                                            <option value="3"
-                                                {{ old('careof', $quotationData['careof'] ?? '') == '3' ? 'selected' : '' }}>
-                                                Married to</option>
-                                            <option value="4"
-                                                {{ old('careof', $quotationData['careof'] ?? '') == '4' ? 'selected' : '' }}>
-                                                Guardian Name</option>
+
+                                            @php
+                                                $careOfTypes = OrgService::getKeyValuesByCode('CARE_OF_TYPE');
+                                            @endphp
+
+                                            @foreach ($careOfTypes as $careOf)
+                                                <option value="{{ $careOf->id }}"
+                                                    {{ old('careof', $quotationData['careof'] ?? '') == $careOf->id ? 'selected' : '' }}>
+                                                    {{ $careOf->value }}
+                                                </option>
+                                            @endforeach
                                         </select>
                                     </div>
-                                    <!-- Print ke waqt sirf plain text dikhega -->
+
                                     <span id="careof_relation_print" class="print-only-inline"
                                         style="padding-left: 5px;">Care Of</span>
                                 </td>
@@ -1790,12 +1788,7 @@
                                                                 class="form-select form-select-sm"
                                                                 style="font-size: 9px; padding: 1px 3px; height: 22px; border: 1px solid #ccc; border-radius: 3px; width: 100%; background: var(--tblr-card-bg);">
                                                                 <option value="">Select Type</option>
-                                                                @foreach ($reg_no_type_map ?? [
-            '1' => 'Regular',
-            '2' => 'BH
-                                                                                                                                Series',
-            '3' => 'Special Number',
-        ] as $key => $value)
+                                                                @foreach ($reg_no_type_map as $key => $value)
                                                                     <option value="{{ $key }}"
                                                                         {{ old('registration_no_type', $quotationData['registration_no_type'] ?? '') == $key ? 'selected' : '' }}>
                                                                         {{ $value }}

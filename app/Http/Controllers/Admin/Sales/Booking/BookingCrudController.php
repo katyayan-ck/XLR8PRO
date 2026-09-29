@@ -955,7 +955,7 @@ class BookingCrudController extends CrudController
                 'bookings.created_by',
                 'bookings.updated_at',
                 'bookings.updated_by',
-
+                'bookings.final_data',
                 // 2. Joined Fields from Enquiry Table
                 'enq.dealer_branch as branch_code',
                 'enq.dealer_location as location_code',
@@ -1892,12 +1892,6 @@ class BookingCrudController extends CrudController
             ['headerName' => 'DO Number (TA Statement)', 'field' => 'do_number_ta', 'width' => 180],
             ['headerName' => 'DO Amount (TA Statement)', 'field' => 'do_amount_ta', 'width' => 180, 'type' => 'number', 'cellClass' => 'text-right'],
 
-            // ----- OTHER RECEIVABLES -----
-            ['headerName' => 'Brokerage Amount', 'field' => 'brokerage_amount', 'width' => 150, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Other Receivable', 'field' => 'other_discount_receivable', 'width' => 160, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'M&M Support Receivable', 'field' => 'mm_support_receivable', 'width' => 180, 'type' => 'number', 'cellClass' => 'text-right'],
-            ['headerName' => 'Liquidation Scheme Receivable', 'field' => 'liquidation_scheme_receivable', 'width' => 190, 'type' => 'number', 'cellClass' => 'text-right'],
-
             // ----- ACTION -----
             ['headerName' => 'Action', 'field' => 'action', 'width' => 150, 'sortable' => false, 'filter' => false, 'cellRenderer' => 'htmlRenderer', 'pinned' => 'right'],
         ];
@@ -1972,9 +1966,10 @@ class BookingCrudController extends CrudController
 
     private function getRegistrationTypeLabel($value)
     {
-        if (empty($value)) {
-            return 'N/A';
+        if ($value === null || $value === '') {
+            return '—';
         }
+
         $map = [
             '0' => 'Tax Only',
             '1' => 'TRC + Tax',
@@ -1982,7 +1977,7 @@ class BookingCrudController extends CrudController
             '3' => 'Exempted',
         ];
 
-        return $map[$value] ?? 'N/A';
+        return $map[(string) $value] ?? (string) $value;
     }
 
     private function getDeliveryOptionLabel($value)
@@ -2056,20 +2051,49 @@ class BookingCrudController extends CrudController
     private function getConsultantDetails($consultantCode)
     {
         if (empty($consultantCode)) {
-            return ['name' => 'N/A', 'mile_id' => 'N/A'];
+            return [
+                'name' => null,
+                'mile_id' => null,
+                'branch_name' => null,
+                'location_name' => null,
+            ];
         }
 
-        $consultant = DB::table('xlr8_admin_person')
-            ->where('person_code', $consultantCode)
+        $consultantCode = trim((string) $consultantCode);
+
+        $employee = DB::table('xlr8_admin_employee as e')
+            ->join(
+                'xlr8_admin_person as p',
+                'p.person_code',
+                '=',
+                'e.person_code'
+            )
+            ->where(function ($q) use ($consultantCode) {
+                $q->where('e.code', $consultantCode)
+                    ->orWhere('e.person_code', $consultantCode)
+                    ->orWhere('p.person_code', $consultantCode);
+            })
+            ->select([
+                'e.code',
+                'e.person_code',
+                'p.display_name',
+            ])
             ->first();
 
-        if (! $consultant) {
-            return ['name' => 'N/A', 'mile_id' => 'N/A'];
+        if (! $employee) {
+            return [
+                'name' => null,
+                'mile_id' => null,
+                'branch_name' => null,
+                'location_name' => null,
+            ];
         }
 
         return [
-            'name' => $consultant->display_name ?? 'N/A',
-            'mile_id' => $consultant->employee_code ?? 'N/A',
+            'name' => $employee->display_name,
+            'mile_id' => $employee->code,
+            'branch_name' => null,
+            'location_name' => null,
         ];
     }
 
@@ -10220,9 +10244,20 @@ class BookingCrudController extends CrudController
         $this->data['crud'] = $this->crud;
         $this->data['title'] = 'Transaction / OTF Listings';
 
-        $query = $this->getBaseQuery();
-        $query->whereIn('bookings.status', [1, 8]);
-        $query->orderBy('bookings.id', 'desc');
+        $query = $this->getBaseQuery()
+            ->whereIn('bookings.status', [1, 8])
+            ->whereRaw("
+                JSON_VALID(bookings.final_data)
+                AND NULLIF(
+                    TRIM(
+                        JSON_UNQUOTE(
+                            JSON_EXTRACT(bookings.final_data, '$.votf_no')
+                        )
+                    ),
+                    ''
+                ) IS NOT NULL
+            ")
+            ->orderBy('bookings.id', 'desc');
 
         $paginatedBookings = $query->paginate(50);
         $gridLookups = $this->preloadGridLookups($paginatedBookings->getCollection());
@@ -10268,9 +10303,26 @@ class BookingCrudController extends CrudController
             $mapped->customer_address = $otfData['registration_address'] ?? $booking->address ?? 'N/A';
             $mapped->customer_tehsil = $otfData['customer_tehsil'] ?? 'N/A';
             $mapped->customer_district = $otfData['customer_district'] ?? 'N/A';
-            $mapped->segment = $booking->segment_code ?? 'N/A';
-            $mapped->model = $booking->model_code ?? 'N/A';
-            $mapped->variant = $booking->variant_code ?? 'N/A';
+            $segmentCode = $booking->segment_code ?? null;
+            $modelCode   = $booking->model_code ?? null;
+            $variantCode = $booking->variant_code ?? null;
+            $colorCode   = $booking->color_code ?? null;
+
+            $mapped->segment = $gridLookups['segments']->get($segmentCode)
+                ?? $segmentCode
+                ?? '—';
+
+            $mapped->model = $gridLookups['models']->get($modelCode)
+                ?? $modelCode
+                ?? '—';
+
+            $mapped->variant = $gridLookups['variants']->get($variantCode)
+                ?? $variantCode
+                ?? '—';
+
+            $mapped->color = $gridLookups['colors']->get($colorCode)
+                ?? $colorCode
+                ?? '—';
             $mapped->chassis_no = $booking->chassis_no ?? 'N/A';
             $mapped->mobile = $booking->mobile ?? 'N/A';
             $mapped->gstn = $booking->gstn ?? 'N/A';
@@ -10282,14 +10334,33 @@ class BookingCrudController extends CrudController
             $mapped->sale_type = $this->getSaleTypeLabel($rto->sale_type ?? $otfData['sale_type'] ?? null);
             $mapped->permit = $this->getPermitLabel($rto->permit ?? $otfData['permit'] ?? null);
             $mapped->registration_no_type = $this->getRegNoTypeLabel($rto->rgn_no_type ?? $otfData['registration_no_type'] ?? null);
-            $mapped->registration_category = $otfData['registration_category'] ?? 'N/A';
+            $registrationCategoryMap = [
+                '1' => 'Exempted',
+                '2' => 'Standard',
+            ];
+
+            $registrationCategory = $otfData['registration_category'] ?? null;
+
+            $mapped->registration_category =
+                $registrationCategory !== null && $registrationCategory !== ''
+                    ? ($registrationCategoryMap[(string) $registrationCategory]
+                        ?? (string) $registrationCategory)
+                    : '—';
             $mapped->registration_type = $this->getRegistrationTypeLabel($rto->rgn_type ?? $otfData['registration_type'] ?? null);
-            $mapped->color = $booking->color_code ?? 'N/A';
 
             // ----- OTF / DMS -----
-            $mapped->votf_no = $otfData['votf_no'] ?? 'N/A';
-            $mapped->fsc_name = $consultant['name'] ?? 'N/A';
-            $mapped->fsc_mile_id = $consultant['mile_id'] ?? 'N/A';
+            $mapped->votf_no = $booking->votf_no
+                ?: ($otfData['votf_no'] ?? 'N/A');
+
+            $consultantCode = $otfData['consultant']
+                ?? $booking->consultant
+                ?? null;
+
+            $consultant = $this->getConsultantDetails($consultantCode);
+            $mapped->fsc_name = $consultant['name'] ?? '—';
+            $mapped->fsc_mile_id = $consultant['mile_id'] ?? '—';
+            $mapped->sc_branch = $consultant['branch_name'] ?? '—';
+            $mapped->sc_location = $consultant['location_name'] ?? '—';
             $mapped->dms_no = $booking->dms_no ?? 'N/A';
             $mapped->dms_otf = $booking->dms_otf ?? 'N/A';
             $mapped->booking_no = $booking->id;
@@ -10308,9 +10379,7 @@ class BookingCrudController extends CrudController
             $mapped->customer_category = $booking->b_cat ?? 'N/A';
             $mapped->retail_category = $otfData['retail_category'] ?? 'N/A';
 
-            // ----- SC Branch & Location -----
-            $mapped->sc_branch = $consultant['branch_name'] ?? 'N/A';
-            $mapped->sc_location = $consultant['location_name'] ?? 'N/A';
+            
 
             // ----- PMS SC -----
             $pmsConsultant = $this->getConsultantDetails($booking->consultant);
@@ -10375,11 +10444,31 @@ class BookingCrudController extends CrudController
             } else {
                 $mapped->financier = $financierValue ?? '';
             }
-            $mapped->loan_amount = $otfData['loan_amount'] ?? $finance?->loan_amount ?? '';
-            $mapped->file_charge = $otfData['file_charge'] ?? $finance?->file_charge ?? '';
-            $mapped->margin_money = $otfData['margin_money'] ?? $finance?->margin ?? '';
-            $mapped->financier_subvention = $otfData['financier_subvention'] ?? $finance?->subvention_amount ?? '';
-            $mapped->do_amount = $otfData['net_settlement_amount'] ?? 'N/A';
+            $loanAmount = (float) ($otfData['loan_amount'] ?? $finance?->loan_amount ?? 0);
+            $fileCharge = (float) ($otfData['file_charge'] ?? $finance?->file_charge ?? 0);
+            $marginMoney = (float) ($otfData['margin_money'] ?? $finance?->margin ?? 0);
+            $financierSubvention = (float) (
+                $otfData['financier_subvention']
+                ?? $finance?->subvention_amount
+                ?? 0
+            );
+
+            $doAmount = $otfData['net_settlement_amount'] ?? null;
+
+            if ($doAmount === null || $doAmount === '') {
+                $doAmount =
+                    $loanAmount
+                    - $fileCharge
+                    + $marginMoney
+                    - $financierSubvention;
+            }
+
+            $mapped->loan_amount = number_format($loanAmount, 2);
+            $mapped->file_charge = number_format($fileCharge, 2);
+            $mapped->margin_money = number_format($marginMoney, 2);
+            $mapped->financier_subvention = number_format($financierSubvention, 2);
+
+            $mapped->do_amount = number_format((float) $doAmount, 2);
 
             // ----- RECEIPTS -----
             $receiptLogs = Bookingamount::where('bid', $booking->id)
@@ -10396,30 +10485,115 @@ class BookingCrudController extends CrudController
             $mapped->receipt_details = ! empty($receiptDisplay) ? implode(' | ', $receiptDisplay) : 'N/A';
             $mapped->receipt_total = number_format($receiptTotal, 2);
 
+            $receiptLogs = Bookingamount::where('bid', $booking->id)
+                ->where('type', 1)
+                ->whereNull('deleted_at')
+                ->orderBy('date')
+                ->orderBy('id')
+                ->get();
+
+            $receiptDisplay = [];
+            $receiptTotal = 0;
+
+            foreach ($receiptLogs as $receipt) {
+                $receiptDisplay[] =
+                    "{$receipt->type_number} / "
+                    . site_date($receipt->date)
+                    . ' / ₹'
+                    . number_format((float) $receipt->amount, 2);
+
+                $receiptTotal += (float) $receipt->amount;
+            }
+
+            $mapped->receipt_details =
+                ! empty($receiptDisplay)
+                    ? implode(' | ', $receiptDisplay)
+                    : '—';
+
+            $mapped->receipt_total = number_format($receiptTotal, 2);
+
             $receipts = $receiptLogs->values();
-            $mapped->receipt_no_1 = isset($receipts[0]) ? $receipts[0]->reciept : 'N/A';
-            $mapped->receipt_date_1 = isset($receipts[0]) ? site_date($receipts[0]->date) : 'N/A';
-            $mapped->receipt_amount_1 = isset($receipts[0]) ? number_format($receipts[0]->amount, 2) : 'N/A';
-            $mapped->receipt_no_2 = isset($receipts[1]) ? $receipts[1]->reciept : 'N/A';
-            $mapped->receipt_date_2 = isset($receipts[1]) ? site_date($receipts[1]->date) : 'N/A';
-            $mapped->receipt_amount_3 = isset($receipts[2]) ? number_format($receipts[2]->amount, 2) : 'N/A';
 
+            $mapped->receipt_no_1 =
+                isset($receipts[0])
+                    ? ($receipts[0]->type_number ?: '—')
+                    : '—';
+
+            $mapped->receipt_date_1 =
+                isset($receipts[0])
+                    ? site_date($receipts[0]->date)
+                    : '—';
+
+            $mapped->receipt_amount_1 =
+                isset($receipts[0])
+                    ? number_format((float) $receipts[0]->amount, 2)
+                    : '—';
+
+            $mapped->receipt_no_2 =
+                isset($receipts[1])
+                    ? ($receipts[1]->type_number ?: '—')
+                    : '—';
+
+            $mapped->receipt_date_2 =
+                isset($receipts[1])
+                    ? site_date($receipts[1]->date)
+                    : '—';
+
+            $mapped->receipt_amount_3 =
+                isset($receipts[2])
+                    ? number_format((float) $receipts[2]->amount, 2)
+                    : '—';
             // ----- BALANCE -----
-            $mapped->expected_balance = $otfData['expected_balance'] ?? '';
-            $mapped->do_settlement_difference = $otfData['do_settlement_difference'] ?? '';
-            $mapped->discount_through_jv = $otfData['discount_through_jv'] ?? '';
-            $mapped->final_balance = $otfData['final_balance'] ?? '';
+            $mapped->expected_balance =
+                ($otfData['expected_balance'] ?? '') !== ''
+                    ? $otfData['expected_balance']
+                    : '—';
 
-            // ----- DELIVERY -----
-            $mapped->do_number_delivery = $otfData['do_number'] ?? $finance?->instrument_ref_no ?? 'N/A';
-            $mapped->do_number_ta = $otfData['do_number_ta'] ?? 'N/A';
-            $mapped->do_amount_ta = $otfData['do_amount_ta'] ?? 'N/A';
+            $mapped->do_settlement_difference =
+                ($otfData['do_settlement_difference'] ?? '') !== ''
+                    ? $otfData['do_settlement_difference']
+                    : '—';
+
+            $mapped->discount_through_jv =
+                ($otfData['discount_through_jv'] ?? '') !== ''
+                    ? $otfData['discount_through_jv']
+                    : '—';
+
+            $mapped->final_balance =
+                ($otfData['final_balance'] ?? '') !== ''
+                    ? $otfData['final_balance']
+                    : '—';
+
+            $financeDoNumber = trim(
+                (string) ($finance?->instrument_ref_no ?? '')
+            );
+
+            $taStatement = null;
+
+            if ($financeDoNumber !== '') {
+                $taStatement = DB::table('xlr8_financer_statement')
+                    ->where('do_no', $financeDoNumber)
+                    ->whereNull('deleted_at')
+                    ->orderByDesc('created_at')
+                    ->first();
+            }
+
+            $mapped->do_number_delivery =
+                $otfData['do_number']
+                ?? $finance?->instrument_ref_no
+                ?? '—';
+
+            $mapped->do_number_ta =
+                $taStatement?->do_no
+                ?? '—';
+
+            $mapped->do_amount_ta =
+                $taStatement?->credit_amount !== null
+                    ? number_format((float) $taStatement->credit_amount, 2)
+                    : '—';
 
             // ----- OTHER RECEIVABLES -----
-            $mapped->brokerage_amount = $otfData['brokerage_amount'] ?? 'N/A';
-            $mapped->other_discount_receivable = $otfData['other_discount_receivable'] ?? 'N/A';
-            $mapped->mm_support_receivable = $otfData['mm_support_receivable'] ?? 'N/A';
-            $mapped->liquidation_scheme_receivable = $otfData['liquidation_scheme_receivable'] ?? 'N/A';
+            
 
             // ----- OTF Action Button -----
             $otfUrl = backpack_url("sales/booking/otf-form/{$booking->id}");
@@ -10488,30 +10662,42 @@ class BookingCrudController extends CrudController
 
     public function getDoAmount(Request $request)
     {
-        if (! backpack_user()->can('SLS_BKNG_DO')) {
+        if (!backpack_user()->can('SLS_BKNG_DO')) {
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
         }
 
-        $doNo = $request->input('do_no');
+        $doNo = trim((string) $request->input('do_no'));
 
-        if (empty($doNo)) {
-            return response()->json(['amount' => '', 'date' => '']);
-        }
-
-        // Search for exact match in do_no column
-        $statement = DB::table('xlr8_financer_statement')
-            ->where('do_no', $doNo)
-            ->where('trans_type', 'C') // Credit transactions only
-            ->first();
-
-        if ($statement) {
+        if ($doNo === '') {
             return response()->json([
-                'amount' => number_format($statement->credit_amount ?? 0, 2),
-                'date' => site_date($statement->trans_date, ''),
+                'amount' => '',
+                'date' => '',
             ]);
         }
 
-        return response()->json(['amount' => '', 'date' => '']);
+        // Find exact DO Number in Financer Statement
+        $statement = DB::table('xlr8_financer_statement')
+            ->where('do_no', $doNo)
+            ->whereNull('deleted_at')
+            ->orderByDesc('created_at')
+            ->first();
+
+        if (!$statement) {
+            return response()->json([
+                'amount' => '',
+                'date' => '',
+            ]);
+        }
+
+        return response()->json([
+            'amount' => $statement->credit_amount !== null
+                ? number_format((float) $statement->credit_amount, 2, '.', '')
+                : '',
+
+            'date' => !empty($statement->created_at)
+                ? \Carbon\Carbon::parse($statement->created_at)->format('Y-m-d')
+                : '',
+        ]);
     }
 
     public function getTAStatement(Request $request)
@@ -10591,34 +10777,44 @@ class BookingCrudController extends CrudController
 
     public function downloadOtfPdf($id)
     {
-        if (! backpack_user()->can('SLS_BKNG_OTF')) {
-            abort(403, 'Unauthorized. You do not have permission to perform this action.');
+        if (!backpack_user()->can('SLS_BKNG_OTF')) {
+            abort(403, 'Unauthorized to download OTF PDF.');
         }
 
         $this->crud->hasAccessOrFail('show');
 
         $booking = Booking::findOrFail($id);
 
-        // Get all the data needed for the OTF form (reuse from otfProcess)
-        $data = $this->getOtfPdfData($booking);
+        // Use the same data source as the OTF form
+        $data = $this->otfService->resolveOtfFormData($booking);
 
-        // Load the view for PDF
-        $pdf = Pdf::loadView('admin.pdf.otf-form-pdf', $data);
+        if (!$data) {
+            abort(404, 'OTF data not found for this booking.');
+        }
 
-        // Set paper size and options
+        $pdf = Pdf::loadView(
+            'admin.pdf.otf-form-pdf',
+            $data
+        );
+
         $pdf->setPaper('a4', 'portrait');
+
         $pdf->setOptions([
             'isHtml5ParserEnabled' => true,
             'isPhpEnabled' => false,
             'dpi' => 150,
             'defaultFont' => 'DejaVu Sans',
-            'isRemoteEnabled' => true, // For images
+            'isRemoteEnabled' => true,
         ]);
 
         $filename = sprintf(
             'OTF_Form_%s_%s_%s.pdf',
             $booking->id,
-            str_replace(' ', '_', $booking->name ?? 'Unknown'),
+            str_replace(
+                ' ',
+                '_',
+                $booking->name ?? 'Unknown'
+            ),
             now()->format('Y-m-d')
         );
 
@@ -10670,6 +10866,10 @@ class BookingCrudController extends CrudController
         $variant = Variant::with(['permit', 'fuelType', 'bodyType', 'bodyMake'])
             ->where('code', $booking->variant_code)->first();
         $color = Color::where('code', $booking->color_code)->first();
+        $enquiry = null;
+            if (!empty($booking->enq_no)) {
+                $enquiry = \App\Models\CRM\Enquiry::resolveByAnyReference($booking->enq_no);
+            }
 
         $consultants = OrgService::getUsers(desigCode: 'SLS_CONS');
 
@@ -10749,7 +10949,8 @@ class BookingCrudController extends CrudController
             'body_type_map',
             'sale_type_map',
             'deliveryOptions',
-            'financierName'
+            'financierName',
+            'enquiry'
         );
     }
 }
