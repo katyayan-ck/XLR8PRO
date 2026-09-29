@@ -23,6 +23,10 @@ use Illuminate\Http\UploadedFile;
  */
 class BookingRtoService
 {
+    /**
+     * The RTO form posts these fixed codes. Keyword masters (SALE_TYPE, BODY_TYPE, REGISTRATION_NO_TYPE) win when they
+     * hold the code; these are the fallback so a missing master never blanks the rule match (BUG-215, 30-09 merge).
+     */
     private const SALE_TYPE_MAP = ['1' => 'Within State', '2' => 'Outside State'];
 
     private const BODY_TYPE_MAP = ['1' => 'Complete', '2' => 'CBC'];
@@ -152,10 +156,14 @@ class BookingRtoService
     ): XlRto {
         $permitMap = $this->permitMap();
 
-        $saleText = self::SALE_TYPE_MAP[$validated['sale_type']] ?? '';
+        $saleTypeMap = (OrgService::getKeyValuesByCode('SALE_TYPE')?->pluck('value', 'code')->toArray() ?? []) + self::SALE_TYPE_MAP;
+        $bodyTypeMap = (OrgService::getKeyValuesByCode('BODY_TYPE')?->pluck('value', 'code')->toArray() ?? []) + self::BODY_TYPE_MAP;
+        $regNoTypeMap = (OrgService::getKeyValuesByCode('REGISTRATION_NO_TYPE')?->pluck('value', 'code')->toArray() ?? []) + self::REG_NO_TYPE_MAP;
+
+        $saleText = $saleTypeMap[(string) $validated['sale_type']] ?? '';
         $permitText = $permitMap[$validated['permit']] ?? '';
-        $bodyText = self::BODY_TYPE_MAP[$validated['body_type']] ?? '';
-        $regNoTypeText = self::REG_NO_TYPE_MAP[$validated['reg_no_type']] ?? '';
+        $bodyText = $bodyTypeMap[(string) $validated['body_type']] ?? '';
+        $regNoTypeText = $regNoTypeMap[(string) $validated['reg_no_type']] ?? '';
 
         $matchingRule = null;
 

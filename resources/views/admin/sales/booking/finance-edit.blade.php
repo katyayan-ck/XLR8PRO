@@ -199,7 +199,7 @@
                                     ? 'selected' : '' }}>
                                     Customer Cheque
                                 </option>
-                            </select>
+                                </select>
                             </div>
 
                             <!-- Ref No. -->

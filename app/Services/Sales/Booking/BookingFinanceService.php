@@ -24,17 +24,6 @@ use Illuminate\Support\Collection;
  */
 class BookingFinanceService
 {
-    private const INSTRUMENT_TYPES = [
-        1 => 'Financier Payment',
-        2 => 'Delivery Order',
-        3 => 'Sanction Letter',
-        4 => 'Mail Communication',
-        5 => 'Whatsapp Communication',
-        6 => 'Banker Cheque',
-        7 => 'Demand Graph',
-        8 => 'Customer Cheque',
-    ];
-
     private const CASE_LOST_REASONS = [
         1 => 'Cash Purchase',
         2 => 'Customer Self Finance',
@@ -403,7 +392,11 @@ class BookingFinanceService
 
     public function instrumentTypeLabel(mixed $value): string
     {
-        return self::INSTRUMENT_TYPES[$value] ?? (string) $value;
+        $map = OrgService::getKeyValuesByCode('INSTRUMENT_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+
+        return $map[(string) $value] ?? (string) $value;
     }
 
     public function caseLostReasonLabel(mixed $value): string

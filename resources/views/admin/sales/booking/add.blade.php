@@ -673,13 +673,20 @@
 
                                             <option value="">Please Select...</option>
 
-                                            <option value="1" {{ (string)$saleType === '1' ? 'selected' : '' }}>
-                                                Within State
-                                            </option>
+                                            @foreach ($sale_type_map ?? [] as $code => $value)
+                                                @php
+                                                    $saleTypeCode = match (strtoupper((string) $code)) {
+                                                        'WITHIN_STATE' => '1',
+                                                        'OUTSIDE_STATE' => '2',
+                                                        default => (string) $code,
+                                                    };
+                                                @endphp
 
-                                            <option value="2" {{ (string)$saleType === '2' ? 'selected' : '' }}>
-                                                Outside State
-                                            </option>
+                                                <option value="{{ $saleTypeCode }}"
+                                                    {{ (string) $saleType === $saleTypeCode ? 'selected' : '' }}>
+                                                    {{ $value }}
+                                                </option>
+                                            @endforeach
                                         </select>
                                     </div>
 

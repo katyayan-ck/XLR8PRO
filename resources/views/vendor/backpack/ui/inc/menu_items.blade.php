@@ -351,6 +351,7 @@
                     'assigned_quick' => \App\Models\CRM\Enquiry::assignedQuick()->count(),
                     'unassigned_long' => \App\Models\CRM\Enquiry::unassignedLong()->count(),
                     'assigned_long' => \App\Models\CRM\Enquiry::assignedLong()->count(),
+                    'duplicate' => \App\Models\CRM\Enquiry::whereNotNull('duplicate')->where('is_active', 1)->count(),
                 ];
             });
         @endphp
@@ -454,8 +455,11 @@
                         <span class="badge rounded-pill text-dark"
                             style="background-color: #e9ecef;">{{ $enqCounts['assigned_long'] ?? 0 }}</span>
                     </a>
-                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
-                        <span><i class="la la-list"></i>Duplicate Enquiries</span>
+                    <a class="dropdown-item d-flex align-items-center justify-content-between" 
+                        href="{{ backpack_url('sales/enquiry/duplicate') }}">
+                        <span><i class="nav-icon la la-copy me-2"></i>Duplicate Enquiries</span>
+                        <span class="badge rounded-pill text-dark"
+                            style="background-color: #e9ecef;">{{ $enqCounts['duplicate'] ?? 0 }}</span>
                     </a>
                 @endif
                 @if (backpack_user() && backpack_user()->can('SLS_CMPN_VIEW'))

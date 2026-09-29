@@ -183,7 +183,7 @@
         'receipt_total',
         'expected_balance', 'do_settlement_difference', 'discount_through_jv', 'final_balance',
         'do_number_delivery', 'do_number_ta', 'do_amount_ta',
-        'brokerage_amount', 'other_discount_receivable', 'mm_support_receivable', 'liquidation_scheme_receivable',
+        
         'action'
     ];
 

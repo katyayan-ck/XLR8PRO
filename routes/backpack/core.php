@@ -389,6 +389,9 @@ Route::group([
     Route::get('sales/enquiry/unassigned-long', [EnquiryCrudController::class, 'unassignedLongList'])->name('sales.enquiry.unassigned-long');
     Route::get('sales/enquiry/assigned-quick', [EnquiryCrudController::class, 'assignedQuickList'])->name('sales.enquiry.assigned-quick');
     Route::get('sales/enquiry/unassigned-quick', [EnquiryCrudController::class, 'unassignedQuickList'])->name('sales.enquiry.unassigned-quick');
+    Route::get('sales/enquiry/duplicate', [EnquiryCrudController::class, 'duplicateEnquiryList'])->name('sales.enquiry.duplicate');
+    Route::get('crm-sales/verifications/lost-enquiries', [EnquiryCrudController::class, 'lostEnquiriesList'])->name('sales.enquiry.lost');
+    Route::get('sales/enquiry/{id}/view', [EnquiryCrudController::class, 'showEnquiry'])->name('sales.enquiry.view');
     // 'pending'/'erroneous' point at BUG-046's confirmed-broken pendingList()/erroneousList() methods.
     // sales.enquiry.pending removed: pendingList() never existed and nothing links to it (DEC-020).
     // sales.enquiry.erroneous removed: erroneousList() never existed; hidden until Track B (DEC-023).
@@ -405,6 +408,7 @@ Route::group([
     Route::get('sales/enquiry/exchange/not-interested', [EnquiryCrudController::class, 'exchangeNotInterestedList'])->name('sales.enquiry.exchange.not-interested');
     Route::get('sales/enquiry/exchange/{id}/edit', [EnquiryCrudController::class, 'exchangeEnquiryEdit'])->name('sales.enquiry.exchange.edit');
     Route::post('sales/enquiry/{id}/exchange-update', [EnquiryCrudController::class, 'exchangeEnquiryUpdate'])->name('sales.enquiry.exchange.update');
+    Route::get('sales/enquiry/exchange/{id}/view', [EnquiryCrudController::class, 'exchangeEnquiryView'])->name('sales.enquiry.exchange.view');
 
     // =========================================================
     // FINANCE ENQUIRY ROUTES
@@ -413,6 +417,7 @@ Route::group([
     Route::get('sales/enquiry/finance/not-interested', [EnquiryCrudController::class, 'financeNotInterestedList'])->name('sales.enquiry.finance.not-interested');
     Route::get('sales/enquiry/finance/{id}/edit', [EnquiryCrudController::class, 'financeEnquiryEdit'])->name('sales.enquiry.finance.edit');
     Route::put('sales/enquiry/finance/{id}/update', [EnquiryCrudController::class, 'financeEnquiryUpdate'])->name('sales.enquiry.finance.update');
+    Route::get('sales/enquiry/finance/{id}/view', [EnquiryCrudController::class, 'financeEnquiryView'])->name('sales.enquiry.finance.view');
 
     // =========== CAMPAIGN ========================
     Route::get('sales/campaign', [CampaignCrudController::class, 'index'])->name('sales.campaign.index');

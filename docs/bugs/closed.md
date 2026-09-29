@@ -207,6 +207,8 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-211 | The Laradocs site (`/docs`, only the `web` middleware) served the whole `docs/` folder — the bug tracker (security findings) and the decision log could be read without signing in wherever `LARADOCS_ENABLED` is true | High | FIXED — `/docs` requires the admin login (Backpack `admin` middleware group) and serves only `tech-guides/` | 29-09-2026 | 30-09-2026 |
 | BUG-212 | Duplicate model `App\Models\Module\Booking\XlInsurer` (same table as `Module\Insurance\XlInsurer`, which is the one every caller uses) — dead copy that has drifted | Low | FIXED — the unused `Module\Booking\XlInsurer` copy deleted | 06-09-2026 (audit HIGH-01), verified 29-09-2026 | 30-09-2026 |
 | BUG-213 | `app/Models/Vehicle/Pricing/pricing.php` (lowercase file) declares `class Pricing` on the old `xlr8_vehicle_pricing` table — unused, and breaks PSR-4 autoloading on case-sensitive servers if ever referenced | Low | CLOSED — not a bug (verification error): the file is `Pricing.php` in git and is the live price model | 06-09-2026 (audit MED-02), verified 29-09-2026 | 30-09-2026 |
+| BUG-214 | OTF form: the hidden invoice date was taken from `toISOString()` (UTC), so an invoice date picked in IST was saved as the previous day | Medium | FIXED — `instance.formatDate(date, 'Y-m-d')` (local) | 30-09-2026 | 30-09-2026 |
+| BUG-215 | RTO apply (stage change 28-09): sale type / registration-no type looked up in keyword masters that do not exist (`SALE_TYPE`, `REGISTRATION_NO_TYPE`) while the form still posts 1 / 2 / 3 — no RTO rule ever matched, so the RTO status was wrong | High | FIXED — keyword masters first, fixed code maps as fallback | 30-09-2026 | 30-09-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2574,3 +2576,28 @@ guessed at.
 - **Where:** `app/Models/Vehicle/Pricing/pricing.php`.
 - **Description:** nothing references `App\Models\Vehicle\Pricing\Pricing`; the pricing engine uses the DEC-073 models.
 - **Proposed solution:** delete the file.
+
+### BUG-214 — OTF form: the hidden invoice date was taken from `toISOString()` (UTC), so an invoice date picked in IST was saved as the previous day
+
+- **Final status:** FIXED — `instance.formatDate(date, 'Y-m-d')` (local) · **Fixed:** 30-09-2026
+- **Status:** FIXED 30-09-2026.
+- **Severity:** Medium (the booking's invoice date saved one day early).
+- **Found:** 30-09-2026, resolving the stage merge in `resources/views/admin/sales/booking/otf-form.blade.php` (present on
+  both sides).
+- **Description:** the flatpickr `onChange` wrote `selectedDates[0].toISOString().split('T')[0]` into
+  `#hidden_invoice_date`. A date picked at local midnight is 18:30 of the previous day in UTC.
+- **Fixed:** 30-09-2026 — `instance.formatDate(selectedDates[0], 'Y-m-d')` (flatpickr's local formatter).
+
+### BUG-215 — RTO apply (stage change 28-09): sale type / registration-no type looked up in keyword masters that do not exist (`SALE_TYPE`, `REGISTRATION_
+
+- **Final status:** FIXED — keyword masters first, fixed code maps as fallback · **Fixed:** 30-09-2026
+- **Status:** FIXED 30-09-2026 on `dev/admin` (still present on `stage`).
+- **Severity:** High (every RTO update computed status without a matching rule).
+- **Found:** 30-09-2026 — `BookingRtoServiceTest` failed after merging `origin/stage` (3 tests).
+- **Where:** `app/Services/Sales/Booking/BookingRtoService.php::apply()`.
+- **Description:** the stage change replaced the fixed code → text maps with `OrgService::getKeyValuesByCode()` for
+  `SALE_TYPE`, `BODY_TYPE`, `REGISTRATION_NO_TYPE`. Only `BODY_TYPE` exists (with other codes); the RTO form posts
+  `1` / `2` / `3`. The text used to match `XlRtoRules` became empty.
+- **Fixed:** 30-09-2026 — the keyword master wins when it holds the code; the fixed maps are the fallback. Tests pass.
+- **Follow-up (owner / booking team):** create the `SALE_TYPE` and `REGISTRATION_NO_TYPE` keyword masters (codes 1 / 2 /
+  3) or change the form to the keyword codes; then the fallback can go.

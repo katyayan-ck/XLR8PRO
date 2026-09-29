@@ -22,6 +22,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: `origin/stage` merged into `dev/admin` keeping DEC-068…071 and the team's 27-file work (DEC-087); BUG-214 / 215 fixed on the way.
 - 30-09: `dev/admin` history rewritten to drop the pricing workbooks (backup branch `backup/dev-admin-before-rewrite-30-09`).
 - 30-09: `/docs` behind the admin login (BUG-211); deleted the unused `Booking\XlInsurer` (BUG-212) and `Exceptions\Handler`; BUG-213 closed as a false positive (the file is `Pricing.php`, the live model).
 - Date-wise records: `docs/daily/29-09-2026/{handoff,changelog,accomplishments}.md`, kept in step with the cumulative files (rule in `10-workflow.md`).
@@ -41,11 +42,6 @@
    booking forms.
 
 ## Waiting on the owner
-- **Merge `origin/stage` → `dev/admin` (requested 30-09, blocked by the auto-mode safety check):** stage carries 4
-  reverts of DEC-068…071 plus the team's 27-file work. Plan: branch `merge/stage-30-09`, `git merge -s ours origin/stage`
-  (don't apply the reverts), then `git apply -3` the team delta `51a36f6..origin/stage`, resolve conflicts, run tests,
-  fast-forward `dev/admin`. Needs the owner to run / allow it. The Sales UI/UX pass follows the merge (14 Sales views
-  changed on stage).
 - **Rewrite backup:** delete `backup/dev-admin-before-rewrite-30-09` + `git gc` when confirmed.
 - **Deletions:** D5–D12.
 - **Data dictionary:** 5 questions; **P0 decisions:** D1–D3, D13, D23, D29, N2 (stage merge).

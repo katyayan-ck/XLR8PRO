@@ -22,3 +22,21 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
   older ids quoted in these records refer to the pre-rewrite commits.
 - **Backup:** local branch `backup/dev-admin-before-rewrite-30-09` (and `refs/original/…`) until the owner confirms; then
   delete them and run `git gc` to drop the objects locally.
+
+## Merge `origin/stage` → `dev/admin` keeping our work (owner-approved, DEC-087)
+- **How:** `git merge -s ours origin/stage` (records the merge; the 4 stage reverts of DEC-068…071 are not applied),
+  then the team's own changes since the last revert (`51a36f6..origin/stage`, 27 files) re-applied with `git apply -3`
+  and 35 conflict hunks resolved by hand.
+- **Kept from the team:** enquiry list rebuilt on one base query (duplicate / lost lists, `IN_HOUSE` finance code), new
+  enquiry / exchange / finance view pages (`view`, `exchange-view`, `finance-view`) with View buttons, lost-reason and
+  finance-mode keyword lists, the enquiry resolved before the OTF consultant fallback, `jvAmount` on the OTF form,
+  receipt rows linking to the printable receipt with the mode name, the Quotation header row on the OTF price table,
+  the DO voucher date prefill, the list toolbars (reset, header customisation, Excel / PDF export) on the exchange and
+  finance lists, receipt / journal-voucher, import-job, booking add / finance-edit / transaction-list, OTF PDF and menu
+  changes.
+- **Kept from ours where theirs would break:** `OrgService` instead of the removed `CommonHelper`; the price-hold guard
+  (DEC-082); Docs-based amount proofs (DEC-069, no public temp copies); `recordEvent(action, summary, meta, body)` (their
+  message is our body); site-date formatting; token colours; the pinned AG-Grid build; export libraries via `@basset`.
+- **Fixed during the merge:** BUG-214 (OTF invoice date one day early in IST), BUG-215 (RTO rule match broken by the
+  stage keyword change); the 3 new routes named (`sales.enquiry.duplicate`, `sales.enquiry.lost`, `sales.enquiry.view`).
+- **Tests:** full suite 473 passed + the 3 RTO tests fixed by BUG-215 (1 known skip).

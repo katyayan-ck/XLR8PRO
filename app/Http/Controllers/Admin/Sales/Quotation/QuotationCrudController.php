@@ -48,25 +48,22 @@ class QuotationCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to view quotations.');
         }
 
-        $insurance_type_map = [
-            1 => 'Standard',
-            2 => 'Nil Dep',
-            3 => 'Base',
-            4 => 'Higher',
-        ];
+        $insurance_type_map = OrgService::getKeyValuesByCode('POLICY_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
-        $registration_type_map = [
-            '0' => 'Tax Only',
-            '1' => 'TRC + Tax',
-            '2' => 'TRC Only',
-            '3' => 'Exempted',
-        ];
+        $registration_type_map = OrgService::getKeyValuesByCode('REGISTRATION_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
-        $reg_no_type_map = [
-            '1' => 'Regular',
-            '2' => 'BH Series',
-            '3' => 'Special Number',
-        ];
+        $reg_no_type_map = OrgService::getKeyValuesByCode('REGISTRATION_NO_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+
+        $care_of_type_map = OrgService::getKeyValuesByCode('CARE_OF_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+
 
         $this->crud->setListView('admin.sales.quotation.list');
 
@@ -79,7 +76,14 @@ class QuotationCrudController extends CrudController
             ->whereNotNull('quotation_id')
             ->pluck('id', 'quotation_id');
 
-        $gridData = $quotations->map(function ($quotation, $index) use ($insurance_type_map, $registration_type_map, $reg_no_type_map, $bookingMap) {
+
+        $gridData = $quotations->map(function ($quotation, $index) use (
+            $insurance_type_map,
+            $registration_type_map,
+            $reg_no_type_map,
+            $care_of_type_map,
+            $bookingMap
+        ) {
 
             $data = $quotation->standard_data ?? [];
             $enquiry = $quotation->enquiry;
@@ -211,13 +215,7 @@ class QuotationCrudController extends CrudController
                 'variant' => $variantName,
                 'color' => $colorName,
 
-                // Other fields from standard_data
-                'care_of_type' => [
-                    1 => 'Son of',
-                    2 => 'Daughter of',
-                    3 => 'Married to',
-                    4 => 'Guardian Name',
-                ][$data['careof'] ?? ''] ?? '-',
+                'care_of_type' => $care_of_type_map[$data['careof'] ?? ''] ?? ($data['careof'] ?? '-'),
                 'care_of_name' => $data['careofname'] ?? '-',
                 'permit' => $data['permit'] ?? '-',
                 'oem_code' => $data['oem_code'] ?? $enquiry?->oem_code ?? '-',
@@ -509,17 +507,21 @@ class QuotationCrudController extends CrudController
             })
             ->toArray();
 
-        $insurance_type_map = [
-            1 => 'Nil Dep',
-            2 => 'Higher',
-        ];
+        $insurance_type_map = OrgService::getKeyValuesByCode('POLICY_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
-        $registration_type_map = [
-            '0' => 'Tax Only',
-            '1' => 'TRC + Tax',
-            '2' => 'TRC Only',
-            '3' => 'Exempted',
-        ];
+        $registration_type_map = OrgService::getKeyValuesByCode('REGISTRATION_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+
+        $reg_no_type_map = OrgService::getKeyValuesByCode('REGISTRATION_NO_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+
+        $care_of_type_map = OrgService::getKeyValuesByCode('CARE_OF_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
         $accessoryList = Accessory::where(
             'status',
@@ -542,6 +544,8 @@ class QuotationCrudController extends CrudController
             'accessoryList' => $accessoryList,
             'financiers' => $financiers,
             'permit_map' => $permit_map,
+            'reg_no_type_map' => $reg_no_type_map,
+            'care_of_type_map' => $care_of_type_map,
             'bookingId' => $bookingId,
             'quotationData' => [
                 'careof' => $careOf,
@@ -1020,22 +1024,14 @@ class QuotationCrudController extends CrudController
         if (! isset($quotationData['insurance_covers'])) {
             $quotationData['insurance_covers'] = [];
         }
-        /*
-        |--------------------------------------------------------------------------
-        | 14. Dropdown maps
-        |--------------------------------------------------------------------------
-        */
-        $insurance_type_map = [
-            1 => 'Nil Dep',
-            2 => 'Higher',
-        ];
+        
+        $insurance_type_map = OrgService::getKeyValuesByCode('POLICY_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
-        $registration_type_map = [
-            '0' => 'Tax Only',
-            '1' => 'TRC + Tax',
-            '2' => 'TRC Only',
-            '3' => 'Exempted',
-        ];
+        $registration_type_map = OrgService::getKeyValuesByCode('REGISTRATION_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
         $permit_map = OrgService::getKeyValuesByCode('RTO_PERMIT')
             ->sortBy('id')
@@ -1047,11 +1043,13 @@ class QuotationCrudController extends CrudController
             })
             ->toArray();
 
-        $reg_no_type_map = [
-            '1' => 'Regular',
-            '2' => 'BH Series',
-            '3' => 'Special Number',
-        ];
+        $reg_no_type_map = OrgService::getKeyValuesByCode('REGISTRATION_NO_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
+
+        $care_of_type_map = OrgService::getKeyValuesByCode('CARE_OF_TYPE')
+            ?->pluck('value', 'code')
+            ->toArray() ?? [];
 
         /*
         |--------------------------------------------------------------------------
@@ -1183,6 +1181,7 @@ class QuotationCrudController extends CrudController
                 'registration_type_map' => $registration_type_map,
                 'permit_map' => $permit_map,
                 'reg_no_type_map' => $reg_no_type_map,
+                'care_of_type_map' => $care_of_type_map,
                 // Other data
                 'accessoryList' => $accessoryList,
                 'financiers' => $financiers,
@@ -2475,17 +2474,13 @@ class QuotationCrudController extends CrudController
         | Dropdown maps
         |--------------------------------------------------------------------------
         */
-        $insurance_type_map = [
-            1 => 'Nil Dep',
-            2 => 'Higher',
-        ];
+        $insurance_type_map = OrgService::keywordValueByCode('POLICY_TYPE');
 
-        $registration_type_map = [
-            '0' => 'Tax Only',
-            '1' => 'TRC + Tax',
-            '2' => 'TRC Only',
-            '3' => 'Exempted',
-        ];
+        $registration_type_map = OrgService::keywordValueByCode('REGISTRATION_TYPE');
+
+        $reg_no_type_map = OrgService::keywordValueByCode('REGISTRATION_NO_TYPE');
+
+        $care_of_type_map = OrgService::keywordValueByCode('CARE_OF_TYPE');
 
         $permit_map = OrgService::getKeyValuesByCode('RTO_PERMIT')
             ->sortBy('id')
@@ -2497,11 +2492,7 @@ class QuotationCrudController extends CrudController
             })
             ->toArray();
 
-        $reg_no_type_map = [
-            '1' => 'Regular',
-            '2' => 'BH Series',
-            '3' => 'Special Number',
-        ];
+        
 
         /*
     |--------------------------------------------------------------------------

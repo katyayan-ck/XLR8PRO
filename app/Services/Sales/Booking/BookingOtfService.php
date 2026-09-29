@@ -81,19 +81,20 @@ class BookingOtfService
 
         $otfData = array_merge($quotationData, $finalData);
 
-        if (! empty($otfData['net_settlement_amount'])) {
-            $otfData['net_settlement_amount'] = $otfData['net_settlement_amount'];
-        } else {
-            $loanAmount = (float) ($otfData['loan_amount'] ?? 0);
-            $fileCharge = (float) ($otfData['file_charge'] ?? 0);
-            $marginMoney = (float) ($otfData['margin_money'] ?? 0);
-            $financierSubvention = (float) ($otfData['financier_subvention'] ?? 0);
+        $loanAmount = (float) ($otfData['loan_amount'] ?? 0);
+        $fileCharge = (float) ($otfData['file_charge'] ?? 0);
+        $marginMoney = (float) ($otfData['margin_money'] ?? 0);
+        $financierSubvention = (float) ($otfData['financier_subvention'] ?? 0);
 
-            $otfData['net_settlement_amount'] = number_format(
-                $loanAmount - $fileCharge + $marginMoney - $financierSubvention,
-                2
-            );
-        }
+        $otfData['net_settlement_amount'] = number_format(
+            $loanAmount
+            - $fileCharge
+            + $marginMoney
+            - $financierSubvention,
+            2,
+            '.',
+            ''
+        );
 
         if (! empty($quotationData['insurance_covers'])) {
             $otfData['insurance_covers'] = $quotationData['insurance_covers'];
@@ -125,8 +126,12 @@ class BookingOtfService
         // SELECTED SALES CONSULTANT
         // ==========================================================
 
-        // Booking consultant is the value selected in the Booking/OTF
-        // Sales Consultant dropdown.
+        // Booking consultant is the value selected in the Booking/OTF Sales Consultant dropdown; the enquiry is resolved
+        // first so its consultant can be the fallback (stage fix, 30-09 merge).
+        $enquiry = ! empty($booking->enq_no)
+            ? Enquiry::resolveByAnyReference($booking->enq_no)
+            : null;
+
         $selectedScCode = trim((string) (
             $booking->consultant
             ?? $enquiry?->x8_sc_code
@@ -182,10 +187,6 @@ class BookingOtfService
 
         $dsa = ! empty($booking->dsa_id) ? Xl_DSA_Master::find($booking->dsa_id) : null;
 
-        $enquiry = ! empty($booking->enq_no)
-            ? Enquiry::find($booking->enq_no)
-            : null;
-
         $segmentCode = $enquiry?->segment_code ?? $booking->segment_code;
         $modelCode = $enquiry?->model_code ?? $booking->model_code;
         $variantCode = $enquiry?->variant_code ?? $booking->variant_code;
@@ -238,24 +239,72 @@ class BookingOtfService
         ];
         $registration_type_map = ['0' => 'Tax Only', '1' => 'TRC + Tax', '2' => 'TRC Only', '3' => 'Exempted'];
         $customer_categories = OrgService::keywordValueByCode('CUSTOMER_TYPE');
-        $deliveryOptions = [1 => 'Payment', 2 => 'DO', 3 => 'Sanction Letter', 4 => 'Mail', 5 => 'Whatsapp'];
+        $deliveryOptions = [
+            1 => 'Financier Payment',
+            2 => 'Delivery Order',
+            3 => 'Sanction Letter',
+            4 => 'Mail Communication',
+            5 => 'Whatsapp Communication',
+            6 => 'Banker Cheque',
+            7 => 'Demand Graph',
+            8 => 'Customer Cheque',
+        ];
 
-        $financierName = XlFinancier::find($booking->financier)?->name ?? 'N/A';
+        $financierId = $finance?->financier ?? $booking->financier ?? null;
+
+        $financierName = $financierId
+            ? (XlFinancier::find($financierId)?->name ?? 'N/A')
+            : 'N/A';
 
         $receiptLogs = Bookingamount::where('bid', $booking->id)
+            ->where('type', 1) // Receipt only
             ->whereNull('deleted_at')
             ->orderBy('date')
+            ->orderBy('id')
             ->get();
-        $receiptTotal = $receiptLogs->sum(fn ($receipt) => (float) $receipt->amount);
+
+        $receiptLogs->each(function ($receipt) {
+            // Actual receipt number is stored in type_number
+            $receipt->receipt_no = $receipt->type_number;
+
+            // Convert payment mode ID/code into display value
+            if (empty($receipt->mode)) {
+                $receipt->mode_name = '';
+            } elseif (is_numeric($receipt->mode)) {
+                $receipt->mode_name =
+                    OrgService::getKeyValueById((int) $receipt->mode)?->value
+                    ?? (string) $receipt->mode;
+            } else {
+                $receipt->mode_name =
+                    OrgService::getKeyValueByCode((string) $receipt->mode)?->value
+                    ?? (string) $receipt->mode;
+            }
+        });
+
+        $receiptTotal = $receiptLogs->sum(
+            fn ($receipt) => (float) $receipt->amount
+        );
+
+        $jvAmount = Bookingamount::where('bid', $booking->id)
+            ->where('type', 2)
+            ->whereNull('deleted_at')
+            ->sum('amount');
 
         $chassisImage = $booking->documentUrl('chassis_image');
 
-        $enquiry = ! empty($booking->enq_no) ? Enquiry::find($booking->enq_no) : null;
+        $enquiry = ! empty($booking->enq_no)
+            ? Enquiry::resolveByAnyReference($booking->enq_no)
+            : null;
 
         $taStatement = null;
-        if ($finance && $finance->instrument_type == 2 && ! empty($finance->instrument_ref_no)) {
+
+        $financeDoNumber = trim((string) ($finance?->instrument_ref_no ?? ''));
+
+        if ($financeDoNumber !== '') {
             $taStatement = DB::table('xlr8_financer_statement')
-                ->where('do_no', trim($finance->instrument_ref_no))
+                ->where('do_no', $financeDoNumber)
+                ->whereNull('deleted_at')
+                ->orderByDesc('created_at')
                 ->first();
         }
 
@@ -318,7 +367,7 @@ class BookingOtfService
 
         return compact(
             'booking', 'finance', 'salesconsultants', 'selectedSc', 'selectedScMileId', 'selectedScBranch', 'selectedScLocation', 'branches', 'taStatement', 'enquiry',
-            'quotationData', 'finalData', 'otfData', 'insurance', 'rto', 'dsa',
+            'quotationData', 'finalData', 'otfData', 'insurance', 'rto', 'dsa', 'jvAmount',
             'segment', 'model', 'variant', 'color', 'accessories', 'permit_map',
             'sale_type_map', 'reg_no_type_map', 'registration_category_map',
             'registration_type_map', 'customer_category_map', 'customer_categories', 'body_type_map',
@@ -452,10 +501,25 @@ class BookingOtfService
             $finalJsonData['insurance_covers'] = array_values($formData['insurance_covers']);
         }
 
+        $votfNo = trim((string) (
+            $formData['votf_no']
+            ?? $existingFinalData['votf_no']
+            ?? $booking->votf_no
+            ?? ''
+        ));
+
+        if ($votfNo !== '') {
+            $finalJsonData['votf_no'] = $votfNo;
+        }
+
         $booking->final_data = json_encode(
             $finalJsonData,
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT
         );
+
+        if ($votfNo !== '') {
+            $booking->votf_no = $votfNo;
+        }
 
         $booking->gstn = strtoupper(trim($formData['gstn'] ?? $booking->gstn ?? ''));
         $booking->pan_no = strtoupper(trim($formData['pan_no'] ?? $booking->pan_no ?? ''));
@@ -502,8 +566,6 @@ class BookingOtfService
         $finance->file_charge = $formData['file_charge'] ?? $finance->file_charge;
         $finance->margin = $formData['margin_money'] ?? $finance->margin;
         $finance->subvention_amount = $formData['financier_subvention'] ?? $finance->subvention_amount;
-        $finance->instrument_type = $formData['vehicle_delivery_on'] ?? $finance->instrument_type;
-        $finance->instrument_ref_no = $formData['do_number'] ?? $finance->instrument_ref_no;
 
         if (! $finance->exists) {
             $finance->verification_status = 0;

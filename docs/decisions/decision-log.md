@@ -1397,3 +1397,14 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
      the live price model — so nothing was deleted for it.
   3. **History rewrite of `dev/admin`** from `4c82d28` (unpushed commits only) to drop `docs/reference/XLRM-Pricing-data/`
      from every commit; a backup ref is kept locally until the owner confirms.
+
+### DEC-087 | 30-09-2026 | A (repo) | Merge `origin/stage` into `dev/admin` keeping both sides' work
+- **Why:** the owner asked (30-09) to merge the remote `stage` into local and keep our work while bringing in the team's
+  changes ("do what is best"). `stage` carries 4 reverts (28-09, booking team) of our DEC-068…071 merges plus 27 files of
+  new team work.
+- **Decision:** `git merge -s ours origin/stage` on a separate branch (the reverts are recorded, not applied), then the
+  team's changes since the last revert re-applied 3-way; conflicts resolved per hunk by intent (our architecture where
+  theirs calls removed code or bypasses DEC rules; their features otherwise); tests; then `dev/admin` fast-forwards.
+  Nothing is pushed.
+- **Approved-by:** owner (30-09) · **Risk:** MEDIUM (manual conflict resolution; covered by the full suite) ·
+  **Reversal:** reset `dev/admin` to the pre-merge commit (`merge/stage-30-09` keeps the history).

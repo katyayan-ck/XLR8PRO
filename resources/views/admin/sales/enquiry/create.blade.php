@@ -680,15 +680,11 @@
                                     <label class="form-label">Referee Type <span class="text-danger">*</span></label>
                                     <select name="referred_by" id="referred_by" class="form-control form-select">
                                         <option value="">Select Referee Type</option>
-                                        <option value="Customer"
-                                            {{ old('referred_by', $enquiry->referred_by ?? '') == 'Customer' ? 'selected' : '' }}>
-                                            Customer</option>
-                                        <option value="Team Member"
-                                            {{ old('referred_by', $enquiry->referred_by ?? '') == 'Team Member' ? 'selected' : '' }}>
-                                            Team Member</option>
-                                        <option value="Promoter"
-                                            {{ old('referred_by', $enquiry->referred_by ?? '') == 'Promoter' ? 'selected' : '' }}>
-                                            Promoter</option>
+                                        @foreach ($referred_by_types as $item)
+                                            <option value="{{ $item['code'] }}"
+                                                {{ old('referred_by', $enquiry->referred_by ?? '') == $item['code'] ? 'selected' : '' }}>
+                                                {{ $item['value'] }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                                 <div class="col-md-4 mb-4">
@@ -879,18 +875,11 @@
                                 <label class="form-label">Care Of <small class="text-muted"></small></label>
                                 <select name="care_of_type" id="care_of_type" class="form-control form-select">
                                     <option value="">Select Care Of</option>
-                                    <option value="1"
-                                        {{ old('care_of_type', $enquiry->care_of_type ?? '') == '1' ? 'selected' : '' }}>
-                                        Son of</option>
-                                    <option value="2"
-                                        {{ old('care_of_type', $enquiry->care_of_type ?? '') == '2' ? 'selected' : '' }}>
-                                        Daughter of</option>
-                                    <option value="3"
-                                        {{ old('care_of_type', $enquiry->care_of_type ?? '') == '3' ? 'selected' : '' }}>
-                                        Married to</option>
-                                    <option value="4"
-                                        {{ old('care_of_type', $enquiry->care_of_type ?? '') == '4' ? 'selected' : '' }}>
-                                        Guardian Name</option>
+                                    @foreach ($care_of_types as $item)
+                                        <option value="{{ $item['code'] }}"
+                                            {{ old('care_of_type', $enquiry->care_of_type ?? '') == $item['code'] ? 'selected' : '' }}>
+                                            {{ $item['value'] }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                             <div class="col-md-5 mb-5">
@@ -1020,18 +1009,11 @@
                                 <label class="form-label">Finance Mode <span class="text-danger">*</span></label>
                                 <select name="fin_mode" id="fin_mode" class="form-control form-select">
                                     <option value="" disabled selected>Select Finance Mode</option>
-                                    <option value="In-house"
-                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'In-house' ? 'selected' : '' }}>
-                                        In-house</option>
-                                    <option value="Customer Self"
-                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Customer Self' ? 'selected' : '' }}>
-                                        Customer Self</option>
-                                    <option value="Cash"
-                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Cash' ? 'selected' : '' }}>Cash
-                                    </option>
-                                    <option value="Yet To Decide"
-                                        {{ old('fin_mode', $enquiry->fin_mode ?? '') == 'Yet To Decide' ? 'selected' : '' }}>
-                                        Yet To Decide</option>
+                                    @foreach ($finance_modes as $item)
+                                        <option value="{{ $item['code'] }}"
+                                            {{ old('fin_mode', $enquiry->fin_mode ?? '') == $item['code'] ? 'selected' : '' }}>
+                                            {{ $item['value'] }}</option>
+                                    @endforeach
                                 </select>
                             </div>
 
@@ -1999,6 +1981,25 @@
                                     <label class="form-label">CRE Followup Remarks</label>
                                     <textarea name="cre_fup_remarks" class="form-control" rows="1">{{ old('cre_fup_remarks') }}</textarea>
                                 </div>
+                                {{-- NEW: CONDITIONAL LOST REASONS --}}
+                                <div class="col-md-2 mb-2 cre-lost-fields d-none">
+                                    <label class="form-label">Lost Reason <span class="text-danger">*</span></label>
+                                    <select name="cre_lost_reason" id="cre_lost_reason" class="form-control form-select">
+                                        <option value="">Select Reason</option>
+                                        @foreach ($lost_reasons as $item)
+                                            <option value="{{ $item['code'] }}" {{ old('cre_lost_reason', $lastCre->cre_lost_reason ?? '') == $item['code'] ? 'selected' : '' }}>{{ $item['value'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-2 mb-2 cre-lost-fields d-none">
+                                    <label class="form-label">Lost Sub Reason</label>
+                                    <select name="cre_lost_sub_reason" id="cre_lost_sub_reason" class="form-control form-select">
+                                        <option value="">Select Sub Reason</option>
+                                        @foreach ($lost_sub_reasons as $item)
+                                            <option value="{{ $item['code'] }}" {{ old('cre_lost_sub_reason', $lastCre->cre_lost_sub_reason ?? '') == $item['code'] ? 'selected' : '' }}>{{ $item['value'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2132,7 +2133,9 @@
             district: @json(old('district', $enquiry->district ?? '')),
             city: @json(old('city', $enquiry->city ?? '')),
             territory: @json(old('territory', $enquiry->territory ?? '')),
-            creEnqStage: @json(old('cre_enq_stage', $enquiry->cre_enq_stage ?? ''))
+            creEnqStage: @json(old('cre_enq_stage', $enquiry->cre_enq_stage ?? '')),
+            creLostReason: @json(old('cre_lost_reason', $lastCre->cre_lost_reason ?? '')),
+            creLostSubReason: @json(old('cre_lost_sub_reason', $lastCre->cre_lost_sub_reason ?? ''))
         };
 
         $(function() {
@@ -2544,6 +2547,15 @@
                             'background-color': 'var(--tblr-bg-surface-tertiary)'
                         })
                         .attr('tabindex', '-1');
+                        
+                    // Show CRE Lost fields if stage is LOST
+                    if (custStageVal === 'LOST' || custStageText === 'LOST') {
+                        $('.cre-lost-fields').removeClass('d-none');
+                        $('#cre_lost_reason').prop('required', true);
+                    } else {
+                        $('.cre-lost-fields').addClass('d-none');
+                        $('#cre_lost_reason').prop('required', false);
+                    }
                 } else {
                     $nextFup.css({
                             'pointer-events': 'auto',
@@ -2551,12 +2563,29 @@
                         })
                         .prop('required', currentEnquiry.isEdit ? true : false)
                         .removeAttr('tabindex');
+                        
+                    $('.cre-lost-fields').addClass('d-none');
+                    $('#cre_lost_reason').prop('required', false);
                 }
             }
 
-            // Bind listeners to both Enquiry Stage and Customer Stage
             $('select[name="cre_enq_stage"]').on('change', handleStageRules);
             $('select[name="cre_customer_stage"]').on('change', handleStageRules);
+
+            // Cascading CRE Lost Reason -> CRE Lost Sub Reason
+            $('#cre_lost_reason').on('change', function() {
+                const rawVal = $(this).val() || '';
+                const $subReason = $('#cre_lost_sub_reason');
+                if (rawVal === '') {
+                    $subReason.html('<option value="">Select Sub Reason</option>').val('');
+                    return;
+                }
+                loadKeywordDropdown('LOST_SUBREASON', rawVal, $subReason, 'Select Sub Reason', currentEnquiry.creLostSubReason);
+            });
+            
+            if (currentEnquiry.isEdit && currentEnquiry.creLostReason) {
+                $('#cre_lost_reason').trigger('change');
+            }
 
             // Trigger check on page load if editing
             if (currentEnquiry.isEdit) {

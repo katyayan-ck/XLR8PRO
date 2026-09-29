@@ -318,9 +318,9 @@
             white-space: nowrap;
             text-align: center;
         }
-       .chassis-img {
-            max-width: 170px;
-            max-height: 70px;
+         .chassis-img {
+            max-width: 200px;
+            max-height: 105px;
             width: auto;
             height: auto;
             object-fit: contain;
@@ -407,9 +407,6 @@
 
                 <br>
 
-                <strong>Corporate GSTIN:</strong>
-                {{ $booking->gstn ?? '27ABCDE1234F1Z5' }}
-
             </div>
 
         </td>
@@ -417,11 +414,11 @@
         {{-- RIGHT: MAHINDRA LOGO --}}
         <td style="width:20%; text-align:right; vertical-align:middle;">
             @php
-                $segment = strtoupper($booking->segment_code ?? '');
+                $segmentCodeForLogo = strtoupper($booking->segment_code ?? '');
 
-                if ($segment == 'LMM') {
+                if ($segmentCodeForLogo == 'LMM') {
                     $mahindraLogo = asset('images/mahindra-lmm-logo.png');
-                } elseif ($segment == 'BEV') {
+                } elseif ($segmentCodeForLogo == 'BEV') {
                     $mahindraLogo = asset('images/mahindra-ev-logo.png');
                 } else {
                     $mahindraLogo = asset('images/mahindra-pv-cv-logo.png');
@@ -491,19 +488,30 @@
     <table class="card-data-grid">
         <tr>
             <td class="field-label">SC Name</td>
-            <td class="field-value">{{ $consultants ? collect($consultants)->firstWhere('person_code', $booking->consultant)['display_name'] ?? $booking->consultant : 'N/A' }}</td>
+            <td class="field-value">
+                {{ $selectedSc['display_name'] ?? $selectedSc['name'] ?? '—' }}
+            </td>
+
             <td class="field-label">SC Mile ID</td>
-            <td class="field-value">{{ $consultants ? collect($consultants)->firstWhere('person_code', $booking->consultant)['employee_code'] ?? '' : 'N/A' }}</td>
+            <td class="field-value">
+                {{ $selectedScMileId ?: '—' }}
+            </td>
         </tr>
+
         <tr>
             <td class="field-label">SC Branch</td>
-            <td class="field-value">{{ $consultants ? collect($consultants)->firstWhere('person_code', $booking->consultant)['branch_name'] ?? 'Bikaner' : 'Bikaner' }}</td>
+            <td class="field-value">
+                {{ $selectedScBranch ?: '—' }}
+            </td>
+
             <td class="field-label">SC Location</td>
-            <td class="field-value">{{ $consultants ? collect($consultants)->firstWhere('person_code', $booking->consultant)['location_name'] ?? 'Bikaner' : 'Bikaner' }}</td>
+            <td class="field-value">
+                {{ $selectedScLocation ?: '—' }}
+            </td>
         </tr>
         <tr>
             <td class="field-label">DMS Enquiry No.</td>
-            <td class="field-value">{{ $booking->dms_no ?? 'N/A' }}</td>
+            <td class="field-value">{{ $enquiry?->dms_enq_no ?? 'N/A' }}</td>
             <td class="field-label">DMS OTF No.</td>
             <td class="field-value">{{ $booking->dms_otf ?? $otfData['dms_otf'] ?? 'N/A' }}</td>
         </tr>
@@ -532,22 +540,11 @@
         </tr>
         <tr>
             <td class="field-label">In House RTO</td>
-            <td class="field-value">{{ ($otfData['in_house_rto'] ?? $rto?->in_house_rto ?? 0) == 1 ? 'Yes' : 'No' }}</td>
-            {{-- <td class="field-label">Accessories Items List</td>
-            <td class="field-value">
-                @php
-                    $accList = [];
-                    if (!empty($otfData['accessories']) && is_array($otfData['accessories'])) {
-                        foreach ($otfData['accessories'] as $accCode) {
-                            $acc = DB::table('xlr8_vehicle_accessories')->where('part_no', trim($accCode))->first();
-                            if ($acc) {
-                                $accList[] = $acc->item . ' (₹' . number_format((float)$acc->ndp, 2) . ')';
-                            }
-                        }
-                    }
-                    echo implode(', ', $accList);
-                @endphp
-            </td> --}}
+            <td class="field-value">{{ $rto ? 'Yes' : 'No' }}</td>
+            <td class="field-label">Accessories Items List</td>
+                <td class="field-value" colspan="3">
+                    {{ $accessories ?: '—' }}
+                </td>
         </tr>
     </table>
 </div>
@@ -560,7 +557,7 @@
             <td class="field-label">VOTF No.</td>
             <td class="field-value">{{ $booking->votf_no ?? $otfData['votf_no'] ?? 'N/A' }}</td>
             <td class="field-label">Customer Name</td>
-            <td class="field-value">{{ $booking->name ?? 'N/A' }}</td>
+            <td class="field-value">{{ $enquiry?->name ?? 'N/A' }}</td>
         </tr>
         <tr>
             <td class="field-label">Registration Address</td>
@@ -576,17 +573,23 @@
             <td class="field-label">Pincode</td>
             <td class="field-value">{{ $otfData['pincode'] ?? 'N/A' }}</td>
             <td class="field-label">Customer Contact No.</td>
-            <td class="field-value">{{ $booking->mobile ?? 'N/A' }}</td>
+            <td class="field-value">{{ $enquiry->mobile ?? 'N/A' }}</td>
         </tr>
         <tr>
             <td class="field-label">Date of Birth</td>
-            <td class="field-value">{{ $booking->c_dob ? \Carbon\Carbon::parse($booking->c_dob)->format('d-M-Y') : 'N/A' }}</td>
+            <td class="field-value">{{ $enquiry?->dob
+                    ? \Carbon\Carbon::parse($enquiry->dob)->format('d M Y')
+                    : 'N/A'
+                }}</td>
             <td class="field-label">Marital Status</td>
             <td class="field-value">{{ $otfData['marital_status'] ?? $booking->marital_status ?? 'N/A' }}</td>
         </tr>
         <tr>
-            <td class="field-label">Date of Anniversary</td>
-            <td class="field-value">{{ $otfData['anniversary_date'] ?? $booking->anniversary_date ?? 'N/A' }}</td>
+            <td class="field-label">Date of Marriage</td>
+            <td class="field-value">{{ !empty($otfData['anniversary_date'] ?? $booking->anniversary_date)
+    ? \Carbon\Carbon::parse($otfData['anniversary_date'] ?? $booking->anniversary_date)->format('d M Y')
+    : 'N/A'
+}}</td>
             <td class="field-label">Email ID</td>
             <td class="field-value">{{ $otfData['email'] ?? $booking->email ?? 'N/A' }}</td>
         </tr>
@@ -659,7 +662,10 @@
         </tr>
         <tr>
             <td class="field-label">Invoice Date</td>
-            <td class="field-value" colspan="3">{{ $booking->inv_date ? \Carbon\Carbon::parse($booking->inv_date)->format('d-M-Y') : 'N/A' }}</td>
+            <td class="field-value" colspan="3">{{ $booking->inv_date
+    ? \Carbon\Carbon::parse($booking->inv_date)->format('d M Y')
+    : 'N/A'
+}}</td>
         </tr>
     </table>
 </div>
@@ -1040,20 +1046,22 @@
     }
 @endphp
 
-@if($insuranceText || $accessoriesText)
 <div class="info-card-container" style="margin-bottom: 5px;">
+
     @if($insuranceText)
-    <div class="itemization-badge-strip" style="border-bottom: 1px solid #e2e8f0;">
-        <span class="itemization-strip-title">Insurance:</span> {!! $insuranceText !!}
+    <div class="itemization-badge-strip"
+         style="border-bottom: 1px solid #e2e8f0;">
+        <span class="itemization-strip-title">Insurance:</span>
+        {!! $insuranceText !!}
     </div>
     @endif
-    @if($accessoriesText)
+
     <div class="itemization-badge-strip">
-        <span class="itemization-strip-title">Accessories:</span> {!! $accessoriesText !!}
+        <span class="itemization-strip-title">Accessories:</span>
+        {!! $accessoriesText ?: '&nbsp;' !!}
     </div>
-    @endif
+
 </div>
-@endif
 
 <!-- ================= FINANCIER DETAILS ================= -->
 <!-- ================= FINANCIER DETAILS (SPLIT INTO TWO HALVES) ================= -->
@@ -1153,7 +1161,7 @@
                         </tr>
                         <tr>
                             <td style="font-weight:600; color:#0f172a; font-size:10px;">DO No. (TA Statement)</td>
-                            <td style="text-align:right; font-weight:500; font-family: monospace;">{{ $otfData['do_number_ta'] ?? 'N/A' }}</td>
+                            <td style="text-align:right; font-weight:500; font-family: monospace;">{{ $taStatement?->do_no ?? $otfData['do_number_ta'] ?? '—' }}</td>
                         </tr>
                         <tr>
                             <td style="font-weight:600; color:#0f172a; font-size:10px;">DO Amount (TA Statement)</td>
@@ -1161,32 +1169,14 @@
                         </tr>
                         <tr>
                             <td style="font-weight:600; color:#0f172a; font-size:10px;">DO Voucher Date</td>
-                            <td style="text-align:right; font-weight:500;">{{ $otfData['do_voucher_date'] ?? 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:600; color:#0f172a; font-size:10px;">Brokerage Amount</td>
-                            <td style="text-align:right; font-weight:500;">₹ {{ number_format((float)($otfData['brokerage_amount'] ?? 0), 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:600; color:#0f172a; font-size:10px;">Other Discount Receivable</td>
-                            <td style="text-align:right; font-weight:500;">₹ {{ number_format((float)($otfData['other_discount_receivable'] ?? 0), 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:600; color:#0f172a; font-size:10px;">Other Discount Receivable - M&amp;M Support Discount</td>
-                            <td style="text-align:right; font-weight:500;">₹ {{ number_format((float)($otfData['mm_support_receivable'] ?? 0), 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:600; color:#0f172a; font-size:10px;">Other Discount Receivable - Liquidation Scheme</td>
-                            <td style="text-align:right; font-weight:500;">₹ {{ number_format((float)($otfData['liquidation_scheme_receivable'] ?? 0), 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:600; color:#0f172a; font-size:10px;">RTO Service Charge - Receivable</td>
-                            <td style="text-align:right; font-weight:500;">₹ {{ number_format((float)($otfData['registration_service_charge_receivable'] ?? 0), 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:600; color:#0f172a; font-size:10px;">RTO Service Charge - Received</td>
-                            <td style="text-align:right; font-weight:500;">₹ {{ number_format((float)($otfData['registration_service_charge_received'] ?? 0), 2) }}</td>
-                        </tr>
+                            <td style="text-align:right; font-weight:500;">
+                                {{ !empty($otfData['do_voucher_date'])
+                                    ? \Carbon\Carbon::parse($otfData['do_voucher_date'])->format('d M Y')
+                                    : 'N/A'
+                                }}
+                            </td>                        
+                            </tr>
+                        
                     </tbody>
                 </table>
             </div>
@@ -1240,7 +1230,7 @@
         <tbody>
             @forelse($receiptLogs ?? [] as $receipt)
             <tr>
-                <td style="font-weight:600;">{{ $receipt->reciept }}</td>
+                <td style="font-weight:600;">{{ $receipt->receipt_no ?? $receipt->type_number ?? '—' }}</td>
                 <td>{{ \Carbon\Carbon::parse($receipt->date)->format('d M Y') }}</td>
                 <td>{{ $receipt->mode ?? '' }}</td>
                 <td style="font-weight:600; color:#28a745;">₹ {{ number_format($receipt->amount, 2) }}</td>
@@ -1304,8 +1294,9 @@
 
 
         {{-- ================= CHASSIS IMAGE: 30% ================= --}}
+{{-- ================= CHASSIS IMAGE: 25% ================= --}}
 <td style="
-    width:30%;
+    width:25%;
     vertical-align:middle;
     text-align:center;
     border:1px solid #000;
@@ -1314,7 +1305,7 @@
 
     <table style="
         width:100%;
-        height:90px;
+        height:145px;
         border-collapse:collapse;
     ">
         {{-- IMAGE --}}
@@ -1327,16 +1318,16 @@
             ">
                 @if(!empty($chassisImage))
                     <img src="{{ $chassisImage }}"
-                         class="chassis-img"
-                         style="
+                        class="chassis-img"
+                        style="
                             display:block;
                             margin:0 auto;
-                            max-width:170px;
-                            max-height:65px;
-                            width:auto;
-                            height:auto;
+                            width:150px;
+                            height:105px;
                             object-fit:contain;
-                         ">
+                            transform:rotate(-90deg);
+                            transform-origin:center center;
+                        ">
                 @endif
             </td>
         </tr>
