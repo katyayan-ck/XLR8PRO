@@ -252,6 +252,7 @@ class EnquiryCrudController extends CrudController
                 'exchange_not_interested',
                 'finance',
                 'finance_not_interested',
+                'duplicate',
             ]) => $listType,
 
             default => 'all',
@@ -1074,6 +1075,10 @@ class EnquiryCrudController extends CrudController
             $viewUrl = backpack_url("sales/enquiry/finance/{$e->id}/view");
             $actionBtns .= '<a href="'.$finUrl.'" class="btn btn-sm btn-info">Process</a>';
             $actionBtns .= '<a href="'.$viewUrl.'" class="btn btn-sm btn-primary ms-1">View</a>';
+        } elseif ($type === 'duplicate') {
+            $viewUrl = backpack_url("sales/enquiry/{$e->id}/view");
+            $actionBtns .= '<a href="'.$viewUrl.'" class="btn btn-sm btn-info">View</a>';
+            $actionBtns .= '<a href="'.$editUrl.'" class="btn btn-sm btn-primary ms-1">Edit</a>';
         } else {
             // Standard Master Grid Buttons
             $viewUrl = backpack_url("sales/enquiry/{$e->id}/view");
@@ -1922,7 +1927,6 @@ class EnquiryCrudController extends CrudController
 
             $nextFupDate = $request->cre_next_fup_date ? Carbon::parse($request->cre_next_fup_date, 'Asia/Kolkata')->format('Y-m-d H:i:s') : null;
 
-            // Insert ONLY the completed follow up row
             DB::table('xlr8_cre_enquiry_fup')->insert([
                 'enquiry_no' => $enquiry->oem_enquiry_no ?? $enquiry->enquiry_no,
                 'quick_enquiry_no' => $enquiry->quick_enquiry_no ?? $enquiry->oem_quick_enquiry_no,
@@ -2702,6 +2706,8 @@ class EnquiryCrudController extends CrudController
             'finance_modes' => $kw('FIN_MODE'),
             'care_of_types' => $kw('CARE_OF_TYPE'),
             'referred_by_types' => $kw('REFERRED_BY'),
+            'lost_reasons' => $kw('LOST_REASON'),
+            'lost_sub_reasons' => array_merge($kw('LOST_SUBREASON') ?: [], $kw('LOST_SUB_REASON') ?: []),
         ];
     }
 
