@@ -1423,3 +1423,19 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   is empty, so no data is at risk).
 - **Approved-by:** owner (request 30-09) · **Risk:** LOW (additive; the drop is conditional on empty data) · **Reversal:** the
   migration's `down()` (also fail-safe).
+
+### DEC-089 | 30-09-2026 | A (IAM / Org) | Users bulk workbook + bulk screen redesign; org rules enforced (to-do W10–W12)
+- **Why:** owner request 30-09 (fixed headers, master dropdowns, dependent lists, multi-select add-ons with All / None,
+  employee history, a bulk create / edit screen, org rules everywhere). Plan:
+  `tech-guides/frs-and-workflows/plans/2026-09-30-users-bulk-and-org-rules-DEC-089.md`.
+- **Decision (owner answers 30-09):**
+  1. Multi-select in Excel = comma-separated codes validated on import (helper list per column); the check / uncheck picker
+     lives in the bulk screen.
+  2. Blank add-on / vehicle-scope cell = keep stored; `None` = clear; `All` = all; blank vehicle scope on create = all.
+  3. Every Branch / Department / Segment gets a same-code, same-name Location / Division / Sub-segment — automatically for new
+     parents, and a fail-safe migration fills existing gaps.
+  4. Aadhaar exported masked (last 4); masked / blank on import keeps the stored number.
+  Primaries (branch, location, department, division) and at least one vertical are mandatory; every user has an employee
+  code. The DEC-040 two-sheet workbook stays importable during the change-over.
+- **Approved-by:** owner (30-09) · **Risk:** MEDIUM (bulk writes to users / employees / scopes; covered by tests; history
+  kept) · **Reversal:** revert the phases; the gap migration's `down()` removes only the children it created.

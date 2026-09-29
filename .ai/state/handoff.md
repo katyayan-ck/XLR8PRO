@@ -43,7 +43,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-0. **Now: W10 — Users bulk export / import redesign** (then W11 bulk create / edit screen, W12 org rules). Next step: study the existing users workbook (`php artisan users:export-rbac`, `UserRbacWorkbookTest`, DEC-040) before designing the new headers.
+0. **Now: W10–W12 (DEC-089, plan `tech-guides/frs-and-workflows/plans/2026-09-30-users-bulk-and-org-rules-DEC-089.md`)** — owner answered the 4 design questions (comma codes + web picker; blank = keep / None = clear; auto-create same-name children; Aadhaar masked). Next step: Phase A — `afterSave()` in Branch / Department / Segment services creates the same-code child; migration for gaps; user rules; tests.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.
 3. **U1 per screen:** header-less Backpack form cards get headers when converted; a real-browser check of quotation /

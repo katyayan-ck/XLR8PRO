@@ -10,6 +10,7 @@ from it also appears as rows in `docs/todo.md`.
 | [My Account + dynamic dashboard](2026-09-28-my-account-and-dashboard-DEC-072.md) | DEC-072 | ✅ shipped (`dev/admin`) | email / mobile self-service (N4) |
 | [Pricing process redesign](2026-09-28-pricing-redesign-DEC-073.md) | DEC-073 … 082 | ✅ shipped (`dev/admin`) | sheet fixes, quotation picker browser check, COD |
 | [Pricing masters, recalculation, sync stamp, logo](2026-09-29-pricing-masters-DEC-083.md) | DEC-083 | ✅ shipped (`dev/admin`) | `PRC_*` grants, accessory re-import, prod queue worker |
+| [Users bulk workbook + screen, org rules](2026-09-30-users-bulk-and-org-rules-DEC-089.md) | DEC-089 | 🟡 in progress (Phase A next) | phases A–C |
 | Go-live to-do (the programme plan) | — | 🟡 live | lives in `docs/todo.md` Part 1 |
 
 **New plan:** save it here as `YYYY-MM-DD-{topic}-DEC-NNN.md` (the plan-mode file in `~/.claude/plans/` is only a
