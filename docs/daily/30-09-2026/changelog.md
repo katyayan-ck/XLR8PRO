@@ -57,3 +57,15 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - **Verified:** all Blade views compile; 82 parameter-free Sales screens rendered as user 1 (only the 8 BUG-122 report
   pages fail — missing tables, pre-existing) and user 40 (81 × 403 by permission, 0 errors); `@basset` serves the
   libraries from the local cache.
+
+## Booking team schema (`booking.sql`) compared and aligned (DEC-088)
+- **Compared** their dump (tables `xlr8_crm_booking`, `xlr8_crm_enquiries`, `xlr8_crm_quotations`, `xlr8_vehicle_variant`)
+  with local `xlrm` via `information_schema` (a scratch local DB, dropped afterwards): booking and quotations identical.
+- **New migration** `database/migrations/2026_09_30_013707_align_crm_enquiries_with_booking_team_schema.php` (every step
+  state-checked): `cre_lost_reason`, `cre_lost_sub_reason` (VARCHAR 100 NULL, after `lost_remarks`), `vh_id` → `vh_code`,
+  index `idx_mobile`, drop `x8_enq_source` only when empty (it was: 0 of 60,923 rows). `down()` fail-safe too.
+- **`2026_09_24_125033_update_xlr8_crm_enquiries_table.php`:** `down()` guarded (its `up()` rename never ran — it sat
+  behind a `//` comment).
+- **Not aligned on purpose:** variant defaults (DEC-073) and their `model_code + code + color_code` UNIQUE index.
+- **Run:** `xlrm_testing` (up → down → up) and `xlrm`; a re-diff shows only the intended differences. Schema-only backup
+  taken first. Enquiry / booking / quotation / dashboard / scope tests: 109 passed.

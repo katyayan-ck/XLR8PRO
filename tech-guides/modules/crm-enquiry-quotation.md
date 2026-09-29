@@ -61,6 +61,9 @@ empty branch / location from the acting employee's primary branch / location and
 `->history()`, `<x-chat.thread :model="$enquiry" />`. `HasColumnTransformations` stays off on Enquiry / Lead (it would
 change stored values).
 
+**Schema notes (DEC-088, 30-09):** `cre_lost_reason` / `cre_lost_sub_reason` hold the CRE's lost reasons (lost-enquiry
+screens); the vehicle field is `vh_code` (was `vh_id`); `mobile` is indexed (`idx_mobile`) for the duplicate check.
+
 ### Quotation (`xlr8_crm_quotations`) and QuoteAction (`xlr8_crm_quote_actions`)
 Quotation fields: `quotation_no`, `enquiry_no` (holds the **enquiry id**), `booking_id`, `person_code`, vehicle codes,
 `sc_code`, `assigned_to`, `revision`, `standard_data` (the pricing JSON quoted), `final_data` (after edits),

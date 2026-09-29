@@ -819,3 +819,14 @@ unchanged. Guide: `tech-guides/platform/ui-kit.md` (List screens).
 **Verified:** views compile; render smoke of 82 Sales screens for users 1 and 40 (no new errors; BUG-122 reports
 unchanged). **Left:** a real-browser pass of the busiest forms (booking add, OTF, quotation); page-header eyebrow on
 forms as they are next edited.
+
+### 5. Booking team DB changes compared and migrated fail-safe (DEC-088)
+
+**Delivered:** their 4-table dump compared column by column and index by index with our DB. One fail-safe migration brings
+`xlr8_crm_enquiries` in line (the lost-reason columns their merged screens need, the `vh_code` rename, `idx_mobile`, the
+empty `x8_enq_source` removed). The broken rollback of their earlier migration is guarded. Our newer variant schema
+(DEC-073) is kept and the reason documented.
+
+**Verified:** up / down / up on the test copy; applied locally; re-diff clean except the intended items; 109 related tests
+pass. **Left:** their environments get this and our index migrations on the next deploy; `booking.sql` stays untracked in
+the project root (not committed).

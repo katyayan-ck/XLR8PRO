@@ -1408,3 +1408,18 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   Nothing is pushed.
 - **Approved-by:** owner (30-09) · **Risk:** MEDIUM (manual conflict resolution; covered by the full suite) ·
   **Reversal:** reset `dev/admin` to the pre-merge commit (`merge/stage-30-09` keeps the history).
+
+### DEC-088 | 30-09-2026 | A (Sales DB) | Align `xlr8_crm_enquiries` with the booking team's schema; keep our variant schema
+- **Why:** the owner asked (30-09) to compare the booking team's `booking.sql` (4 tables) with our local DB and write fail-safe
+  migrations for the differences. `xlr8_crm_booking` and `xlr8_crm_quotations` are identical. `xlr8_crm_enquiries` differs:
+  theirs has `cre_lost_reason`, `cre_lost_sub_reason` (used by the merged lost-enquiry screens), `vh_code` (their rename of
+  `vh_id`, which never ran here because it sat behind a `//` comment) and `idx_mobile`; ours has an empty `x8_enq_source` and four
+  dashboard / scope indexes (created by our migrations, so their environments get them on deploy). `xlr8_vehicle_variant`
+  differs only where ours is newer (DEC-073 relaxed defaults) plus their hand-made `model_code + code + color_code` UNIQUE index.
+- **Decision:** one fail-safe migration `2026_09_30_013707_align_crm_enquiries_with_booking_team_schema` (each step checks state
+  first): add the two lost-reason columns, rename `vh_id` → `vh_code`, add `idx_mobile`, drop `x8_enq_source` only when every row is
+  empty. The old migration's `down()` is guarded. Variant defaults and the UNIQUE index are **not** changed (DEC-073; the entity
+  service enforces uniqueness, a DB index would count soft-deleted rows). A schema-only backup is taken first (the dropped column
+  is empty, so no data is at risk).
+- **Approved-by:** owner (request 30-09) · **Risk:** LOW (additive; the drop is conditional on empty data) · **Reversal:** the
+  migration's `down()` (also fail-safe).

@@ -23,9 +23,15 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // DEC-088: guarded — the vh_id → vh_code rename in up() never ran here (it sat behind a comment); the later
+        // align migration does it fail-safe, so only undo what exists.
         Schema::table('xlr8_crm_enquiries', function (Blueprint $table) {
-            $table->dropColumn('duplicate');
-            $table->renameColumn('vh_code', 'vh_id');
+            if (Schema::hasColumn('xlr8_crm_enquiries', 'duplicate')) {
+                $table->dropColumn('duplicate');
+            }
+            if (Schema::hasColumn('xlr8_crm_enquiries', 'vh_code') && ! Schema::hasColumn('xlr8_crm_enquiries', 'vh_id')) {
+                $table->renameColumn('vh_code', 'vh_id');
+            }
         });
     }
 };
