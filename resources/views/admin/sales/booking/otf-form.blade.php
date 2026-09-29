@@ -75,6 +75,18 @@ use App\Services\OrgService;
         width: 100%;
     }
 
+    /* All displayed date fields - same size */
+    .bill-table input.date-picker,
+    .bill-table input.date-picker-alt {
+        font-size: 10px !important;
+        padding: 2px !important;
+        height: auto !important;
+        line-height: normal !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+
     /* Hide Backpack UI */
     .page-header,
     .navbar,
@@ -1048,7 +1060,7 @@ use App\Services\OrgService;
                 value="{{ old(
                     'dob',
                     !empty($enquiry?->dob)
-                        ? \Carbon\Carbon::parse($enquiry->dob)->format('d-M-Y')
+                        ? \Carbon\Carbon::parse($enquiry->dob)->format('d M Y')
                         : ''
                 ) }}"
                 readonly
@@ -1102,9 +1114,11 @@ use App\Services\OrgService;
             class="date-picker"
             value="{{ old(
                 'anniversary_date',
-                $otfData['anniversary_date']
-                    ?? $enquiry?->marriage_date
-                    ?? ''
+                !empty($otfData['anniversary_date'] ?? $enquiry?->marriage_date)
+                    ? \Carbon\Carbon::parse(
+                        $otfData['anniversary_date'] ?? $enquiry?->marriage_date
+                    )->format('d M Y')
+                    : ''
             ) }}"
         >
     </td>
@@ -2554,17 +2568,18 @@ use App\Services\OrgService;
                                     <td class="title">DO Voucher Date</td>
                                     <td>
                                         <input
-                                            type="date"
+                                            type="text"
                                             id="do_voucher_date"
                                             name="do_voucher_date"
                                             value="{{ $taStatement?->created_at
-                                                ? \Carbon\Carbon::parse($taStatement->created_at)->format('Y-m-d')
+                                                ? \Carbon\Carbon::parse($taStatement->created_at)->format('d M Y')
                                                 : '' }}"
                                             readonly
                                             style="background:transparent;border:none;width:100%;"
                                         >
                                     </td>
                                 </tr>
+
                             </table>
 
                             
@@ -3689,42 +3704,42 @@ $('#dsa_id').on('change', updateDsaLocation);
 $(document).ready(function () {
     updateDsaLocation();
 });
-
 document.addEventListener("DOMContentLoaded", function () {
-    // Configure Flatpickr with d-M-Y format (12-Aug-2026)
+
     const dateConfig = {
         dateFormat: SITE_DATE_FORMAT,
         allowInput: false,
         clickOpens: true,
         altInput: true,
-        altFormat: "d-M-Y"
-    };
+        altFormat: "d M Y",
+        altInputClass: "date-picker-alt",
 
-    // Apply to all date picker inputs
-    flatpickr(".date-picker", dateConfig);
-    flatpickr(".flatpickr", dateConfig);
-    flatpickr("#dob", dateConfig);
-    flatpickr("#anniversary_date", dateConfig);
-    flatpickr("#invoice_date", dateConfig);
-
-    // Handle invoice date with hidden field
-    const invoicePicker = flatpickr("#invoice_date", {
-        dateFormat: SITE_DATE_FORMAT,
-        allowInput: false,
-        clickOpens: true,
-        altInput: true,
-        altFormat: "d-M-Y",
         onChange: function(selectedDates, dateStr, instance) {
-            if (selectedDates.length > 0) {
-                const yyyyMMdd = selectedDates[0].toISOString().split('T')[0];
-                document.getElementById('hidden_invoice_date').value = yyyyMMdd;
-            } else {
-                document.getElementById('hidden_invoice_date').value = '';
+
+            // Only Invoice Date
+            if (instance.element.id === 'invoice_date') {
+
+                const hiddenInvoiceDate =
+                    document.getElementById('hidden_invoice_date');
+
+                if (hiddenInvoiceDate) {
+
+                    if (selectedDates.length > 0) {
+                        const yyyyMMdd =
+                            selectedDates[0].toISOString().split('T')[0];
+
+                        hiddenInvoiceDate.value = yyyyMMdd;
+                    } else {
+                        hiddenInvoiceDate.value = '';
+                    }
+                }
             }
         }
-    });
-    
-    
+    };
+
+    flatpickr(".date-picker", dateConfig);
+    flatpickr(".flatpickr", dateConfig);
+
 });
 // ==========================================================
 // MARITAL STATUS → MARRIAGE DATE
