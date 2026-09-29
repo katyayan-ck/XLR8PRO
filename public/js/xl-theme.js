@@ -150,9 +150,24 @@
         attributeFilter: ['data-bs-theme', 'data-bs-theme-primary', 'data-bs-theme-base', 'data-bs-theme-font', 'data-bs-theme-radius', 'data-xl-text', 'data-xl-space'],
     });
 
+    /* Another tab changed the colour mode. Backpack's colorMode.set() always removes the key and writes it again, and each
+       write fires "storage" in every other tab — re-setting on each event made tabs bounce the mode back and forth several
+       times a second (BUG-216). So: wait until the other tab's write has settled, read the final value once, and apply it
+       only when it differs from this tab's mode; the tabs then converge after one round. */
+    var modeSyncTimer = null;
+    function syncModeFromOtherTab() {
+        var wanted = null;
+        try { wanted = window.localStorage.getItem('colorMode'); } catch (e) { /* storage blocked */ }
+        wanted = wanted || 'system';
+        if (window.colorMode && window.colorMode.get() !== wanted) { window.colorMode.set(wanted); }
+    }
+
     window.addEventListener('storage', function (event) {
         if (event.key === STORE) { applyAttrs(readStore()); }
-        if (event.key === 'colorMode' && window.colorMode) { window.colorMode.set(event.newValue || 'system'); }
+        if (event.key === 'colorMode' && window.colorMode) {
+            window.clearTimeout(modeSyncTimer);
+            modeSyncTimer = window.setTimeout(syncModeFromOtherTab, 150);
+        }
     });
 
     XL.theme = { get: get, set: set, reset: reset, onChange: onChange, token: token, layouts: LAYOUTS };

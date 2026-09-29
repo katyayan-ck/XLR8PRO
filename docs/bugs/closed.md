@@ -209,6 +209,7 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-213 | `app/Models/Vehicle/Pricing/pricing.php` (lowercase file) declares `class Pricing` on the old `xlr8_vehicle_pricing` table — unused, and breaks PSR-4 autoloading on case-sensitive servers if ever referenced | Low | CLOSED — not a bug (verification error): the file is `Pricing.php` in git and is the live price model | 06-09-2026 (audit MED-02), verified 29-09-2026 | 30-09-2026 |
 | BUG-214 | OTF form: the hidden invoice date was taken from `toISOString()` (UTC), so an invoice date picked in IST was saved as the previous day | Medium | FIXED — `instance.formatDate(date, 'Y-m-d')` (local) | 30-09-2026 | 30-09-2026 |
 | BUG-215 | RTO apply (stage change 28-09): sale type / registration-no type looked up in keyword masters that do not exist (`SALE_TYPE`, `REGISTRATION_NO_TYPE`) while the form still posts 1 / 2 / 3 — no RTO rule ever matched, so the RTO status was wrong | High | FIXED — keyword masters first, fixed code maps as fallback | 30-09-2026 | 30-09-2026 |
+| BUG-216 | Colour mode flashed dark / light many times a second with two or more admin tabs open — tabs re-set the mode on every `storage` event, and Backpack's `colorMode.set()` rewrites the key each time, so the tabs kept bouncing it | High | FIXED — debounced, compare-then-apply sync | 30-09-2026 | 30-09-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2601,3 +2602,19 @@ guessed at.
 - **Fixed:** 30-09-2026 — the keyword master wins when it holds the code; the fixed maps are the fallback. Tests pass.
 - **Follow-up (owner / booking team):** create the `SALE_TYPE` and `REGISTRATION_NO_TYPE` keyword masters (codes 1 / 2 /
   3) or change the form to the keyword codes; then the fallback can go.
+
+### BUG-216 — Colour mode flashed dark / light many times a second with two or more admin tabs open — tabs re-set the mode on every `storage` event, and B
+
+- **Final status:** FIXED · **Fixed:** 30-09-2026
+- **Status:** FIXED 30-09-2026.
+- **Severity:** High (the whole admin flickered; reported by the owner after the stage merge).
+- **Found:** 30-09-2026, owner report ("colour mode switcher not working, colours flashing dark to light").
+- **Where:** `public/js/xl-theme.js` (DEC-067) — the `storage` listener.
+- **Description:** Backpack's `ColorMode.set()` always `removeItem('colorMode')` and then `setItem()`s it; each write fires
+  `storage` in every other tab. Our listener called `colorMode.set(event.newValue || 'system')` on every event, which wrote
+  the key again → events back in the first tab → an endless ping-pong between the transient empty value ("system") and the
+  real one. Not caused by the merge; it shows whenever two admin tabs are open.
+- **Fixed:** 30-09-2026 — the listener waits 150 ms for the other tab's writes to settle, reads the final value once and
+  applies it only when it differs from this tab's mode. Reproduction in headless Chrome (two same-origin frames with
+  Backpack's real `ColorMode` class): old code 300 flips per tab in 3 s and diverging modes; fixed code 1 flip per switch,
+  both tabs converge (dark → system → light: 3 flips each, both end light).

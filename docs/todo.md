@@ -830,3 +830,9 @@ empty `x8_enq_source` removed). The broken rollback of their earlier migration i
 **Verified:** up / down / up on the test copy; applied locally; re-diff clean except the intended items; 109 related tests
 pass. **Left:** their environments get this and our index migrations on the next deploy; `booking.sql` stays untracked in
 the project root (not committed).
+
+### 6. Colour-mode flicker fixed — BUG-216
+
+**Delivered:** the dark / light flashing is gone: tabs now pick up another tab's colour mode once instead of bouncing it.
+**Verified:** a two-tab reproduction in headless Chrome (old 300 flips in 3 s → new 1 per switch, tabs agree).
+**Left:** —

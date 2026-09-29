@@ -69,3 +69,9 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - **Not aligned on purpose:** variant defaults (DEC-073) and their `model_code + code + color_code` UNIQUE index.
 - **Run:** `xlrm_testing` (up → down → up) and `xlrm`; a re-diff shows only the intended differences. Schema-only backup
   taken first. Enquiry / booking / quotation / dashboard / scope tests: 109 passed.
+
+## BUG-216 — colour mode flashing between tabs
+- **`public/js/xl-theme.js`:** the cross-tab `storage` sync is debounced (150 ms) and compare-then-apply; before, it re-set
+  the mode on every event and Backpack's remove + set wrote it back, bouncing between tabs (~100 flips / s).
+- **Verified:** headless Chrome, two same-origin frames with Backpack's `ColorMode`: old 300 flips / 3 s, diverging; new 1
+  flip per switch, converging (dark / system / light).

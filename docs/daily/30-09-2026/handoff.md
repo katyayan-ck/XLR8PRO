@@ -25,6 +25,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: BUG-216 fixed — colour mode flashed between open tabs (cross-tab sync loop in `xl-theme.js`).
 - 30-09: booking team schema (`booking.sql`) compared; fail-safe migration `2026_09_30_013707_align_crm_enquiries_with_booking_team_schema` run on `xlrm` + `xlrm_testing` (DEC-088).
 - 30-09: Sales UI/UX pass — 77 views on the shared layer (xl-grid, toolbar / popover / loader classes, tokens, @basset, XL.notify); logic untouched.
 - 30-09: `origin/stage` merged into `dev/admin` keeping DEC-068…071 and the team's 27-file work (DEC-087); BUG-214 / 215 fixed on the way.
