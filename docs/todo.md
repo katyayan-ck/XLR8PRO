@@ -352,7 +352,7 @@ The booking team owns it (DEC-034); these are the items we know of.
   request-level codes added, the enum status map fixed, a test that fails when a code has no message. BUG-209 (settings
   API writes always 403) found and partly fixed.
 - **Left:** the web side (admin flashes for business errors through the same codes), the `E002` rename (app team),
-  deleting the dead `app/Exceptions/Handler.php` (needs approval).
+  the dead `app/Exceptions/Handler.php` was deleted on 30-09 (approved).
 
 ## 10c. Docs, AI-context and repository clean-up (your request, 29-09 — DEC-086)
 
@@ -365,7 +365,7 @@ The booking team owns it (DEC-034); these are the items we know of.
 | C5 | One to-do + accomplishments file `docs/todo.md`, plus date-wise handoff / changelog / accomplishment files | ✅ 29-09 (`docs/daily/DD-MM-YYYY/`, kept in step with the cumulative files) | P1 | |
 | C6 | Old context and superseded files moved to the git-ignored `_backup/` (kept on disk, out of the repo and out of agent searches) | ✅ 29-09 (removing `4c82d28`'s workbooks from history needs your approval) | P1 | Includes the pricing reference workbooks that were committed by mistake in `4c82d28` (not pushed) |
 | C8 | Plans kept in the repo and current: `tech-guides/frs-and-workflows/plans/` (DEC-071, 072, 073, 083) with status headers + index; rule added | ✅ 29-09 | P1 | Update a plan's header when its work moves |
-| C7 | The Laradocs site (`/docs`, `web` middleware only) served the whole `docs/` folder, including the bug tracker and the decision log | 🟡 mitigated 29-09 (reads `tech-guides/`); login decision open (BUG-211) | P0 | Point it at `tech-guides/`; whether it needs a login is an owner decision (BUG-211) |
+| C7 | The Laradocs site (`/docs`, `web` middleware only) served the whole `docs/` folder, including the bug tracker and the decision log | ✅ 30-09 (reads `tech-guides/`; admin login required — BUG-211) | P0 | Point it at `tech-guides/`; whether it needs a login is an owner decision (BUG-211) |
 
 ## 11. Deferred (after UAT)
 
@@ -773,3 +773,20 @@ files); `/docs` renders from `tech-guides/`; `php artisan ai:refresh-context` �
 `docs/daily/README.md`, and the standing rule (always loaded) to update the day's files together with the cumulative
 ones in every commit. **Verified:** the copies match today's sections of `docs/changelog.md`, `docs/todo.md` and
 `.ai/state/handoff.md`. **Left:** —
+
+## 30-09-2026
+
+### 1. Owner-approved clean-up items: `/docs` login, dead files — BUG-211, BUG-212, BUG-213
+
+**Delivered:**
+- `/docs` (the developer guides) now requires the admin login and serves only `tech-guides/` (BUG-211 fixed).
+- The unused `Module\Booking\XlInsurer` copy (BUG-212) and the never-registered `app/Exceptions/Handler.php` deleted.
+- BUG-213 corrected and closed: the "lowercase `pricing.php`" was a false positive from my 29-09 check on a
+  case-insensitive filesystem. The file is `Pricing.php` and is the live price model used by 9 services; deleting it
+  would have broken pricing, so nothing was removed.
+- A flaky time-dependent assertion in `ApiErrorEnvelopeTest` fixed.
+
+**Verified:** `DocsSiteAccessTest` (guest → login redirect; signed-in → 200 from `tech-guides/`); API envelope tests
+passed 3 runs in a row; the related API / pricing / booking / insurance suites, 93 passed.
+
+**Left:** —

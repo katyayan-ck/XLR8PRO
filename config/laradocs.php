@@ -224,7 +224,9 @@ return [
         'register' => env('LARADOCS_ROUTE_REGISTER', true),
         'prefix' => env('LARADOCS_ROUTE_PREFIX', 'docs'),
         'domain' => env('LARADOCS_ROUTE_DOMAIN'),
-        'middleware' => ['web'],
+        // BUG-211 (DEC-086): the guides are internal — only signed-in admin users (Backpack's `admin` group: login,
+        // idle-session rules) may read /docs.
+        'middleware' => ['web', 'admin'],
         'package_middleware' => [
             EnsureDocsEnabled::class,
             SetDocsLocale::class,

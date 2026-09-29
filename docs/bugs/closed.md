@@ -204,6 +204,9 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-205 | Importing the Insurance workbook's "Insurance Co." sheet expired every insurance preference row; with segment preferences (DEC-083) it would have wiped them. The export also folded them into model rows | Medium | FIXED (DEC-083, 29-09-2026; found in design, never shipped broken) | 29-09-2026 | 29-09-2026 |
 | BUG-208 | API error handling is not central: 401 / 404 / 405 / 429 / 500 on `api/*` bypass the envelope (Laravel default JSON or debug trace); `App\Exceptions\Handler` is never registered (dead); `ErrorCodeEnum::message()` throws `UnhandledMatchError` for the six `POST_*` / `EMP_*` codes; `DomainException` defaults to the missing `VALIDATION_ERROR` case; the enum maps `VALIDATION_*` to 400 while responses send 422 | Medium | FIXED 29-09-2026 (DEC-085) except `E002` (app team) | 29-09-2026 | 29-09-2026 |
 | BUG-210 | `POST api/v1/devices/register` validated `device_id` as `unique:user_device_tokens…`, a table that does not exist (the model uses `xlr8_iam_user_device_token`): every registration failed with a 500, so no device ever got a push token; the rule would also have blocked refreshing a rotated FCM token | High | FIXED 29-09-2026 | 29-09-2026 | 29-09-2026 |
+| BUG-211 | The Laradocs site (`/docs`, only the `web` middleware) served the whole `docs/` folder — the bug tracker (security findings) and the decision log could be read without signing in wherever `LARADOCS_ENABLED` is true | High | FIXED — `/docs` requires the admin login (Backpack `admin` middleware group) and serves only `tech-guides/` | 29-09-2026 | 30-09-2026 |
+| BUG-212 | Duplicate model `App\Models\Module\Booking\XlInsurer` (same table as `Module\Insurance\XlInsurer`, which is the one every caller uses) — dead copy that has drifted | Low | FIXED — the unused `Module\Booking\XlInsurer` copy deleted | 06-09-2026 (audit HIGH-01), verified 29-09-2026 | 30-09-2026 |
+| BUG-213 | `app/Models/Vehicle/Pricing/pricing.php` (lowercase file) declares `class Pricing` on the old `xlr8_vehicle_pricing` table — unused, and breaks PSR-4 autoloading on case-sensitive servers if ever referenced | Low | CLOSED — not a bug (verification error): the file is `Pricing.php` in git and is the live price model | 06-09-2026 (audit MED-02), verified 29-09-2026 | 30-09-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -217,7 +220,7 @@ The pre-refactor audit listed 32 issues. Each listed item was checked against th
 | CRIT-04 | Missing `HasHashedMediaTrait` in 7 models | Resolved — no references |
 | CRIT-05 | Enquiry trait imports `App\Traits\*` | Resolved |
 | CRIT-06 | Broken imports in `BookingStateService` | Resolved — class removed |
-| HIGH-01 | Duplicate `XlInsurer` models | **Open → BUG-212** |
+| HIGH-01 | Duplicate `XlInsurer` models | Resolved 30-09 — the unused copy deleted (BUG-212) |
 | HIGH-02 | `AuthenticationService` vs `AuthService` | Resolved — one service |
 | HIGH-03 | Broken imports in `DocService` | Resolved — imports valid (DEC-060…065) |
 | HIGH-04 | `App\Models\ImportLog` import in `AccessoryService` | Resolved — no references |
@@ -226,7 +229,7 @@ The pre-refactor audit listed 32 issues. Each listed item was checked against th
 | HIGH-07 | Parallel completeness logic (`VehicleService` / `VehicleMasterService`) | Resolved — `VehicleCompleteness` (DEC-073) |
 | HIGH-08 | Importers using deleted `App\Models\Core\*` | Resolved (see BUG-075 / BUG-076) |
 | MED-01 | `DesignationDeptTree.php` filename mismatch | Resolved |
-| MED-02 | Lowercase `Vehicle/Pricing/pricing.php` | **Open → BUG-213** |
+| MED-02 | Lowercase `Vehicle/Pricing/pricing.php` | Resolved — the file is `Pricing.php` (BUG-213 was a false positive, closed 30-09) |
 | MED-03 | `X_Vh_Stock.php` filename mismatch | Resolved |
 | MED-04 / 05 | `class Xlinsurer` casing | Resolved — `XlInsurer` |
 | MED-06 | Legacy helpers importing deleted classes | Resolved — `app/Helpers` removed (DEC-060) |
@@ -2530,3 +2533,44 @@ guessed at.
   existing row (FCM rotates tokens).
 - **Fix:** the unique rule is removed; the service upserts per user + device. Test:
   `tests/Feature/Api/DeviceRegistrationTest.php` (register, re-register refreshes the token, `fcm_token` required).
+
+### BUG-211 — The Laradocs site (`/docs`, only the `web` middleware) served the whole `docs/` folder — the bug tracker (security findings) and the decisio
+
+- **Final status:** FIXED — `/docs` requires the admin login (Backpack `admin` middleware group) and serves only `tech-guides/` · **Fixed:** 30-09-2026
+- **Fixed:** 30-09-2026 — `config/laradocs.php`: `route.middleware` = `['web', 'admin']` (guests go to the login page) and `docs.path` = `tech-guides/` (29-09). Owner approved 30-09. Test: `tests/Feature/Utils/DocsSiteAccessTest.php`.
+
+- **Status:** OPEN (mitigated 29-09-2026, DEC-086).
+- **Severity:** High.
+- **Found:** 29-09-2026, the docs clean-up (to-do C7).
+- **Where:** `config/laradocs.php` (`route.middleware` = `['web']`, `path` = `base_path('docs')`).
+- **Description:** Laradocs renders every markdown file under its path at `/docs`. With the path on `docs/`, the bug
+  tracker (including unfixed security findings such as BUG-182 / BUG-187 / BUG-207) and the full decision log were
+  public on any environment with `LARADOCS_ENABLED=true` (the default).
+- **Mitigation:** the path is now `tech-guides/` (developer guides only).
+- **Proposed solution:** put `/docs` behind the admin login (a `backpack` middleware + a permission such as
+  `DEV_DOCS_VIEW`) or disable it outside local (`LARADOCS_ENABLED=false`) — owner decision (an access change).
+
+### BUG-212 — Duplicate model `App\Models\Module\Booking\XlInsurer` (same table as `Module\Insurance\XlInsurer`, which is the one every caller uses) — dea
+
+- **Final status:** FIXED — the unused `Module\Booking\XlInsurer` copy deleted · **Fixed:** 30-09-2026
+- **Fixed:** 30-09-2026 — `app/Models/Module/Booking/XlInsurer.php` deleted (owner approved); no references remained.
+
+- **Status:** OPEN (deletion of a tracked file needs approval).
+- **Severity:** Low.
+- **Found:** 06-09-2026 audit (`knownissues.txt` HIGH-01); verified still present 29-09-2026.
+- **Where:** `app/Models/Module/Booking/XlInsurer.php`.
+- **Description:** two `XlInsurer` classes exist; all three callers (`BookingCrudController`, `BookingInsuranceService`,
+  `BookingOtfService`) import `Module\Insurance\XlInsurer`. The Booking copy is unused and now differs from it.
+- **Proposed solution:** delete `Module/Booking/XlInsurer.php`.
+
+### BUG-213 — `app/Models/Vehicle/Pricing/pricing.php` (lowercase file) declares `class Pricing` on the old `xlr8_vehicle_pricing` table — unused, and bre
+
+- **Final status:** CLOSED — not a bug (verification error): the file is `Pricing.php` in git and is the live price model · **Fixed:** 30-09-2026
+- **Closed:** 30-09-2026 — **not a bug.** Git tracks `app/Models/Vehicle/Pricing/Pricing.php` (correct PSR-4 case). The 29-09 check `ls …/pricing.php` succeeded only because Windows paths are case-insensitive, and the reference search used a broken escape. `App\Models\Vehicle\Pricing\Pricing` is the live price model (9 services, 6 tests) — it must not be deleted. The 06-09 audit item MED-02 was already resolved.
+
+- **Status:** OPEN (deletion of a tracked file needs approval).
+- **Severity:** Low.
+- **Found:** 06-09-2026 audit (`knownissues.txt` MED-02); verified still present 29-09-2026.
+- **Where:** `app/Models/Vehicle/Pricing/pricing.php`.
+- **Description:** nothing references `App\Models\Vehicle\Pricing\Pricing`; the pricing engine uses the DEC-073 models.
+- **Proposed solution:** delete the file.

@@ -18,3 +18,4 @@ Days before 29-09-2026 exist only in the cumulative files (`docs/changelog.md` b
 | Day | Files |
 |---|---|
 | [29-09-2026](29-09-2026/) | [handoff](29-09-2026/handoff.md) · [changelog](29-09-2026/changelog.md) · [accomplishments](29-09-2026/accomplishments.md) |
+| [30-09-2026](30-09-2026/) | [handoff](30-09-2026/handoff.md) · [changelog](30-09-2026/changelog.md) · [accomplishments](30-09-2026/accomplishments.md) |

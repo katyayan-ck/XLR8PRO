@@ -1390,3 +1390,10 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Addendum (29-09, user request):** date-wise records as well — `docs/daily/DD-MM-YYYY/{handoff,changelog,
   accomplishments}.md`, created from today's entries and updated in the same commit as the cumulative files
   (`.ai/state/handoff.md`, `docs/changelog.md`, `docs/todo.md` Part 2). Index: `docs/daily/README.md`.
+- **Addendum 2 (30-09, owner approval "Yes do the all 3"):**
+  1. **`/docs` requires the admin login** (Backpack `admin` middleware group; BUG-211), still serving only `tech-guides/`.
+  2. **Deletions:** `app/Models/Module/Booking/XlInsurer.php` (unused copy, BUG-212) and `app/Exceptions/Handler.php`
+     (never registered, DEC-085). BUG-213 (`pricing.php`) turned out to be a false positive — the file is `Pricing.php`,
+     the live price model — so nothing was deleted for it.
+  3. **History rewrite of `dev/admin`** from `4c82d28` (unpushed commits only) to drop `docs/reference/XLRM-Pricing-data/`
+     from every commit; a backup ref is kept locally until the owner confirms.

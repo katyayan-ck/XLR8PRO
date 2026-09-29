@@ -48,9 +48,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-206 | `person_code` (the person business key, referenced by 14 tables incl. users, bookings, enquiries) holds the person's **PAN (51) or Aadhaar (160)** for 211 of 215 people — government IDs as a key spread into every referencing row, URLs and logs (DPDP / UIDAI Aadhaar-storage risk) | High | OPEN (owner decision: surrogate key + remap — data dictionary §person) | 29-09-2026 | — |
 | BUG-207 | v1 `system-settings` read endpoints are open to every signed-in app user and return **all** visible settings (encrypted ones as ciphertext); `GET system-settings/{key}` returns the raw row (validation rules, defaults); update / import go through the legacy `SystemSettingService` | Medium | OPEN (API access change — owner decision; proposed app-facing allow-list) | 29-09-2026 | — |
 | BUG-209 | `BaseController::authorize()` never works: `canPerform()` calls `parent::authorize()`, which `Controller` does not have (always false), and the throw passed its arguments in the wrong order (a `TypeError` → 500). `PUT api/v1/system-settings/{key}` and `POST …/import/json` therefore always fail; there is no `SystemSetting` policy either | Medium | PARTLY FIXED 29-09-2026: the 500 is now the intended 403; making the endpoints work waits on BUG-207 (owner) | 29-09-2026 | — |
-| BUG-211 | The Laradocs site (`/docs`, only the `web` middleware) served the whole `docs/` folder — the bug tracker (security findings) and the decision log could be read without signing in wherever `LARADOCS_ENABLED` is true | High | OPEN — mitigated 29-09 (Laradocs now reads `tech-guides/`); whether `/docs` needs a login is the owner's call | 29-09-2026 | — |
-| BUG-212 | Duplicate model `App\Models\Module\Booking\XlInsurer` (same table as `Module\Insurance\XlInsurer`, which is the one every caller uses) — dead copy that has drifted | Low | OPEN (deletion — needs approval) | 06-09-2026 (audit HIGH-01), verified 29-09-2026 | — |
-| BUG-213 | `app/Models/Vehicle/Pricing/pricing.php` (lowercase file) declares `class Pricing` on the old `xlr8_vehicle_pricing` table — unused, and breaks PSR-4 autoloading on case-sensitive servers if ever referenced | Low | OPEN (deletion — needs approval) | 06-09-2026 (audit MED-02), verified 29-09-2026 | — |
 
 ## Entries
 
@@ -449,35 +446,3 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
     check would still deny everyone but the superadmin.
 - **Fix so far:** the throw passes the ability (`You are not authorized to update.`, 403). Not changed: `canPerform()`
   (fixing it would open the legacy write path that BUG-207 proposes to replace).
-
-### BUG-211 — The Laradocs site (`/docs`, only the `web` middleware) served the whole `docs/` folder — the bug tracker (security findings) and the decisio
-
-- **Status:** OPEN (mitigated 29-09-2026, DEC-086).
-- **Severity:** High.
-- **Found:** 29-09-2026, the docs clean-up (to-do C7).
-- **Where:** `config/laradocs.php` (`route.middleware` = `['web']`, `path` = `base_path('docs')`).
-- **Description:** Laradocs renders every markdown file under its path at `/docs`. With the path on `docs/`, the bug
-  tracker (including unfixed security findings such as BUG-182 / BUG-187 / BUG-207) and the full decision log were
-  public on any environment with `LARADOCS_ENABLED=true` (the default).
-- **Mitigation:** the path is now `tech-guides/` (developer guides only).
-- **Proposed solution:** put `/docs` behind the admin login (a `backpack` middleware + a permission such as
-  `DEV_DOCS_VIEW`) or disable it outside local (`LARADOCS_ENABLED=false`) — owner decision (an access change).
-
-### BUG-212 — Duplicate model `App\Models\Module\Booking\XlInsurer` (same table as `Module\Insurance\XlInsurer`, which is the one every caller uses) — dea
-
-- **Status:** OPEN (deletion of a tracked file needs approval).
-- **Severity:** Low.
-- **Found:** 06-09-2026 audit (`knownissues.txt` HIGH-01); verified still present 29-09-2026.
-- **Where:** `app/Models/Module/Booking/XlInsurer.php`.
-- **Description:** two `XlInsurer` classes exist; all three callers (`BookingCrudController`, `BookingInsuranceService`,
-  `BookingOtfService`) import `Module\Insurance\XlInsurer`. The Booking copy is unused and now differs from it.
-- **Proposed solution:** delete `Module/Booking/XlInsurer.php`.
-
-### BUG-213 — `app/Models/Vehicle/Pricing/pricing.php` (lowercase file) declares `class Pricing` on the old `xlr8_vehicle_pricing` table — unused, and bre
-
-- **Status:** OPEN (deletion of a tracked file needs approval).
-- **Severity:** Low.
-- **Found:** 06-09-2026 audit (`knownissues.txt` MED-02); verified still present 29-09-2026.
-- **Where:** `app/Models/Vehicle/Pricing/pricing.php`.
-- **Description:** nothing references `App\Models\Vehicle\Pricing\Pricing`; the pricing engine uses the DEC-073 models.
-- **Proposed solution:** delete the file.

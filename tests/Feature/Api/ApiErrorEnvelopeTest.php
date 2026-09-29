@@ -16,6 +16,8 @@ class ApiErrorEnvelopeTest extends TestCase
 {
     public function test_an_unauthenticated_call_gets_the_envelope_with_the_same_status_and_message(): void
     {
+        $this->freezeTime();
+
         $this->getJson('/api/v1/vehicle/pricing/ANY')
             ->assertStatus(401)
             ->assertExactJson([
