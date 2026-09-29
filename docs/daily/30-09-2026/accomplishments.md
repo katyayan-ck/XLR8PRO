@@ -82,3 +82,14 @@ scope section listing employee code, OEM Mile ID, designation, the primary and a
 locations, segments, sub-segments, models, variants, verticals and the permissions by module — blank ("—") where nothing
 is defined. **Verified:** `MyAccountTest` (5 passed, every field asserted); rendered for a super admin and a scoped user.
 **Left:** —
+
+### 9. Vehicle Info workbook with master dropdowns — W9
+
+**Delivered:** the Vehicle Info export now carries a dropdown on every lookup column, filled from the masters (codes),
+with Sub Segment limited to the chosen Segment and number ranges on Seating / Wheels / GST%. The import only accepts
+values that exist in the masters — a typo can no longer create a new segment or sub-segment, and transmission /
+drivetrain are checked too. `AWD` was added to the drivetrain master because vehicles already use it.
+
+**Verified:** 2 new tests (strict import, dropdown workbook structure); the pricing suite, 71 passed; migration run on
+both databases. **Left:** duplicate keyword codes (`AUTOMATIC` / `AUTOMATIC_1` …) are collapsed in the dropdowns; the
+real clean-up is F6.

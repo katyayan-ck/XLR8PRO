@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Vehicle\Pricing\Import;
 
+use App\Models\Vehicle\Segment;
+use App\Models\Vehicle\SubSegment;
 use App\Models\Vehicle\Variant;
 use App\Services\KeywordValueService;
 use App\Services\Vehicle\VehicleCompleteness;
@@ -12,8 +14,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
+use PhpOffice\PhpSpreadsheet\NamedRange;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 /**
@@ -21,8 +27,12 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
  *
  *  export($path)            every vehicle in the master (complete, incomplete, inactive, discontinued), sorted
  *                           Segment → OEM Model → code, in the reference "Vehicle Info" layout + a Missing Fields column;
- *                           lookups (Fuel, Permit, Body Make / Type) written as their key-value codes
- *  import($path, $onProgress)  fills the masters through VehicleService::applyVehicleInfo() (entity services) and
+ *                           lookups (Fuel, Permit, Body Make / Type) written as their key-value codes; every lookup
+ *                           column is a dropdown fed from the masters (hidden "Lists" sheet; Sub Segment follows the
+ *                           row's Segment; numbers range-checked), so an edited value always relates to existing data
+ *                           (owner request 30-09)
+ *  import($path, $onProgress)  fills the masters through VehicleService::applyVehicleInfo() (entity services; the
+ *                           masters must exist — an unknown segment / sub-segment / lookup value rejects the row) and
  *                           reports completed / still incomplete / rejected per row. It never creates vehicles — they
  *                           come only from the price lists (Detect). Run it inside PricingSessionService::record().
  */
@@ -80,6 +90,8 @@ class VehicleInfoWorkbookService
                 $sheet->getStyle('A'.($i + 2).":{$last}".($i + 2))->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('FFF2CC');
             }
         }
+        $this->addDropdowns($book, $sheet, count($rows));
+
         (new Xlsx($book))->save($path);
         $book->disconnectWorksheets();
 
@@ -155,7 +167,7 @@ class VehicleInfoWorkbookService
         }
         $wasComplete = $this->completeness->isComplete($variant);
         try {
-            $result = $this->vehicles->applyVehicleInfo($variant, $row);
+            $result = $this->vehicles->applyVehicleInfo($variant, $row, null, true);
         } catch (ValidationException $e) {
             $stats['rejected']++;
             $this->issue($stats, $rowNo, $code, 'rejected', implode(' ', array_merge(...array_values($e->errors()))));
@@ -249,6 +261,95 @@ class VehicleInfoWorkbookService
             'shield_pack' => (string) $v->shield_pack,
             'missing' => implode(', ', $missing),
         ];
+    }
+
+    /**
+     * Master-fed dropdowns on the Vehicle Info sheet (owner request 30-09). A hidden "Lists" sheet holds the codes; each
+     * lookup column gets a list validation (stop on anything else), Sub Segment follows the row's Segment through a
+     * named range per segment (`SUB_<CODE>`), and the numeric columns are range-checked. Codes are what the import reads.
+     */
+    private function addDropdowns(Spreadsheet $book, Worksheet $sheet, int $rowCount): void
+    {
+        $lists = $book->createSheet()->setTitle('Lists');
+        $segments = Segment::query()->where('is_active', true)->orderBy('code')->pluck('code')->map(fn ($c) => (string) $c)->all();
+        $subSegments = SubSegment::query()->where('is_active', true)->orderBy('code')->get(['segment_code', 'code'])
+            ->groupBy('segment_code')->map(fn ($rows) => $rows->pluck('code')->map(fn ($c) => (string) $c)->all())->all();
+        $columns = [
+            'segment' => $segments,
+            'fuel' => array_keys($this->vehicles->keywordOptions('FUEL_TYPE')),
+            'transmission' => array_keys($this->vehicles->keywordOptions('TRANSMISSION')),
+            'drivetrain' => array_keys($this->vehicles->keywordOptions('DRIVETRAIN')),
+            'body_make' => array_keys($this->vehicles->keywordOptions('BODY_MAKE')),
+            'body_type' => array_keys($this->vehicles->keywordOptions('BODY_TYPE')),
+            'permit' => array_keys($this->vehicles->keywordOptions('PERMIT')),
+            'taxi_price' => ['YES', 'NO'],
+            'status' => [VehicleService::STATUS_ACTIVE, VehicleService::STATUS_INACTIVE, VehicleService::STATUS_DISCONTINUED, VehicleService::STATUS_INCOMPLETE],
+        ];
+        $lastRow = max(2, $rowCount + 1);
+        $keys = array_keys(self::COLUMNS);
+        $col = fn (string $field) => Coordinate::stringFromColumnIndex((int) array_search($field, $keys, true) + 1);
+        $range = fn (string $field) => $col($field).'2:'.$col($field).$lastRow;
+
+        $listCol = 0;
+        $writeList = function (string $title, array $values, string $name) use (&$listCol, $lists, $book): void {
+            $listCol++;
+            $letter = Coordinate::stringFromColumnIndex($listCol);
+            $lists->setCellValue($letter.'1', $title);
+            foreach (array_values($values) as $i => $value) {
+                $lists->setCellValueExplicit($letter.($i + 2), $value, DataType::TYPE_STRING);
+            }
+            $end = max(2, count($values) + 1);
+            $book->addNamedRange(new NamedRange($name, $lists, '$'.$letter.'$2:$'.$letter.'$'.$end));
+        };
+
+        foreach ($columns as $field => $values) {
+            $name = 'LST_'.strtoupper($field);
+            $writeList(self::COLUMNS[$field], $values, $name);
+            $this->listValidation($sheet, $range($field), '='.$name, self::COLUMNS[$field]);
+        }
+
+        // Sub Segment: one named range per segment, picked by the row's Segment
+        foreach ($segments as $segment) {
+            $writeList('Sub Segment · '.$segment, $subSegments[$segment] ?? [], $this->subSegmentRange($segment));
+        }
+        $this->listValidation($sheet, $range('sub_segment'),
+            '=INDIRECT("SUB_"&SUBSTITUTE(SUBSTITUTE(SUBSTITUTE($'.$col('segment').'2,"-","_")," ","_"),".","_"))', self::COLUMNS['sub_segment']);
+
+        foreach (['seating' => [1, 100], 'wheels' => [1, 30]] as $field => [$min, $max]) {
+            $this->numberValidation($sheet, $range($field), DataValidation::TYPE_WHOLE, $min, $max, self::COLUMNS[$field]);
+        }
+        $this->numberValidation($sheet, $range('gst_pct'), DataValidation::TYPE_DECIMAL, 0, 100, self::COLUMNS['gst_pct']);
+
+        $lists->setSheetState(Worksheet::SHEETSTATE_HIDDEN);
+        $book->setActiveSheetIndex(0);
+    }
+
+    /** `SUB_<segment>`: a valid Excel name (letters, digits, underscores) — the INDIRECT formula builds the same. */
+    private function subSegmentRange(string $segment): string
+    {
+        return 'SUB_'.str_replace(['-', ' ', '.'], '_', strtoupper($segment));
+    }
+
+    private function listValidation(Worksheet $sheet, string $range, string $formula, string $label): void
+    {
+        $v = new DataValidation;
+        $v->setType(DataValidation::TYPE_LIST)->setErrorStyle(DataValidation::STYLE_STOP)->setAllowBlank(true)
+            ->setShowDropDown(true)->setShowErrorMessage(true)->setShowInputMessage(true)
+            ->setErrorTitle($label.': pick from the list')
+            ->setError('Choose a '.$label.' from the dropdown (the masters). New values are added in the masters first.')
+            ->setPromptTitle($label)->setPrompt('Pick from the list')
+            ->setFormula1($formula);
+        $sheet->setDataValidation($range, $v);
+    }
+
+    private function numberValidation(Worksheet $sheet, string $range, string $type, int|float $min, int|float $max, string $label): void
+    {
+        $v = new DataValidation;
+        $v->setType($type)->setOperator(DataValidation::OPERATOR_BETWEEN)->setErrorStyle(DataValidation::STYLE_STOP)
+            ->setAllowBlank(true)->setShowErrorMessage(true)
+            ->setErrorTitle($label.': out of range')->setError($label.' must be a number from '.$min.' to '.$max.'.')
+            ->setFormula1((string) $min)->setFormula2((string) $max);
+        $sheet->setDataValidation($range, $v);
     }
 
     /** @return array<string, array<int, string>> keyword => [key-value id => code] */

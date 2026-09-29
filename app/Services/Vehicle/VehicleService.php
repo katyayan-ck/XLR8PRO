@@ -254,13 +254,43 @@ class VehicleService
      * variant are updated through their entity services; a value that breaks a field rule rejects
      * the row (the importer reports it).
      *
+     * With `$mastersMustExist` (the Vehicle Info workbook import, owner request 30-09) the row must relate to existing
+     * masters: an unknown segment / sub-segment is rejected instead of created, and transmission / drivetrain must match
+     * their keyword masters (`TRANSMISSION`, `DRIVETRAIN`; a code or a label is accepted, then stored in the variant
+     * service's format — e.g. `Automatic`, `RWD`).
+     *
      * @return array{complete:bool,missing:array,active:bool,variant:Variant}
      */
-    public function applyVehicleInfo(Variant $variant, array $row, ?int $userId = null): array
+    public function applyVehicleInfo(Variant $variant, array $row, ?int $userId = null, bool $mastersMustExist = false): array
     {
         $segmentCode = $this->norm($row['segment'] ?? $variant->segment_code);
         $subCode = $this->norm($row['sub_segment'] ?? $variant->sub_segment_code ?: $segmentCode);
         $changes = [];
+
+        if ($mastersMustExist) {
+            $unknown = [];
+            if ($segmentCode !== '' && ! Segment::query()->where('code', $segmentCode)->exists()) {
+                $unknown['segment'] = "Unknown Segment \"{$segmentCode}\" (not in the segment master).";
+            } elseif ($segmentCode !== '' && ! SubSegment::query()->where('segment_code', $segmentCode)->where('code', $subCode)->exists()) {
+                $unknown['sub_segment'] = "Unknown Sub Segment \"{$subCode}\" for segment {$segmentCode}.";
+            }
+            foreach (['transmission' => ['TRANSMISSION', 'Transmission'], 'drivetrain' => ['DRIVETRAIN', 'Drivetrain']] as $field => [$keyword, $label]) {
+                if (! isset($row[$field]) || $row[$field] === '') {
+                    continue;
+                }
+                // the variant service's own transforms first (e.g. AT → Automatic), then the master
+                $normalised = (string) (app(VariantService::class)->normalise([$field => (string) $row[$field]])[$field] ?? $row[$field]);
+                $code = $this->keywordCode($keyword, $normalised);
+                if ($code === null) {
+                    $unknown[$field] = "Unknown {$label} \"{$row[$field]}\" (not in key values {$keyword}).";
+                } else {
+                    $row[$field] = $code;
+                }
+            }
+            if ($unknown !== []) {
+                throw ValidationException::withMessages($unknown);
+            }
+        }
 
         if ($segmentCode !== '') {
             $subSegment = $this->findOrCreateSubSegment($segmentCode, $subCode, $subCode, $userId);
@@ -405,6 +435,50 @@ class VehicleService
 
     /** @var array<string, int|null> keyword|value => key-value id, for this service instance (one import run) */
     private array $kkvMemo = [];
+
+    /**
+     * One entry per distinct value of a keyword master, keyed by its canonical code (duplicates such as `AUTOMATIC` /
+     * `AUTOMATIC_1` collapse to the code without the numeric suffix — the keyword clean-up is to-do F6). Used for the
+     * Vehicle Info dropdowns and to accept a code or a label on import.
+     *
+     * @return array<string, string> code => label
+     */
+    public function keywordOptions(string $keyword): array
+    {
+        $out = [];
+        $seen = [];
+        $enum = KeywordValueService::getEnum($keyword, false);
+        uksort($enum, fn ($a, $b) => [preg_match('/_\d+$/', (string) $a), (string) $a] <=> [preg_match('/_\d+$/', (string) $b), (string) $b]);
+        foreach ($enum as $code => $label) {
+            $key = $this->norm((string) $label);
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $out[$this->norm((string) $code)] = (string) $label;
+        }
+        ksort($out);
+
+        return $out;
+    }
+
+    /** The canonical keyword code for a code or label (case-insensitive), or null when the master has neither. */
+    public function keywordCode(string $keyword, string $value): ?string
+    {
+        $value = $this->norm($value);
+        foreach ($this->keywordOptions($keyword) as $code => $label) {
+            if ($code === $value || $this->norm($label) === $value) {
+                return $code;
+            }
+        }
+        foreach (KeywordValueService::getEnum($keyword, false) as $code => $label) {
+            if ($this->norm((string) $code) === $value || $this->norm((string) $label) === $value) {
+                return $this->keywordCode($keyword, (string) $label) ?? $this->norm((string) $code);
+            }
+        }
+
+        return null;
+    }
 
     public function kkvId(string $keyword, mixed $value, bool $create = false): ?int
     {

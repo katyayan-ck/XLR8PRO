@@ -276,3 +276,15 @@ DB::transaction(function () use ($svc, $rows, $wef) {
 Pricing tests need vehicle rows → `xlrm_testing`. Build a snapshot payload with `PricingContract::normalize()` and assert keys exist
 (`array_keys(PricingContract::defaults())` ⊆ payload keys) and totals; for rule services assert `expireActive()`
 counts and that history rows remain.
+
+## Vehicle Info workbook — master dropdowns (owner request 30-09)
+- **Export** (`VehicleInfoWorkbookService::export()` → `addDropdowns()`): a hidden `Lists` sheet with named ranges
+  `LST_SEGMENT`, `LST_FUEL`, `LST_TRANSMISSION`, `LST_DRIVETRAIN`, `LST_BODY_MAKE`, `LST_BODY_TYPE`, `LST_PERMIT`,
+  `LST_TAXI_PRICE`, `LST_STATUS` and one `SUB_<SEGMENT>` per segment; every lookup column has a stop-style list
+  validation (codes), Sub Segment follows the row's Segment (`INDIRECT`), Seating 1–100, Wheels 1–30, GST% 0–100.
+- **Import** calls `VehicleService::applyVehicleInfo($variant, $row, null, mastersMustExist: true)`: an unknown segment /
+  sub-segment is rejected (never created from the sheet), transmission / drivetrain must be in their keyword masters
+  (a code or label; stored in the variant service's format). Fuel / permit / body make / body type were already strict.
+- `VehicleService::keywordOptions($keyword)` → one entry per distinct value (duplicates like `AUTOMATIC` / `AUTOMATIC_1`
+  collapse — clean-up is to-do F6); `keywordCode($keyword, $value)` → the canonical code or null.
+- Migration `2026_09_30_023856_add_awd_to_drivetrain_keyword` added `AWD` (used by existing vehicles) to `DRIVETRAIN`.

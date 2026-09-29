@@ -5,6 +5,7 @@ namespace Tests\Feature\Pricing;
 use App\Jobs\Vehicle\Pricing\Process\ImportVehicleInfoJob;
 use App\Models\User;
 use App\Models\Vehicle\Pricing\ImportSession;
+use App\Models\Vehicle\Segment;
 use App\Models\Vehicle\Variant;
 use App\Services\Vehicle\Pricing\Import\PricingWorkbookReader;
 use App\Services\Vehicle\Pricing\Import\VehicleInfoWorkbookService;
@@ -15,7 +16,9 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
@@ -119,6 +122,50 @@ class PricingVehicleInfoTest extends TestCase
         $this->assertStringContainsString('new vehicles come only from the price lists', $reasons["ZQV{$this->tag}ZZ"]);
         $this->assertFalse(Variant::where('code', "ZQV{$this->tag}ZZ")->exists());
         $this->assertSame('done', $this->session->fresh()->progress['state']);
+    }
+
+    /** Owner request 30-09: imported rows must relate to existing masters — nothing is created from the sheet. */
+    public function test_import_rejects_values_that_are_not_in_the_masters(): void
+    {
+        $segment = $this->stub('WH');
+        $drivetrain = $this->stub('RD');
+        $label = $this->stub('BL');
+        $path = $this->sheet([
+            $this->row($segment, ['Segment' => 'NOSUCHSEG', 'Sub Segment' => 'NOSUCHSEG']),
+            $this->row($drivetrain, ['Drivetrain' => 'HOVER']),
+            $this->row($label, ['Transmission' => 'MANUAL', 'Drivetrain' => 'Fwd']),
+        ]);
+
+        app()->call([new ImportVehicleInfoJob($this->session->id, $path), 'handle']);
+
+        $reasons = collect($this->session->fresh()->stats['vehicle_info']['issues'])->pluck('reason', 'code');
+        $this->assertStringContainsString('Unknown Segment "NOSUCHSEG"', $reasons[$segment]);
+        $this->assertFalse(Segment::where('code', 'NOSUCHSEG')->exists(), 'no master is created from the sheet');
+        $this->assertStringContainsString('Unknown Drivetrain "HOVER"', $reasons[$drivetrain]);
+        $saved = Variant::where('code', $label)->firstOrFail();
+        $this->assertSame(['Manual', 'FWD'], [$saved->transmission, $saved->drivetrain], 'a code or a label from the master is accepted');
+    }
+
+    /** Owner request 30-09: every lookup column is a dropdown fed from the masters (hidden Lists sheet, codes). */
+    public function test_export_carries_master_dropdowns_on_a_hidden_lists_sheet(): void
+    {
+        $this->stub('WH');
+        $out = Storage::disk('local')->path('vi-dropdowns.xlsx');
+
+        app(VehicleInfoWorkbookService::class)->export($out);
+
+        $book = IOFactory::load($out);
+        $lists = $book->getSheetByName('Lists');
+        $this->assertNotNull($lists);
+        $this->assertSame(Worksheet::SHEETSTATE_HIDDEN, $lists->getSheetState());
+        foreach (['LST_SEGMENT', 'LST_FUEL', 'LST_TRANSMISSION', 'LST_DRIVETRAIN', 'LST_BODY_MAKE', 'LST_BODY_TYPE', 'LST_PERMIT', 'LST_TAXI_PRICE', 'LST_STATUS', 'SUB_PV'] as $name) {
+            $this->assertNotNull($book->getNamedRange($name), "named range {$name}");
+        }
+        $formulas = collect($book->getSheetByName('Vehicle Info')->getDataValidationCollection())->map(fn ($v) => $v->getFormula1())->values()->all();
+        $this->assertContains('LST_SEGMENT', array_map(fn ($f) => ltrim((string) $f, '='), $formulas));
+        $this->assertNotEmpty(array_filter($formulas, fn ($f) => str_contains((string) $f, 'INDIRECT("SUB_"')), 'sub-segment follows the segment');
+        $fuelCodes = array_filter(array_map(fn ($r) => $r[1] ?? null, $lists->toArray(null, false, false, false)));
+        $this->assertContains('DIESEL', $fuelCodes);
     }
 
     public function test_export_lists_every_vehicle_with_lookup_codes_and_missing_fields(): void

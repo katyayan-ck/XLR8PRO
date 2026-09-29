@@ -100,3 +100,17 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - **`.ai/guidelines/10-workflow.md`** (→ `CLAUDE.md` / `AGENTS.md`): new *Continuity* section — records updated on every
   task completion and every commit; mark a task in progress in the to-do and handoff before starting; keep the handoff's
   *In progress* exact at each checkpoint; a resume procedure. Change-workflow card updated.
+
+## W9 — Vehicle Info export with master dropdowns; strict import
+- **`app/Services/Vehicle/Pricing/Import/VehicleInfoWorkbookService.php`:** `addDropdowns()` — hidden `Lists` sheet, named
+  ranges, list validations on Segment, Sub Segment (dependent on Segment via `INDIRECT`), Fuel, Transmission, Drivetrain,
+  Body Make, Body Type, Permit, Taxi Price, Status; number ranges on Seating, Wheels, GST%. The import passes
+  `mastersMustExist: true`.
+- **`app/Services/Vehicle/VehicleService.php`:** `applyVehicleInfo(..., bool $mastersMustExist = false)` — unknown
+  segment / sub-segment rejected instead of created; transmission / drivetrain validated against their keyword masters
+  (after the variant service's own normalising, so `At` still means Automatic); new `keywordOptions()` / `keywordCode()`.
+  **Before → after:** a typo in Segment used to create a new segment master; now the row is rejected with the reason.
+- **Migration** `2026_09_30_023856_add_awd_to_drivetrain_keyword` (guarded, run on `xlrm` + `xlrm_testing`): `AWD` added to
+  `DRIVETRAIN` (22 vehicles use it).
+- **Tests:** `PricingVehicleInfoTest` +2 (strict import; dropdowns / hidden sheet / named ranges / dependent sub-segment);
+  pricing suite 71 passed. Guide `tech-guides/modules/pricing.md`.

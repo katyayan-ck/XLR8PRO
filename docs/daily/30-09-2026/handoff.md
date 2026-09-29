@@ -25,6 +25,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: W9 — Vehicle Info export with master dropdowns (hidden Lists sheet, dependent sub-segment) and a strict import; `AWD` added to DRIVETRAIN.
 - 30-09: Continuity rule added for all agents (`.ai/guidelines/10-workflow.md`).
 - 30-09: W8 — My Account in the UI-demo layout with Permissions & scope (`MyAccountService::access()`). Next: W9 Vehicle Info export dropdowns.
 - 30-09: W1 (merge wrap-up: 476 passed, temp branch deleted) and W2 (last API docs + Postman; BUG-217 fixed). Next: W3 Sales / booking feature tests.
@@ -45,7 +46,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-0. **Now: W9 — Vehicle Info export with master dropdowns** (`app/Services/Vehicle/Pricing/Import/VehicleInfoWorkbookService.php`; lookups today: FUEL_TYPE, PERMIT, BODY_MAKE, BODY_TYPE, VEHICLE_STATUS written as codes). Next step: add a hidden `Lists` sheet + data validation per lookup column; then W10 / W11 / W12.
+0. **Now: W10 — Users bulk export / import redesign** (then W11 bulk create / edit screen, W12 org rules). Next step: study the existing users workbook (`php artisan users:export-rbac`, `UserRbacWorkbookTest`, DEC-040) before designing the new headers.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.
 3. **U1 per screen:** header-less Backpack form cards get headers when converted; a real-browser check of quotation /
