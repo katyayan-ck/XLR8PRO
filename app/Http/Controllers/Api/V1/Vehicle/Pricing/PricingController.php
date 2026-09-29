@@ -40,6 +40,7 @@ class PricingController extends BaseController
      *   @OA\Parameter(name="include_cod", in="query", @OA\Schema(type="boolean")),
      *   @OA\Parameter(name="exchange", in="query", @OA\Schema(type="string")),
      *   @OA\Parameter(name="corporate", in="query", @OA\Schema(type="string")),
+     *   @OA\Parameter(name="loyalty", in="query", @OA\Schema(type="string")),
      *
      *   @OA\Response(response=200, description="data.pricing = fixed-key contract v2"),
      *   @OA\Response(response=404, description="PRICING_NOT_FOUND"),
@@ -66,6 +67,7 @@ class PricingController extends BaseController
                 'include_cod' => ['nullable', 'boolean'],
                 'exchange' => ['nullable', 'string', 'max:60'],
                 'corporate' => ['nullable', 'string', 'max:60'],
+                'loyalty' => ['nullable', 'string', 'max:60'],
             ]);
             $result = $this->pricing->getPricing($oemCode, array_filter($options, fn ($v) => $v !== null));
 

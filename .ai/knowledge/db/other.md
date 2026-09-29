@@ -115,5 +115,9 @@ Indexes: (assigned_to), (person_code), UNIQUE (wa_id)
 id bigint unsigned PK, channel varchar(10), event_id varchar(150), payload json?, result varchar(250)?, created_at timestamp?
 Indexes: UNIQUE (channel,event_id)
 
+## `xlr8_pricing_master_imports` · ~0 rows · model: App\Models\Vehicle\Pricing\MasterImport
+id bigint unsigned PK, master varchar(40), status varchar(16), file_name varchar(190)?, path varchar(255), wef_date date?, message varchar(255)?, result json?, created_by bigint unsigned?, created_at timestamp?, updated_at timestamp?
+Indexes: (master,created_at)
+
 ## `xlr8_user_branches` · ~279 rows · model: —
 user_id bigint unsigned PK, branch_id bigint unsigned PK

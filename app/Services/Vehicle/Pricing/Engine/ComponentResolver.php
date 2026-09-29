@@ -16,7 +16,7 @@ use Illuminate\Support\Collection;
  *   dealerCharges($v, $permit)  the winning row's heads (incidental, FASTag, TRC, RTO tape, COD, Kazam)
  *   rsa($v)                     options by years from the most specific RSA scope; default = the first paid 1-year option
  *   shield($v)                  schemes from the most specific Shield scope; default = scheme 1
- *   discountOptions($v, $type)  exchange schemes / corporate categories, each from its most specific row (none selected)
+ *   discountOptions($v, $type)  exchange / loyalty schemes, corporate categories, each from its most specific row (none selected)
  */
 final class ComponentResolver
 {
@@ -77,19 +77,23 @@ final class ComponentResolver
     }
 
     /**
-     * @param  'EXCHANGE'|'CORPORATE'  $type
+     * @param  'EXCHANGE'|'CORPORATE'|'LOYALTY'  $type
      * @return list<array<string, mixed>>
      */
     public function discountOptions(VehicleFacts $v, string $type): array
     {
-        $rows = $type === 'EXCHANGE' ? $this->book->exchange : $this->book->corporate;
-        $label = $type === 'EXCHANGE' ? 'scheme_name' : 'category';
+        $rows = match ($type) {
+            'EXCHANGE' => $this->book->exchange,
+            'LOYALTY' => $this->book->loyalty,
+            default => $this->book->corporate,
+        };
+        $label = $type === 'CORPORATE' ? 'category' : 'scheme_name';
         $out = [];
         foreach ($rows->groupBy(fn (Discount $d) => strtoupper((string) $d->{$label})) as $option) {
             $row = ScopeMatcher::best($option, ['model_code' => array_merge([$v->modelCode], $v->modelNames), 'variant_code' => [$v->code]]);
             if ($row instanceof Discount) {
                 $total = (float) ($row->total_discount ?? ((float) $row->oem_share + (float) $row->dealer_share));
-                $out[] = [$type === 'EXCHANGE' ? 'scheme' : 'category' => (string) $row->{$label}, 'oem' => (float) $row->oem_share, 'dealer' => (float) $row->dealer_share, 'total' => $total];
+                $out[] = [$type === 'CORPORATE' ? 'category' : 'scheme' => (string) $row->{$label}, 'oem' => (float) $row->oem_share, 'dealer' => (float) $row->dealer_share, 'total' => $total];
             }
         }
 

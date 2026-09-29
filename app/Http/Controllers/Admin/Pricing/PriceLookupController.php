@@ -37,6 +37,7 @@ class PriceLookupController extends Controller
             'include_cod' => ['nullable', 'boolean'],
             'exchange' => ['nullable', 'string', 'max:60'],
             'corporate' => ['nullable', 'string', 'max:60'],
+            'loyalty' => ['nullable', 'string', 'max:60'],
         ]);
 
         $result = null;

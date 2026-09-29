@@ -16,7 +16,7 @@ use App\Support\Result;
  *   getPricing('AZ1116YGTTA4EA01BZ', [
  *       'permit' => 'PRIVATE', 'vin_type' => 'NV', 'channel' => 'normal', 'wef_date' => '2026-10-15',
  *       'rsa_years' => 2, 'shield_scheme' => 0, 'insurance' => ['company' => 'USGI', 'plan' => '3+3', 'addons' => ['NIL_DEP']],
- *       'reg_type' => 'BH', 'outside_state' => false, 'include_cod' => false, 'exchange' => 'Scrappage', 'corporate' => 'CAT A',
+ *       'reg_type' => 'BH', 'outside_state' => false, 'include_cod' => false, 'exchange' => 'Scrappage', 'corporate' => 'CAT A', 'loyalty' => 'Loyalty',
  *   ]);
  *   → Result ok ['pricing' => contract] · fail NOT_FOUND · fail ON_HOLD (data.pricing with hold = true)
  * Unknown selections are ignored and reported in pricing.errors[].
@@ -130,7 +130,7 @@ class PricingQueryService
             $p['dealer_charges']['total'] += (float) $p['dealer_charges']['cod'];
             $p['dealer_charges']['cod_in_total'] = true;
         }
-        foreach (['exchange' => 'scheme', 'corporate' => 'category'] as $type => $key) {
+        foreach (['exchange' => 'scheme', 'corporate' => 'category', 'loyalty' => 'scheme'] as $type => $key) {
             if (empty($o[$type])) {
                 continue;
             }
@@ -193,7 +193,7 @@ class PricingQueryService
     private function totals(array $p, array $errors): array
     {
         $d = &$p['discounts'];
-        $d['total'] = $d['consumer_scheme'] + $d['cash'] + $d['accessory'] + $d['shield'] + $d['rsa'] + $d['exchange']['amount'] + $d['corporate']['amount'];
+        $d['total'] = $d['consumer_scheme'] + $d['cash'] + $d['accessory'] + $d['shield'] + $d['rsa'] + $d['exchange']['amount'] + $d['corporate']['amount'] + $d['loyalty']['amount'];
         $ex = (float) $p['ex_showroom'];
         $tcs = &$p['tcs'];
         $tcs['base'] = max(0.0, $ex - $d['total']);

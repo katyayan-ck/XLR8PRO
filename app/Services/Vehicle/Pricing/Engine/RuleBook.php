@@ -38,6 +38,9 @@ final class RuleBook
     /** @var Collection<int, Discount> */
     public Collection $corporate;
 
+    /** @var Collection<int, Discount> loyalty schemes (DEC-083, like exchange) */
+    public Collection $loyalty;
+
     /** @var Collection<int, RtoRule> */
     public Collection $rto;
 
@@ -81,6 +84,7 @@ final class RuleBook
         $discounts = Discount::query()->where('is_active', true)->orderBy('id')->get();
         $this->exchange = $discounts->where('discount_type', 'EXCHANGE')->values();
         $this->corporate = $discounts->where('discount_type', 'CORPORATE')->values();
+        $this->loyalty = $discounts->where('discount_type', 'LOYALTY')->values();
         $this->rto = RtoRule::query()->where('is_active', true)->orderBy('id')->get();
         $this->insurance = InsBaseRule::query()->where('is_active', true)->orderBy('id')->get();
         $ids = $this->insurance->pluck('id')->all();

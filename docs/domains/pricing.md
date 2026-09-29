@@ -117,6 +117,36 @@ $onRoad = $r->get('pricing')['on_road'];
 | `PricingCalculationService::publishVehicles($codes, $wefFor, ?$sessionId, $onResult)` | The vehicle loop shared by step 9 and the automatic runs (build → publish, one transaction per vehicle, held lists skipped). |
 | `PricingSyncStamp` (singleton) | `touch()` (`SnapshotPublisher::publish()`, vehicle masters, accessories) → written once by `flush()` at request end / after each queued job → setting `pricing.last_updated_at`; `lastUpdated()`, `isPending()`. |
 
+## Pricing masters — Admin → Pricing → Masters (DEC-083, `App\Support\PricingMaster\*`)
+One kit serves every master: `MasterController` (routes `pricing.masters.{index,rows,create,store,edit,update,destroy,export,import,import-status}`, URI `admin/pricing/masters/{master}`), views `admin/pricing/masters/{index,form}`, queued `ImportPricingMasterJob` with a `MasterImport` row (`xlr8_pricing_master_imports`) for progress / result.
+
+| `MasterDefinition` method | Meaning |
+|---|---|
+| `key()`, `label()`, `icon()`, `description()`, `permission()` | route key, titles, `{prefix}_VIEW` (list, export) / `{prefix}_MANAGE` (write, import) |
+| `model()`, `service()`, `defaults()`, `query($history)` | the table, its entity service (the only write path), fixed attributes (e.g. `addon_type = RSA`), live rows (+ expired with `history`) |
+| `columns()`, `row($model)`, `formFields()`, `input($field)` | grid / export columns; form fields with type / label / options / required derived from the service's `Field`s |
+| `save($input, ?$existing)` | create; update (same WEF); new WEF → expire the stored row at it and insert the new version (every stored value carries forward) |
+| `remove($model)` | WEF rows expire today (or at their WEF if later); others are soft-deleted |
+| `export($path)` / `import($path, $wef, $progress)` | default: one row per record ("ID" first; an ID updates or versions that row, no ID creates); chunked, one transaction per chunk; rejected rows reported |
+| `WorkbookGroupMaster` | Dealer Charges, RSA, Shield, Exchange, Corporate, Loyalty: export / import = that sheet of Addon-N-Discounts.xlsx (the process's own format); the import replaces the group at the WEF |
+
+- **Masters** (`MasterRegistry::MASTERS`):
+  - Dealer Charges (`PRC_DLRC`), Discounting Breakup (`PRC_DBRK`, the price rows' NV / OV scheme blocks), RSA
+    (`PRC_RSA`), Shield (`PRC_SHLD`);
+  - Corporate (`PRC_CORP`), Exchange (`PRC_EXCH`), Loyalty (`PRC_LYLT`).
+  - Insurance, RTO and Accessories masters follow in phases C–D.
+- **Writes:**
+  - Refused while a Pricing Process is open.
+  - Every change reaches `PricingParamObserver` → automatic recalculation of the affected vehicles + the sync stamp.
+- **Loyalty** (like Exchange):
+  - `discount_type = LOYALTY` with a scheme name, OEM + dealer share.
+  - `RuleBook::$loyalty`, `ComponentResolver::discountOptions($v, 'LOYALTY')`.
+  - Contract `discounts.loyalty {selected, amount, options[{scheme, oem, dealer, total}]}`.
+  - getPricing option `loyalty` (API + admin lookup).
+  - Price List "Loyalty" conditional columns.
+  - Quotation `deductibles.loyalty-scheme` (CN2, not auto-applied).
+  - Addon-N-Discounts "Loyalty" sheet (registry rows copied from Exchange, migration `2026_09_29_192409`).
+
 ## Price List screens (DEC-081, `App\Services\Vehicle\Pricing\Engine\PriceListService`)
 Read-only lists of the published NV prices at the default selections, laid out like the reference PDFs. They are open
 to **every logged-in user** (no permission). The menu is **Price List**; the routes are `pricing.price-list.index`,

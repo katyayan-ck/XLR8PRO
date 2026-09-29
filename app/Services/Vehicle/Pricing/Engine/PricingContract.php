@@ -37,6 +37,7 @@ final class PricingContract
                 'shield' => 0.0, 'rsa' => 0.0, 'accessory_eligibility' => 0.0, 'shield_eligibility' => 0.0, 'total' => 0.0,
                 'exchange' => ['selected' => null, 'amount' => 0.0, 'options' => []],
                 'corporate' => ['selected' => null, 'amount' => 0.0, 'options' => []],
+                'loyalty' => ['selected' => null, 'amount' => 0.0, 'options' => []],
             ],
             'insurance' => [
                 'insu_permit' => null,

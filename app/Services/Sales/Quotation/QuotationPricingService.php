@@ -21,7 +21,7 @@ use Illuminate\Support\Collection;
 class QuotationPricingService
 {
     /** Default discount types — the screen's own (DEC-082 §3). */
-    public const TYPES = ['consumer' => 'INV_OE', 'cash' => 'CN1', 'accessory' => 'INV_OE', 'shield' => 'CN1', 'rsa' => 'CN1', 'corporate' => 'INV', 'exchange' => 'CN2'];
+    public const TYPES = ['consumer' => 'INV_OE', 'cash' => 'CN1', 'accessory' => 'INV_OE', 'shield' => 'CN1', 'rsa' => 'CN1', 'corporate' => 'INV', 'exchange' => 'CN2', 'loyalty' => 'CN2'];
 
     public function __construct(
         private readonly PricingQueryService $pricing,
@@ -98,6 +98,7 @@ class QuotationPricingService
                 'other-cash-discount' => ['amount' => (float) $d['rsa'], 'type' => self::TYPES['rsa']],
                 'corp-scheme' => array_map(fn ($o) => ['name' => (string) $o['category'], 'amount' => (float) $o['total'], 'type' => self::TYPES['corporate']], $d['corporate']['options']),
                 'exchange-scheme' => array_map(fn ($o) => ['name' => (string) $o['scheme'], 'amount' => (float) $o['total'], 'type' => self::TYPES['exchange']], $d['exchange']['options']),
+                'loyalty-scheme' => array_map(fn ($o) => ['name' => (string) $o['scheme'], 'amount' => (float) $o['total'], 'type' => self::TYPES['loyalty']], $d['loyalty']['options']),
             ],
         ];
     }

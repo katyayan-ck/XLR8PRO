@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\Pricing\HoldController;
 use App\Http\Controllers\Admin\Pricing\InsuranceController;
+use App\Http\Controllers\Admin\Pricing\MasterController;
 use App\Http\Controllers\Admin\Pricing\PriceListController;
 use App\Http\Controllers\Admin\Pricing\PriceLookupController;
 use App\Http\Controllers\Admin\Pricing\PricingResetController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Admin\Pricing\Process\RulesController;
 use App\Http\Controllers\Admin\Pricing\Process\VehicleInfoController;
 use App\Http\Controllers\Admin\Pricing\RtoRuleController;
 use App\Http\Controllers\Admin\Pricing\TcsConfigController;
+use App\Support\PricingMaster\MasterRegistry;
 use Illuminate\Support\Facades\Route;
 
 Route::group([
@@ -28,6 +30,20 @@ Route::group([
     Route::put('tcs', [TcsConfigController::class, 'update'])->name('pricing.tcs.update');
 
     Route::get('lookup', [PriceLookupController::class, 'index'])->name('pricing.lookup');
+
+    // DEC-083 pricing masters — list / CRUD / import / export (one controller, a definition per master)
+    Route::prefix('masters/{master}')->whereIn('master', MasterRegistry::keys())->name('pricing.masters.')->group(function () {
+        Route::get('/', [MasterController::class, 'index'])->name('index');
+        Route::get('rows', [MasterController::class, 'rows'])->name('rows');
+        Route::get('create', [MasterController::class, 'create'])->name('create');
+        Route::post('/', [MasterController::class, 'store'])->name('store');
+        Route::get('export', [MasterController::class, 'export'])->name('export');
+        Route::post('import', [MasterController::class, 'import'])->name('import');
+        Route::get('imports/{id}', [MasterController::class, 'importStatus'])->whereNumber('id')->name('import-status');
+        Route::get('{id}/edit', [MasterController::class, 'edit'])->whereNumber('id')->name('edit');
+        Route::put('{id}', [MasterController::class, 'update'])->whereNumber('id')->name('update');
+        Route::delete('{id}', [MasterController::class, 'destroy'])->whereNumber('id')->name('destroy');
+    });
 
     // DEC-081 standalone Price List — every logged-in user, read-only
     Route::get('price-list', [PriceListController::class, 'index'])->name('pricing.price-list.index');

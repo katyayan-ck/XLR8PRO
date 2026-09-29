@@ -87,6 +87,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 return num(undefined, s, { colId: 'exchange:' + s, valueGetter: function (p) { return p.data.exchange[s] || 0; } });
             }) });
         }
+        if ((data.loyalty || []).length) {
+            conditional.push({ headerName: 'Loyalty', children: data.loyalty.map(function (l) {
+                return num(undefined, l, { colId: 'loyalty:' + l, valueGetter: function (p) { return (p.data.loyalty || {})[l] || 0; } });
+            }) });
+        }
         if (data.corporate.length) {
             conditional.push({ headerName: 'Corporate', children: data.corporate.map(function (c) {
                 return num(undefined, c, { colId: 'corporate:' + c, valueGetter: function (p) { return p.data.corporate[c] || 0; } });

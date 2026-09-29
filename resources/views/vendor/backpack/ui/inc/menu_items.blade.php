@@ -175,8 +175,11 @@
 @endif
 
     {{-- Pricing (DEC-073 / DEC-081, resolves BUG-069) --}}
-    @php $u = backpack_user(); @endphp
-    @if ($u && ($u->can('PRC_WKFL_VIEW') || $u->can('PRC_HOLD_VIEW') || $u->can('PRC_TCS_VIEW') || $u->can('PRC_RTOR_VIEW') || $u->can('PRC_INSR_VIEW')))
+    @php
+        $u = backpack_user();
+        $pricingMasters = $u ? array_filter(App\Support\PricingMaster\MasterRegistry::all(), fn ($m) => $u->can($m->permission().'_VIEW')) : [];
+    @endphp
+    @if ($u && ($pricingMasters !== [] || $u->can('PRC_WKFL_VIEW') || $u->can('PRC_HOLD_VIEW') || $u->can('PRC_TCS_VIEW') || $u->can('PRC_RTOR_VIEW') || $u->can('PRC_INSR_VIEW')))
         <x-backpack::menu-dropdown title="Pricing" icon="la la-rupee-sign" nested="true">
             @if ($u->can('PRC_WKFL_VIEW'))
                 <a class="dropdown-item" href="{{ route('pricing.workflow.index') }}"><i class="la la-stream me-2"></i>Pricing Process</a>
@@ -184,6 +187,14 @@
             @endif
             @if ($u->can('PRC_HOLD_VIEW'))
                 <a class="dropdown-item" href="{{ route('pricing.hold.index') }}"><i class="la la-pause-circle me-2"></i>Price Holds</a>
+            @endif
+            @if ($pricingMasters !== [])
+                <div class="dropdown-divider"></div>
+                <h6 class="dropdown-header">Masters</h6>
+                @foreach ($pricingMasters as $pm)
+                    <a class="dropdown-item" href="{{ route('pricing.masters.index', $pm->key()) }}"><i class="la {{ $pm->icon() }} me-2"></i>{{ $pm->label() }}</a>
+                @endforeach
+                <div class="dropdown-divider"></div>
             @endif
             @if ($u->can('PRC_TCS_VIEW'))
                 <a class="dropdown-item" href="{{ route('pricing.tcs.index') }}"><i class="la la-percent me-2"></i>TCS</a>

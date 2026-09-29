@@ -56,6 +56,7 @@ final class SnapshotBuilder
         $shield = $this->components->shield($v);
         $exchange = $this->components->discountOptions($v, 'EXCHANGE');
         $corporate = $this->components->discountOptions($v, 'CORPORATE');
+        $loyalty = $this->components->discountOptions($v, 'LOYALTY');
 
         $out = [];
         foreach ($permits as $permit) {
@@ -72,7 +73,7 @@ final class SnapshotBuilder
                 foreach (['NV', 'OV'] as $vin) {
                     $out[] = [
                         'channel' => $channel, 'vin_type' => $vin, 'permit' => $permit, 'rto_permit' => $rtoPermit, 'insu_permit' => $insuPermit,
-                        'payload' => $this->payload($v, $price, $channel, $vin, $permit, $rtoPermit, $insuPermit, $wefDate, $charges, $rsa, $shield, $exchange, $corporate, $rto, $insurance),
+                        'payload' => $this->payload($v, $price, $channel, $vin, $permit, $rtoPermit, $insuPermit, $wefDate, $charges, $rsa, $shield, $exchange, $corporate, $rto, $insurance, $loyalty),
                     ];
                 }
             }
@@ -87,12 +88,13 @@ final class SnapshotBuilder
      * @param  array<string, mixed>  $shield
      * @param  list<array<string, mixed>>  $exchange
      * @param  list<array<string, mixed>>  $corporate
+     * @param  list<array<string, mixed>>  $loyalty
      * @param  array<string, mixed>  $rto
      * @param  array<string, mixed>  $insurance
      * @return array<string, mixed>
      */
     private function payload(VehicleFacts $v, Pricing $price, string $channel, string $vin, string $permit, string $rtoPermit, string $insuPermit, string $wef,
-        array $charges, array $rsa, array $shield, array $exchange, array $corporate, array $rto, array $insurance): array
+        array $charges, array $rsa, array $shield, array $exchange, array $corporate, array $rto, array $insurance, array $loyalty = []): array
     {
         $p = $vin === 'NV' ? 'curr_' : 'old_';
         $ex = (float) $price->ex_showroom_price;
@@ -107,6 +109,7 @@ final class SnapshotBuilder
         $discounts['total'] = $discounts['consumer_scheme'] + $discounts['cash'] + $discounts['accessory'] + $discounts['shield'] + $discounts['rsa'];
         $discounts['exchange'] = ['selected' => null, 'amount' => 0.0, 'options' => $exchange];
         $discounts['corporate'] = ['selected' => null, 'amount' => 0.0, 'options' => $corporate];
+        $discounts['loyalty'] = ['selected' => null, 'amount' => 0.0, 'options' => $loyalty];
         $accessories = ['amount' => $discounts['accessory'], 'discount' => $discounts['accessory'], 'items' => []];
 
         $limit = (float) $this->book->tcs->limit_amount;

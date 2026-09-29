@@ -12,7 +12,7 @@
     $running = ($progress['step'] ?? null) === 'addons' && ($progress['state'] ?? null) === 'running';
     $issues = collect($run['issues'] ?? []);
     $checked = old('groups', array_keys($groups));
-    $labels = ['DEALER_CHARGES' => 'Dealer Charges', 'RSA' => 'RSA', 'SHIELD' => 'Shield', 'EXCHANGE' => 'Exchange', 'CORPORATE' => 'Corporate'];
+    $labels = ['DEALER_CHARGES' => 'Dealer Charges', 'RSA' => 'RSA', 'SHIELD' => 'Shield', 'EXCHANGE' => 'Exchange', 'CORPORATE' => 'Corporate', 'LOYALTY' => 'Loyalty'];
 @endphp
 <div class="container-xl">
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">

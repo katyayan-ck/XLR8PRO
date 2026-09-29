@@ -122,3 +122,30 @@
   - Pricing + vehicle suites: 103 passed.
 - **Found while building:** with the sync queue, a job that re-dispatched itself while a process was open recursed
   forever. The run now simply waits, and the process's complete / discard re-queues it.
+
+## Pricing masters — phases A2 + B: master kit, add-on / discount masters, Loyalty (DEC-083)
+- **Kit:**
+  - `App\Support\PricingMaster\{MasterDefinition, WorkbookGroupMaster, MasterRegistry}` and
+    `Admin\Pricing\MasterController`.
+  - Views `admin/pricing/masters/{index,form}`; `Jobs\Vehicle\Pricing\ImportPricingMasterJob`; model `MasterImport`.
+  - Migrations: `2026_09_29_192219_create_pricing_master_imports_dec083` and `…pricing_master_permissions_dec083`
+    (processes + `PRC_{DLRC,DBRK,RSA,SHLD,CORP,EXCH,LYLT,ACCS,INCO,INPF,INAD}_{VIEW,MANAGE}`, `PRC_RCLC_VIEW`,
+    `PRC_INSR_MANAGE`). Run on xlrm and xlrm_testing.
+- **Masters:** Dealer Charges, Discounting Breakup, RSA, Shield, Corporate, Exchange, Loyalty
+  (`app/Support/PricingMaster/Masters/*`).
+- **Loyalty:**
+  - `AddonDiscountWorkbookService`: `LOYALTY` sheet / headers / schemes, export and import like Exchange. Migration
+    `2026_09_29_192409_pricing_loyalty_sheet_headers_dec083`.
+  - `RuleBook`, `ComponentResolver`, `SnapshotBuilder`, `PricingContract` (`discounts.loyalty`).
+  - `PricingQueryService` (the `loyalty` option, in totals); the API + admin lookup validation / select.
+  - `PriceListService` + the Price List view (Loyalty columns); `QuotationPricingService` (`loyalty-scheme`, CN2);
+    the process add-ons view label.
+- **Menu:** Admin → Pricing → Masters, each item gated by its `_VIEW` permission.
+- **Rules doc:** `.ai/rules/admin-backpack.md` module table gains the new PRC process codes.
+- **Fix found while building:**
+  - Before: removing a future-dated rule row failed validation (expiry before its WEF).
+  - After: it now expires at max(today, WEF).
+- **Tests:**
+  - `PricingMasterTest` (5): permissions + every screen renders; CRUD + WEF versioning + recalculation; locked while
+    a process is open; one-row-per-record round trip (Discounting Breakup); workbook round trip (Dealer Charges).
+  - `LoyaltyDiscountTest` (2).

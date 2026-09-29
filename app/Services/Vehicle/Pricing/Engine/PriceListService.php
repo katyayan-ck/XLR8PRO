@@ -61,26 +61,27 @@ class PriceListService
 
     /**
      * @param  array{label: string, hold: string, channel: string, price_list: string|null, taxi: bool}  $def
-     * @return array{wef: list<string>, exchange: list<string>, corporate: list<string>, rows: list<array<string, mixed>>}
+     * @return array{wef: list<string>, exchange: list<string>, corporate: list<string>, loyalty: list<string>, rows: list<array<string, mixed>>}
      */
     private function build(array $def, string $date): array
     {
         $rows = [];
-        $exchange = $corporate = $wef = [];
+        $exchange = $corporate = $loyalty = $wef = [];
         $this->query($def, $date)->select(['id', 'model_code', 'wef_date', 'payload'])
-            ->chunkById(self::CHUNK, function ($chunk) use (&$rows, &$exchange, &$corporate, &$wef) {
+            ->chunkById(self::CHUNK, function ($chunk) use (&$rows, &$exchange, &$corporate, &$loyalty, &$wef) {
                 foreach ($chunk as $snapshot) {
                     $p = PricingContract::normalize((array) $snapshot->payload);
                     $row = $this->row($p);
                     $exchange += array_flip(array_keys($row['exchange']));
                     $corporate += array_flip(array_keys($row['corporate']));
+                    $loyalty += array_flip(array_keys($row['loyalty']));
                     $wef[(string) $snapshot->wef_date?->toDateString()] = true;
                     $rows[] = $row;
                 }
             });
         usort($rows, fn ($a, $b) => [$a['model'], $a['variant'], $a['colour']] <=> [$b['model'], $b['variant'], $b['colour']]);
 
-        return ['wef' => array_keys($wef), 'exchange' => array_map('strval', array_keys($exchange)), 'corporate' => array_map('strval', array_keys($corporate)), 'rows' => $rows];
+        return ['wef' => array_keys($wef), 'exchange' => array_map('strval', array_keys($exchange)), 'corporate' => array_map('strval', array_keys($corporate)), 'loyalty' => array_map('strval', array_keys($loyalty)), 'rows' => $rows];
     }
 
     /**
@@ -141,6 +142,7 @@ class PriceListService
             'disc_shield' => (float) $d['shield'], 'disc_rsa' => (float) $d['rsa'], 'disc_total' => (float) $d['total'],
             'exchange' => $this->options($d['exchange']['options'], 'scheme'),
             'corporate' => $this->options($d['corporate']['options'], 'category'),
+            'loyalty' => $this->options($d['loyalty']['options'], 'scheme'),
             'tcs' => (float) $p['tcs']['amount'], 'on_road' => (float) $p['on_road'], 'invoice' => (float) $p['invoice_value'],
             'hold' => (bool) $p['hold'],
         ];

@@ -24,7 +24,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 /**
  * Step 5 — Addon-N-Discounts.xlsx (DEC-073 / DEC-077).
  *
- *  presence()                       live rows per group (DEALER_CHARGES, RSA, SHIELD, EXCHANGE, CORPORATE)
+ *  presence()                       live rows per group (DEALER_CHARGES, RSA, SHIELD, EXCHANGE, CORPORATE, LOYALTY)
  *  export($path, $groups)           the reference sheets for the ticked groups; every applicable group row appears
  *                                   (segments / models / schemes / categories), amounts from the live rows, blank where
  *                                   nothing is stored
@@ -38,7 +38,7 @@ class AddonDiscountWorkbookService
     /** group => sheet title in the reference workbook */
     public const SHEETS = [
         'DEALER_CHARGES' => 'Dealer Charges - Segment Wise', 'RSA' => 'RSA', 'SHIELD' => 'Shield',
-        'EXCHANGE' => 'Exchange', 'CORPORATE' => 'Corporate',
+        'EXCHANGE' => 'Exchange', 'CORPORATE' => 'Corporate', 'LOYALTY' => 'Loyalty',
     ];
 
     /** group => export header (the reference labels) */
@@ -48,9 +48,13 @@ class AddonDiscountWorkbookService
         'SHIELD' => ['OEM Model', 'OEM Variant', 'Shield Pack', 'Transmission', 'Fuel', 'Standard Warranty', 'Shield Scheme 1 Name', 'Shield Scheme 1 Amt', 'Shield Scheme 2 Name', 'Shield Scheme 2 Amt'],
         'EXCHANGE' => ['OEM Model', 'OEM Variant', 'Scheme', 'Bonus OEM', 'Bonus DLR', 'Bonus TOTAL'],
         'CORPORATE' => ['OEM Model', 'OEM Variant', 'Category', 'OEM', 'DLR', 'TOTAL'],
+        'LOYALTY' => ['OEM Model', 'OEM Variant', 'Scheme', 'Bonus OEM', 'Bonus DLR', 'Bonus TOTAL'],
     ];
 
     public const EXCHANGE_SCHEMES = ['Exchange', 'Welcome', 'Scrappage'];
+
+    /** Loyalty works like Exchange (DEC-083): scheme name, OEM + dealer share per model / variant */
+    public const LOYALTY_SCHEMES = ['Loyalty'];
 
     public const CORPORATE_CATEGORIES = ['CAT B', 'BULK 1 (2-5)', 'CAT A', 'BULK 2 (6-10)', 'CAT F', 'BULK 3 (11 & Above)', 'CAT Y', 'CAT Z'];
 
@@ -94,6 +98,7 @@ class AddonDiscountWorkbookService
             'SHIELD' => Addon::query()->where('is_active', true)->where('addon_type', 'SHIELD')->count(),
             'EXCHANGE' => Discount::query()->where('is_active', true)->where('discount_type', 'EXCHANGE')->count(),
             'CORPORATE' => Discount::query()->where('is_active', true)->where('discount_type', 'CORPORATE')->count(),
+            'LOYALTY' => Discount::query()->where('is_active', true)->where('discount_type', 'LOYALTY')->count(),
         ];
     }
 
@@ -266,11 +271,15 @@ class AddonDiscountWorkbookService
      */
     private function discountRows(string $type, array $models): array
     {
-        $label = $type === 'EXCHANGE' ? 'scheme_name' : 'category';
+        $label = $type === 'CORPORATE' ? 'category' : 'scheme_name';
         $stored = Discount::query()->where('is_active', true)->where('discount_type', $type)->get()
             ->keyBy(fn (Discount $d) => strtoupper(($d->model_code ?: 'ANY').'|'.$d->{$label}));
         $options = array_values(array_unique(array_merge(
-            $type === 'EXCHANGE' ? self::EXCHANGE_SCHEMES : self::CORPORATE_CATEGORIES,
+            match ($type) {
+                'EXCHANGE' => self::EXCHANGE_SCHEMES,
+                'LOYALTY' => self::LOYALTY_SCHEMES,
+                default => self::CORPORATE_CATEGORIES,
+            },
             $stored->pluck($label)->filter()->all()
         )));
         $rows = [];
@@ -470,15 +479,15 @@ class AddonDiscountWorkbookService
 
                 return $out;
 
-            default: // EXCHANGE / CORPORATE
+            default: // EXCHANGE / LOYALTY (scheme) / CORPORATE (category)
                 [$oem, $dealer, $total] = [$num('oem_share'), $num('dealer_share'), $num('total')];
                 if ($oem === null && $dealer === null && $total === null) {
                     return [];
                 }
-                $option = $text($group === 'EXCHANGE' ? 'scheme_type' : 'category');
+                $option = $text($group === 'CORPORATE' ? 'category' : 'scheme_type');
 
                 return [$base + ['discount_type' => $group, 'model_code' => $this->modelCode($text('model')), 'variant_code' => $this->anyToNull($text('variant')),
-                    'scheme_name' => $group === 'EXCHANGE' ? $option : null, 'category' => $group === 'CORPORATE' ? $option : null,
+                    'scheme_name' => $group === 'CORPORATE' ? null : $option, 'category' => $group === 'CORPORATE' ? $option : null,
                     'discount_category' => $group === 'CORPORATE' ? $option : $group, 'name' => $option ?: $group,
                     'oem_share' => $oem ?? 0, 'dealer_share' => $dealer ?? 0, 'total_discount' => $total, 'is_conditional' => true]];
         }
@@ -491,7 +500,7 @@ class AddonDiscountWorkbookService
             'DEALER_CHARGES' => ['segment', 'permit', 'model_code'],
             'RSA' => ['segment', 'model_code'],
             'SHIELD' => ['model_code', 'variant_code', 'shield_pack', 'transmission', 'fuel'],
-            'EXCHANGE' => ['model_code', 'variant_code', 'scheme_name'],
+            'EXCHANGE', 'LOYALTY' => ['model_code', 'variant_code', 'scheme_name'],
             default => ['model_code', 'variant_code', 'category'],
         };
 

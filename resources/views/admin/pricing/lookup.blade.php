@@ -102,6 +102,13 @@
                         </select>
                     </div>
                     <div class="col-6 col-md-2">
+                        <label class="form-label" for="pl-loyalty">Loyalty</label>
+                        <select class="form-select" name="loyalty" id="pl-loyalty">
+                            <option value="">None</option>
+                            @foreach ($p['discounts']['loyalty']['options'] as $o)<option value="{{ $o['scheme'] }}" @selected(($input['loyalty'] ?? '') === $o['scheme'])>{{ $o['scheme'] }} · {{ $inr($o['total']) }}</option>@endforeach
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-2">
                         <label class="form-label" for="pl-reg">Registration</label>
                         <select class="form-select" name="reg_type" id="pl-reg">
                             @foreach (['Regular', 'BH'] as $o)<option value="{{ $o }}" @selected(($input['reg_type'] ?? 'Regular') === $o)>{{ $o }}</option>@endforeach
@@ -191,6 +198,7 @@
                             @endforeach
                             <tr><td>Exchange{{ $p['discounts']['exchange']['selected'] ? ' · '.$p['discounts']['exchange']['selected'] : '' }}</td><td class="text-end">{{ $inr($p['discounts']['exchange']['amount']) }}</td></tr>
                             <tr><td>Corporate{{ $p['discounts']['corporate']['selected'] ? ' · '.$p['discounts']['corporate']['selected'] : '' }}</td><td class="text-end">{{ $inr($p['discounts']['corporate']['amount']) }}</td></tr>
+                            <tr><td>Loyalty{{ $p['discounts']['loyalty']['selected'] ? ' · '.$p['discounts']['loyalty']['selected'] : '' }}</td><td class="text-end">{{ $inr($p['discounts']['loyalty']['amount']) }}</td></tr>
                         </tbody>
                     </table>
                 </div>
