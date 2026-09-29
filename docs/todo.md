@@ -790,3 +790,9 @@ ones in every commit. **Verified:** the copies match today's sections of `docs/c
 passed 3 runs in a row; the related API / pricing / booking / insurance suites, 93 passed.
 
 **Left:** —
+
+### 2. Pricing reference workbooks removed from `dev/admin` history
+
+**Delivered:** the ~18 MB of workbooks / PDFs committed by mistake in `4c82d28` are gone from every commit of
+`dev/admin` (16 unpushed commits rewritten); files stay on disk in `_backup/`. **Verified:** no commit touches the path;
+tree identical to before. **Left:** delete `backup/dev-admin-before-rewrite-30-09` + `git gc` once confirmed.

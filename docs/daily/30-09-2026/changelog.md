@@ -13,3 +13,12 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - **`tests/Feature/Api/ApiErrorEnvelopeTest.php`:** the exact-JSON 401 test freezes time (it failed when the clock ticked
   between the request and the assertion).
 - **Bugs:** 28 open / 185 closed (BUG-211, 212, 213 moved with their details; audit rows HIGH-01 / MED-02 corrected).
+
+## History rewrite of `dev/admin` (DEC-086 addendum 2, owner-approved)
+- `git filter-branch --index-filter` over the 16 unpushed commits `4c82d28^..dev/admin` removed
+  `docs/reference/XLRM-Pricing-data/` (~18 MB workbooks / PDFs) from every commit. No remote branch contained them.
+- **Verified:** no commit in the range touches the path; the final tree equals the pre-rewrite tip.
+- **Commit ids changed** from `4c82d28` on (e.g. `db49a10` → `a5a8c47`, `3abe70a` → `96cf3ef`, `6f98953` → `f87a013`);
+  older ids quoted in these records refer to the pre-rewrite commits.
+- **Backup:** local branch `backup/dev-admin-before-rewrite-30-09` (and `refs/original/…`) until the owner confirms; then
+  delete them and run `git gc` to drop the objects locally.
