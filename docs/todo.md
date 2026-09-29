@@ -146,7 +146,7 @@ convention and matches our route names (`module.process.activity`), so it is a g
 
 | # | Decision | Priority | Blocks |
 |---|---|---|---|
-| D1 | Repair mobile OTP login: `users` has no `mobile`, so the app gets nulls (BUG-187) | **P0** | Mobile app login |
+| D1 | Repair mobile OTP login: `users` has no `mobile`, so the app gets nulls (BUG-187). Same fix covers `sender.name` / `receiver.name` (null) in the notification / alert / message responses (found 30-09) | **P0** | Mobile app login |
 | D2 | `random_int` OTP instead of `rand()` (BUG-188) | **P0** | Security |
 | D3 | v1 `docs/upload`, `history/{entityType}` accept any model class from input (BUG-182) | **P0** | Security |
 | D4 | Lead lookups | P1 | Sales |
@@ -165,7 +165,7 @@ convention and matches our route names (`module.process.activity`), so it is a g
 | D28 | Spares module rebuild (BUG-031 / 032 / 116) | ⏸ | Spares (hidden) |
 | D29 | Rotate the Google API key | **P0** | Security |
 | N1 | **COD in on-road** (setting `pricing.dealer_charges.include_cod`, off today) | P1 | Pricing numbers |
-| N2 | Stage merge: origin/stage has 4 reverts by the booking team; merge `dev/admin` after your talk | **P0** | Deploy |
+| N2 | Stage merge — **local part done 30-09 (DEC-087):** `origin/stage` merged into `dev/admin` keeping both sides' work, DB aligned (DEC-088). **Left:** full suite on the final tip + delete the temp branch `merge/stage-30-09` (no decision needed, in progress); delete `backup/dev-admin-before-rewrite-30-09` once you confirm the history rewrite; **push `dev/admin` and merge it into `stage` — your call** | **P0** | Deploy |
 | N3 | Formats / permission naming (§2 F2) | P1 | §2 |
 | N4 | Security policy values (§4: idle minutes, lock, password rules, self-service rules) | P1 | §4 |
 
@@ -308,7 +308,7 @@ The booking team owns it (DEC-034); these are the items we know of.
 | U8 | Custom error pages (403 / 404 / 419 / 429 / 500 / 503) | ✅ 29-09 | P1 | Branded pages in `resources/views/errors/`: logo, plain message, a link to the dashboard, a reference id on 500 (no stack traces) |
 | U9 | These instructions in the project rules for all agents | ✅ 29-09 | — |
 | U10 | Changelog + task status + handoff with every commit; commented + formatted code | ✅ rule (`.ai/guidelines/10-workflow.md`) | — | `.ai/state/handoff.md` |
-| U11 | **Module-wise API docs** (request, params, validation, every response + a Postman v2.1 collection per module) | 🟡 pricing, system-settings, auth, devices ✅ (index in `tech-guides/api/index.md`); notifications / alerts / messages, documents, history, webhooks next | P1 | `tech-guides/api/{module}.md` + `tech-guides/api/postman/`; the existing `tech-guides/api/*.md` are empty; start with pricing, auth, settings, docs / history, devices | `.ai/rules/ui.md`, `app.md`, `api.md` (synced to `.claude/rules`) |
+| U11 | **Module-wise API docs** (request, params, validation, every response + a Postman v2.1 collection per module) | ✅ 30-09 — every v1 module documented with Postman (index `tech-guides/api/index.md`) | P1 | `tech-guides/api/{module}.md` + `tech-guides/api/postman/`; the existing `tech-guides/api/*.md` are empty; start with pricing, auth, settings, docs / history, devices | `.ai/rules/ui.md`, `app.md`, `api.md` (synced to `.claude/rules`) |
 
 **U1 plan:**
 - One shared enhancement in `xl-ui.js` + `xl-ui.css` for every card inside a form: a collapse toggle, a drag handle
@@ -374,6 +374,23 @@ The booking team owns it (DEC-034); these are the items we know of.
   Each is a major upgrade that needs your approval.
 
 ---
+
+## 11b. Work order agreed 30-09 — items that need no owner decision first
+
+Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under its date.
+
+| # | Item | Status |
+|---|---|---|
+| W1 | N2 wrap-up: full suite on the merged tip, delete `merge/stage-30-09` | ✅ 30-09 (476 passed; branch deleted) |
+| W2 | U11 API docs: notifications / alerts / messages, documents, history, webhooks (+ Postman) | ✅ 30-09 (BUG-217 fixed on the way) |
+| W3 | Q1 Sales / booking feature tests (enquiry, quotation, booking flows) | 🟡 next |
+| W4 | Q5 PHPStan baseline for the legacy controllers | 🔴 |
+| W5 | Q7 UI clean-up outside Sales (hex / inline styles → shared layer, same method as the Sales pass) | 🔴 |
+| W6 | U7 web side: admin flash messages through the error codes / language file (same wording) | 🔴 |
+| W7 | U4 N+1 review of the big lists (enquiries, bookings, quotations) | 🔴 |
+
+**Needs you (not started):** D1–D29, N1, N3 / F2 formats, N4 security values (S3, S4, S5, S7), S6 / O3 / O6 / Q3 package
+approvals, O1 / O2 / O5 CI and server changes, V8 app-sync endpoint shape, V10 / DA6 deletions, the push to `stage`.
 
 ## 12. Suggested order
 
@@ -836,3 +853,14 @@ the project root (not committed).
 **Delivered:** the dark / light flashing is gone: tabs now pick up another tab's colour mode once instead of bouncing it.
 **Verified:** a two-tab reproduction in headless Chrome (old 300 flips in 3 s → new 1 per switch, tabs agree).
 **Left:** —
+
+### 7. Merge wrapped up and every mobile API documented — W1, W2 (to-do U11 done)
+
+**Delivered:** the stage merge is closed out (full suite green on the final tip, temp branch deleted). The last four API
+modules — notifications / alerts / messages, documents, record history and the provider webhooks — have full docs (every
+parameter, rule and response) and Postman collections, so all v1 endpoints are documented. BUG-217 (bad sort values
+crashed the lists) fixed with a regression test.
+
+**Verified:** 476 passed; the new test fails on the old code and passes now; collections parse; every documented field
+was read from the controllers, resources and services. **Left:** BUG-182 (documents / history access) and the null names
+wait on D3 / D1.

@@ -410,6 +410,21 @@ class NotificationController extends BaseController
     }
 
     /**
+     * The list's sort column and direction from `sort_by` / `sort_order`, limited to the given columns and asc / desc
+     * (BUG-217: raw values reached orderBy() and an unknown one was a 500). Anything else → newest first.
+     *
+     * @param  list<string>  $columns
+     * @return array{0: string, 1: string}
+     */
+    private function sortFor(Request $request, array $columns): array
+    {
+        $column = in_array($request->get('sort_by'), $columns, true) ? $request->get('sort_by') : 'created_at';
+        $direction = strtolower((string) $request->get('sort_order', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        return [$column, $direction];
+    }
+
+    /**
      * Get unread notifications count
      *
      * Retrieves count of unread notifications, alerts, and messages.
@@ -601,7 +616,7 @@ class NotificationController extends BaseController
 
             $query = Notification::forUser(auth('sanctum')->id())
                 ->with('sender:id,username,person_code')
-                ->orderBy($request->get('sort_by', 'created_at'), $request->get('sort_order', 'desc'));
+                ->orderBy(...$this->sortFor($request, ['created_at', 'sent_at', 'read_at', 'priority']));
 
             if ($request->filled('type')) {
                 $query->byType($request->type);
@@ -745,7 +760,7 @@ class NotificationController extends BaseController
             $query = Notification::forUser(auth('sanctum')->id())
                 ->with('sender:id,username,person_code')
                 ->unread()
-                ->orderBy($request->get('sort_by', 'created_at'), $request->get('sort_order', 'desc'));
+                ->orderBy(...$this->sortFor($request, ['created_at', 'sent_at', 'read_at', 'priority']));
 
             $notifications = $query->paginate($perPage);
 
@@ -888,7 +903,7 @@ class NotificationController extends BaseController
 
             $query = Alert::forUser(auth('sanctum')->id())
                 ->with('sender:id,username,person_code')
-                ->orderBy($request->get('sort_by', 'created_at'), $request->get('sort_order', 'desc'));
+                ->orderBy(...$this->sortFor($request, ['created_at', 'read_at', 'severity']));
 
             if ($request->filled('severity')) {
                 $query->bySeverity($request->severity);
@@ -1050,7 +1065,7 @@ class NotificationController extends BaseController
 
             $query = Message::forUser(auth('sanctum')->id())
                 ->with(['sender:id,username,person_code,avatar', 'receiver:id,username,person_code'])
-                ->orderBy($request->get('sort_by', 'created_at'), $request->get('sort_order', 'desc'));
+                ->orderBy(...$this->sortFor($request, ['created_at', 'read_at']));
 
             if ($request->filled('type')) {
                 $query->where('message_type', $request->type);

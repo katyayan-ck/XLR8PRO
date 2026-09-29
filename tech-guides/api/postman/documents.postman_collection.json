@@ -1,0 +1,829 @@
+{
+  "info": {
+    "name": "Xceler8 API v1 — Documents",
+    "_postman_id": "xlrm-documents-v1",
+    "description": "Docs: tech-guides/api/documents.md. BUG-182: no access checks yet (owner decision D3).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://dev.xceler8.in"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "group_id",
+      "value": "1"
+    },
+    {
+      "key": "doc_id",
+      "value": "1"
+    },
+    {
+      "key": "enquiry_id",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Upload document",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "multipart/form-data. See BUG-182.",
+        "url": {
+          "raw": "{{base_url}}/api/v1/docs/upload",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "docs",
+            "upload"
+          ]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "title",
+              "value": "PAN copy",
+              "type": "text"
+            },
+            {
+              "key": "category_key",
+              "value": "KYC",
+              "type": "text"
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "entity_type",
+              "value": "CRM\\Enquiry",
+              "type": "text"
+            },
+            {
+              "key": "entity_id",
+              "value": "{{enquiry_id}}",
+              "type": "text"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "201",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "multipart/form-data. See BUG-182.",
+            "url": {
+              "raw": "{{base_url}}/api/v1/docs/upload",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "docs",
+                "upload"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "PAN copy",
+                  "type": "text"
+                },
+                {
+                  "key": "category_key",
+                  "value": "KYC",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "entity_type",
+                  "value": "CRM\\Enquiry",
+                  "type": "text"
+                },
+                {
+                  "key": "entity_id",
+                  "value": "{{enquiry_id}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "status": "Created",
+          "code": 201,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 201,\n  \"success\": true,\n  \"code\": \"S201\",\n  \"message\": \"Document uploaded\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": {\n    \"id\": 91,\n    \"title\": \"PAN copy\"\n  }\n}"
+        },
+        {
+          "name": "422",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "multipart/form-data. See BUG-182.",
+            "url": {
+              "raw": "{{base_url}}/api/v1/docs/upload",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "docs",
+                "upload"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "PAN copy",
+                  "type": "text"
+                },
+                {
+                  "key": "category_key",
+                  "value": "KYC",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "entity_type",
+                  "value": "CRM\\Enquiry",
+                  "type": "text"
+                },
+                {
+                  "key": "entity_id",
+                  "value": "{{enquiry_id}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "status": "Unprocessable Entity",
+          "code": 422,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 422,\n  \"success\": false,\n  \"code\": \"VALIDATION_FAILED\",\n  \"message\": \"Validation failed\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"errors\": {\n    \"file\": [\n      \"The file field is required.\"\n    ]\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "My documents",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/docs/my",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "docs",
+            "my"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/docs/my",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "docs",
+                "my"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Documents retrieved\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": [\n    {\n      \"id\": 91,\n      \"name\": \"PAN copy\",\n      \"kind\": \"FILE\",\n      \"collection\": \"docs\",\n      \"mime\": \"application/pdf\",\n      \"size\": 184320,\n      \"url\": \"https://\\u2026/pan.pdf\",\n      \"is_image\": false,\n      \"info\": null,\n      \"path\": \"Customers/2026-27\",\n      \"fy\": \"2026-27\",\n      \"owner_id\": 40,\n      \"created_at\": \"2026-09-30T10:12:00+05:30\"\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "Search",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/docs/search?query=pan",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "docs",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "query",
+              "value": "pan"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/docs/search?query=pan",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "docs",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "pan"
+                }
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Search results\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": [\n    {\n      \"id\": 91,\n      \"name\": \"PAN copy\",\n      \"kind\": \"FILE\",\n      \"collection\": \"docs\",\n      \"mime\": \"application/pdf\",\n      \"size\": 184320,\n      \"url\": \"https://\\u2026/pan.pdf\",\n      \"is_image\": false,\n      \"info\": null,\n      \"path\": \"Customers/2026-27\",\n      \"fy\": \"2026-27\",\n      \"owner_id\": 40,\n      \"created_at\": \"2026-09-30T10:12:00+05:30\"\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/docs/analytics",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "docs",
+            "analytics"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/docs/analytics",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "docs",
+                "analytics"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Analytics retrieved\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": {\n    \"views\": 12,\n    \"downloads\": 3\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Create group",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/docs/groups",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "docs",
+            "groups"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Booking BK-1043\",\n  \"description\": null\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [
+        {
+          "name": "201",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/docs/groups",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "docs",
+                "groups"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Booking BK-1043\",\n  \"description\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Created",
+          "code": 201,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 201,\n  \"success\": true,\n  \"code\": \"S201\",\n  \"message\": \"Group created\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": {\n    \"id\": 7,\n    \"name\": \"Booking BK-1043\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Add to group",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/docs/groups/{{group_id}}/add",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "docs",
+            "groups",
+            "{{group_id}}",
+            "add"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"doc_id\": 91\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/docs/groups/{{group_id}}/add",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "docs",
+                "groups",
+                "{{group_id}}",
+                "add"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doc_id\": 91\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Added to group\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Remove from group",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/docs/groups/{{group_id}}/remove/{{doc_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "docs",
+            "groups",
+            "{{group_id}}",
+            "remove",
+            "{{doc_id}}"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/docs/groups/{{group_id}}/remove/{{doc_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "docs",
+                "groups",
+                "{{group_id}}",
+                "remove",
+                "{{doc_id}}"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Removed from group\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Download group ZIP",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "Returns application/zip (a file), not JSON.",
+        "url": {
+          "raw": "{{base_url}}/api/v1/docs/groups/{{group_id}}/zip",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "docs",
+            "groups",
+            "{{group_id}}",
+            "zip"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Approve document",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/docs/{{doc_id}}/approve",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "docs",
+            "{{doc_id}}",
+            "approve"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/docs/{{doc_id}}/approve",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "docs",
+                "{{doc_id}}",
+                "approve"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Document approved\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\"\n}"
+        }
+      ]
+    }
+  ]
+}

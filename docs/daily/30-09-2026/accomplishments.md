@@ -63,3 +63,14 @@ the project root (not committed).
 **Delivered:** the dark / light flashing is gone: tabs now pick up another tab's colour mode once instead of bouncing it.
 **Verified:** a two-tab reproduction in headless Chrome (old 300 flips in 3 s → new 1 per switch, tabs agree).
 **Left:** —
+
+### 7. Merge wrapped up and every mobile API documented — W1, W2 (to-do U11 done)
+
+**Delivered:** the stage merge is closed out (full suite green on the final tip, temp branch deleted). The last four API
+modules — notifications / alerts / messages, documents, record history and the provider webhooks — have full docs (every
+parameter, rule and response) and Postman collections, so all v1 endpoints are documented. BUG-217 (bad sort values
+crashed the lists) fixed with a regression test.
+
+**Verified:** 476 passed; the new test fails on the old code and passes now; collections parse; every documented field
+was read from the controllers, resources and services. **Left:** BUG-182 (documents / history access) and the null names
+wait on D3 / D1.

@@ -1,0 +1,876 @@
+{
+  "info": {
+    "name": "Xceler8 API v1 — Inbound comms webhooks",
+    "_postman_id": "xlrm-webhooks-v1",
+    "description": "Docs: tech-guides/api/webhooks.md. Provider-facing; HMAC-signed.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://dev.xceler8.in"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "webhook_secret",
+      "value": ""
+    },
+    {
+      "key": "signature",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "sms event",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Signature",
+            "value": "{{signature}}"
+          }
+        ],
+        "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+        "url": {
+          "raw": "{{base_url}}/api/webhooks/comms/sms",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "webhooks",
+            "comms",
+            "sms"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event_id\": \"evt-0001\",\n  \"message_id\": \"prov-771\",\n  \"status\": \"DELIVERED\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const sig = CryptoJS.HmacSHA256(pm.request.body.raw, pm.collectionVariables.get('webhook_secret')).toString();",
+              "pm.collectionVariables.set('signature', sig);"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Signature",
+                "value": "{{signature}}"
+              }
+            ],
+            "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/comms/sms",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "comms",
+                "sms"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"evt-0001\",\n  \"message_id\": \"prov-771\",\n  \"status\": \"DELIVERED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"ok\": true,\n  \"code\": \"OK\",\n  \"message\": \"\",\n  \"data\": {}\n}"
+        },
+        {
+          "name": "401",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Signature",
+                "value": "{{signature}}"
+              }
+            ],
+            "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/comms/sms",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "comms",
+                "sms"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"evt-0001\",\n  \"message_id\": \"prov-771\",\n  \"status\": \"DELIVERED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Unauthorized",
+          "code": 401,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"ok\": false,\n  \"code\": \"BAD_SIGNATURE\"\n}"
+        },
+        {
+          "name": "200 duplicate",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Signature",
+                "value": "{{signature}}"
+              }
+            ],
+            "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/comms/sms",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "comms",
+                "sms"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"evt-0001\",\n  \"message_id\": \"prov-771\",\n  \"status\": \"DELIVERED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"ok\": true,\n  \"duplicate\": true\n}"
+        }
+      ]
+    },
+    {
+      "name": "email event",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Signature",
+            "value": "{{signature}}"
+          }
+        ],
+        "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+        "url": {
+          "raw": "{{base_url}}/api/webhooks/comms/email",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "webhooks",
+            "comms",
+            "email"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event_id\": \"evt-0002\",\n  \"type\": \"bounced\",\n  \"message_id\": \"prov-772\",\n  \"address\": \"someone@example.com\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const sig = CryptoJS.HmacSHA256(pm.request.body.raw, pm.collectionVariables.get('webhook_secret')).toString();",
+              "pm.collectionVariables.set('signature', sig);"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Signature",
+                "value": "{{signature}}"
+              }
+            ],
+            "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/comms/email",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "comms",
+                "email"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"evt-0002\",\n  \"type\": \"bounced\",\n  \"message_id\": \"prov-772\",\n  \"address\": \"someone@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"ok\": true,\n  \"code\": \"OK\",\n  \"message\": \"\",\n  \"data\": {}\n}"
+        },
+        {
+          "name": "401",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Signature",
+                "value": "{{signature}}"
+              }
+            ],
+            "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/comms/email",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "comms",
+                "email"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"evt-0002\",\n  \"type\": \"bounced\",\n  \"message_id\": \"prov-772\",\n  \"address\": \"someone@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Unauthorized",
+          "code": 401,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"ok\": false,\n  \"code\": \"BAD_SIGNATURE\"\n}"
+        },
+        {
+          "name": "200 duplicate",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Signature",
+                "value": "{{signature}}"
+              }
+            ],
+            "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/comms/email",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "comms",
+                "email"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"evt-0002\",\n  \"type\": \"bounced\",\n  \"message_id\": \"prov-772\",\n  \"address\": \"someone@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"ok\": true,\n  \"duplicate\": true\n}"
+        }
+      ]
+    },
+    {
+      "name": "whatsapp event",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Signature",
+            "value": "{{signature}}"
+          }
+        ],
+        "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+        "url": {
+          "raw": "{{base_url}}/api/webhooks/comms/whatsapp",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "webhooks",
+            "comms",
+            "whatsapp"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event_id\": \"evt-0003\",\n  \"type\": \"status\",\n  \"message_id\": \"wamid.1\",\n  \"status\": \"READ\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const sig = CryptoJS.HmacSHA256(pm.request.body.raw, pm.collectionVariables.get('webhook_secret')).toString();",
+              "pm.collectionVariables.set('signature', sig);"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Signature",
+                "value": "{{signature}}"
+              }
+            ],
+            "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/comms/whatsapp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "comms",
+                "whatsapp"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"evt-0003\",\n  \"type\": \"status\",\n  \"message_id\": \"wamid.1\",\n  \"status\": \"READ\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"ok\": true,\n  \"code\": \"OK\",\n  \"message\": \"\",\n  \"data\": {}\n}"
+        },
+        {
+          "name": "401",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Signature",
+                "value": "{{signature}}"
+              }
+            ],
+            "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/comms/whatsapp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "comms",
+                "whatsapp"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"evt-0003\",\n  \"type\": \"status\",\n  \"message_id\": \"wamid.1\",\n  \"status\": \"READ\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Unauthorized",
+          "code": 401,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"ok\": false,\n  \"code\": \"BAD_SIGNATURE\"\n}"
+        },
+        {
+          "name": "200 duplicate",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Signature",
+                "value": "{{signature}}"
+              }
+            ],
+            "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/comms/whatsapp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "comms",
+                "whatsapp"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"evt-0003\",\n  \"type\": \"status\",\n  \"message_id\": \"wamid.1\",\n  \"status\": \"READ\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"ok\": true,\n  \"duplicate\": true\n}"
+        }
+      ]
+    },
+    {
+      "name": "telephony event",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Signature",
+            "value": "{{signature}}"
+          }
+        ],
+        "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+        "url": {
+          "raw": "{{base_url}}/api/webhooks/comms/telephony",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "webhooks",
+            "comms",
+            "telephony"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event_id\": \"evt-0004\",\n  \"vendor_call_id\": \"call-9\",\n  \"direction\": \"OUT\",\n  \"status\": \"COMPLETED\",\n  \"duration\": 42\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const sig = CryptoJS.HmacSHA256(pm.request.body.raw, pm.collectionVariables.get('webhook_secret')).toString();",
+              "pm.collectionVariables.set('signature', sig);"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Signature",
+                "value": "{{signature}}"
+              }
+            ],
+            "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/comms/telephony",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "comms",
+                "telephony"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"evt-0004\",\n  \"vendor_call_id\": \"call-9\",\n  \"direction\": \"OUT\",\n  \"status\": \"COMPLETED\",\n  \"duration\": 42\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"ok\": true,\n  \"code\": \"OK\",\n  \"message\": \"\",\n  \"data\": {}\n}"
+        },
+        {
+          "name": "401",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Signature",
+                "value": "{{signature}}"
+              }
+            ],
+            "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/comms/telephony",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "comms",
+                "telephony"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"evt-0004\",\n  \"vendor_call_id\": \"call-9\",\n  \"direction\": \"OUT\",\n  \"status\": \"COMPLETED\",\n  \"duration\": 42\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Unauthorized",
+          "code": 401,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"ok\": false,\n  \"code\": \"BAD_SIGNATURE\"\n}"
+        },
+        {
+          "name": "200 duplicate",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Signature",
+                "value": "{{signature}}"
+              }
+            ],
+            "description": "X-Signature = hex HMAC-SHA256(raw body, Settings comms.webhook_secret). The pre-request script computes it from {{webhook_secret}}.",
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/comms/telephony",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "comms",
+                "telephony"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"evt-0004\",\n  \"vendor_call_id\": \"call-9\",\n  \"direction\": \"OUT\",\n  \"status\": \"COMPLETED\",\n  \"duration\": 42\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"ok\": true,\n  \"duplicate\": true\n}"
+        }
+      ]
+    }
+  ]
+}

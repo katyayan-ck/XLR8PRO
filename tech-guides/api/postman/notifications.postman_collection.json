@@ -1,0 +1,957 @@
+{
+  "info": {
+    "name": "Xceler8 API v1 — Notifications, alerts, messages",
+    "_postman_id": "xlrm-notifications-v1",
+    "description": "Docs: tech-guides/api/notifications.md. sender/receiver name is null until D1 (BUG-187).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://dev.xceler8.in"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "notification_id",
+      "value": "1"
+    },
+    {
+      "key": "alert_id",
+      "value": "1"
+    },
+    {
+      "key": "message_id",
+      "value": "1"
+    },
+    {
+      "key": "other_user_id",
+      "value": "5"
+    }
+  ],
+  "item": [
+    {
+      "name": "List notifications",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/notifications?page=1&per_page=20&sort_by=created_at&sort_order=desc&read_status=unread",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "notifications"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "per_page",
+              "value": "20"
+            },
+            {
+              "key": "sort_by",
+              "value": "created_at"
+            },
+            {
+              "key": "sort_order",
+              "value": "desc"
+            },
+            {
+              "key": "read_status",
+              "value": "unread"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications?page=1&per_page=20&sort_by=created_at&sort_order=desc&read_status=unread",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "created_at"
+                },
+                {
+                  "key": "sort_order",
+                  "value": "desc"
+                },
+                {
+                  "key": "read_status",
+                  "value": "unread"
+                }
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Notifications retrieved\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": {\n    \"notifications\": [\n      {\n        \"id\": 812,\n        \"type\": \"BOOKING\",\n        \"title\": \"Booking BK-1043 invoiced\",\n        \"description\": \"\\u2026\",\n        \"priority\": \"normal\",\n        \"category\": \"sales\",\n        \"is_read\": false,\n        \"read_at\": null,\n        \"sent_at\": \"2026-09-30T10:12:00+05:30\",\n        \"is_sent_via_fcm\": true,\n        \"reference_type\": \"booking\",\n        \"reference_id\": 1043,\n        \"deep_link\": \"xlrm://booking/1043\",\n        \"sender\": {\n          \"id\": 5,\n          \"name\": null\n        },\n        \"payload\": {},\n        \"created_at\": \"2026-09-30T10:12:00+05:30\"\n      }\n    ],\n    \"pagination\": {\n      \"current_page\": 1,\n      \"per_page\": 20,\n      \"total\": 1,\n      \"last_page\": 1\n    }\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Unread notifications",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/notifications/unread",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "notifications",
+            "unread"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/unread",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "unread"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Unread notifications retrieved\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": {\n    \"notifications\": [\n      {\n        \"id\": 812,\n        \"type\": \"BOOKING\",\n        \"title\": \"Booking BK-1043 invoiced\",\n        \"description\": \"\\u2026\",\n        \"priority\": \"normal\",\n        \"category\": \"sales\",\n        \"is_read\": false,\n        \"read_at\": null,\n        \"sent_at\": \"2026-09-30T10:12:00+05:30\",\n        \"is_sent_via_fcm\": true,\n        \"reference_type\": \"booking\",\n        \"reference_id\": 1043,\n        \"deep_link\": \"xlrm://booking/1043\",\n        \"sender\": {\n          \"id\": 5,\n          \"name\": null\n        },\n        \"payload\": {},\n        \"created_at\": \"2026-09-30T10:12:00+05:30\"\n      }\n    ],\n    \"pagination\": {\n      \"current_page\": 1,\n      \"per_page\": 20,\n      \"total\": 1,\n      \"last_page\": 1\n    }\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Mark notification read",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/notifications/{{notification_id}}/read",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "notifications",
+            "{{notification_id}}",
+            "read"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/{{notification_id}}/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "{{notification_id}}",
+                "read"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Notification marked as read\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": {\n    \"id\": 812,\n    \"type\": \"BOOKING\",\n    \"title\": \"Booking BK-1043 invoiced\",\n    \"description\": \"\\u2026\",\n    \"priority\": \"normal\",\n    \"category\": \"sales\",\n    \"is_read\": true,\n    \"read_at\": \"2026-09-30T10:12:00+05:30\",\n    \"sent_at\": \"2026-09-30T10:12:00+05:30\",\n    \"is_sent_via_fcm\": true,\n    \"reference_type\": \"booking\",\n    \"reference_id\": 1043,\n    \"deep_link\": \"xlrm://booking/1043\",\n    \"sender\": {\n      \"id\": 5,\n      \"name\": null\n    },\n    \"payload\": {},\n    \"created_at\": \"2026-09-30T10:12:00+05:30\"\n  }\n}"
+        },
+        {
+          "name": "403",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/{{notification_id}}/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "{{notification_id}}",
+                "read"
+              ]
+            }
+          },
+          "status": "Forbidden",
+          "code": 403,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 403,\n  \"success\": false,\n  \"code\": \"AUTH_FORBIDDEN\",\n  \"message\": \"You are not authorized to read Notification\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\"\n}"
+        },
+        {
+          "name": "404",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/{{notification_id}}/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "{{notification_id}}",
+                "read"
+              ]
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 404,\n  \"success\": false,\n  \"code\": \"RESOURCE_NOT_FOUND\",\n  \"message\": \"Notification not found with ID 999\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Mark all read",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/notifications/mark-all-read",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "notifications",
+            "mark-all-read"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/mark-all-read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "mark-all-read"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"All notifications marked as read\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": {\n    \"count\": 7\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Delete notification",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/notifications/{{notification_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "notifications",
+            "{{notification_id}}"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/notifications/{{notification_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "notifications",
+                "{{notification_id}}"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Notification deleted\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "List alerts",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/alerts?severity=high",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "alerts"
+          ],
+          "query": [
+            {
+              "key": "severity",
+              "value": "high"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/alerts?severity=high",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts"
+              ],
+              "query": [
+                {
+                  "key": "severity",
+                  "value": "high"
+                }
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Alerts retrieved\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": {\n    \"alerts\": [\n      {\n        \"id\": 17,\n        \"severity\": \"high\",\n        \"title\": \"RTO pending 7 days\",\n        \"description\": \"\\u2026\",\n        \"is_read\": false,\n        \"read_at\": null,\n        \"reference_type\": \"booking\",\n        \"reference_id\": 1043,\n        \"deep_link\": \"xlrm://booking/1043\",\n        \"sender\": {\n          \"id\": 5,\n          \"name\": null\n        },\n        \"created_at\": \"2026-09-30T10:12:00+05:30\"\n      }\n    ],\n    \"pagination\": {\n      \"current_page\": 1,\n      \"per_page\": 20,\n      \"total\": 1,\n      \"last_page\": 1\n    }\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Mark alert read",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/alerts/{{alert_id}}/read",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "alerts",
+            "{{alert_id}}",
+            "read"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/alerts/{{alert_id}}/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "alerts",
+                "{{alert_id}}",
+                "read"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Alert marked as read\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": {\n    \"id\": 17,\n    \"severity\": \"high\",\n    \"title\": \"RTO pending 7 days\",\n    \"description\": \"\\u2026\",\n    \"is_read\": true,\n    \"read_at\": \"2026-09-30T10:12:00+05:30\",\n    \"reference_type\": \"booking\",\n    \"reference_id\": 1043,\n    \"deep_link\": \"xlrm://booking/1043\",\n    \"sender\": {\n      \"id\": 5,\n      \"name\": null\n    },\n    \"created_at\": \"2026-09-30T10:12:00+05:30\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Conversation",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/messages/user/{{other_user_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "messages",
+            "user",
+            "{{other_user_id}}"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/messages/user/{{other_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "messages",
+                "user",
+                "{{other_user_id}}"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Conversation messages retrieved\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": {\n    \"messages\": [\n      {\n        \"id\": 31,\n        \"sender\": {\n          \"id\": 40,\n          \"name\": null,\n          \"avatar\": null\n        },\n        \"receiver\": {\n          \"id\": 5,\n          \"name\": null\n        },\n        \"message_text\": \"Customer confirmed\",\n        \"message_type\": \"text\",\n        \"is_read\": false,\n        \"read_at\": null,\n        \"attachments\": [],\n        \"created_at\": \"2026-09-30T10:12:00+05:30\",\n        \"updated_at\": \"2026-09-30T10:12:00+05:30\"\n      }\n    ],\n    \"pagination\": {\n      \"current_page\": 1,\n      \"per_page\": 20,\n      \"total\": 1,\n      \"last_page\": 1\n    }\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Send message",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/messages/user/{{other_user_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "messages",
+            "user",
+            "{{other_user_id}}"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message_text\": \"Customer confirmed\",\n  \"message_type\": \"text\",\n  \"attachments\": []\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [
+        {
+          "name": "201",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/messages/user/{{other_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "messages",
+                "user",
+                "{{other_user_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message_text\": \"Customer confirmed\",\n  \"message_type\": \"text\",\n  \"attachments\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Created",
+          "code": 201,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 201,\n  \"success\": true,\n  \"code\": \"S201\",\n  \"message\": \"Message sent\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": {\n    \"id\": 31,\n    \"sender\": {\n      \"id\": 40,\n      \"name\": null,\n      \"avatar\": null\n    },\n    \"receiver\": {\n      \"id\": 5,\n      \"name\": null\n    },\n    \"message_text\": \"Customer confirmed\",\n    \"message_type\": \"text\",\n    \"is_read\": false,\n    \"read_at\": null,\n    \"attachments\": [],\n    \"created_at\": \"2026-09-30T10:12:00+05:30\",\n    \"updated_at\": \"2026-09-30T10:12:00+05:30\"\n  }\n}"
+        },
+        {
+          "name": "422",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/messages/user/{{other_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "messages",
+                "user",
+                "{{other_user_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message_text\": \"Customer confirmed\",\n  \"message_type\": \"text\",\n  \"attachments\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Unprocessable Entity",
+          "code": 422,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 422,\n  \"success\": false,\n  \"code\": \"VALIDATION_FAILED\",\n  \"message\": \"Validation failed\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"errors\": {\n    \"message_type\": [\n      \"The message type field is required.\"\n    ]\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Mark message read",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/messages/{{message_id}}/read",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "messages",
+            "{{message_id}}",
+            "read"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/messages/{{message_id}}/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "messages",
+                "{{message_id}}",
+                "read"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Message marked as read\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": {\n    \"id\": 31,\n    \"sender\": {\n      \"id\": 40,\n      \"name\": null,\n      \"avatar\": null\n    },\n    \"receiver\": {\n      \"id\": 5,\n      \"name\": null\n    },\n    \"message_text\": \"Customer confirmed\",\n    \"message_type\": \"text\",\n    \"is_read\": true,\n    \"read_at\": \"2026-09-30T10:12:00+05:30\",\n    \"attachments\": [],\n    \"created_at\": \"2026-09-30T10:12:00+05:30\",\n    \"updated_at\": \"2026-09-30T10:12:00+05:30\"\n  }\n}"
+        }
+      ]
+    }
+  ]
+}

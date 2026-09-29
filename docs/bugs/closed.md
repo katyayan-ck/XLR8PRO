@@ -210,6 +210,7 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-214 | OTF form: the hidden invoice date was taken from `toISOString()` (UTC), so an invoice date picked in IST was saved as the previous day | Medium | FIXED — `instance.formatDate(date, 'Y-m-d')` (local) | 30-09-2026 | 30-09-2026 |
 | BUG-215 | RTO apply (stage change 28-09): sale type / registration-no type looked up in keyword masters that do not exist (`SALE_TYPE`, `REGISTRATION_NO_TYPE`) while the form still posts 1 / 2 / 3 — no RTO rule ever matched, so the RTO status was wrong | High | FIXED — keyword masters first, fixed code maps as fallback | 30-09-2026 | 30-09-2026 |
 | BUG-216 | Colour mode flashed dark / light many times a second with two or more admin tabs open — tabs re-set the mode on every `storage` event, and Backpack's `colorMode.set()` rewrites the key each time, so the tabs kept bouncing it | High | FIXED — debounced, compare-then-apply sync | 30-09-2026 | 30-09-2026 |
+| BUG-217 | v1 notification / alert lists passed `sort_by` / `sort_order` straight into orderBy() — an unknown column or direction was a 500 | Medium | FIXED — per-list allow-list, fallback newest first | 30-09-2026 | 30-09-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2618,3 +2619,17 @@ guessed at.
   applies it only when it differs from this tab's mode. Reproduction in headless Chrome (two same-origin frames with
   Backpack's real `ColorMode` class): old code 300 flips per tab in 3 s and diverging modes; fixed code 1 flip per switch,
   both tabs converge (dark → system → light: 3 flips each, both end light).
+
+### BUG-217 — v1 notification / alert lists passed `sort_by` / `sort_order` straight into orderBy() — an unknown column or direction was a 500
+
+- **Final status:** FIXED · **Fixed:** 30-09-2026
+- **Status:** FIXED 30-09-2026.
+- **Severity:** Medium (any bad query string broke the app's lists).
+- **Found:** 30-09-2026, writing `tech-guides/api/notifications.md` (to-do U11 / W2).
+- **Where:** `app/Http/Controllers/Api/V1/NotificationController.php` — `getNotifications`, `getUnreadNotifications`,
+  `getAlerts`, `getMessages`.
+- **Description:** `->orderBy($request->get('sort_by', 'created_at'), $request->get('sort_order', 'desc'))`. Laravel
+  quotes the column (no SQL injection), but an unknown column is a SQL error and a direction other than asc / desc throws
+  → 500.
+- **Fixed:** 30-09-2026 — `sortFor($request, $columns)`: only the list's own columns and asc / desc; anything else sorts
+  newest first. Test `tests/Feature/Api/NotificationListSortTest.php` (fails on the old code, passes now).

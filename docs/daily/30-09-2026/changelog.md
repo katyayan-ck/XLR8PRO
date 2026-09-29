@@ -75,3 +75,12 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
   the mode on every event and Backpack's remove + set wrote it back, bouncing between tabs (~100 flips / s).
 - **Verified:** headless Chrome, two same-origin frames with Backpack's `ColorMode`: old 300 flips / 3 s, diverging; new 1
   flip per switch, converging (dark / system / light).
+
+## W1 merge wrap-up + W2 API docs (to-do U11 complete); BUG-217
+- **W1:** full suite on the merged tip — 476 passed, 1 known skip; `merge/stage-30-09` deleted (fully merged). The
+  history-rewrite backup branch stays until the owner confirms.
+- **W2 / U11:** new `tech-guides/api/{notifications,documents,history,webhooks}.md` and their Postman collections (the
+  webhook one signs each request with a pre-request HMAC script); `tech-guides/api/index.md` — every v1 module documented.
+- **BUG-217 fixed:** `NotificationController::sortFor()` allow-lists `sort_by` / `sort_order` (unknown values were a 500);
+  test `tests/Feature/Api/NotificationListSortTest.php`.
+- **Found, not changed:** `sender.name` / `receiver.name` are null (no `users.name`) — added to owner decision D1.

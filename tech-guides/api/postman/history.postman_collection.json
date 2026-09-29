@@ -1,0 +1,244 @@
+{
+  "info": {
+    "name": "Xceler8 API v1 — Record history",
+    "_postman_id": "xlrm-history-v1",
+    "description": "Docs: tech-guides/api/history.md. BUG-182: no access checks yet (owner decision D3).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://dev.xceler8.in"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "entity_type",
+      "value": "CRM%5CEnquiry"
+    },
+    {
+      "key": "entity_id",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Record history",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "entity_type = model class under App\\Models, URL-encoded (CRM%5CEnquiry).",
+        "url": {
+          "raw": "{{base_url}}/api/v1/history/{{entity_type}}/{{entity_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "history",
+            "{{entity_type}}",
+            "{{entity_id}}"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "entity_type = model class under App\\Models, URL-encoded (CRM%5CEnquiry).",
+            "url": {
+              "raw": "{{base_url}}/api/v1/history/{{entity_type}}/{{entity_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "history",
+                "{{entity_type}}",
+                "{{entity_id}}"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"History retrieved\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": [\n    {\n      \"id\": 5501,\n      \"comm_master_id\": 812,\n      \"parent_id\": null,\n      \"actor_id\": 40,\n      \"action_id\": 3,\n      \"title\": \"Booking created\",\n      \"body\": null,\n      \"extra_data\": {},\n      \"is_internal\": false,\n      \"edited_at\": null,\n      \"created_at\": \"2026-09-30T10:12:00+05:30\",\n      \"children\": [],\n      \"media\": []\n    }\n  ]\n}"
+        },
+        {
+          "name": "404",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "entity_type = model class under App\\Models, URL-encoded (CRM%5CEnquiry).",
+            "url": {
+              "raw": "{{base_url}}/api/v1/history/{{entity_type}}/{{entity_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "history",
+                "{{entity_type}}",
+                "{{entity_id}}"
+              ]
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 404,\n  \"success\": false,\n  \"code\": \"RESOURCE_NOT_FOUND\",\n  \"message\": \"History not found\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Add comment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "description": "",
+        "url": {
+          "raw": "{{base_url}}/api/v1/history/{{entity_type}}/{{entity_id}}/thread",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "history",
+            "{{entity_type}}",
+            "{{entity_id}}",
+            "thread"
+          ]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "action_key",
+              "value": "REMARK",
+              "type": "text"
+            },
+            {
+              "key": "message",
+              "value": "Customer asked for a callback",
+              "type": "text"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "201",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "",
+            "url": {
+              "raw": "{{base_url}}/api/v1/history/{{entity_type}}/{{entity_id}}/thread",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "history",
+                "{{entity_type}}",
+                "{{entity_id}}",
+                "thread"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "action_key",
+                  "value": "REMARK",
+                  "type": "text"
+                },
+                {
+                  "key": "message",
+                  "value": "Customer asked for a callback",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "status": "Created",
+          "code": 201,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 201,\n  \"success\": true,\n  \"code\": \"S201\",\n  \"message\": \"Comment added\",\n  \"timestamp\": \"2026-09-30T10:12:00+05:30\",\n  \"data\": {\n    \"id\": 5502,\n    \"comm_master_id\": 812,\n    \"parent_id\": null,\n    \"actor_id\": 40,\n    \"action_id\": 3,\n    \"title\": null,\n    \"body\": \"Customer asked for a callback\",\n    \"extra_data\": {},\n    \"is_internal\": false,\n    \"edited_at\": null,\n    \"created_at\": \"2026-09-30T10:12:00+05:30\",\n    \"children\": [],\n    \"media\": []\n  }\n}"
+        }
+      ]
+    }
+  ]
+}
