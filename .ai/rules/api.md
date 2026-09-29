@@ -21,3 +21,5 @@ paths:
   (see `.ai/rules/testing.md`) — `route:list` alone doesn't prove it works.
 - Changing a response shape = breaking the mobile app: add fields, don't rename/remove; new shapes go to v2 (Track B).
 - Never log OTPs, tokens or full phone numbers.
+- Errors: every API error is the envelope with a registered `ErrorCodeEnum` code and its HTTP status; unhandled
+  exceptions go through the central handler (never a raw HTML page or stack trace to the app).

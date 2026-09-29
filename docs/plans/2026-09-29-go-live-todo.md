@@ -279,6 +279,52 @@ The booking team owns it (DEC-034); these are the items we know of.
 
 ---
 
+## 10b. UI / UX and platform standards (your request, 29-09 — standing rules in `.ai/rules/ui.md` / `app.md` / `api.md`)
+
+| # | Item | Status | Priority | Plan |
+|---|---|---|---|---|
+| U1 | Standard form screens: same header style, minimal spacing, smaller font; every card collapsible + draggable (order remembered) with **required filled / total** in the header | 🔴 → in progress | P1 | See the U1 plan below the table. |
+| U2 | Use the UI-kit elements for the best UX | 🟡 | P1 | Rule added; each screen converges when touched (`ui-design-progress.md` tracks the rest) |
+| U3 | Font size + spacing / margin / padding controller | 🔴 → in progress | P1 | See the U3 plan below the table. |
+| U4 | Caching / optimisation, lazy loading | 🟡 | P1 | See the U4 plan below the table. |
+| U5 | Select2, flatpickr, badges, buttons, tabs, accordions wherever they fit | 🟡 | P1 | Rule added; the shared layer already upgrades native inputs; convert the dense legacy forms screen by screen |
+| U6 | Guides updated on every change | ✅ rule | — | `.ai/rules/app.md` standing rule; the go-live wrap-up audits guides vs code |
+| U7 | Central uniform error / response / exception handling with module-wise codes + messages | 🔴 | P1 | See the U7 plan below the table. |
+| U8 | Custom error pages (403 / 404 / 419 / 429 / 500 / 503) | 🔴 → in progress | P1 | Branded pages in `resources/views/errors/`: logo, plain message, a link to the dashboard, a reference id on 500 (no stack traces) |
+| U9 | These instructions in the project rules for all agents | ✅ 29-09 | — | `.ai/rules/ui.md`, `app.md`, `api.md` (synced to `.claude/rules`) |
+
+**U1 plan:**
+- One shared enhancement in `xl-ui.js` + `xl-ui.css` for every card inside a form: a collapse toggle, a drag handle
+  (order saved per user + page), and a required-fields counter that updates live.
+- A compact form density.
+- A standard page-header partial.
+
+**U3 plan:**
+- Site defaults in Settings (`ui.density.font_scale`, `ui.density.space_scale`).
+- A per-user override in the Appearance panel (font size S / M / L, spacing compact / cozy / comfortable), applied as
+  CSS variables on `<html>`.
+
+**U4 plan:**
+- Images: `loading="lazy"` / `decoding="async"` everywhere (shared layer).
+- Deploy: `config:cache` / `route:cache` / `view:cache` (O2).
+- Cache: Redis (O7).
+- Queries: settings / keyword / org caches ✅; add caches for the menu counts and the dashboard widgets ✅; review
+  N+1 on the big lists.
+- Grids load by AJAX ✅ (Price List, masters).
+- Collapsed cards / tabs lazy-load their heavy content.
+- HTTP: gzip / cache headers for static assets.
+
+**U7 plan:**
+1. Inventory every error path: `ErrorCodeEnum` (55 codes), Result codes per service, `abort()` messages, `Alert`
+   flashes, try / catch in controllers.
+2. A per-module code list (`{MODULE}_{NAME}`) with its messages in `resources/lang/en/errors.php` (customisable per
+   module).
+3. `withExceptions` renders:
+   - the API: always the envelope;
+   - the web: the branded pages + the flash for validation / business errors;
+   - with a reference id logged.
+4. Migrate controllers screen by screen; a test that fails on an unregistered code.
+
 ## 11. Deferred (after UAT)
 
 - **Track B:** resume from xceler8 `d9009db`.

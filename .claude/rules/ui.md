@@ -50,3 +50,22 @@ Every file upload uses the shared drop-zone component: drag-and-drop + click-to-
 
 ## Modern, minimal, responsive screens (phone, tablet, desktop)
 Every screen is modern, elegant and minimal (Tabler tokens, consistent page shell/cards, clear hierarchy, empty/loading/error states) and must work at 360px (6" Android/iOS), 768px tablet and desktop: no fixed pixel widths, tables in `.table-responsive` or stacked cards on phones, forms single-column on phones, touch targets ≥ 40px, dropdowns fit the viewport. Verify at those three widths before shipping. No hex/`bg-white`/inline `<style>` blocks — shared CSS and Tabler variables (dark mode safe).
+
+## Dense, standard form screens (user standing instruction, 29-09-2026)
+- Every form screen uses the one standard shell: the same page header (small eyebrow line + title + actions on the
+  right), minimal spacing and the compact type scale, so the most data fits on one screen. No per-screen header styles.
+- Every card on a form is **collapsible and draggable** (the user's order is remembered) and shows
+  **required filled / required total** in its header. The shared layer (`public/js/xl-ui.js`) does this for cards
+  inside forms; opt out with `data-xl="off"`. Put required inputs inside their card and mark them `required`, so the
+  counter is right.
+- Prefer the space-saving kit elements wherever they fit: Select2 (`<x-ui.select>`), flatpickr (`<x-ui.date>`), the
+  drop-zone (`<x-ui.upload>`), badges, button groups, tabs, accordions and collapsible cards. Check the dev UI kit
+  (`/admin/dev/ui`) before building anything new, and reuse it.
+- Density (font size, spacing / margin / padding scale) is a per-user choice with a site default (Settings
+  `ui.density.*` + the Appearance panel). Style only with the shared CSS variables so the controls reach every screen;
+  never hard-code px font sizes or paddings.
+- Performance on every screen: `loading="lazy"` + `decoding="async"` on images (the shared layer adds it to images
+  without the attribute), load large grids and off-screen tabs / cards by AJAX when they are opened, keep inline scripts
+  small, and let Basset cache CDN assets.
+- Error pages (403 / 404 / 419 / 429 / 500 / 503) use the shared branded templates in `resources/views/errors/`. Never
+  show a raw stack trace or framework page to users.
