@@ -362,7 +362,7 @@ The booking team owns it (DEC-034); these are the items we know of.
 | C2 | AI-agent performance at minimum tokens (Claude Code, Codex): lean always-loaded files (`CLAUDE.md` / `AGENTS.md`), stable text for prompt caching, path-scoped rules, on-demand skills, unused skills removed, big / backup files blocked from reads | ✅ 29-09 (`CLAUDE.md` / `AGENTS.md` 21.1 → 12.4 KB; `config/boost.php` exclusions; `.claude/settings.json`) | P1 | `boost.json`, `.ai/guidelines`, `.claude/settings.json` |
 | C3 | Bugs / known issues verified and split into `docs/bugs/open.md` and `docs/bugs/closed.md`; a fixed bug moves from open to closed with its full details | ✅ 29-09 (31 open verified, 182 closed; old audit verified, BUG-212 / 213 from it) | P1 | Verify every open entry and the old `docs/bugs/closed.md` audit against the code |
 | C4 | One chronological changelog `docs/changelog.md` (all `ai-changelogs-*` + the root `changelog.md`) | ✅ 29-09 (findings of the same days included) | P1 | |
-| C5 | One to-do + accomplishments file `docs/todo.md` (date-wise handoff / changelog / accomplishment files come later) | ✅ 29-09 (date-wise files: later, on your go) | P1 | |
+| C5 | One to-do + accomplishments file `docs/todo.md`, plus date-wise handoff / changelog / accomplishment files | ✅ 29-09 (`docs/daily/DD-MM-YYYY/`, kept in step with the cumulative files) | P1 | |
 | C6 | Old context and superseded files moved to the git-ignored `_backup/` (kept on disk, out of the repo and out of agent searches) | ✅ 29-09 (removing `4c82d28`'s workbooks from history needs your approval) | P1 | Includes the pricing reference workbooks that were committed by mistake in `4c82d28` (not pushed) |
 | C8 | Plans kept in the repo and current: `tech-guides/frs-and-workflows/plans/` (DEC-071, 072, 073, 083) with status headers + index; rule added | ✅ 29-09 | P1 | Update a plan's header when its work moves |
 | C7 | The Laradocs site (`/docs`, `web` middleware only) served the whole `docs/` folder, including the bug tracker and the decision log | 🟡 mitigated 29-09 (reads `tech-guides/`); login decision open (BUG-211) | P0 | Point it at `tech-guides/`; whether it needs a login is an owner decision (BUG-211) |
@@ -766,3 +766,10 @@ files); `/docs` renders from `tech-guides/`; `php artisan ai:refresh-context` �
 
 **Left:** date-wise handoff / changelog / accomplishment files (later); the history rewrite for `4c82d28` and the
 `/docs` login decision (owner).
+
+### 13. Date-wise handoff, changelog and accomplishments — DEC-086 addendum
+
+**Delivered:** `docs/daily/29-09-2026/` with today's handoff, changelog and accomplishments, an index
+`docs/daily/README.md`, and the standing rule (always loaded) to update the day's files together with the cumulative
+ones in every commit. **Verified:** the copies match today's sections of `docs/changelog.md`, `docs/todo.md` and
+`.ai/state/handoff.md`. **Left:** —

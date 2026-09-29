@@ -22,5 +22,7 @@ The loop every agent follows (full rules: `.ai/guidelines/10-workflow.md`, alway
      plans are saved there);
    - `docs/bugs/open.md` for a new bug (immediately), or move a fixed one to `docs/bugs/closed.md` with its details;
    - rewrite `.ai/state/handoff.md` (done / in progress / open questions / how to verify);
+   - the same entries in today's date-wise files `docs/daily/DD-MM-YYYY/{handoff,changelog,accomplishments}.md`
+     (create the folder on the day's first commit — `docs/daily/README.md`);
    - `php artisan ai:refresh-context` when bugs, rules or schema changed.
 6. **Commit:** `type(scope): message` on the working branch (never `main`); never push without approval in that turn.

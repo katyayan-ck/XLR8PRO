@@ -9628,3 +9628,9 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   `CLAUDE.md` / `AGENTS.md` regenerated (21.1 → 12.4 KB); code comments pointing at old changelog files; `.gitignore`
   (`/_backup`).
 - **Bugs:** BUG-029 closed (code removed); BUG-211, BUG-212, BUG-213 logged.
+
+## Date-wise records (DEC-086 addendum)
+- **New:** `docs/daily/README.md`, `docs/daily/29-09-2026/{handoff,changelog,accomplishments}.md` (copies of today's
+  handoff, changelog entries and accomplishments).
+- **Rule:** `.ai/guidelines/10-workflow.md` (→ `CLAUDE.md` / `AGENTS.md`) and the change-workflow card: every commit
+  updates today's daily files and the cumulative ones together.

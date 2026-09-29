@@ -41,7 +41,7 @@ paste whole folders into a prompt.
 | `.ai/skills/` → `.claude/skills/`, `.agents/skills/` | On-demand skills (loaded by description) |
 | `.ai/knowledge/db/` | Generated DB schema cards (`php artisan ai:refresh-context`) |
 | `.ai/state/handoff.md`, `bugs-index.md` | Live hand-over; generated open-bug index |
-| `docs/` | Project records: `todo.md`, `changelog.md`, `bugs/open.md`, `bugs/closed.md`, `decisions/decision-log.md` |
+| `docs/` | Project records: `todo.md`, `changelog.md`, `bugs/open.md`, `bugs/closed.md`, `decisions/decision-log.md`, and the date-wise `daily/DD-MM-YYYY/{handoff,changelog,accomplishments}.md` |
 | `_backup/` | Superseded files, git-ignored, never read by agents (history only) |
 
 ## Keeping guides true

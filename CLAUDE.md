@@ -50,6 +50,9 @@ auth/permission/secret changes · UAT-visible behaviour changes beyond an obviou
 - Guides → the matching `tech-guides/` file for any change to a model, service, business rule, screen standard or API.
 - Handoff → rewrite `.ai/state/handoff.md`: just done, in progress (exact next step, files, uncommitted work), open
   questions for the owner, how to verify. A new session must be able to continue from it alone.
+- **Date-wise copies (user standing instruction):** keep `docs/daily/DD-MM-YYYY/` (today) in step with the cumulative
+  files in the same commit — `handoff.md` = `.ai/state/handoff.md`, `changelog.md` = today's changelog entries,
+  `accomplishments.md` = today's accomplishments. First commit of a day: create the folder (`docs/daily/README.md`).
 - Code is commented (PHPDoc on every class and public method; inline comments only for non-obvious logic, with the
   DEC/BUG id) and formatted with pint before every commit.
 

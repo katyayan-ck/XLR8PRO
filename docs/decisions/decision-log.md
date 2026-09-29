@@ -1387,3 +1387,6 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
      at `/docs` (BUG-211; a login for `/docs` is the owner's call).
 - **Approved-by:** user (request 29-09) · **Risk:** LOW (files move; history keeps them) · **Reversal:** git revert; the
   backup folder is on disk.
+- **Addendum (29-09, user request):** date-wise records as well — `docs/daily/DD-MM-YYYY/{handoff,changelog,
+  accomplishments}.md`, created from today's entries and updated in the same commit as the cumulative files
+  (`.ai/state/handoff.md`, `docs/changelog.md`, `docs/todo.md` Part 2). Index: `docs/daily/README.md`.
