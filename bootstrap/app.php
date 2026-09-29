@@ -1,9 +1,12 @@
 <?php
 
 use App\Console\Commands\ImportUsersCommand;
+use App\Exceptions\ApiExceptionRenderer;
 use App\Http\Middleware\CheckSuperAdmin;
 use App\Http\Middleware\DataScopeOff;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\ValidateDevice;
+use App\Support\ErrorRef;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -28,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => RoleOrPermissionMiddleware::class,
         ]);
         // Go-live to-do S10: baseline security headers + CSP (report-only by default, setting security.csp_mode).
-        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(SecurityHeaders::class);
         // DEC-067: the admin layout choice is written by the Appearance panel in the browser (public/js/xl-theme.js).
         $middleware->encryptCookies(except: ['xl_layout']);
     })
@@ -37,5 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
         // Go-live to-do U8: every logged exception carries the request's reference id, which the branded 500 page shows.
-        $exceptions->context(fn () => ['error_ref' => \App\Support\ErrorRef::get()]);
+        $exceptions->context(fn () => ['error_ref' => ErrorRef::get()]);
+        // Go-live to-do U7 (DEC-085): every exception on api/* answers with the standard envelope.
+        $exceptions->render(new ApiExceptionRenderer);
     })->create();

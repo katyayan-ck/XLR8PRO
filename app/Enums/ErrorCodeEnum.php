@@ -14,6 +14,9 @@ namespace App\Enums;
  * - AUTH_DEVICE_BINDING_FAILED (Authentication → Device → Binding Failed)
  * - SETTINGS_UPDATE_FAILED (Settings → Update → Failed)
  *
+ * Messages live in resources/lang/en/errors.php (grouped by module); the API envelope for every exception on api/*
+ * is built by App\Exceptions\ApiExceptionRenderer (DEC-085).
+ *
  * @author VDMS Development Team
  *
  * @version 2.0
@@ -44,6 +47,11 @@ enum ErrorCodeEnum: string
     case AUTH_MOBILE_REGISTERED = 'AUTH_MOBILE_REGISTERED';
     case AUTH_MOBILE_NOT_REGISTERED = 'AUTH_MOBILE_NOT_REGISTERED';
 
+    // Request-level (DEC-085)
+    case REQUEST_INVALID = 'REQUEST_INVALID';
+    case REQUEST_METHOD_NOT_ALLOWED = 'REQUEST_METHOD_NOT_ALLOWED';
+    case REQUEST_RATE_LIMITED = 'REQUEST_RATE_LIMITED';
+
     case VALIDATION_FAILED = 'VALIDATION_FAILED';
     case VALIDATION_REQUIRED_FIELD = 'VALIDATION_REQUIRED_FIELD';
     case VALIDATION_INVALID_FORMAT = 'VALIDATION_INVALID_FORMAT';
@@ -55,6 +63,7 @@ enum ErrorCodeEnum: string
     case RESOURCE_CONFLICT = 'RESOURCE_CONFLICT';
     case RESOURCE_ALREADY_EXISTS = 'RESOURCE_ALREADY_EXISTS';
     case RESOURCE_PERMISSION_DENIED = 'RESOURCE_PERMISSION_DENIED';
+    case RESOURCE_LOCKED = 'RESOURCE_LOCKED';
 
     case DATABASE_CONNECTION_FAILED = 'DATABASE_CONNECTION_FAILED';
     case DATABASE_QUERY_FAILED = 'DATABASE_QUERY_FAILED';
@@ -89,77 +98,22 @@ enum ErrorCodeEnum: string
     case EMP_ALREADY_HAS_PRIMARY_POST = 'EMP_ALREADY_HAS_PRIMARY_POST';
     case POST_HAS_ACTIVE_OCCUPANTS = 'POST_HAS_ACTIVE_OCCUPANTS';
 
+    /**
+     * The user-facing message, from `resources/lang/en/errors.php` (the SSOT, grouped by module — DEC-085). A code
+     * without a line there falls back to the generic SYSTEM_ERROR text instead of failing.
+     */
     public function message(): string
     {
-        return match ($this) {
+        $key = 'errors.'.$this->value;
 
-            self::AUTH_OTP_INVALID => 'Invalid OTP code. Please try again.',
-            self::AUTH_OTP_EXPIRED => 'OTP has expired. Please request a new one.',
-            self::AUTH_OTP_ATTEMPTS_EXCEEDED => 'Too many failed OTP attempts. Please try again later.',
-            self::AUTH_OTP_SEND_FAILED => 'Failed to send OTP. Please try again.',
-            self::AUTH_OTP_RATE_LIMIT => 'Too many OTP requests. Please try again in a few minutes.',
-            self::AUTH_USER_NOT_FOUND => 'User not found in the system.',
-            self::AUTH_USER_INACTIVE => 'Your account is inactive. Please contact support.',
-            self::AUTH_USER_LOCKED => 'Your account has been locked. Please contact support.',
-            self::AUTH_USER_SUSPENDED => 'Your account has been suspended. Please contact support.',
-            self::AUTH_DEVICE_BINDING_FAILED => 'Failed to bind device. Please try again.',
-            self::AUTH_DEVICE_INVALID => 'Device information is invalid.',
-            self::AUTH_TOKEN_INVALID => 'Invalid authentication token.',
-            self::AUTH_TOKEN_EXPIRED => 'Authentication token has expired. Please login again.',
-            self::AUTH_TOKEN_REVOKED => 'Authentication token has been revoked.',
-            self::AUTH_UNAUTHORIZED => 'You are not authorized to perform this action.',
-            self::AUTH_FORBIDDEN => 'Access forbidden.',
-            self::AUTH_MOBILE_INVALID => 'Invalid mobile number format.',
-            self::AUTH_MOBILE_REGISTERED => 'This mobile number is already registered.',
-            self::AUTH_MOBILE_NOT_REGISTERED => 'This mobile number is not registered.',
-
-            self::VALIDATION_FAILED => 'Validation failed. Please check the provided data.',
-            self::VALIDATION_REQUIRED_FIELD => 'One or more required fields are missing.',
-            self::VALIDATION_INVALID_FORMAT => 'Data format is invalid.',
-            self::VALIDATION_DUPLICATE_ENTRY => 'This entry already exists.',
-            self::VALIDATION_CONSTRAINT_VIOLATION => 'Data violates business constraints.',
-
-            self::RESOURCE_NOT_FOUND => 'Requested resource not found.',
-            self::RESOURCE_DELETED => 'Requested resource has been deleted.',
-            self::RESOURCE_CONFLICT => 'Resource conflict detected.',
-            self::RESOURCE_ALREADY_EXISTS => 'Resource already exists.',
-            self::RESOURCE_PERMISSION_DENIED => 'You do not have permission to access this resource.',
-
-            self::DATABASE_CONNECTION_FAILED => 'Database connection failed. Please try again.',
-            self::DATABASE_QUERY_FAILED => 'Database query failed.',
-            self::DATABASE_TRANSACTION_FAILED => 'Database transaction failed.',
-            self::DATABASE_INTEGRITY_VIOLATION => 'Data integrity violation detected.',
-            self::DATABASE_DEADLOCK => 'Database deadlock detected. Please try again.',
-
-            self::SERVICE_UNAVAILABLE => 'Service is temporarily unavailable. Please try again later.',
-            self::SERVICE_TIMEOUT => 'Service request timed out. Please try again.',
-            self::SERVICE_CONFIGURATION_ERROR => 'Service configuration error.',
-            self::SERVICE_EXTERNAL_API_ERROR => 'External service error. Please try again later.',
-
-            self::SETTINGS_NOT_FOUND => 'Setting not found.',
-            self::PRICING_NOT_FOUND => 'No published price for this vehicle with these options.',
-            self::PRICING_ON_HOLD => 'This price list is on hold.',
-            self::SETTINGS_UPDATE_FAILED => 'Failed to update setting.',
-            self::SETTINGS_INVALID_VALUE => 'Invalid setting value.',
-            self::SETTINGS_IMPORT_FAILED => 'Failed to import settings.',
-            self::SETTINGS_EXPORT_FAILED => 'Failed to export settings.',
-
-            self::SYSTEM_ERROR => 'An error occurred. Please contact support.',
-            self::SYSTEM_MAINTENANCE => 'System is under maintenance. Please try again later.',
-            self::SYSTEM_CONFIGURATION_ERROR => 'System configuration error.',
-            self::SYSTEM_PERMISSION_ERROR => 'Insufficient permissions.',
-        };
+        return trans()->has($key) ? (string) __($key) : (string) __('errors.SYSTEM_ERROR');
     }
 
     public function statusCode(): int
     {
         return match ($this) {
             // 400 Bad Request
-            self::VALIDATION_FAILED,
-            self::VALIDATION_REQUIRED_FIELD,
-            self::VALIDATION_INVALID_FORMAT,
-            self::AUTH_MOBILE_INVALID,
-            self::VALIDATION_CONSTRAINT_VIOLATION => 400,
+            self::REQUEST_INVALID => 400,
 
             // 401 Unauthorized
             self::AUTH_TOKEN_INVALID,
@@ -189,7 +143,15 @@ enum ErrorCodeEnum: string
             self::AUTH_MOBILE_REGISTERED,
             self::DATABASE_INTEGRITY_VIOLATION => 409,
 
-            // 422 Unprocessable — HR/Post domain rules  ← MOVED BEFORE default
+            // 405 Method Not Allowed
+            self::REQUEST_METHOD_NOT_ALLOWED => 405,
+
+            // 422 Unprocessable — validation (every validation response already sent 422, DEC-085) + HR / Post rules
+            self::VALIDATION_FAILED,
+            self::VALIDATION_REQUIRED_FIELD,
+            self::VALIDATION_INVALID_FORMAT,
+            self::VALIDATION_CONSTRAINT_VIOLATION,
+            self::AUTH_MOBILE_INVALID,
             self::POST_NOT_FOUND,
             self::POST_OCCUPIED,
             self::POST_FULLY_OCCUPIED,
@@ -199,6 +161,7 @@ enum ErrorCodeEnum: string
 
             // 429 Too Many Requests
             self::AUTH_OTP_RATE_LIMIT,
+            self::REQUEST_RATE_LIMITED,
             self::AUTH_OTP_ATTEMPTS_EXCEEDED => 429,
 
             // 503 Service Unavailable
@@ -207,7 +170,8 @@ enum ErrorCodeEnum: string
             self::DATABASE_CONNECTION_FAILED => 503,
 
             self::PRICING_NOT_FOUND => 404,
-            self::PRICING_ON_HOLD => 423,
+            self::PRICING_ON_HOLD,
+            self::RESOURCE_LOCKED => 423,
 
             // 500 Internal Server Error (always last)
             default => 500,

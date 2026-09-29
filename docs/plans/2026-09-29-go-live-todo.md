@@ -289,7 +289,7 @@ The booking team owns it (DEC-034); these are the items we know of.
 | U4 | Caching / optimisation, lazy loading | 🟡 lazy images ✅ 29-09 | P1 | See the U4 plan below the table. |
 | U5 | Select2, flatpickr, badges, buttons, tabs, accordions wherever they fit | 🟡 | P1 | Rule added; the shared layer already upgrades native inputs; convert the dense legacy forms screen by screen |
 | U6 | Guides updated on every change | ✅ rule | — | `.ai/rules/app.md` standing rule; the go-live wrap-up audits guides vs code |
-| U7 | Central uniform error / response / exception handling with module-wise codes + messages | 🔴 | P1 | See the U7 plan below the table. |
+| U7 | Central uniform error / response / exception handling with module-wise codes + messages | 🟡 API ✅ 29-09 (DEC-085: one envelope for every `api/*` exception, messages in `resources/lang/en/errors.php`); web flashes + `E002` rename left | P1 | See the U7 plan below the table. |
 | U8 | Custom error pages (403 / 404 / 419 / 429 / 500 / 503) | ✅ 29-09 | P1 | Branded pages in `resources/views/errors/`: logo, plain message, a link to the dashboard, a reference id on 500 (no stack traces) |
 | U9 | These instructions in the project rules for all agents | ✅ 29-09 | — |
 | U10 | Changelog + task status + handoff with every commit; commented + formatted code | ✅ rule (`.ai/guidelines/10-workflow.md`) | — | `.ai/state/handoff.md` |
@@ -332,6 +332,12 @@ The booking team owns it (DEC-034); these are the items we know of.
    - the web: the branded pages + the flash for validation / business errors;
    - with a reference id logged.
 4. Migrate controllers screen by screen; a test that fails on an unregistered code.
+- **Done 29-09 (DEC-085, BUG-208):** steps 2 and 3 for the API — `App\Exceptions\ApiExceptionRenderer` in
+  `withExceptions()->render()`, `BaseController::handleException` uses it, messages moved to the language file, four
+  request-level codes added, the enum status map fixed, a test that fails when a code has no message. BUG-209 (settings
+  API writes always 403) found and partly fixed.
+- **Left:** the web side (admin flashes for business errors through the same codes), the `E002` rename (app team),
+  deleting the dead `app/Exceptions/Handler.php` (needs approval).
 
 ## 11. Deferred (after UAT)
 

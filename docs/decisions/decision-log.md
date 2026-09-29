@@ -1338,3 +1338,29 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - Self-service change of **email / mobile** (OTP to the new value, optional approval) is **not** built: it changes
     the OTP-login identity (an auth change) and waits for the policy decision N4. Password expiry / history also wait
     (new columns + policy).
+
+### DEC-085 | 29-09-2026 | A (platform / API) | One API error envelope for every exception; module-wise error messages in a language file (go-live to-do U7)
+- **Why:** the user asked for centralised, uniform error / response / exception handling with module-wise customisable
+  codes and messages (29-09). The inventory (BUG-208) found that only errors caught inside controllers use the
+  `{http_status, success, code, message, timestamp, errors}` envelope: an unauthenticated call returns Laravel's
+  `{"message": "Unauthenticated."}`, an unknown route / wrong method / throttle / crash returns Laravel's page or
+  debug JSON, and `App\Exceptions\Handler` is never registered in Laravel 12 (dead code).
+- **Decision:**
+  1. **One renderer** `App\Exceptions\ApiExceptionRenderer`, registered in `bootstrap/app.php`
+     (`withExceptions()->render()`), turns every exception on `api/*` into the envelope. `BaseController::handleException`
+     uses the same mapping, so controllers and the global path answer alike.
+  2. **Status codes are unchanged** (401 / 403 / 404 / 405 / 422 / 423 / 429 / 5xx as today). `message` keeps today's
+     text where one existed (e.g. `Unauthenticated.`). Only fields are added (`success`, `code`, `http_status`,
+     `timestamp`, and `error_ref` on 5xx), so v1 stays backward compatible (DEC-004).
+  3. **5xx never expose internals:** a generic message plus the request's `error_ref` (U8), which is also in the log.
+     With `APP_DEBUG=true` a `debug` block (class, message, file:line) is added for developers.
+  4. **Messages are the language file** `resources/lang/en/errors.php`, keyed by code and grouped by module (the SSOT;
+     `ErrorCodeEnum::message()` reads it, so a message is changed there, never in code). New codes: `REQUEST_INVALID`
+     (400), `REQUEST_METHOD_NOT_ALLOWED` (405), `RESOURCE_LOCKED` (423), `REQUEST_RATE_LIMITED` (429).
+  5. **Enum status map fixed:** the `VALIDATION_*` codes map to 422 (every response already sent 422; only the enum said
+     400). `DomainException`'s default code pointed at a missing case; it is now `VALIDATION_CONSTRAINT_VIOLATION`.
+  6. **Not changed (needs the app team):** `validate_device` still answers with the unregistered code `E002`; renaming
+     it to `AUTH_UNAUTHORIZED` / `AUTH_DEVICE_INVALID` changes a value the app may check. Admin (web) AJAX keeps
+     Laravel's JSON shape; its pages use the branded error pages (U8).
+- **Approved-by:** user (feature request); auto (additive, status codes unchanged) · **Risk:** LOW · **Reversal:** remove
+  the `render()` registration in `bootstrap/app.php`.

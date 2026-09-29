@@ -77,6 +77,9 @@ excluded.
 |---|---|---|
 | `value` | required | Typed by the setting |
 
+> ⚠ **BUG-209:** `PUT /{key}` and `POST /import/json` currently always answer **403** (the authorization helper they
+> use never passes, and there is no settings policy). They wait on the BUG-207 decision.
+
 **Responses:**
 - **200:** `data` = the updated row.
 - **403:** without the permission.
@@ -103,8 +106,8 @@ excluded.
 ## Errors common to all
 | HTTP | Code | When |
 |---|---|---|
-| 401 | `E002` (to become a registered code under U7) | No / invalid token or device |
+| 401 | `AUTH_UNAUTHORIZED` (no / invalid token) · `E002` (no live device session) | See [index.md](index.md#errors-common-to-every-endpoint-dec-085) |
 | 403 | `…FORBIDDEN` | Admin endpoints without `UTL_SETTINGS_MANAGE` |
 | 404 | `…NOT_FOUND` | Unknown topic / key |
 | 422 | `VALIDATION_FAILED` | Invalid body |
-| 500 | `SYSTEM_ERROR` | Unexpected (logged) |
+| 500 | `SYSTEM_ERROR` + `error_ref` | Unexpected (logged with the same reference) |

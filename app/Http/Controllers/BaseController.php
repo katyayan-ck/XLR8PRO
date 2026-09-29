@@ -3,26 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ErrorCodeEnum;
+use App\Exceptions\ApiExceptionRenderer;
 use App\Exceptions\ApplicationException;
-use App\Exceptions\AuthenticationException;
 use App\Exceptions\AuthorizationException;
-use App\Exceptions\ValidationException;
 use Exception;
-use Illuminate\Auth\AuthenticationException as LaravelAuthException;
-use Illuminate\Auth\Access\AuthorizationException as LaravelAuthorizationException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\ValidationException as LaravelValidationException;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
  * BaseController
- * 
+ *
  * Enhanced base controller with robust exception/error handling.
  * Provides unified response formatting and error management.
- * 
+ *
  * Key Features:
  * - Centralized error code management via ErrorCodeEnum
  * - Custom exception handling for all error types
@@ -30,24 +25,21 @@ use Throwable;
  * - Contextual logging with audit trails
  * - Consistent JSON response format across all endpoints
  * - Support for field-level validation errors
- * 
- * @package App\Http\Controllers
+ *
  * @author VDMS Development Team
+ *
  * @version 2.0
  */
 abstract class BaseController extends Controller
 {
     use AuthorizesRequests;
 
-   
-
     /**
      * Return successful response JSON (uniform format: no 'meta', timestamp direct)
-     * 
-     * @param mixed $data Response data
-     * @param string $message Success message
-     * @param int $statusCode HTTP status code
-     * @return JsonResponse
+     *
+     * @param  mixed  $data  Response data
+     * @param  string  $message  Success message
+     * @param  int  $statusCode  HTTP status code
      */
     protected function successResponse(
         mixed $data = null,
@@ -57,7 +49,7 @@ abstract class BaseController extends Controller
         $response = [
             'http_status' => $statusCode,
             'success' => true,
-            'code' => 'S' . str_pad($statusCode, 3, '0', STR_PAD_LEFT),
+            'code' => 'S'.str_pad($statusCode, 3, '0', STR_PAD_LEFT),
             'message' => $message,
             'timestamp' => now()->toIso8601String(),
         ];
@@ -71,12 +63,11 @@ abstract class BaseController extends Controller
 
     /**
      * Return paginated response (uses uniform success format)
-     * 
-     * @param mixed $data Paginated items
-     * @param object $paginator Laravel paginator instance
-     * @param string $message Success message
-     * @param int $statusCode HTTP status code
-     * @return JsonResponse
+     *
+     * @param  mixed  $data  Paginated items
+     * @param  object  $paginator  Laravel paginator instance
+     * @param  string  $message  Success message
+     * @param  int  $statusCode  HTTP status code
      */
     protected function paginatedResponse(
         mixed $data,
@@ -98,16 +89,14 @@ abstract class BaseController extends Controller
         );
     }
 
-   
     /**
      * Return error response (uniform format, optional data/errors)
-     * 
-     * @param string $message Error message
-     * @param string $code Error code from ErrorCodeEnum
-     * @param int $status HTTP status code
-     * @param array $errors Optional field-level errors
-     * @param mixed $data Optional additional data
-     * @return JsonResponse
+     *
+     * @param  string  $message  Error message
+     * @param  string  $code  Error code from ErrorCodeEnum
+     * @param  int  $status  HTTP status code
+     * @param  array  $errors  Optional field-level errors
+     * @param  mixed  $data  Optional additional data
      */
     protected function errorResponse(
         string $message,
@@ -124,7 +113,7 @@ abstract class BaseController extends Controller
             'timestamp' => now()->toIso8601String(),
         ];
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             $response['errors'] = $errors;
         }
 
@@ -137,10 +126,9 @@ abstract class BaseController extends Controller
 
     /**
      * Return not found response
-     * 
-     * @param string $resource Resource name
-     * @param mixed $id Optional ID
-     * @return JsonResponse
+     *
+     * @param  string  $resource  Resource name
+     * @param  mixed  $id  Optional ID
      */
     protected function notFoundResponse(string $resource, $id = null): JsonResponse
     {
@@ -148,6 +136,7 @@ abstract class BaseController extends Controller
         if ($id !== null) {
             $message .= " with ID {$id}";
         }
+
         return $this->errorResponse(
             $message,
             ErrorCodeEnum::RESOURCE_NOT_FOUND->value,
@@ -157,14 +146,14 @@ abstract class BaseController extends Controller
 
     /**
      * Return forbidden response
-     * 
-     * @param string $action Action attempted
-     * @param string $resource Resource name
-     * @return JsonResponse
+     *
+     * @param  string  $action  Action attempted
+     * @param  string  $resource  Resource name
      */
     protected function forbiddenResponse(string $action, string $resource): JsonResponse
     {
         $message = "You are not authorized to {$action} {$resource}";
+
         return $this->errorResponse(
             $message,
             ErrorCodeEnum::AUTH_FORBIDDEN->value,
@@ -174,9 +163,8 @@ abstract class BaseController extends Controller
 
     /**
      * Return unauthorized response
-     * 
-     * @param string $message Custom message
-     * @return JsonResponse
+     *
+     * @param  string  $message  Custom message
      */
     protected function unauthorizedResponse(string $message = 'Unauthorized'): JsonResponse
     {
@@ -187,14 +175,12 @@ abstract class BaseController extends Controller
         );
     }
 
-    
-
     /**
      * Handle exceptions uniformly with mapping to custom codes
-     * 
-     * @param Throwable $e Exception to handle
-     * @param string $operation Operation context for logging
-     * @param array $context Additional log context
+     *
+     * @param  Throwable  $e  Exception to handle
+     * @param  string  $operation  Operation context for logging
+     * @param  array  $context  Additional log context
      * @return JsonResponse Uniform error response
      */
     protected function handleException(
@@ -202,49 +188,15 @@ abstract class BaseController extends Controller
         string $operation,
         array $context = []
     ): JsonResponse {
-       
+
         $this->logException($e, $operation, $context);
 
-       
-        if ($e instanceof ApplicationException) {
-            return $this->errorResponse(
-                $e->getMessage(),
-                $e->getErrorCode()->value,
-                $e->getStatusCode(),
-                $e->getErrors()
-            );
-        }
-
-        if ($e instanceof LaravelValidationException) {
-            return $this->errorResponse(
-                'Validation failed',
-                ErrorCodeEnum::VALIDATION_FAILED->value,
-                422,
-                $e->errors()
-            );
-        } elseif ($e instanceof LaravelAuthException) {
-            return $this->unauthorizedResponse($e->getMessage());
-        } elseif ($e instanceof LaravelAuthorizationException) {
-            return $this->forbiddenResponse('access', 'resource');
-        } elseif ($e instanceof ModelNotFoundException) {
-            return $this->notFoundResponse('Resource');
-        }
-
-       
-        return $this->errorResponse(
-            'An unexpected error occurred',
-            ErrorCodeEnum::SYSTEM_ERROR->value,
-            500
-        );
+        // DEC-085: the same mapping as uncaught API exceptions (App\Exceptions\ApiExceptionRenderer)
+        return ApiExceptionRenderer::toResponse($e);
     }
 
     /**
      * Log exception with context
-     * 
-     * @param Throwable $e
-     * @param string $context
-     * @param array $data
-     * @return void
      */
     private function logException(Throwable $e, string $context, array $data = []): void
     {
@@ -260,7 +212,7 @@ abstract class BaseController extends Controller
             'trace' => $e->getTraceAsString(),
         ];
 
-        if (!empty($data)) {
+        if (! empty($data)) {
             $logContext['additional_data'] = $data;
         }
 
@@ -273,13 +225,12 @@ abstract class BaseController extends Controller
 
     /**
      * Log audit trail for operations
-     * 
-     * @param string $action Action performed (create, update, delete, etc.)
-     * @param string $resource Resource type
-     * @param array $changes Changes made
-     * @param int|string|null $resourceId Resource identifier
-     * @param string|null $status Operation status
-     * @return void
+     *
+     * @param  string  $action  Action performed (create, update, delete, etc.)
+     * @param  string  $resource  Resource type
+     * @param  array  $changes  Changes made
+     * @param  int|string|null  $resourceId  Resource identifier
+     * @param  string|null  $status  Operation status
      */
     protected function logAudit(
         string $action,
@@ -303,37 +254,27 @@ abstract class BaseController extends Controller
         Log::info("Audit: {$action} {$resource}", $auditData);
     }
 
- 
-
     /**
      * Check authorization and throw exception if not allowed
-     * 
-     * @param string $ability
-     * @param mixed $resource
-     * @return void
+     *
      * @throws AuthorizationException
      */
     public function authorize(string $ability, mixed $resource = null): void
     {
-        if (!$this->canPerform($ability, $resource)) {
-            throw new AuthorizationException(
-                ErrorCodeEnum::AUTH_FORBIDDEN,
-                "You are not authorized to {$ability}."
-            );
+        if (! $this->canPerform($ability, $resource)) {
+            // BUG-209: the arguments were swapped (a TypeError → 500); this is the 403 it always meant
+            throw new AuthorizationException($ability);
         }
     }
 
     /**
      * Check if user can perform action (non-throwing version)
-     * 
-     * @param string $ability
-     * @param mixed $resource
-     * @return bool
      */
     protected function canPerform(string $ability, mixed $resource = null): bool
     {
         try {
             parent::authorize($ability, $resource);
+
             return true;
         } catch (Throwable $e) {
             return false;

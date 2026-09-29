@@ -24,3 +24,28 @@ This is the mobile app contract (DEC-004: v1 stays backward compatible; new shap
 | History (chat) | `GET history/{entityType}/{entityId}`, `POST history/{entityType}/{entityId}/thread` | — | — | 🔴 — BUG-182 |
 | Webhooks (comms) | `POST /api/webhooks/comms/{channel}` (HMAC-signed, not Sanctum) | — | — | 🔴 |
 | Booking / Enquiry / Lead | No v1 routes today | booking.md / enquiry.md / lead.md (empty placeholders) | — | — (the files are kept for the future endpoints) |
+
+## Errors common to every endpoint (DEC-085)
+Every error on `api/*` has the envelope, whether a controller answered it or it was uncaught
+(`App\Exceptions\ApiExceptionRenderer`):
+
+```json
+{ "http_status": 404, "success": false, "code": "RESOURCE_NOT_FOUND", "message": "Requested resource not found.",
+  "timestamp": "2026-09-29T21:40:00+05:30" }
+```
+
+| HTTP | Code | When | Extra fields |
+|---|---|---|---|
+| 401 | `AUTH_UNAUTHORIZED` (message `Unauthenticated.`) | No / invalid / expired Sanctum token | — |
+| 401 | `E002` | Token without a live device session (`validate_device`; the code is renamed only with the app team) | — |
+| 403 | `AUTH_FORBIDDEN` / a module code | Missing permission | — |
+| 404 | `RESOURCE_NOT_FOUND` / a module code (e.g. `PRICING_NOT_FOUND`) | Unknown route or record | — |
+| 405 | `REQUEST_METHOD_NOT_ALLOWED` | Wrong HTTP method | `Allow` header |
+| 422 | `VALIDATION_FAILED` / a module code | Invalid input | `errors: {field: [messages]}` |
+| 423 | `RESOURCE_LOCKED` / a module code (e.g. `PRICING_ON_HOLD`) | Locked / on hold | — |
+| 429 | `REQUEST_RATE_LIMITED`, `AUTH_OTP_RATE_LIMIT` | Throttled | `Retry-After` header |
+| 500 | `SYSTEM_ERROR` | Unexpected; nothing internal is shown | `error_ref`: quote it to support (it is in the log entry) |
+| 503 | `SERVICE_UNAVAILABLE` | Maintenance | — |
+
+**Codes and messages:** `App\Enums\ErrorCodeEnum` (code → HTTP status) and `resources/lang/en/errors.php` (code →
+message, grouped by module). Apps should branch on `code`, not on `message`.

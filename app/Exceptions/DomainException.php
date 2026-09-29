@@ -8,13 +8,13 @@ use Throwable;
 /**
  * Concrete throwable domain exception.
  * Use this for business-rule violations in Services.
- * PostService, HRJourneyService, ReportingService all throw this.
+ * Defaults to VALIDATION_CONSTRAINT_VIOLATION (422); the case it named before did not exist (BUG-208).
  */
 class DomainException extends ApplicationException
 {
     public function __construct(
         string $message,
-        ErrorCodeEnum $errorCode = ErrorCodeEnum::VALIDATION_ERROR,
+        ErrorCodeEnum $errorCode = ErrorCodeEnum::VALIDATION_CONSTRAINT_VIOLATION,
         ?int $statusCode = null,
         ?Throwable $previous = null
     ) {

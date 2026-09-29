@@ -7,13 +7,15 @@ use Illuminate\Auth\AuthenticationException as LaravelAuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException as LaravelValidationException;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 use Throwable;
 
+/**
+ * @deprecated Never registered: Laravel 12 configures exceptions in bootstrap/app.php. The API envelope for every
+ *             exception is App\Exceptions\ApiExceptionRenderer (DEC-085, BUG-208). Kept until its deletion is approved.
+ */
 class Handler extends ExceptionHandler
 {
     protected $dontFlash = [
@@ -69,7 +71,7 @@ class Handler extends ExceptionHandler
                 'timestamp' => now()->toIso8601String(),
             ];
 
-            if (!empty($errors)) {
+            if (! empty($errors)) {
                 $response['errors'] = $errors;
             }
 

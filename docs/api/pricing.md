@@ -120,8 +120,14 @@ An unknown selection (for example an RSA tenure that isn't offered) is **not** a
 - TCS = rate × (ex-showroom − discounts) when ex-showroom ≥ the limit.
 
 ### 401 — not signed in / no device
-The `validate_device` middleware answers these. The code is `E002` today; it moves to a registered code under the
-error pipeline work (U7).
+- No or an invalid token (DEC-085 envelope):
+
+```json
+{ "http_status": 401, "success": false, "code": "AUTH_UNAUTHORIZED", "message": "Unauthenticated.", "timestamp": "…" }
+```
+
+- A token without a live device session: the `validate_device` middleware answers with `E002` (renamed only with the
+  app team, DEC-085):
 
 ```json
 { "http_status": 401, "success": false, "code": "E002", "message": "Unauthorized: Invalid device session" }

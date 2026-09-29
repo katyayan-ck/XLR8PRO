@@ -4,6 +4,7 @@
 reverts by the booking team).
 
 ## Just done (latest first)
+- U7 (API side, DEC-085): `ApiExceptionRenderer` gives every `api/*` exception the envelope; messages in `resources/lang/en/errors.php`; BUG-208 fixed; BUG-209 logged (settings API writes always 403; waits on BUG-207).
 - U1 / U3 / U4: collapsible + draggable form cards with required badges (`xl-ui.js`), density settings `ui.density.*` + Appearance controls, lazy images; `UiDensityTest`.
 - U11 API docs: `docs/api/index.md`, pricing + system-settings docs and Postman collections; BUG-207 logged (settings API exposure).
 - U8 branded error pages (public + admin in-shell, 500 reference id in logs); the accomplishments log rule + `docs/accomplishments/29-09-2026.md`.
@@ -27,8 +28,8 @@ reverts by the booking team).
 
 ## In progress / next (to-do `docs/plans/2026-09-29-go-live-todo.md`)
 1. **U11 API docs:** remaining modules: auth, devices, notifications / alerts / messages, documents, history, webhooks.
-2. **U7:** the central error pipeline (inventory first, then `withExceptions`); fix the 422 vs 400 enum mismatch and
-   the unregistered `E002` in `validate_device`.
+2. **U7 web side:** admin flashes for business errors through the same codes / language file; `E002` rename needs the
+   app team; deleting `app/Exceptions/Handler.php` needs approval.
 3. **U1 per screen:** header-less Backpack form cards get headers when converted; a real-browser check on quotation /
    booking forms (local MySQL had to be started by hand on 29-09; the web server was not running).
 
@@ -39,6 +40,7 @@ reverts by the booking team).
 - **Security policy values (N4):** idle minutes, lock, password expiry / history, email / mobile self-service, token
   expiry.
 - **Package approvals:** 2FA, backups, error tracking, browser tests.
+- **API:** the `E002` code rename (app team); BUG-207 / BUG-209 (settings API exposure and writes).
 
 ## How to verify
 - `php artisan test --compact`: 458+ pass, 1 known skip.

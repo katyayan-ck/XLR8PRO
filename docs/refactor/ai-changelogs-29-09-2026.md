@@ -266,3 +266,20 @@
   scale the owner asked for (29-09), and users can switch back in Appearance.
 - **Tests:** `tests/Feature/Utils/UiDensityTest.php` (2); the card behaviour was checked in headless Chrome (counter,
   saved order / collapse restored, invalid field opens its card).
+
+## One API error envelope + module-wise messages (to-do U7, DEC-085, BUG-208, BUG-209)
+- **New:** `app/Exceptions/ApiExceptionRenderer.php` (every exception on `api/*` → the envelope; 5xx → `error_ref`, no
+  internals; `debug` only with `APP_DEBUG`), registered in `bootstrap/app.php` (`$exceptions->render(...)`).
+- **New:** `resources/lang/en/errors.php`, the SSOT for messages by code, grouped by module.
+- **`app/Enums/ErrorCodeEnum.php`:** `message()` reads the language file (it threw `UnhandledMatchError` for the six
+  `POST_*` / `EMP_*` codes); new `REQUEST_INVALID`, `REQUEST_METHOD_NOT_ALLOWED`, `REQUEST_RATE_LIMITED`,
+  `RESOURCE_LOCKED`; `VALIDATION_*` + `AUTH_MOBILE_INVALID` → 422 (as the responses already were).
+- **`app/Http/Controllers/BaseController.php`:** `handleException` → `ApiExceptionRenderer::toResponse`; `authorize()`
+  throws the intended 403 (it was a `TypeError`, BUG-209); pint restyled the file.
+- **`app/Exceptions/DomainException.php`:** default code `VALIDATION_CONSTRAINT_VIOLATION` (the old default did not
+  exist). **`app/Exceptions/Handler.php`:** marked `@deprecated` (never registered).
+- **Before → after:** `GET api/v1/vehicle/pricing/X` without a token: `{"message":"Unauthenticated."}` →
+  `{"http_status":401,"success":false,"code":"AUTH_UNAUTHORIZED","message":"Unauthenticated.","timestamp":…}`; unknown
+  `api/*` route: Laravel 404 (trace under debug) → the envelope. Status codes unchanged.
+- **Docs:** `docs/api/index.md` (common errors), `pricing.md`, `system-settings.md`.
+- **Tests:** `tests/Feature/Api/ApiErrorEnvelopeTest.php` (6).
