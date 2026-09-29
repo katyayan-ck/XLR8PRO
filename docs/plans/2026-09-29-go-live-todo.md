@@ -293,7 +293,7 @@ The booking team owns it (DEC-034); these are the items we know of.
 | U8 | Custom error pages (403 / 404 / 419 / 429 / 500 / 503) | ✅ 29-09 | P1 | Branded pages in `resources/views/errors/`: logo, plain message, a link to the dashboard, a reference id on 500 (no stack traces) |
 | U9 | These instructions in the project rules for all agents | ✅ 29-09 | — |
 | U10 | Changelog + task status + handoff with every commit; commented + formatted code | ✅ rule (`.ai/guidelines/10-workflow.md`) | — | `.ai/state/handoff.md` |
-| U11 | **Module-wise API docs** (request, params, validation, every response + a Postman v2.1 collection per module) | 🔴 → in progress | P1 | `docs/api/{module}.md` + `docs/api/postman/`; the existing `docs/api/*.md` are empty; start with pricing, auth, settings, docs / history, devices | `.ai/rules/ui.md`, `app.md`, `api.md` (synced to `.claude/rules`) |
+| U11 | **Module-wise API docs** (request, params, validation, every response + a Postman v2.1 collection per module) | 🟡 pricing + system-settings ✅ (index in `docs/api/index.md`); auth, devices, notifications, docs, history, webhooks next | P1 | `docs/api/{module}.md` + `docs/api/postman/`; the existing `docs/api/*.md` are empty; start with pricing, auth, settings, docs / history, devices | `.ai/rules/ui.md`, `app.md`, `api.md` (synced to `.claude/rules`) |
 
 **U1 plan:**
 - One shared enhancement in `xl-ui.js` + `xl-ui.css` for every card inside a form: a collapse toggle, a drag handle

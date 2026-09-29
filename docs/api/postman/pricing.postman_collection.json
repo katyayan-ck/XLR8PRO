@@ -1,0 +1,491 @@
+{
+  "info": {
+    "name": "Xceler8 API v1 — Pricing",
+    "_postman_id": "xlrm-pricing-v1",
+    "description": "Module PRC. Docs: docs/api/pricing.md. Auth: a Sanctum token bound to a device (POST /auth/verify-otp).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://dev.xceler8.in"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "oem_code",
+      "value": "AZ1116YGTTA4EA01BZ"
+    }
+  ],
+  "item": [
+    {
+      "name": "Vehicle pricing",
+      "item": [
+        {
+          "name": "Get pricing (defaults)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/vehicle/pricing/{{oem_code}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "vehicle",
+                "pricing",
+                "{{oem_code}}"
+              ],
+              "query": []
+            },
+            "description": "Published NV price for the vehicle's own permit, normal channel, today."
+          },
+          "response": [
+            {
+              "name": "200 Pricing ready",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vehicle/pricing/{{oem_code}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "vehicle",
+                    "pricing",
+                    "{{oem_code}}"
+                  ],
+                  "query": []
+                },
+                "description": "Published NV price for the vehicle's own permit, normal channel, today."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Pricing ready.\",\n  \"timestamp\": \"2026-09-29T14:05:11+05:30\",\n  \"data\": {\n    \"pricing\": {\n      \"contract_version\": 2,\n      \"source\": \"snapshot\",\n      \"oem_code\": \"AZ1116YGTTA4EA01BZ\",\n      \"permit\": \"PRIVATE\",\n      \"vin_type\": \"NV\",\n      \"channel\": \"normal\",\n      \"wef_date\": \"2026-10-01\",\n      \"ex_showroom\": 2276500.0,\n      \"on_road\": 2550251.0,\n      \"hold\": false,\n      \"errors\": [],\n      \"_note\": \"abridged \\u2014 see docs/api/pricing.md for the full contract v2\"\n    }\n  }\n}"
+            },
+            {
+              "name": "423 On hold",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vehicle/pricing/{{oem_code}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "vehicle",
+                    "pricing",
+                    "{{oem_code}}"
+                  ],
+                  "query": []
+                },
+                "description": "Published NV price for the vehicle's own permit, normal channel, today."
+              },
+              "status": "Locked",
+              "code": 423,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"http_status\": 423,\n  \"success\": false,\n  \"code\": \"PRICING_ON_HOLD\",\n  \"message\": \"This price list is on hold \\u2014 quotations and bookings are paused until it is reopened.\",\n  \"timestamp\": \"2026-09-29T14:05:11+05:30\",\n  \"data\": {\n    \"pricing\": {\n      \"oem_code\": \"AZ1116YGTTA4EA01BZ\",\n      \"hold\": true,\n      \"_note\": \"full contract as in 200\"\n    }\n  }\n}"
+            },
+            {
+              "name": "401 No device",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vehicle/pricing/{{oem_code}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "vehicle",
+                    "pricing",
+                    "{{oem_code}}"
+                  ],
+                  "query": []
+                },
+                "description": "Published NV price for the vehicle's own permit, normal channel, today."
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"http_status\": 401,\n  \"success\": false,\n  \"code\": \"E002\",\n  \"message\": \"Unauthorized: Invalid device session\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get pricing (selections)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/vehicle/pricing/{{oem_code}}?permit=PASSENGER&rsa_years=2&reg_type=BH&exchange=Scrappage&insurance[company]=USGI&insurance[plan]=1%2B3&insurance[addons][]=NIL_DEP&insurance[addons][]=KEY&wef_date=2026-10-15",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "vehicle",
+                "pricing",
+                "{{oem_code}}"
+              ],
+              "query": [
+                {
+                  "key": "permit",
+                  "value": "PASSENGER"
+                },
+                {
+                  "key": "rsa_years",
+                  "value": "2"
+                },
+                {
+                  "key": "reg_type",
+                  "value": "BH"
+                },
+                {
+                  "key": "exchange",
+                  "value": "Scrappage"
+                },
+                {
+                  "key": "insurance[company]",
+                  "value": "USGI"
+                },
+                {
+                  "key": "insurance[plan]",
+                  "value": "1%2B3"
+                },
+                {
+                  "key": "insurance[addons][]",
+                  "value": "NIL_DEP"
+                },
+                {
+                  "key": "insurance[addons][]",
+                  "value": "KEY"
+                },
+                {
+                  "key": "wef_date",
+                  "value": "2026-10-15"
+                }
+              ]
+            },
+            "description": "Taxi price with a 2-year RSA, BH registration, the Scrappage exchange bonus and a custom insurance combo."
+          },
+          "response": [
+            {
+              "name": "200 Pricing ready",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vehicle/pricing/{{oem_code}}?permit=PASSENGER&rsa_years=2&reg_type=BH&exchange=Scrappage&insurance[company]=USGI&insurance[plan]=1%2B3&insurance[addons][]=NIL_DEP&insurance[addons][]=KEY&wef_date=2026-10-15",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "vehicle",
+                    "pricing",
+                    "{{oem_code}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "permit",
+                      "value": "PASSENGER"
+                    },
+                    {
+                      "key": "rsa_years",
+                      "value": "2"
+                    },
+                    {
+                      "key": "reg_type",
+                      "value": "BH"
+                    },
+                    {
+                      "key": "exchange",
+                      "value": "Scrappage"
+                    },
+                    {
+                      "key": "insurance[company]",
+                      "value": "USGI"
+                    },
+                    {
+                      "key": "insurance[plan]",
+                      "value": "1%2B3"
+                    },
+                    {
+                      "key": "insurance[addons][]",
+                      "value": "NIL_DEP"
+                    },
+                    {
+                      "key": "insurance[addons][]",
+                      "value": "KEY"
+                    },
+                    {
+                      "key": "wef_date",
+                      "value": "2026-10-15"
+                    }
+                  ]
+                },
+                "description": "Taxi price with a 2-year RSA, BH registration, the Scrappage exchange bonus and a custom insurance combo."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Pricing ready.\",\n  \"timestamp\": \"2026-09-29T14:05:11+05:30\",\n  \"data\": {\n    \"pricing\": {\n      \"contract_version\": 2,\n      \"source\": \"snapshot\",\n      \"oem_code\": \"AZ1116YGTTA4EA01BZ\",\n      \"permit\": \"PRIVATE\",\n      \"vin_type\": \"NV\",\n      \"channel\": \"normal\",\n      \"wef_date\": \"2026-10-01\",\n      \"ex_showroom\": 2276500.0,\n      \"on_road\": 2550251.0,\n      \"hold\": false,\n      \"errors\": [],\n      \"_note\": \"abridged \\u2014 see docs/api/pricing.md for the full contract v2\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get pricing (invalid vin_type → 422)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/vehicle/pricing/{{oem_code}}?vin_type=XX",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "vehicle",
+                "pricing",
+                "{{oem_code}}"
+              ],
+              "query": [
+                {
+                  "key": "vin_type",
+                  "value": "XX"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [
+            {
+              "name": "422 Validation failed",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vehicle/pricing/{{oem_code}}?vin_type=XX",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "vehicle",
+                    "pricing",
+                    "{{oem_code}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "vin_type",
+                      "value": "XX"
+                    }
+                  ]
+                },
+                "description": ""
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"http_status\": 422,\n  \"success\": false,\n  \"code\": \"VALIDATION_FAILED\",\n  \"message\": \"Validation failed\",\n  \"timestamp\": \"2026-09-29T14:05:11+05:30\",\n  \"errors\": {\n    \"vin_type\": [\n      \"The selected vin type is invalid.\"\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get pricing (unknown code → 404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/vehicle/pricing/NOSUCHCODE01",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "vehicle",
+                "pricing",
+                "NOSUCHCODE01"
+              ],
+              "query": []
+            },
+            "description": ""
+          },
+          "response": [
+            {
+              "name": "404 Not found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/vehicle/pricing/NOSUCHCODE01",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "vehicle",
+                    "pricing",
+                    "NOSUCHCODE01"
+                  ],
+                  "query": []
+                },
+                "description": ""
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"http_status\": 404,\n  \"success\": false,\n  \"code\": \"PRICING_NOT_FOUND\",\n  \"message\": \"No published price for NOSUCHCODE01 with these options.\",\n  \"timestamp\": \"2026-09-29T14:05:11+05:30\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

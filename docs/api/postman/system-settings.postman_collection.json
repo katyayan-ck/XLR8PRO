@@ -1,0 +1,710 @@
+{
+  "info": {
+    "name": "Xceler8 API v1 — System settings",
+    "_postman_id": "xlrm-system-settings-v1",
+    "description": "Module UTL. Docs: docs/api/system-settings.md (note BUG-207).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://dev.xceler8.in"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Pricing settings (sync stamp)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/system-settings/category/pricing",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "system-settings",
+            "category",
+            "pricing"
+          ]
+        },
+        "description": "Offline-sync check: compare data['pricing.last_updated_at'] with the stored value (DEC-083)."
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/system-settings/category/pricing",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system-settings",
+                "category",
+                "pricing"
+              ]
+            },
+            "description": "Offline-sync check: compare data['pricing.last_updated_at'] with the stored value (DEC-083)."
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Settings for 'pricing' retrieved\",\n  \"timestamp\": \"2026-09-29T14:05:11+05:30\",\n  \"data\": {\n    \"pricing.last_updated_at\": \"2026-09-29T14:05:11+05:30\",\n    \"pricing.insurance.gst_pct\": 18\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "All settings by topic",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/system-settings/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "system-settings"
+          ]
+        },
+        "description": ""
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/system-settings/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system-settings"
+              ]
+            },
+            "description": ""
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"\\u2026\",\n  \"timestamp\": \"2026-09-29T14:05:11+05:30\",\n  \"data\": {}\n}"
+        }
+      ]
+    },
+    {
+      "name": "Site settings",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/system-settings/category/site",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "system-settings",
+            "category",
+            "site"
+          ]
+        },
+        "description": ""
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/system-settings/category/site",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system-settings",
+                "category",
+                "site"
+              ]
+            },
+            "description": ""
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"\\u2026\",\n  \"timestamp\": \"2026-09-29T14:05:11+05:30\",\n  \"data\": {}\n}"
+        }
+      ]
+    },
+    {
+      "name": "Dealership settings",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/system-settings/category/dealership",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "system-settings",
+            "category",
+            "dealership"
+          ]
+        },
+        "description": ""
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/system-settings/category/dealership",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system-settings",
+                "category",
+                "dealership"
+              ]
+            },
+            "description": ""
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"\\u2026\",\n  \"timestamp\": \"2026-09-29T14:05:11+05:30\",\n  \"data\": {}\n}"
+        }
+      ]
+    },
+    {
+      "name": "Settings of a topic",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/system-settings/topic/display",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "system-settings",
+            "topic",
+            "display"
+          ]
+        },
+        "description": ""
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/system-settings/topic/display",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system-settings",
+                "topic",
+                "display"
+              ]
+            },
+            "description": ""
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"\\u2026\",\n  \"timestamp\": \"2026-09-29T14:05:11+05:30\",\n  \"data\": {}\n}"
+        }
+      ]
+    },
+    {
+      "name": "One setting",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/system-settings/pricing.last_updated_at",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "system-settings",
+            "pricing.last_updated_at"
+          ]
+        },
+        "description": ""
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/system-settings/pricing.last_updated_at",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system-settings",
+                "pricing.last_updated_at"
+              ]
+            },
+            "description": ""
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Setting retrieved successfully\",\n  \"timestamp\": \"2026-09-29T14:05:11+05:30\",\n  \"data\": {\n    \"key\": \"pricing.last_updated_at\",\n    \"value\": \"2026-09-29T14:05:11+05:30\",\n    \"type\": \"string\"\n  }\n}"
+        },
+        {
+          "name": "404",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/system-settings/pricing.last_updated_at",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system-settings",
+                "pricing.last_updated_at"
+              ]
+            },
+            "description": ""
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 404,\n  \"success\": false,\n  \"code\": \"NOT_FOUND\",\n  \"message\": \"Setting 'x.y' not found\",\n  \"timestamp\": \"2026-09-29T14:05:11+05:30\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Update a setting (admin)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/system-settings/display.date_format",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "system-settings",
+            "display.date_format"
+          ]
+        },
+        "description": "Admin only (UTL_SETTINGS_MANAGE).",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"value\": \"d-M-Y\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [
+        {
+          "name": "422",
+          "originalRequest": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/system-settings/display.date_format",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system-settings",
+                "display.date_format"
+              ]
+            },
+            "description": "Admin only (UTL_SETTINGS_MANAGE).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": \"d-M-Y\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "Unprocessable Entity",
+          "code": 422,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 422,\n  \"success\": false,\n  \"code\": \"VALIDATION_FAILED\",\n  \"message\": \"Validation failed\",\n  \"timestamp\": \"2026-09-29T14:05:11+05:30\",\n  \"errors\": {\n    \"value\": [\n      \"The value field is required.\"\n    ]\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Export settings (admin)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/system-settings/export/json",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "system-settings",
+            "export",
+            "json"
+          ]
+        },
+        "description": "Admin only."
+      },
+      "response": []
+    },
+    {
+      "name": "Import settings (admin)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/system-settings/import/json",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "system-settings",
+            "import",
+            "json"
+          ]
+        },
+        "description": "Admin only; a JSON array of {key, value, topic}.",
+        "body": {
+          "mode": "raw",
+          "raw": "[\n  {\n    \"key\": \"display.date_format\",\n    \"value\": \"d-M-Y\",\n    \"topic\": \"display\"\n  }\n]",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/system-settings/import/json",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "system-settings",
+                "import",
+                "json"
+              ]
+            },
+            "description": "Admin only; a JSON array of {key, value, topic}.",
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"key\": \"display.date_format\",\n    \"value\": \"d-M-Y\",\n    \"topic\": \"display\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Import completed\",\n  \"timestamp\": \"2026-09-29T14:05:11+05:30\",\n  \"data\": {\n    \"imported\": 1,\n    \"failed\": 0,\n    \"errors\": null\n  }\n}"
+        }
+      ]
+    }
+  ]
+}

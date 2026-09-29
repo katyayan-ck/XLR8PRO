@@ -242,6 +242,7 @@ Entry format:
 | BUG-204 | `AccessoryScope::$fillable` lacked `permit`, so the accessory import's `updateOrCreate` silently dropped it — GPS VLTD / RTO Tape rows were never permit-scoped | Medium | FIXED (DEC-083, 29-09-2026) | 29-09-2026 | 29-09-2026 |
 | BUG-205 | Importing the Insurance workbook's "Insurance Co." sheet expired every insurance preference row; with segment preferences (DEC-083) it would have wiped them. The export also folded them into model rows | Medium | FIXED (DEC-083, 29-09-2026; found in design, never shipped broken) | 29-09-2026 | 29-09-2026 |
 | BUG-206 | `person_code` (the person business key, referenced by 14 tables incl. users, bookings, enquiries) holds the person's **PAN (51) or Aadhaar (160)** for 211 of 215 people — government IDs as a key spread into every referencing row, URLs and logs (DPDP / UIDAI Aadhaar-storage risk) | High | OPEN (owner decision: surrogate key + remap — data dictionary §person) | 29-09-2026 | — |
+| BUG-207 | v1 `system-settings` read endpoints are open to every signed-in app user and return **all** visible settings (encrypted ones as ciphertext); `GET system-settings/{key}` returns the raw row (validation rules, defaults); update / import go through the legacy `SystemSettingService` | Medium | OPEN (API access change — owner decision; proposed app-facing allow-list) | 29-09-2026 | — |
 
 Not a bug (false positive, listed for reference): the original `infer-conventions` sweep flagged
 "`SheetHeaderService`/`SynonymService` not used by importers" — re-investigation on 19-09-2026
@@ -2402,3 +2403,23 @@ guessed at.
   2. A mapping table.
   3. A migration that remaps the 14 tables in one transaction, with a backup.
   4. `PersonService` generates new codes; the ID numbers stay only in their (masked / encrypted) columns.
+
+### BUG-207 — The settings API exposes every setting to any app user
+
+- **Status:** OPEN (owner decision: an API access change)
+- **Severity:** Medium.
+- **Found:** 29-09-2026, writing `docs/api/system-settings.md` (to-do U11).
+- **Detail:**
+  - `GET /api/v1/system-settings`, `/topic/{topic}`, `/category/*` and `/{key}` need only a device-bound token. Any
+    salesperson's app can read the whole configuration, including webhook secrets as ciphertext and internal driver /
+    security settings.
+  - `/{key}` returns the raw `SystemSetting` row.
+  - `PUT` / import write through the legacy `SystemSettingService`, not `SettingsService` (typed validation, audit
+    trail, `SettingsChanged` event).
+- **Proposed fix:**
+  - an app-facing allow-list (the `site.*`, `dealership.*`, `display.*`, `pricing.*` topics, minus secrets), with a
+    trimmed shape `{key, value, type, updated_at}`;
+  - never return `encrypted` types;
+  - `PUT` / import through `SettingsService`;
+  - keep the v1 paths (DEC-004).
+

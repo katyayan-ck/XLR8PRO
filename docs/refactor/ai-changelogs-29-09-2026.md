@@ -245,3 +245,8 @@
   - `CLAUDE.md` / `AGENTS.md` regenerated;
   - `docs/accomplishments/29-09-2026.md` created (today backfilled).
 - **Guide:** `docs/utilities/ui-kit.md` → Error pages.
+
+## API documentation, first modules (to-do U11)
+- **New:** `docs/api/index.md`, `docs/api/pricing.md`, `docs/api/system-settings.md`,
+  `docs/api/postman/{pricing,system-settings}.postman_collection.json`.
+- **BUG-207 logged:** the settings API exposes every setting to any app user.
