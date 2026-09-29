@@ -109,5 +109,6 @@ return [
         'pricing.insurance.goods_tp_gst_pct' => ['value' => 12, 'type' => 'int', 'label' => 'Insurance GST on Goods TP (%)'],
         'pricing.rto.round_up_to' => ['value' => 1000, 'type' => 'int', 'label' => 'RTO tax base rounded up to (₹)'],
         'pricing.dealer_charges.include_cod' => ['value' => false, 'type' => 'bool', 'label' => 'Add COD charges to the default on-road price (takes effect at the next Calculate & Publish)'],
+        'pricing.last_updated_at' => ['value' => '', 'type' => 'string', 'label' => 'Pricing last updated — set automatically on any published-price, vehicle master or accessory change; the app re-syncs its offline data when it moves (DEC-083)'],
     ],
 ];

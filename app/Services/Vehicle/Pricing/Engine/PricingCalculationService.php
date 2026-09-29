@@ -82,10 +82,29 @@ class PricingCalculationService
     /** @param list<string> $codes */
     public function calculate(ImportSession $session, array $codes): void
     {
+        $wef = (string) (data_get($session->stats, 'prices.wef') ?? $session->wef_date?->toDateString() ?? now()->toDateString());
+        $this->publishVehicles($codes, fn (string $code) => $wef, $session->id,
+            function (string $code, ?string $list, string $status, int $count, ?string $message) use ($session) {
+                if ($status === CalcResult::PUBLISHED) {
+                    $this->sessions->markPublished($session);
+                }
+                $this->result($session, $code, $list, $status, $count, $message);
+            });
+    }
+
+    /**
+     * Build + publish the snapshots of these vehicles (one transaction per vehicle; a failing vehicle is reported, not
+     * fatal). Held lists are respected. Shared by the process (step 9) and the automatic recalculation (DEC-083).
+     *
+     * @param  list<string>  $codes
+     * @param  callable(string): string  $wefFor  the snapshot WEF of a vehicle code
+     * @param  callable(string, ?string, string, int, ?string): void  $onResult  code, price list, status, snapshots, message
+     */
+    public function publishVehicles(array $codes, callable $wefFor, ?int $sessionId, callable $onResult): void
+    {
         $book = new RuleBook(app(SynonymService::class));
         $builder = new SnapshotBuilder($book);
         $held = array_flip($this->holds->heldLists());
-        $wef = (string) (data_get($session->stats, 'prices.wef') ?? $session->wef_date?->toDateString() ?? now()->toDateString());
         $variants = Variant::query()->with('vehicleModel')->whereIn('code', $codes)->get()->keyBy(fn (Variant $v) => strtoupper($v->code));
         $prices = Pricing::query()->whereIn('model_code', $codes)->where('is_active', true)->get()->groupBy(fn (Pricing $p) => strtoupper($p->model_code));
 
@@ -96,25 +115,30 @@ class PricingCalculationService
             $list = $live->get('normal')?->price_list;
             try {
                 if (! $variant || ! $variant->is_active || ! $this->completeness->isComplete($variant)) {
-                    $this->result($session, $code, $list, CalcResult::SKIPPED, 0, 'Not Active or incomplete.');
+                    $onResult($code, $list, CalcResult::SKIPPED, 0, 'Not Active or incomplete.');
 
                     continue;
                 }
-                if (isset($held['CSD']) || isset($held['ALL'])) {
+                if (isset($held['ALL']) || ($list !== null && isset($held[$list]))) {
+                    $onResult($code, $list, CalcResult::SKIPPED, 0, 'List '.(isset($held['ALL']) ? 'ALL' : $list).' is on hold.');
+
+                    continue;
+                }
+                if (isset($held['CSD'])) {
                     $live->forget('csd');
                 }
+                $wef = $wefFor($code);
                 // TAXI on hold: drop the extra Passenger snapshots of taxi-priced vehicles (not a Passenger vehicle's own)
                 $ownPermit = $book->keyvalueCodes['PERMIT'][(int) $variant->permit_id] ?? null;
                 $snapshots = array_values(array_filter($builder->build($variant, $live->all(), $wef),
                     fn (array $s) => ! (isset($held['TAXI']) && $s['permit'] === 'PASSENGER' && $ownPermit !== 'PASSENGER')));
-                $count = $this->publisher->publish($variant, $snapshots, $wef, $session->id);
-                $this->sessions->markPublished($session);
-                $this->result($session, $code, $list, CalcResult::PUBLISHED, $count, null);
+                $count = $this->publisher->publish($variant, $snapshots, $wef, $sessionId);
+                $onResult($code, $list, CalcResult::PUBLISHED, $count, null);
             } catch (PricingFailure $e) {
-                $this->result($session, $code, $list, CalcResult::FAILED, 0, $e->getMessage());
+                $onResult($code, $list, CalcResult::FAILED, 0, $e->getMessage());
             } catch (\Throwable $e) {
-                Log::error('[Pricing] calculate vehicle failed', ['session_id' => $session->id, 'code' => $code, 'error' => $e->getMessage()]);
-                $this->result($session, $code, $list, CalcResult::FAILED, 0, 'Unexpected error: '.mb_substr($e->getMessage(), 0, 400));
+                Log::error('[Pricing] calculate vehicle failed', ['session_id' => $sessionId, 'code' => $code, 'error' => $e->getMessage()]);
+                $onResult($code, $list, CalcResult::FAILED, 0, 'Unexpected error: '.mb_substr($e->getMessage(), 0, 400));
             }
         }
     }

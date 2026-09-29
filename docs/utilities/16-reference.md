@@ -154,6 +154,7 @@ Workers: `php artisan queue:work` must run for sends and push outside tests. The
 | `pricing.insurance.goods_tp_gst_pct` | 12 | int | GST on insurance TP for Goods permits |
 | `pricing.rto.round_up_to` | 1000 | int | the RTO tax base (ESR / BH base) is rounded up to this (₹) |
 | `pricing.dealer_charges.include_cod` | false | bool | add COD charges to the default on-road total; applies at the next Calculate & Publish (snapshots are frozen) |
+| `pricing.last_updated_at` | '' | string | ISO-8601 stamp set automatically (`PricingSyncStamp`, DEC-083) on any published-price, vehicle master or accessory change; the app re-syncs offline data when it moves (served by `v1/settings/category/pricing`) |
 | `scope.enabled` | true | bool | user data scoping master switch (DEC-071) |
 | `scope.unassigned_rows` | visible | string | `visible` / `hidden`: rows with an empty scope code for scoped users |
 

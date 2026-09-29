@@ -101,3 +101,24 @@
   - Pricing + vehicle + sales unit suites: 150 passed.
   - JS of the rendered create and edit pages passes `node --check`.
   - Smoke: users 1 and 40.
+
+## Pricing masters — phase A1: automatic recalculation + sync stamp (DEC-083)
+- **New:**
+  - `Engine\PricingRecalcService`, `Engine\PricingParamObserver`, `Engine\PricingParamRegistry`,
+    `Jobs\Vehicle\Pricing\RecalculateAffectedJob`, `PricingSyncStamp`.
+  - Model `RecalcRun` + migration `2026_09_29_025300_create_pricing_recalc_runs_dec083` (run on xlrm and
+    xlrm_testing).
+- **`PricingCalculationService`:**
+  - Before: the vehicle loop lived inside `calculate()` and needed a session.
+  - After: `publishVehicles()` is shared (the session is optional); held lists are also checked per vehicle.
+- **`SnapshotPublisher::publish()`:** the session is now optional, and each publish touches the sync stamp.
+- **`PricingSessionService` `complete()` / `discard()`:** re-queue marks that waited for the process.
+- **`AppServiceProvider`:** observer registration; `Queue::after` flushes the stamp and dispatches pending
+  recalculation; the new singletons.
+- **Setting:** `pricing.last_updated_at` (`config/platform.php`, docs/utilities/16-reference.md).
+- **Tests:**
+  - New `PricingRecalcTest` (4).
+  - The fixture moved to the `BuildsPricedVehicle` trait (shared with `PricingCalculationTest`).
+  - Pricing + vehicle suites: 103 passed.
+- **Found while building:** with the sync queue, a job that re-dispatched itself while a process was open recursed
+  forever. The run now simply waits, and the process's complete / discard re-queues it.

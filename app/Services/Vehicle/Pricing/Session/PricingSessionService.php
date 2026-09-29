@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Vehicle\Pricing\Session;
 
 use App\Models\Vehicle\Pricing\ImportSession;
+use App\Services\Vehicle\Pricing\Engine\PricingRecalcService;
 use App\Services\Vehicle\Pricing\PricingHoldService;
 use App\Support\Result;
 use Illuminate\Http\UploadedFile;
@@ -160,6 +161,8 @@ class PricingSessionService
         });
         Log::info('[Pricing] session discarded', ['session_id' => $session->id, 'changes_undone' => $undone]);
 
+        app(PricingRecalcService::class)->resumeAfterProcess();   // DEC-083: master edits that waited for the process
+
         return Result::ok(['undone' => $undone], "Pricing process #{$session->id} discarded — {$undone} change(s) undone.");
     }
 
@@ -185,6 +188,8 @@ class PricingSessionService
                 'updated_by' => $userId,
             ])->save();
         });
+
+        app(PricingRecalcService::class)->resumeAfterProcess();   // DEC-083: master edits that waited for the process
 
         return Result::ok([], "Pricing process #{$session->id} completed.");
     }

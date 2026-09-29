@@ -47,12 +47,17 @@ use App\Services\Sales\Booking\BookingOtfService;
 use App\Services\Sales\Booking\BookingRefundService;
 use App\Services\Sales\Booking\BookingRtoService;
 use App\Services\SystemSettingService;
+use App\Services\Vehicle\Pricing\Engine\PricingParamObserver;
+use App\Services\Vehicle\Pricing\Engine\PricingParamRegistry;
+use App\Services\Vehicle\Pricing\Engine\PricingRecalcService;
+use App\Services\Vehicle\Pricing\PricingSyncStamp;
 use App\Services\Vehicle\Pricing\Session\PricingChangeObserver;
 use App\Services\Vehicle\Pricing\Session\PricingChangeRecorder;
 use Illuminate\Cache\CacheManager;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -108,6 +113,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(BookingRefundService::class);
         $this->app->singleton(BookingOtfService::class);
         $this->app->singleton(BookingCoreService::class);
+        $this->app->singleton(PricingSyncStamp::class);
+        $this->app->singleton(PricingRecalcService::class);
 
         // SuperAdmin wildcard bypass + user-level permission denial check — registered here in
         // register() (not boot()), and via afterResolving rather than the Gate facade, so this
@@ -162,6 +169,15 @@ class AppServiceProvider extends ServiceProvider
         ] as $model) {
             $model::observe(PricingChangeObserver::class);
         }
+
+        // DEC-083: pricing parameters / vehicle masters / accessories → automatic recalculation + the app's sync stamp
+        foreach (PricingParamRegistry::all() as $model) {
+            $model::observe(PricingParamObserver::class);
+        }
+        Queue::after(function () {   // once per queued job (workers never "terminate")
+            $this->app->make(PricingSyncStamp::class)->flush();
+            $this->app->make(PricingRecalcService::class)->dispatchPending();
+        });
 
         // {{-- @sitedate($booking->booking_date) --}} - one source of truth for
         // frontend date display, per .ai/rules/conventions.md section 13.

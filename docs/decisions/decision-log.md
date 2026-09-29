@@ -1265,3 +1265,43 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   - conditional discounts not auto-applied;
   - the quotation keeps its FRS TCS rule (rate × invoice amount when ≥ limit).
   - DEC-082 is now fully user-approved.
+
+### DEC-083 | 29-09-2026 | A (Pricing admin) | Pricing masters with CRUD + import/export, auto recalculation, pricing sync stamp, configurable logo
+- **User request (29-09):**
+  - Standalone list + full CRUD + import + export, under Admin → Pricing, for: Dealer Charges, Discounting Breakup, RSA,
+    Shield, Corporate, Exchange, Loyalty, Accessories, Insurance Rules, RTO Rules, Insurance Companies, Insurance
+    segment / permit preferences and Insurance Add-ons.
+  - Any pricing parameter change (except accessories) recalculates the affected vehicles.
+  - A site-settings "pricing last updated" timestamp for the app's offline sync.
+  - A configurable site logo that always links to the dashboard.
+- **User decisions (29-09):**
+  1. **Recalculation:** automatic and queued. Each save / import marks the affected vehicles; a debounced (~1 min)
+     background job recalculates only those and publishes their snapshots. Holds are respected. Master edits are
+     blocked while a Pricing Process is open.
+  2. **Discounting Breakup** = the per-vehicle scheme blocks of the price rows (OEM scheme, dealer contribution, cash,
+     accessory, eligibility; NV `curr_*` and OV `old_*`).
+  3. **Loyalty works like Exchange:** a new conditional discount group — scheme name, OEM share + dealer share = total,
+     per segment / model; offered, never auto-applied. It goes to the contract (`discounts.loyalty`), getPricing
+     (`loyalty` option), the quotation (Loyalty Bonus row) and the Price List conditional columns.
+  4. **Insurance:**
+     - a company master (code, name, short name, active);
+     - preferences by segment + permit, with an optional model override → ordered companies (the engine reads them);
+     - an add-on master (code, name, default / mandatory flag, order).
+     - Rates / premiums stay in Insurance Rules.
+  5. **Accessories:** the spec's typed-sheet format (`AccessoryService`) is authoritative; the old one-sheet artisan
+     importer is retired (resolves BUG-179 / D19). Accessory changes do not recalculate prices.
+  6. **Sync stamp `pricing.last_updated_at`** is bumped on published-price changes (publish / expire), vehicle master
+     changes (segment / model / variant / colour / status) and accessory changes. Holds do not bump it.
+  7. **Logo:** a Site Settings image; used in the admin header / sidebar (both layouts, always linking to the
+     dashboard), the login page and the PDFs / prints.
+- **Technical calls:**
+  - One generic "pricing master" kit: a definition per entity (entity service, columns, scope, sheet mapping), shared
+    AG Grid list / form / import / export views. Writes stay on the entity services (DEC-050). Import / export use
+    the same sheet layout as the Pricing Process workbooks where one exists, so files interchange.
+  - WEF: a CRUD save with the same WEF updates the row; a new WEF expires the old row and inserts (DEC-058). The
+    recalculated snapshots publish at max(the change's WEF, today).
+  - Each auto run is logged (`xlr8_vehicle_pricing_recalc_runs`) with a small log screen.
+  - The sync stamp is written once per request / job (deferred), not per row.
+  - Permissions: `PRC_{DLRC,DBRK,RSA,SHLD,CORP,EXCH,LYLT,ACCS,INSR,RTOR,INCO,INPF,INAD}_{VIEW,MANAGE}`.
+- **Approved-by:** user (1–7), auto (technical) · **Risk:** HIGH (price-changing edits outside the process) ·
+  **Reversal:** revert per phase commit; migrations have `down()`.

@@ -109,6 +109,14 @@ $onRoad = $r->get('pricing')['on_road'];
 - **Admin:** `admin/pricing/lookup` (`pricing.lookup`, `PRC_WKFL_VIEW`, `Admin\Pricing\PriceLookupController`) — the
   same options as a form, the build-up, discounts, RTO / insurance heads and the raw JSON.
 
+## Automatic recalculation and the app sync stamp (DEC-083)
+| Piece | API / rule |
+|---|---|
+| `Engine\PricingParamObserver` (on `PricingParamRegistry::all()`) | Saved / deleted / restored pricing parameters (prices, add-ons, discounts, dealer charges, RTO / insurance / TCS rules, permit map, insurance masters) and vehicle masters → `PricingRecalcService::mark()`, **unless a Pricing Process is recording** (step 9 recalculates everything). Vehicle masters and accessories bump the sync stamp; accessories never recalculate. |
+| `Engine\PricingRecalcService` (singleton) | • `scopeOf($model)`: `{segment?, model?, variant?}` or `{all: true}` for rule sets, plus `wef` and `reason`.<br>• `mark($model)` adds it to the pending list (cache `pricing.recalc.pending`).<br>• `dispatchPending()` (request end, and after each queued job) queues one `RecalculateAffectedJob` (delay `DEBOUNCE_SECONDS` = 60, unique until processing).<br>• `affected($pending)` → `code => WEF` for Active vehicles with a live normal price; blank / ANY / ALL / `*` = no filter.<br>• `run()`: republishes those vehicles through `PricingCalculationService::publishVehicles()` at max(change WEF, today, the vehicle's latest live snapshot WEF), skipping held lists. It logs a `RecalcRun` (`xlr8_vehicle_pricing_recalc_runs`: status, reasons, counts, failures). It returns null while a process is open; `complete()` / `discard()` call `resumeAfterProcess()`. |
+| `PricingCalculationService::publishVehicles($codes, $wefFor, ?$sessionId, $onResult)` | The vehicle loop shared by step 9 and the automatic runs (build → publish, one transaction per vehicle, held lists skipped). |
+| `PricingSyncStamp` (singleton) | `touch()` (`SnapshotPublisher::publish()`, vehicle masters, accessories) → written once by `flush()` at request end / after each queued job → setting `pricing.last_updated_at`; `lastUpdated()`, `isPending()`. |
+
 ## Price List screens (DEC-081, `App\Services\Vehicle\Pricing\Engine\PriceListService`)
 Read-only lists of the published NV prices at the default selections, laid out like the reference PDFs. They are open
 to **every logged-in user** (no permission). The menu is **Price List**; the routes are `pricing.price-list.index`,
