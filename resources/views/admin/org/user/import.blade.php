@@ -18,6 +18,9 @@
                             <i class="la la-shield-alt me-1"></i> Users &amp; RBAC (audit)
                         </a>
                     @endif
+                    <a href="{{ route('org.user.bulk') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="la la-table me-1"></i> Bulk edit on screen
+                    </a>
                     <a href="{{ route('org.user.import.template') }}" class="btn btn-outline-primary btn-sm">
                         <i class="la la-download me-1"></i> Download template
                     </a>

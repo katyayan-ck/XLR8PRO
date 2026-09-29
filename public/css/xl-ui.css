@@ -251,3 +251,14 @@ html:is([data-xl-space="cozy"], [data-xl-space="compact"]) form .card + .card { 
 .field-frozen { background-color: var(--tblr-bg-surface-secondary) !important; pointer-events: none !important; color: var(--tblr-muted) !important; }
 .xl-export-icon { height: 30px; width: auto; }
 label .required-mark { display: inline !important; }
+
+/* ── Bulk user grid + filter-like picker (DEC-089 Phase C, public/js/xl-user-bulk.js) ─────────────────────────── */
+.xl-bulk-grid { height: calc(100vh - 15rem); min-height: 24rem; width: 100%; }
+.xl-bulk-grid .xl-row-failed { background: rgba(var(--tblr-danger-rgb), .08); }
+.xl-picker { width: 20rem; max-width: calc(100vw - 16px); padding: .5rem; display: flex; flex-direction: column; gap: .5rem;
+    background: var(--tblr-bg-surface); border: 1px solid var(--tblr-border-color); border-radius: var(--xl-radius); box-shadow: var(--xl-shadow); }
+.xl-picker-list { max-height: 16rem; overflow-y: auto; }
+.xl-picker-item { display: flex; align-items: center; gap: .5rem; padding: .3rem .4rem; border-radius: var(--xl-radius); cursor: pointer; margin: 0; }
+.xl-picker-item:hover { background: var(--tblr-bg-surface-secondary); }
+.xl-picker-item.is-special { font-style: italic; }
+.xl-picker-foot { display: flex; flex-wrap: wrap; gap: .375rem; justify-content: flex-end; }

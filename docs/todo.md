@@ -386,7 +386,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W8 | **My Account like the UI demo + a "Permissions & scope" tab** (your request 30-09): emp code, OEM Mile ID, designation, primary department / division / branch / location, add-on departments / divisions / branches / locations, segments, sub-segments, models, variants, verticals — blank when nothing is defined | ✅ 30-09 |
 | W9 | **Vehicle Info export with controlled values** (your request 30-09): every lookup column a dropdown fed from the masters (codes stored, labels shown), so imported rows always relate to existing data | ✅ 30-09 |
 | W10 | **Users bulk export / import redesign** (your request 30-09): headers `Emp Code*, Employee Name*, Personal Mail Id, Official Mail ID, Personal Contact Number*, Official Contact Number, OEM Mile ID, Aadhaar No, Primary Branch*, Addon Branch, Primary Location*, AddOn Location, Primary Department*, Addon Department, Primary Division, Add On Divisions, Designation*, Vertical, Segment, Sub Segment, Models, Reporting Manager`; master dropdowns, dependent lists (primary location ← primary branch, primary division ← primary department, add-on lists = the left-out children of the primaries + all children of the add-ons), multi-select with `All` first and `None` last, employee history kept | ✅ 30-09 (DEC-089 Phase B, DEC-090) |
-| W11 | **Bulk user create / edit screen** (your request 30-09) with the same rules and multi-select filter-like pickers; writes employee history | 🟡 next (Phase C, on `UserRowService`) |
+| W11 | **Bulk user create / edit screen** (your request 30-09) with the same rules and multi-select filter-like pickers; writes employee history | ✅ 30-09 (DEC-089 Phase C: Org → Users → Bulk edit) |
 | W12 | **Org rules as validation** (your request 30-09): no user without a primary branch / location / department / division (`All` / `None` not allowed there); every parent branch / department / segment has a same-name, same-code child location / division / sub-segment; verticals mandatory (multi-select, no `None`); segment / sub-segment / model / variant blank = all; every user has an employee code, FSCs may have a Mile ID | ✅ 30-09 (Phase A: rules in the entity services; legacy gaps → BUG-218) |
 | W3 | Q1 Sales / booking feature tests (enquiry, quotation, booking flows) | 🔴 |
 | W4 | Q5 PHPStan baseline for the legacy controllers | 🔴 |
@@ -915,3 +915,17 @@ access changes, legacy values never block a re-import).
 **Verified:** 7 new feature tests; Org / IAM suites 106 passed; phpstan clean on the new services; full export →
 unchanged re-import of all 200 users on the test copy = 0 failures, 0 changes; HTTP: superadmin 200 (page + 3
 downloads), scoped user 40 → 403. **Left:** W11 bulk screen on `UserRowService`; filling BUG-218 gaps with the new file.
+
+### 12. Bulk user create / edit screen — W11 (DEC-089 Phase C)
+
+**Delivered:** Org → Users → Bulk edit: a grid of every employee user in the workbook columns. Double-click a cell to
+edit: master cells open a filter-like picker (search, tick / untick; multi-value lists start with `ALL`, end with `NONE`,
+vertical has no `NONE`); lists follow the row (primary location ← branch, primary division ← department, add-on
+locations ← primary + add-on branches, sub-segments ← segments, models ← sub-segments / segments), and changing a
+primary branch / department clears a child that no longer belongs. "Add user" adds a row for a new employee. Save sends
+only new / changed / failed rows through the same `UserRowService` as the workbook (rules, history); per-row results are
+shown in place and failed rows stay marked with their messages. Filters: search, All / Changed / Failed.
+
+**Verified:** 3 HTTP feature tests (screen, data, save order, 403); headless-Chrome run of the grid script on the 200
+exported rows; HTTP smoke superadmin 200, user 40 → 403. **Not verified:** a visual pass at 390 / 768 px (the toolbar
+wraps with the shared `.xl-toolbar`). **Left:** BUG-218 data gaps (HR can now fix them on this screen).

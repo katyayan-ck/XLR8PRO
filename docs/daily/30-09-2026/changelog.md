@@ -143,3 +143,14 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - **Tests:** new `tests/Feature/Org/UsersWorkbookTest.php` (7); `UserBulkImportPageTest` (template name),
   `UserRbacWorkbookTest` (route `export/rbac`); Org / IAM suites 106 passed. Round trip on `xlrm_testing`: 200 / 200 rows,
   0 failures, 0 history rows (rolled back).
+
+## W11 / DEC-089 Phase C — bulk create / edit screen
+- **New:** `app/Http/Controllers/Admin/Org/User/UserBulkEditController.php` (index / data / save, `ORG_USER_IMPORT`),
+  routes `org.user.bulk`, `org.user.bulk.data`, `org.user.bulk.save` (`routes/web.php`), view
+  `resources/views/admin/org/user/bulk.blade.php`, script `public/js/xl-user-bulk.js`, `.xl-picker*` / `.xl-bulk-grid`
+  in `public/css/xl-ui.css`.
+- **`UsersWorkbookService`:** `saveRows()` (the file import now uses it too) and `masterPayload()`.
+- **Links:** "Bulk edit" on the users list (with Bulk import) and "Bulk edit on screen" on the import page.
+- **Tests:** new `tests/Feature/Org/UserBulkEditTest.php` (3); with `UsersWorkbookTest` 10 passed. Grid behaviour checked
+  in headless Chrome against the exported rows (picker ALL / NONE, dependent lists and resets, only edited rows sent,
+  failed row kept with its message).

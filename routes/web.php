@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\Org\User\UserBulkEditController;
 use App\Http\Controllers\Admin\Org\User\UserImportExportController;
 use App\Http\Controllers\Admin\PerformanceController;
 use App\Http\Controllers\Demo\DemoRbacController;
@@ -37,6 +38,10 @@ Route::middleware(array_merge(
         Route::get('/import/template', [UserImportExportController::class, 'downloadTemplate'])->name('org.user.import.template');
         Route::get('/export', [UserImportExportController::class, 'export'])->name('org.user.export');
         Route::get('/export/rbac', [UserImportExportController::class, 'exportRbac'])->name('org.user.export.rbac');
+        // Bulk create / edit grid (DEC-089 Phase C) — same write path as the workbook.
+        Route::get('/bulk', [UserBulkEditController::class, 'index'])->name('org.user.bulk');
+        Route::get('/bulk/data', [UserBulkEditController::class, 'data'])->name('org.user.bulk.data');
+        Route::post('/bulk', [UserBulkEditController::class, 'save'])->name('org.user.bulk.save');
     });
 });
 

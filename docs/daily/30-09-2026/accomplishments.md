@@ -120,3 +120,17 @@ access changes, legacy values never block a re-import).
 **Verified:** 7 new feature tests; Org / IAM suites 106 passed; phpstan clean on the new services; full export →
 unchanged re-import of all 200 users on the test copy = 0 failures, 0 changes; HTTP: superadmin 200 (page + 3
 downloads), scoped user 40 → 403. **Left:** W11 bulk screen on `UserRowService`; filling BUG-218 gaps with the new file.
+
+### 12. Bulk user create / edit screen — W11 (DEC-089 Phase C)
+
+**Delivered:** Org → Users → Bulk edit: a grid of every employee user in the workbook columns. Double-click a cell to
+edit: master cells open a filter-like picker (search, tick / untick; multi-value lists start with `ALL`, end with `NONE`,
+vertical has no `NONE`); lists follow the row (primary location ← branch, primary division ← department, add-on
+locations ← primary + add-on branches, sub-segments ← segments, models ← sub-segments / segments), and changing a
+primary branch / department clears a child that no longer belongs. "Add user" adds a row for a new employee. Save sends
+only new / changed / failed rows through the same `UserRowService` as the workbook (rules, history); per-row results are
+shown in place and failed rows stay marked with their messages. Filters: search, All / Changed / Failed.
+
+**Verified:** 3 HTTP feature tests (screen, data, save order, 403); headless-Chrome run of the grid script on the 200
+exported rows; HTTP smoke superadmin 200, user 40 → 403. **Not verified:** a visual pass at 390 / 768 px (the toolbar
+wraps with the shared `.xl-toolbar`). **Left:** BUG-218 data gaps (HR can now fix them on this screen).

@@ -98,35 +98,71 @@ final class UsersWorkbookService
         $book->disconnectWorksheets();
 
         $map = UsersWorkbookColumns::map(array_shift($cells) ?? []);
-        $summary = ['success' => 0, 'created' => 0, 'updated' => 0, 'skipped' => 0, 'failed' => 0];
-        $issues = [];
-        $results = [];
-
+        $rows = [];
         foreach ($cells as $i => $line) {
             $row = [];
             foreach ($map as $index => $key) {
                 $value = $line[$index] ?? null;
                 $row[$key] = is_float($value) && floor($value) === $value ? sprintf('%.0f', $value) : $value;
             }
-            if (implode('', array_map(fn ($v) => trim((string) $v), $row)) === '') {
-                continue;   // blank line (the template's spare rows)
+            if (implode('', array_map(fn ($v) => trim((string) $v), $row)) !== '') {
+                $rows[$i + 2] = $row;   // keyed by sheet row; blank lines (the template's spare rows) skipped
             }
+        }
 
-            $rowNo = $i + 2;
+        return $this->saveRows($rows, $actorId, 'Row');
+    }
+
+    /**
+     * Save rows one by one through `UserRowService` (one bad row never blocks the others); used by the file import and
+     * the bulk screen. Keys of $rows are the row labels used in the issues list (sheet row numbers / grid indexes).
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array{summary: array{success: int, created: int, updated: int, skipped: int, failed: int}, issues: list<string>, rows: list<array{row: int, status: string, emp_code: string, messages: list<string>}>}
+     */
+    public function saveRows(array $rows, ?int $actorId = null, string $label = 'Row'): array
+    {
+        $summary = ['success' => 0, 'created' => 0, 'updated' => 0, 'skipped' => 0, 'failed' => 0];
+        $issues = [];
+        $results = [];
+
+        foreach ($rows as $rowNo => $row) {
             $result = $this->rows->save($row, $actorId);
             $summary[$result['status']]++;
             if ($result['status'] !== 'failed') {
                 $summary['success']++;
             }
             foreach ($result['messages'] as $message) {
-                $issues[] = "Row {$rowNo} · {$result['emp_code']} · ".($result['status'] === 'failed' ? 'FAILED: ' : '').$message;
+                $issues[] = "{$label} {$rowNo} · {$result['emp_code']} · ".($result['status'] === 'failed' ? 'FAILED: ' : '').$message;
             }
-            $results[] = ['row' => $rowNo] + $result;
+            $results[] = ['row' => (int) $rowNo] + $result;
         }
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return ['summary' => $summary, 'issues' => $issues, 'rows' => $results];
+    }
+
+    /**
+     * Masters for the bulk screen's pickers: CODE => name per type, and the parent → children maps.
+     *
+     * @return array{names: array<string, array<string, string>>, children: array<string, array<string, list<string>>>}
+     */
+    public function masterPayload(): array
+    {
+        $masters = $this->rows->masters();
+        $names = [];
+        foreach (['branch', 'location', 'department', 'division', 'vertical', 'segment', 'sub_segment', 'model', 'designation', 'employee'] as $type) {
+            $names[$type] = $masters->names($type);
+        }
+
+        return ['names' => $names, 'children' => [
+            'location<branch' => $masters->childMap('location', 'branch'),
+            'division<department' => $masters->childMap('division', 'department'),
+            'sub_segment<segment' => $masters->childMap('sub_segment', 'segment'),
+            'model<sub_segment' => $masters->childMap('model', 'sub_segment'),
+            'model<segment' => $masters->childMap('model', 'segment'),
+        ]];
     }
 
     /**

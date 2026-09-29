@@ -203,6 +203,16 @@ Called by `Api\V1\AuthController`; responses are wrapped in the API envelope by 
   ranges `LST_*`, `LOC_<BRANCH>`, `DIV_<DEPT>`, `Instructions`; Aadhaar masked); `import(string $path, ?int $actorId):
   array{summary, issues, rows}`; `userRows()` (export rows; inverse of the row rules).
 
+- `UsersWorkbookService::saveRows(array $rows, ?int $actorId, string $label = 'Row'): array{summary, issues, rows}` —
+  saves rows one by one (keys = row labels); `masterPayload(): array{names, children}` — codes / names and parent → child
+  maps for the screen's pickers.
+- **Bulk edit screen (W11):** `Admin\Org\User\UserBulkEditController` — `GET admin/org/user/bulk` (`org.user.bulk`),
+  `GET …/bulk/data` (rows JSON), `POST …/bulk` (`{rows: [...]}` ≤ 500 → `saveRows()`, results in the order sent); all
+  `ORG_USER_IMPORT`. View `admin/org/user/bulk.blade.php`, script `public/js/xl-user-bulk.js` (AG-Grid 36.2.0, a
+  filter-like picker editor: search, check / uncheck, `ALL` first / `NONE` last, dependent option lists; only new /
+  changed / failed rows are sent, in chunks of 200; failed rows stay marked with their messages), styles `.xl-picker*`,
+  `.xl-bulk-grid` in `public/css/xl-ui.css`.
+
 ## UserRbacExportService (DEC-040 workbook)
 `permissionRows()`, `roleRows()`, `userRows()` (editable importer columns + read-only info), `scopeRows()` (one row per
 user × type × code, compacted to `ALL`), `lists()` (dropdowns, scope lists start with `ALL`), `userHeaders()`,

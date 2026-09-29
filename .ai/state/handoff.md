@@ -22,6 +22,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: W11 / DEC-089 Phase C — Org → Users → Bulk edit (`UserBulkEditController`, `xl-user-bulk.js`, picker editor); DEC-089 plan closed.
 - 30-09: W10 / DEC-089 Phase B — users workbook (`app/Services/Org/UsersWorkbook/`, export / template / import; RBAC workbook at `export/rbac`); DEC-090 cell semantics. Round trip 200/200 no-op.
 - 30-09: W12 / DEC-089 Phase A — same-code children (services + migration), employee primaries + vertical enforced (`EmployeeService::checkPrimaries()`), BUG-218 logged.
 - 30-09: W9 — Vehicle Info export with master dropdowns (hidden Lists sheet, dependent sub-segment) and a strict import; `AWD` added to DRIVETRAIN.
@@ -45,7 +46,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-0. **Now: W10–W12 (DEC-089, plan `tech-guides/frs-and-workflows/plans/2026-09-30-users-bulk-and-org-rules-DEC-089.md`)** — owner answered the 4 design questions (comma codes + web picker; blank = keep / None = clear; auto-create same-name children; Aadhaar masked). Phase A ✅, Phase B ✅ (users workbook, DEC-090). Next step: Phase C (W11) — bulk create / edit screen at Org → Users → Bulk edit: AG-Grid of users (same keys as `UsersWorkbookColumns::HEADERS`), Select2 single dropdowns (dependent location / division), a filter-like multi picker (search, check / uncheck, All / None, children limited to primary + add-on parents), add rows, save = POST rows → `UserRowService::save()` per row, per-row errors in place; permission ORG_USER_IMPORT; tests + smoke.
+0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). Next step: to-do W3 (Sales / booking feature tests), then W4 (PHPStan baseline), W5, W6, W7.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.
 3. **U1 per screen:** header-less Backpack form cards get headers when converted; a real-browser check of quotation /
