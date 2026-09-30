@@ -10021,3 +10021,11 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 - **PHPStan:** baseline regenerated, 2,508 → 2,500 (only removals).
 - **Test:** `tests/Feature/Vehicle/AccessoryExportTest.php`.
 - **Left (owner):** dead `Booking` helpers / `vehicle()` relation, `XlSpareMaster`, `ProductionRBACSeeder` (BUG-221 entry).
+
+## DEC-093 — database access only through Eloquent (rule + guard)
+- **Rule** (owner 01-10): no `DB::` queries; transaction control allowed; migrations exempt. Added to
+  `.ai/rules/database.md`, `.ai/rules/app.md`, `.ai/rules/testing.md`, `.ai/guidelines/20-architecture.md` (→ CLAUDE.md /
+  AGENTS.md, `.claude/rules/`).
+- **Guard:** `tests/Unit/Architecture/NoDbFacadeQueriesTest.php` + `db-facade-baseline.json` (473 legacy uses in 72 files;
+  ratchet — never grows, conversions lower it; comments ignored).
+- **To-do:** W15 (conversion plan W15a–d).

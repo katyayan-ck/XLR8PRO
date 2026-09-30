@@ -34,3 +34,6 @@ to a model, service, module, business rule or API — in the same commit, not la
   `Result->message` (to-do W6). `tests/Unit/Lang/FlashMessagesLangTest` checks every key and placeholder. A caught
   exception's text goes through `App\Support\ErrorRef::userMessage($e)`, never `$e->getMessage()` (SQL / PHP errors
   become a reference id).
+
+## Database access only through Eloquent (DEC-093, owner standing instruction 01-10-2026)
+**No `DB::` queries (DEC-093, owner 01-10-2026):** every database read and write goes through an Eloquent model (entity writes through its entity service, DEC-050) — never `DB::table()`, `DB::select()`, `DB::statement()`, `DB::raw()` or `DB::connection()`. Allowed: transaction control (`DB::transaction()`, `beginTransaction` / `commit` / `rollBack`). Raw SQL fragments use the builder's `selectRaw` / `whereRaw` / `orderByRaw` / `havingRaw`; a table without a model gets one (extends `BaseModel`; `Model` only for pivots / logs without audit columns). Migrations are exempt (they must not depend on models). Enforced by `tests/Unit/Architecture/NoDbFacadeQueriesTest` — a ratchet on `db-facade-baseline.json`: no file may add a use; converted files lower their count (to-do W15).

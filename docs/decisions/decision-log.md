@@ -1482,3 +1482,22 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   New permissions `VEH_CMPR_VIEW`, `VEH_CONT_EDIT` are minted with the feature and granted to superadmin only.
 - **Approved-by:** owner (30-09) · **Risk:** LOW–MEDIUM (new tables only; nothing existing changes) ·
   **Reversal:** migrations' `down()` drop only the new tables.
+
+### DEC-093 | 01-10-2026 | A (Architecture) | No `DB::` queries — all database work through Eloquent models (to-do W15)
+- **Why:** owner instruction 01-10 ("no code should use DB:: queries and all operations to be done via Eloquent model").
+  Facade queries bypass the model layer: soft deletes, audit actor stamping, casts, data scoping (DEC-071) and the entity
+  services' field rules (DEC-050).
+- **Decision:**
+  1. New and changed code never queries through the `DB` facade (`table`, `select*`, `insert`, `update`, `delete`,
+     `statement`, `raw`, `connection`, …); it uses the Eloquent model, and the entity service for entity writes.
+  2. Allowed: transaction control (`DB::transaction`, `beginTransaction`, `commit`, `rollBack`) — it runs no query of
+     its own. Raw SQL fragments go through the builder (`selectRaw`, `whereRaw`, `orderByRaw`, `havingRaw`).
+  3. A table without a model gets one (`BaseModel`; plain `Model` for pivots / logs without audit columns).
+  4. Migrations are exempt: a migration must keep working after the models change (Laravel practice).
+  5. The existing 473 uses in 72 files (01-10) are converted module by module (to-do W15); the guard test
+     `tests/Unit/Architecture/NoDbFacadeQueriesTest` blocks any new use and makes each conversion lower the baseline.
+     Booking controllers are converted last, coordinated with the booking team (stage merge conflicts).
+- **Agent defaults to confirm:** points 2 and 4 (transactions allowed; migrations exempt).
+- **Approved-by:** owner (01-10, the rule); points 2 / 4 agent defaults · **Risk:** LOW for the rule; each conversion is
+  MEDIUM (behaviour must stay identical — soft-deleted rows, global scopes and data scoping now apply) and is tested ·
+  **Reversal:** delete the guard test and the rule lines.
