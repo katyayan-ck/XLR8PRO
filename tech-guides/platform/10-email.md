@@ -70,3 +70,13 @@ tab, details, **Resend**) — `UTL_COMM_VIEW`; resend / send panel `UTL_COMM_SEN
 - Never `Mail::send/raw` in module code — only the mail driver may.
 - Never put customer copy in code; pass `vars`, and escape nothing yourself (HTML vars are escaped by the renderer).
 - Local `.env` points at a real SMTP host — use `mail.driver = log`, `Mail::fake()` in tests, or `mail.redirect_to`.
+
+## Settings → Communication (DEC-091, W13 Phase 3)
+- **Channel switches** `comms.enabled.{mail,sms,whatsapp,push}`: `OutboxService::queue()` records a SUPPRESSED row
+  ("channel is switched off in Settings") and returns `ok` with `switched_off: true` (callers skip their "sent" follow-up);
+  OTPs (`category = OTP`) are exempt. `OutboxService::channelEnabled(string $channel): bool`. Push: `SendPushNotification`
+  keeps the inbox row and skips FCM.
+- **SMTP** `mail.smtp.*`: when a host is set, `LaravelMailDriver` builds the `settings_smtp` mailer at send time
+  (`ssl` → scheme `smtps`, password decrypted); blank host = `.env`.
+- **Sender**: the `default` identity is `mail.smtp.from_name` (else the dealership name) `<mail.smtp.from_address>` (else `.env`).
+- **Signature** `mail.signature`: appended to the HTML (`<br><br>` + escaped lines) and text (`-- ` separator) of every mail.

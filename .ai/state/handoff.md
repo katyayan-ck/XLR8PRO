@@ -22,6 +22,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: W13 Phase 3 — channel switches (OTP exempt), SMTP from settings, signature, default sender.
 - 30-09: W13 Phase 2 — dealership name / favicon / legal name applied (`ApplySiteSettings`, `dealership()`, `site_favicon_url()`).
 - 30-09: W13 Phase 1 — categorised Settings interface (7 tabs, managers only; pricing tab for pricing managers).
 - 30-09: W13 settings interface added to the to-do; owner answered (DEC-091: UTL_SETTINGS_MANAGE / PRC_WKFL_MANAGE, hold in Settings + process, encrypted secrets); plan saved. Next after W5 / W7 or on request: W13 Phase 1 (catalogue `config/settings_ui.php` + tabbed screen).
@@ -52,7 +53,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-- **Now: W13 Phase 3** (DEC-091) — Communication: enforce `comms.enabled.{mail,sms,whatsapp,push}` in the comms router / NotifyService (skipped sends recorded, not errors), SMTP from `mail.smtp.*` applied to the mailer at send time in the Email driver (blank host = .env), `mail.signature` appended by EmailService, from-name = `mail.smtp.from_name` or the dealership name; tests with `Mail::fake()`. Phases 1–2 done.
+- **Now: W13g** (owner feedback 30-09 on the Site tab): browser title = dealership name + app name; footer "Made for <dealership>" linked to the dealership website with the tagline on hover; drop site.name / site.slogan from the screen, add `dealership.tagline`; show the current logo / favicon (built-in when not set) with the shared drop-zone and a Remove button; new setting menu logo = logo or text. Then Phase 4 (pricing holds / TCS). Phases 1–3 done.
 0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). W3 ✅ (15 Sales HTTP tests; BUG-219 open, BUG-220 fixed). W4 ✅ (baseline, full analyse clean; BUG-221). W6 ✅ (225 flash calls → lang `flash` groups; FlashMessagesLangTest). Next step: W5 (UI clean-up outside Sales: hex / inline styles → shared layer, same method as the Sales pass), then W7 (N+1 review). Then W4 (PHPStan baseline), W5, W6, W7.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.

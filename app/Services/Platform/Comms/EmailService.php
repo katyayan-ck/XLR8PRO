@@ -112,6 +112,13 @@ final class EmailService
             return $this->outbox->skip($row, 'SUPPRESSED', $suppressed ? 'All recipients are suppressed.' : 'No valid recipient.');
         }
 
+        // DEC-091: the signature from Settings → Communication ends every e-mail
+        $signature = trim((string) $this->settings->get('mail.signature', ''));
+        if ($signature !== '') {
+            $rendered['html'] = $rendered['html'] !== null ? $rendered['html'].'<br><br>'.nl2br(e($signature)) : null;
+            $rendered['text'] = $rendered['text'] !== null ? $rendered['text']."\n\n-- \n".$signature : null;
+        }
+
         $redirect = trim((string) $this->settings->get('mail.redirect_to', ''));
         $row['payload'] = [
             'from' => $from, 'to' => $redirect !== '' ? [$redirect] : $to, 'cc' => $redirect !== '' ? [] : $cc, 'bcc' => $redirect !== '' ? [] : $bcc,
@@ -122,7 +129,7 @@ final class EmailService
         ];
 
         $queued = $this->outbox->queue($row);
-        if ($queued->ok && ! $queued->get('duplicate')) {
+        if ($queued->ok && ! $queued->get('duplicate') && ! $queued->get('switched_off')) {
             if ($rendered['template_code']) {
                 $this->templates->recordUse($rendered['template_code'], 'EMAIL', (int) $rendered['template_version']);
             }
@@ -153,7 +160,10 @@ final class EmailService
     public function identity(string $fromOrAlias): ?array
     {
         $identities = (array) $this->settings->get('mail.identities', []);
-        $identities['default'] = ($identities['default'] ?? null) ?: trim(config('mail.from.name').' <'.config('mail.from.address').'>');
+        // DEC-091: the default sender is Settings → Communication → From (name falls back to the dealership name), else .env
+        $fromAddress = trim((string) $this->settings->get('mail.smtp.from_address', '')) ?: config('mail.from.address');
+        $fromName = trim((string) $this->settings->get('mail.smtp.from_name', '')) ?: (trim((string) $this->settings->get('dealership.name', '')) ?: config('mail.from.name'));
+        $identities['default'] = ($identities['default'] ?? null) ?: trim($fromName.' <'.$fromAddress.'>');
         $value = $identities[$fromOrAlias] ?? $fromOrAlias;
         if (! preg_match('/^\s*(?:"?([^"<]*)"?\s*)?<?([^\s<>]+@[^\s<>]+)>?\s*$/', (string) $value, $m)) {
             return null;

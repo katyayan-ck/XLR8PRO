@@ -38,6 +38,10 @@ class SendPushNotification implements ShouldQueue
         if (! $row || ! $user || $row->is_sent_via_fcm) {
             return;
         }
+        // DEC-091: push switched off on Settings → Communication — the inbox row stays, nothing goes to the devices.
+        if (! (bool) setting('comms.enabled.push', true)) {
+            return;
+        }
 
         $payload = (array) $row->payload;
         $result = $firebase->sendToUserDevices(

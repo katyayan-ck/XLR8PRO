@@ -184,3 +184,11 @@ quotations and PDFs comes from a new "Legal (company) name" setting instead of t
 
 **Verified:** 3 feature tests; platform + admin + sales suites 135 passed; dashboard smoke for superadmin and user 40.
 **Left:** mail from-name / signature (Phase 3); check Settings → Site on UAT for leftover demo values.
+
+### 18. Communication settings take effect — W13 Phase 3 (DEC-091)
+
+**Delivered:** switching a channel off on Settings → Communication stops mail / SMS / WhatsApp / push at once (rows
+recorded as suppressed for the audit; login OTPs still go out); a mail server entered there is used for the next mail
+(password stored encrypted); the signature ends every mail; the default sender name falls back to the dealership name.
+
+**Verified:** 5 feature tests (switch, OTP exempt, signature, sender, SMTP mailer); platform + API suites 73 passed.

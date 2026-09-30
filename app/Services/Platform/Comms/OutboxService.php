@@ -30,6 +30,14 @@ final class OutboxService
      */
     public function queue(array $row, bool $dispatch = true): Result
     {
+        // DEC-091: a channel switched off on Settings → Communication is recorded as SUPPRESSED, not sent. OTPs are
+        // exempt so sign-in keeps working.
+        if (($row['category'] ?? null) !== 'OTP' && ! $this->channelEnabled((string) $row['channel'])) {
+            $skipped = $this->skip($row, 'SUPPRESSED', 'The '.strtolower((string) $row['channel']).' channel is switched off in Settings.');
+
+            return Result::ok($skipped->data + ['duplicate' => false, 'switched_off' => true]);
+        }
+
         $key = (string) ($row['idempotency_key'] ?? '');
         if ($key === '') {
             $key = strtolower($row['channel']).'.'.hash('sha256', json_encode([$row['channel'], $row['to_address'] ?? null, $row['template_code'] ?? null, $row['payload'] ?? null, $row['ref_type'] ?? null, $row['ref_id'] ?? null]));
@@ -48,6 +56,14 @@ final class OutboxService
         }
 
         return Result::ok(['outbox_id' => $outbox->id, 'status' => 'QUEUED', 'duplicate' => false]);
+    }
+
+    /** Settings → Communication global switch for a channel (EMAIL → comms.enabled.mail, SMS, WHATSAPP, PUSH). */
+    public function channelEnabled(string $channel): bool
+    {
+        $key = ['EMAIL' => 'mail', 'SMS' => 'sms', 'WHATSAPP' => 'whatsapp', 'PUSH' => 'push'][strtoupper($channel)] ?? null;
+
+        return $key === null || (bool) $this->settings->get('comms.enabled.'.$key, true);
     }
 
     /** Record a row that is not sent (suppressed, consent denied …) so the audit is complete. */

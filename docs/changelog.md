@@ -9849,3 +9849,10 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   `admin/sales/booking/otf-form.blade.php`, `admin/sales/quotation/create.blade.php` (7 places; was typed text).
 - **Note for deploy:** a leftover `dealership.name` row (local: "ABC Motors") now shows in the header — set the real
   name on Settings → Site.
+
+## W13 Phase 3 — Communication settings applied (DEC-091)
+- `app/Services/Platform/Comms/OutboxService.php` (channel switches → SUPPRESSED, OTP exempt, `channelEnabled()`),
+  `EmailService.php` (signature; default sender from `mail.smtp.from_*` / dealership name; no "sent" follow-up when
+  switched off), `SmsService.php`, `WhatsAppService.php` (same guard), `Drivers/LaravelMailDriver.php` (SMTP mailer from
+  settings at send time), `app/Jobs/Platform/SendPushNotification.php` (push switch). Test `CommsSettingsTest` (5);
+  guide `tech-guides/platform/10-email.md`. Platform + API suites 73 passed; full PHPStan clean.

@@ -24,7 +24,7 @@ final class LaravelMailDriver implements ChannelDriver
     public function send(CommOutbox $outbox, array $payload): array
     {
         try {
-            $sent = Mail::html((string) ($payload['html'] ?? nl2br(e((string) ($payload['text'] ?? '')))), function (Message $m) use ($payload, $outbox) {
+            $sent = Mail::mailer($this->mailer())->html((string) ($payload['html'] ?? nl2br(e((string) ($payload['text'] ?? '')))), function (Message $m) use ($payload, $outbox) {
                 [$fromAddress, $fromName] = $payload['from'];
                 $m->from($fromAddress, $fromName);
                 $m->to($payload['to']);
@@ -60,6 +60,31 @@ final class LaravelMailDriver implements ChannelDriver
         } catch (Throwable $e) {
             return ['ok' => false, 'error' => mb_substr($e->getMessage(), 0, 450), 'retryable' => true];
         }
+    }
+
+    /**
+     * The mailer to send with (DEC-091): when Settings → Communication → Mail server has a host, an SMTP mailer built from
+     * `mail.smtp.*` (password stored encrypted) at send time, so a change applies to the next mail; else the configured
+     * default (.env).
+     */
+    private function mailer(): string
+    {
+        $host = trim((string) setting('mail.smtp.host', ''));
+        if ($host === '') {
+            return (string) config('mail.default');
+        }
+        config(['mail.mailers.settings_smtp' => [
+            'transport' => 'smtp',
+            'scheme' => setting('mail.smtp.encryption', 'tls') === 'ssl' ? 'smtps' : 'smtp',
+            'host' => $host,
+            'port' => (int) setting('mail.smtp.port', 587),
+            'username' => (string) setting('mail.smtp.username', '') ?: null,
+            'password' => (string) setting('mail.smtp.password', '') ?: null,
+            'timeout' => 30,
+        ]]);
+        Mail::purge('settings_smtp');   // rebuild with the current values
+
+        return 'settings_smtp';
     }
 
     public function supports(string $capability): bool

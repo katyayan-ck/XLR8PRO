@@ -43,7 +43,7 @@ final class SmsService
             return $this->outbox->skip($row, $row['status'], $row['error']);
         }
         $queued = $this->outbox->queue($row);
-        if ($queued->ok && ! $queued->get('duplicate')) {
+        if ($queued->ok && ! $queued->get('duplicate') && ! $queued->get('switched_off')) {
             if ($row['template_code']) {
                 $this->templates->recordUse($row['template_code'], 'SMS', (int) $row['template_version']);
             }

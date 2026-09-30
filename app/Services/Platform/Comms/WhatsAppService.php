@@ -121,7 +121,7 @@ final class WhatsAppService
             'template_code' => $templateCode, 'template_version' => $templateVersion, 'category' => $category,
             'ref_type' => $refType, 'ref_id' => $refId, 'idempotency_key' => $options['idempotency_key'] ?? null,
         ]);
-        if (! $queued->ok || $queued->get('duplicate')) {
+        if (! $queued->ok || $queued->get('duplicate') || $queued->get('switched_off')) {
             return $queued;
         }
         $message = WaMessage::create([

@@ -1,6 +1,6 @@
 # Plan: one categorised Settings interface (DEC-091, to-do W13)
 
-> **Status (30-09-2026): 🟡 in progress** — Phase 1 ✅ (catalogue + tabbed screen); Phase 2 ✅ (site / dealership applied); Phase 3 next. To-do rows W13, W13a–W13f.
+> **Status (30-09-2026): 🟡 in progress** — Phase 1 ✅ (catalogue + tabbed screen); Phase 2 ✅ (site / dealership applied); Phase 3 ✅ (communication); owner feedback on the Site tab next, then Phase 4. To-do rows W13, W13a–W13f.
 
 ## Context
 The owner found settings on several screens: Utilities → Settings (`SettingsService`, 56 keys in 20 prefix groups, one
