@@ -45,3 +45,12 @@ our code still appear as before; technical failures show "A technical error stop
 and the same reference is in the log, so IT support can find the details.
 **Verified:** new `ErrorRefUserMessageTest` (4) + flash-language and error-page tests, 10 passed; PHPStan clean on the
 12 controllers. **Left:** nothing for W6.
+
+### 5. Accessory export repaired — BUG-221 (part)
+
+**Delivered:** `php artisan vehicle-accessories:export` failed with an SQL error as soon as an accessory had a model or
+variant scope (it read columns that do not exist) and logged its runs in the wrong columns. It now uses the current
+vehicle models, names each row's model and variant, and logs file, rows, size and duration in `export_logs`.
+**Verified:** new `AccessoryExportTest` (writes the file, checks the names and the log); full PHPStan clean, baseline
+2,500. **Left:** the dead Booking dashboard helpers, spare-master relations and production RBAC seeder need your OK
+to delete (BUG-221).

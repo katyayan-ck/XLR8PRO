@@ -10012,3 +10012,12 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
   save / update, brand import, user delete, users workbook import, pricing insurance / RTO rule checks.
   Before: a SQL error showed the query and its values (possibly customer data); after: the reference text.
 - **Guides:** `tech-guides/platform/ui-kit.md`, `.ai/rules/app.md`. **Test:** `tests/Feature/Utils/ErrorRefUserMessageTest.php` (4).
+
+## BUG-221 (part) — accessory export works again
+- **Fixed:** `app/Services/Vehicle/AccessoryExportService.php` (`php artisan vehicle-accessories:export`) — dead
+  fall-back class lists → `Vehicle\{Segment,VehicleModel,Variant}`, `Core\ExportLog`; model / variant names read existing
+  columns (before: `name` / `customname` on the variant table → SQL error for any scoped accessory); export log writes
+  its real columns (before: `userid`, `exporttype`… silently dropped, type left at `standard_users`); failures reported.
+- **PHPStan:** baseline regenerated, 2,508 → 2,500 (only removals).
+- **Test:** `tests/Feature/Vehicle/AccessoryExportTest.php`.
+- **Left (owner):** dead `Booking` helpers / `vehicle()` relation, `XlSpareMaster`, `ProductionRBACSeeder` (BUG-221 entry).

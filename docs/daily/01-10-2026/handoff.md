@@ -28,6 +28,7 @@ are local only — pushing again needs the owner's approval in that turn. Not me
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 01-10: BUG-221 part — accessory export repaired (SQL error on scoped rows, wrong export-log columns); PHPStan baseline 2,500.
 - 01-10: W6 remainder — 17 admin error messages no longer show raw exception text (`ErrorRef::userMessage()`).
 - 01-10: records tidy-up — this handoff rewritten (stale "next" items removed), to-do / bug index verified.
 - 01-10: W14 complete (DEC-092) — Phase 4–5 compare (`CompareService`, Vehicles → Compare Vehicles,
@@ -41,9 +42,7 @@ are local only — pushing again needs the owner's approval in that turn. Not me
 - **Nothing in progress.** Every to-do row W1–W14 is ✅; the remaining 🟡 rows (S4/S5/S7/S9/S12/S14, SL6, O8, DA4, Q*, U2,
   F3, N2) each wait on an owner decision, a package approval or are "converge when touched".
 - **Unblocked follow-ups, in order:**
-  1. BUG-221 — point the dead-class references at the current models where the path is still used
-     (`AccessoryExportService`, `Booking` helper); dead files (`XlSpareMaster` relations, `ProductionRBACSeeder`) only
-     with the owner's deletion list (D5–D12).
+  - None left without the owner (BUG-221's remainder is a deletion — see *Waiting on the owner*).
 
 ## Waiting on the owner
 - **Push / merge:** push the local commits after `7140141`; merge `dev/admin` into `stage` (N2); delete
@@ -55,6 +54,9 @@ are local only — pushing again needs the owner's approval in that turn. Not me
   header). Delete the unused `resources/views/admin/pricing/{hold,tcs}/index.blade.php`?
 - **Environment:** `CACHE_STORE=database` makes every cache read a query (~20–30 per page after W7); Redis or file cache
   on UAT recommended.
+- **BUG-221 deletions:** OK to delete the Booking model's dead `vehicle()` relation + nine dashboard helpers
+  (`getDynamicBookingCounts()` … `getBookingsOlderThan()`, no callers, removed tables)? `XlSpareMaster` / `ProductionRBACSeeder` go
+  with D5–D12.
 - **Bugs:** BUG-219 (should a `Dummy` booking still need the base fields?); BUG-207 remainder (narrow or retire
   `GET system-settings` / `topic` / `category` / `{key}`; move PUT / import onto SettingsService); BUG-218 (HR fills the
   missing employee primaries).

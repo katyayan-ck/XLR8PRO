@@ -50,7 +50,7 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-209 | `BaseController::authorize()` never works: `canPerform()` calls `parent::authorize()`, which `Controller` does not have (always false), and the throw passed its arguments in the wrong order (a `TypeError` → 500). `PUT api/v1/system-settings/{key}` and `POST …/import/json` therefore always fail; there is no `SystemSetting` policy either | Medium | PARTLY FIXED 29-09-2026: the 500 is now the intended 403; making the endpoints work waits on BUG-207 (owner) | 29-09-2026 | — |
 | BUG-218 | Legacy employees without the primaries DEC-089 now requires: of 200 active employees 24 have no branch, 39 no location, 5 no department, 12 no division, 35 no vertical (local `xlrm`, 30-09) | Medium | OPEN — data (HR / owner): fill through the new users workbook (W10) or the bulk screen (W11) | 30-09-2026 | — |
 | BUG-219 | Booking create: for customer type `Dummy` every base validation failure is only logged, so a dummy booking can be saved without name, mobile, branch, vehicle or sale type | Medium | OPEN — owner: should a dummy booking still need the base fields (only finance mode is relaxed today)? | 30-09-2026 | — |
-| BUG-221 | Code referencing classes that do not exist (found by the PHPStan baseline, W4): Booking helper, accessory export, spare master, production RBAC seeder | Low | OPEN — each fatals only when reached; fix or delete with the owner's deletion list (D5–D12) | 30-09-2026 | — |
+| BUG-221 | Code referencing classes that do not exist (found by the PHPStan baseline, W4): Booking helper, accessory export, spare master, production RBAC seeder | Low | PARTLY FIXED 01-10 — accessory export repaired; dead Booking helpers / spare master / RBAC seeder await the owner's deletion OK | 30-09-2026 | — |
 
 ## Entries
 
@@ -481,7 +481,7 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 
 ### BUG-221 — Code referencing classes that do not exist (found by the PHPStan baseline, W4): Booking helper, accessory export, spare master, production RBAC seeder
 
-- **Status:** OPEN.
+- **Status:** PARTLY FIXED 01-10-2026 (accessory export); the rest waits on the owner.
 - **Severity:** Low (each path throws "class not found" only when it runs; none is on a main screen).
 - **Found:** 30-09-2026, generating `phpstan-baseline.neon` (to-do W4; identifier `class.notFound`).
 - **Where / what:**
@@ -500,3 +500,14 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
   TypeError) and `SystemSettingAudit::user()` (`User` resolved to the wrong namespace).
 - **Proposed solution:** point each at the current model (`Admin\Branch`, `Admin\Location`, `Vehicle\*`) or delete the
   dead path, then drop its baseline entries.
+- **Fixed 01-10-2026 — accessory export:** `AccessoryExportService` now uses `Vehicle\{Segment,VehicleModel,Variant}` and
+  `Core\ExportLog` directly. Found on the way: the model / variant names read the columns `name` / `customname`, which the
+  variant table does not have, so any scoped accessory made the export fail with an SQL error. Model names now come
+  from `name`, variant names from `display_name` / `custom_name`, and the export log writes its real columns
+  (`user_id`, `export_type`, `total_records`, `file_path`, …; they were written without underscores and dropped).
+  Test `tests/Feature/Vehicle/AccessoryExportTest.php`; 8 baseline entries removed (2,508 → 2,500).
+- **Left, owner's call (deletion):** `Booking` model — `vehicle()` (to the removed `XVehicleMaster`) and the nine
+  dashboard helpers `getDynamicBookingCounts()` … `getBookingsOlderThan()` have no caller and query tables that no longer
+  exist (`xcelr8_vehicle_master`, `bmpl_enum_master`, `branches`, `locations`); proposal: delete them (the agent's
+  deletion was held back for approval). `XlSpareMaster` `EnumMaster` relations and `ProductionRBACSeeder`: delete with
+  D5–D12. `config/media-library.php` PRO class: harmless unless temporary uploads are used.

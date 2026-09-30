@@ -9253,54 +9253,6 @@ parameters:
 			path: app/Services/Vehicle/AccessoryExportService.php
 
 		-
-			message: '#^Class App\\ExportLog not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Services/Vehicle/AccessoryExportService.php
-
-		-
-			message: '#^Class App\\Models\\ExportLog not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Services/Vehicle/AccessoryExportService.php
-
-		-
-			message: '#^Class App\\Models\\Segment not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Services/Vehicle/AccessoryExportService.php
-
-		-
-			message: '#^Class App\\Models\\Variant not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Services/Vehicle/AccessoryExportService.php
-
-		-
-			message: '#^Class App\\Models\\VehicleModel not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Services/Vehicle/AccessoryExportService.php
-
-		-
-			message: '#^Class App\\Segment not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Services/Vehicle/AccessoryExportService.php
-
-		-
-			message: '#^Class App\\Variant not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Services/Vehicle/AccessoryExportService.php
-
-		-
-			message: '#^Class App\\VehicleModel not found\.$#'
-			identifier: class.notFound
-			count: 1
-			path: app/Services/Vehicle/AccessoryExportService.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\Core\\ImportLog\:\:\$started_at\.$#'
 			identifier: property.notFound
 			count: 1
