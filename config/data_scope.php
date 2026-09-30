@@ -1,5 +1,10 @@
 <?php
 
+use App\Models\Admin\Branch;
+use App\Models\Admin\Department;
+use App\Models\Admin\Division;
+use App\Models\Admin\Location;
+use App\Models\Admin\Vertical;
 use App\Models\CRM\Campaign;
 use App\Models\CRM\Enquiry;
 use App\Models\CRM\Lead;
@@ -12,6 +17,10 @@ use App\Models\Module\Booking\XlDelivery;
 use App\Models\Module\Booking\XlRto;
 use App\Models\Module\Finance\XFinance;
 use App\Models\Module\Insurance\XlInsurance;
+use App\Models\Vehicle\Segment;
+use App\Models\Vehicle\SubSegment;
+use App\Models\Vehicle\Variant;
+use App\Models\Vehicle\VehicleModel;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,8 +28,8 @@ use App\Models\Module\Insurance\XlInsurance;
 |--------------------------------------------------------------------------
 | One place that says how a user's scope rows (xlr8_admin_user_scopes) become row filters.
 |
-| trees     — master hierarchies, top level first. Each level names its master table and, for every
-|             ancestor level, the column on that table holding the ancestor's code. A parent covers all its
+| trees     — master hierarchies, top level first. Each level names its master model (`'model' => Class::class`,
+|             DEC-093) and, for every ancestor level, the column on that model's table holding the ancestor's code. A parent covers all its
 |             children unless the user holds codes at a child level; a child restriction applies within the
 |             nearest assigned ancestor (PV + THAR → only THAR under PV).
 | entities  — the business models that are filtered, with the column that carries each scope level
@@ -36,21 +45,21 @@ return [
 
     'trees' => [
         'org_branch' => [
-            'branch' => ['table' => 'xlr8_admin_branch', 'ancestors' => []],
-            'location' => ['table' => 'xlr8_admin_location', 'ancestors' => ['branch' => 'branch_code']],
+            'branch' => ['model' => Branch::class, 'ancestors' => []],
+            'location' => ['model' => Location::class, 'ancestors' => ['branch' => 'branch_code']],
         ],
         'org_department' => [
-            'department' => ['table' => 'xlr8_admin_department', 'ancestors' => []],
-            'division' => ['table' => 'xlr8_admin_division', 'ancestors' => ['department' => 'dept_code']],
+            'department' => ['model' => Department::class, 'ancestors' => []],
+            'division' => ['model' => Division::class, 'ancestors' => ['department' => 'dept_code']],
         ],
         'vertical' => [
-            'vertical' => ['table' => 'xlr8_admin_vertical', 'ancestors' => []],
+            'vertical' => ['model' => Vertical::class, 'ancestors' => []],
         ],
         'vehicle' => [
-            'segment' => ['table' => 'xlr8_vehicle_segment', 'ancestors' => []],
-            'sub_segment' => ['table' => 'xlr8_vehicle_subsegment', 'ancestors' => ['segment' => 'segment_code']],
-            'model' => ['table' => 'xlr8_vehicle_model', 'ancestors' => ['segment' => 'segment_code', 'sub_segment' => 'sub_segment_code']],
-            'variant' => ['table' => 'xlr8_vehicle_variant', 'ancestors' => ['segment' => 'segment_code', 'sub_segment' => 'sub_segment_code', 'model' => 'model_code']],
+            'segment' => ['model' => Segment::class, 'ancestors' => []],
+            'sub_segment' => ['model' => SubSegment::class, 'ancestors' => ['segment' => 'segment_code']],
+            'model' => ['model' => VehicleModel::class, 'ancestors' => ['segment' => 'segment_code', 'sub_segment' => 'sub_segment_code']],
+            'variant' => ['model' => Variant::class, 'ancestors' => ['segment' => 'segment_code', 'sub_segment' => 'sub_segment_code', 'model' => 'model_code']],
         ],
     ],
 

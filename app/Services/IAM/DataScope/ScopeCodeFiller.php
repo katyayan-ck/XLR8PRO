@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services\IAM\DataScope;
 
+use App\Models\Admin\Location;
 use App\Models\CRM\Enquiry;
 use App\Models\CRM\Quotation;
 use App\Models\Module\Booking\Booking;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use App\Models\Vehicle\Variant;
+use App\Models\Vehicle\VehicleModel;
 
 /**
  * Fills the scope codes a record is filtered on (DEC-071) — only codes that are still empty, never overwriting.
@@ -90,7 +92,7 @@ class ScopeCodeFiller
     {
         $variant = $this->code($record->{$variantCol} ?? null);
         if ($variant !== null) {
-            $row = DB::table('xlr8_vehicle_variant')->whereNull('deleted_at')->where('code', $variant)
+            $row = Variant::query()->where('code', $variant)->toBase()
                 ->first(['segment_code', 'sub_segment_code', 'model_code']);
             if ($row) {
                 $this->fillEmpty($record, array_filter([
@@ -103,7 +105,7 @@ class ScopeCodeFiller
 
         $model = $this->code($record->{$modelCol} ?? null);
         if ($model !== null) {
-            $row = DB::table('xlr8_vehicle_model')->whereNull('deleted_at')->where('code', $model)
+            $row = VehicleModel::query()->where('code', $model)->toBase()
                 ->first(['segment_code', 'sub_segment_code']);
             if ($row) {
                 $this->fillEmpty($record, array_filter([
@@ -119,7 +121,7 @@ class ScopeCodeFiller
     {
         $location = $this->code($record->{$locationCol} ?? null);
         if ($location !== null && $this->code($record->{$branchCol} ?? null) === null) {
-            $branch = DB::table('xlr8_admin_location')->whereNull('deleted_at')->where('code', $location)->value('branch_code');
+            $branch = Location::query()->where('code', $location)->value('branch_code');
             $this->fillEmpty($record, [$branchCol => $branch]);
         }
     }

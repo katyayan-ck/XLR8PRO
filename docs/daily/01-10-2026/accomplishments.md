@@ -78,3 +78,11 @@ timeline subscriptions, ticket numbering and template usage counts — use Eloqu
 **Verified:** a new test covers the stores that had none (OTP issue / wrong code / correct code / reuse; consent and
 suppression; subscribe / unsubscribe; branch override and clear; outbox counts); Platform tests 203 passed; PHPStan clean.
 **Baseline now:** 414 `DB::` uses in 54 files.
+
+### W15 — Org / data-scope services off the DB facade
+
+**Delivered:** organisation and data-scope lookups (code resolution, ALL expansion, scope trees, derived codes,
+customer lookup by enquiry / booking / VOTF) read through the models; the scope configuration now names models.
+Deleted masters no longer resolve.
+**Verified:** IAM, Org, Sales and service tests (210) passed; PHPStan clean.
+**Baseline now:** 399 `DB::` uses in 50 files.

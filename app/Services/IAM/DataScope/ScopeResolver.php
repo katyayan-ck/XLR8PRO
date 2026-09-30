@@ -7,7 +7,6 @@ namespace App\Services\IAM\DataScope;
 use App\Models\Admin\UserScope;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Turns a user's scope rows (xlr8_admin_user_scopes) into their effective ScopeSet (DEC-071).
@@ -156,7 +155,7 @@ class ScopeResolver
             (int) config('data_scope.master_cache_seconds', 600),
             function () use ($cfg): array {
                 $columns = array_values((array) ($cfg['ancestors'] ?? []));
-                $rows = DB::table($cfg['table'])->whereNull('deleted_at')->get(array_merge(['code'], $columns));
+                $rows = $cfg['model']::query()->toBase()->get(array_merge(['code'], $columns));   // soft-deleted rows excluded by the model
                 $map = [];
                 foreach ($rows as $row) {
                     $ancestors = [];

@@ -121,3 +121,16 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
   branch override, outbox stats); Platform feature + service unit tests 203 passed.
 - **Guides:** `tech-guides/architecture/model-reference.md`.
 - **Baseline:** 414 uses in 54 files left.
+
+## W15 — Org / data-scope services off the DB facade
+- **Config:** `config/data_scope.php` `trees` and `OrgScopeService::$hierarchy` name each level's master **model**
+  (`'model' => Branch::class`) instead of a table.
+- **Converted:** `ScopeResolver::masters()` (model query, plain rows), `ScopeCodeFiller` (variant / model / location
+  lookups), `OrgScopeService` (code / name resolution, ALL expansion), `OrgService` (colour list via `Variant`;
+  `getCustomerByTransactionIds()` via `Enquiry` / `Booking` with `withoutGlobalScopes()->toBase()` — the same unscoped
+  rows as before; the `enq_no` OR condition is now grouped).
+- **Small differences (fixes):** soft-deleted masters / variants no longer resolve codes or add colours (the raw
+  queries in `OrgScopeService` and the colour list read deleted rows too).
+- **Tests:** IAM + Org + Sales feature and service unit tests 210 passed.
+- **Guides:** `tech-guides/architecture/core.md` (HasDataScope).
+- **Baseline:** 399 uses in 50 files left.

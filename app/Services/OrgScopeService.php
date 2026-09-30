@@ -2,7 +2,15 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
+use App\Models\Admin\Branch;
+use App\Models\Admin\Department;
+use App\Models\Admin\Division;
+use App\Models\Admin\Location;
+use App\Models\Admin\Vertical;
+use App\Models\Vehicle\Segment;
+use App\Models\Vehicle\SubSegment;
+use App\Models\Vehicle\Variant;
+use App\Models\Vehicle\VehicleModel;
 use Illuminate\Support\Str;
 
 class OrgScopeService
@@ -14,13 +22,13 @@ class OrgScopeService
     protected static array $hierarchy = [
         // === ORGANIZATION HIERARCHY ===
         'branch' => [
-            'table' => 'xlr8_admin_branch',
+            'model' => Branch::class,
             'code' => 'code',
             'name' => 'name',
             'children' => ['location'],
         ],
         'location' => [
-            'table' => 'xlr8_admin_location',
+            'model' => Location::class,
             'code' => 'code',
             'name' => 'name',
             'parent_col' => 'branch_code',
@@ -28,20 +36,20 @@ class OrgScopeService
         ],
 
         'department' => [
-            'table' => 'xlr8_admin_department',
+            'model' => Department::class,
             'code' => 'code',
             'name' => 'name',
             'children' => ['division'],
         ],
         'division' => [
-            'table' => 'xlr8_admin_division',
+            'model' => Division::class,
             'code' => 'code',
             'name' => 'name',
             'parent_col' => 'dept_code',
             'children' => [],
         ],
         'vertical' => [
-            'table' => 'xlr8_admin_vertical',
+            'model' => Vertical::class,
             'code' => 'code',
             'name' => 'name',
             'children' => [],
@@ -49,27 +57,27 @@ class OrgScopeService
 
         // === VEHICLE HIERARCHY (Segment → SubSegment → Model → Variant) ===
         'segment' => [
-            'table' => 'xlr8_vehicle_segment',
+            'model' => Segment::class,
             'code' => 'code',
             'name' => 'name',
             'children' => ['sub_segment'],
         ],
         'sub_segment' => [
-            'table' => 'xlr8_vehicle_subsegment',
+            'model' => SubSegment::class,
             'code' => 'code',
             'name' => 'name',
             'parent_col' => 'segment_code',
             'children' => ['model'],
         ],
         'model' => [
-            'table' => 'xlr8_vehicle_model',
+            'model' => VehicleModel::class,
             'code' => 'code',
             'name' => 'name',
             'parent_col' => 'segment_code', // or sub_segment_code if you have it
             'children' => ['variant'],
         ],
         'variant' => [
-            'table' => 'xlr8_vehicle_variant',
+            'model' => Variant::class,
             'code' => 'code',
             // Variants have no `name` column; one code spans several colour rows (BUG-164).
             'name' => 'display_name',
@@ -102,7 +110,7 @@ class OrgScopeService
         $cfg = self::$hierarchy[$type];
 
         // Try code
-        $code = DB::table($cfg['table'])
+        $code = $cfg['model']::query()
             ->whereRaw("UPPER(`{$cfg['code']}`) = ?", [$upper])
             ->value($cfg['code']);
 
@@ -111,7 +119,7 @@ class OrgScopeService
         }
 
         // Try name
-        $code = DB::table($cfg['table'])
+        $code = $cfg['model']::query()
             ->whereRaw("UPPER(`{$cfg['name']}`) = ?", [$upper])
             ->value($cfg['code']);
 
@@ -137,7 +145,7 @@ class OrgScopeService
 
         // === Handle ALL / ANY with hierarchical expansion ===
         if (in_array($upper, ['ALL', 'ANY'])) {
-            $query = DB::table($cfg['table'])->where('is_active', 1);
+            $query = $cfg['model']::query()->where('is_active', 1);
 
             // Apply parent filter if context has the parent code
             if (! empty($cfg['parent_col']) && isset($context[$cfg['parent_col']])) {

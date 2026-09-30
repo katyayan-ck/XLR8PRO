@@ -177,6 +177,10 @@ The transformer never blanks a value: if a step produces an empty string the ori
 `entities` (columns per scope level, or `via` a parent). `Model::withoutDataScope()` gives an unscoped query;
 `DataScope::off(fn, 'reason')` and route middleware `data-scope:off` switch it off wider. Rules, API and examples:
 `tech-guides/modules/iam-auth.md` → "Data scoping". Jobs and console run without a user and are never scoped.
+The `trees` in `config/data_scope.php` (and `OrgScopeService::$hierarchy`) name each level's master **model**
+(`'model' => Branch::class`, DEC-093); masters are read without soft-deleted rows. Code that must see every enquiry /
+booking regardless of the user (lookups inside the scoping itself, `OrgService::getCustomerByTransactionIds()`) uses
+`withoutGlobalScopes()`.
 
 ---
 

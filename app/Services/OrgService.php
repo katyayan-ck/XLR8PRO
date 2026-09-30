@@ -9,6 +9,8 @@ use App\Models\Admin\Location;
 use App\Models\Admin\Person;
 use App\Models\Admin\PinCodes;
 use App\Models\Admin\Vertical;
+use App\Models\CRM\Enquiry;
+use App\Models\Module\Booking\Booking;
 use App\Models\Module\Booking\Bookingamount;
 use App\Models\Module\Booking\Xl_DSA_Master;
 use App\Models\User;
@@ -22,7 +24,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OrgService
@@ -389,7 +390,7 @@ class OrgService
             self::CACHE_TTL,
             function () use ($variantCode) {
 
-                return DB::table('xlr8_vehicle_variant')
+                return Variant::query()
                     ->where('is_active', 1)
                     ->whereNotNull('color_code')
                     ->where('color_code', '!=', '')
@@ -1665,25 +1666,25 @@ class OrgService
         $enqNoClean = $enqNo ? app(EnquiryReferenceService::class)->fromReference($enqNo) : null;
 
         if ($enqNoClean) {
-            $enquiry = DB::table('xlr8_crm_enquiries')->where('id', $enqNoClean)->first();
+            $enquiry = Enquiry::query()->withoutGlobalScopes()->where('id', $enqNoClean)->toBase()->first();
         }
 
         if (! $enquiry && $bookingId) {
-            $booking = DB::table('xlr8_booking_master')->where('id', $bookingId)->first();
+            $booking = Booking::query()->withoutGlobalScopes()->where('id', $bookingId)->toBase()->first();
             if ($booking && $booking->enq_no) {
                 $cleanRef = app(EnquiryReferenceService::class)->fromReference($booking->enq_no);
-                $enquiry = DB::table('xlr8_crm_enquiries')->where('id', $cleanRef)->first();
+                $enquiry = Enquiry::query()->withoutGlobalScopes()->where('id', $cleanRef)->toBase()->first();
             }
         }
 
         if (! $enquiry && $votfNo) {
-            $booking = DB::table('xlr8_booking_master')->where('votf_no', $votfNo)->first();
+            $booking = Booking::query()->withoutGlobalScopes()->where('votf_no', $votfNo)->toBase()->first();
             if ($booking && $booking->enq_no) {
                 $cleanRef = app(EnquiryReferenceService::class)->fromReference($booking->enq_no);
-                $enquiry = DB::table('xlr8_crm_enquiries')->where('id', $cleanRef)->first();
+                $enquiry = Enquiry::query()->withoutGlobalScopes()->where('id', $cleanRef)->toBase()->first();
             } else {
                 // Fallback: Check enquiry table directly for oem_otf_no
-                $enquiry = DB::table('xlr8_crm_enquiries')->where('oem_otf_no', $votfNo)->first();
+                $enquiry = Enquiry::query()->withoutGlobalScopes()->where('oem_otf_no', $votfNo)->toBase()->first();
             }
         }
 
@@ -1692,10 +1693,9 @@ class OrgService
         }
 
         if (! $booking) {
-            $booking = DB::table('xlr8_booking_master')
-                ->where('enq_no', app(EnquiryReferenceService::class)->toReference($enquiry->id))
-                ->orWhere('enq_no', $enquiry->id)
-                ->first();
+            $booking = Booking::query()->withoutGlobalScopes()
+                ->where(fn ($q) => $q->where('enq_no', app(EnquiryReferenceService::class)->toReference($enquiry->id))->orWhere('enq_no', $enquiry->id))
+                ->toBase()->first();
         }
 
         return [
