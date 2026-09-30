@@ -10122,3 +10122,13 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 - `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` · `getAccessoriesList()` (unused helper), `getConsultantDetails()`, `delivered()`, `pendingDeliveries()`, `setupUpdateOperation()` (consultant fallback), `addAmountForm()`, `pendingEdit()`, `dealerInvoice()`, `pendingRto()`. DEC-093. Models `Accessory`, `Employee` + `Person`, `XlDelivery`, `XlRto`, `Variant`. The raw queries read every row, so the model queries keep that: `withTrashed()` (soft-deleted rows included) and, for `XlDelivery` / `XlRto` (which carry the automatic data scope), `withoutGlobalScopes()`.
 - Checked: delivered, delivered/list, pending-rto, pending-deliveries, otf-form, and for one booking per status (7): edit, add-amount, pending-edit, dealer-invoice, otf-form/{id} — superadmin + user 40: 80 / 80 identical; Sales tests 74 passed; PHPStan no new errors. Log: `docs/booking-team-changes.md`.
 - **Baseline:** 349 `DB::` uses in 45 files left.
+
+## W15 tooling + booking sweep findings
+- **New:** `app/Console/Commands/RouteSnapshot.php` (`dev:route-snapshot`, local + `xlrm_testing` only) and
+  `tests/RouteSnapshots/booking-all.txt` (every booking GET screen; one booking per status); guide
+  `tech-guides/platform/15-testing.md`.
+- **Full booking sweep before the booking changes** (superadmin + user 40, 484 requests): 34 failures on 17 screens, all
+  pre-existing — BUG-122 (5 reports + lists: missing `xlr8_vehicle_master` / `xlr8_us_location`, owner D23), the
+  chassis-number endpoint (wrong column, logged 28-09), and new **BUG-223** (finance view / payout-edit null finance),
+  **BUG-224** (`invoiced-show` view missing), **BUG-225** (`refund-view` undefined `$receiptLogs`).
+- **Baseline:** 349 `DB::` uses in 45 files left.

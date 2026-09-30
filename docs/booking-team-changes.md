@@ -15,6 +15,8 @@ booking team can see what changed, where and why, and revert any single change.
   requested as superadmin and as a scoped user (id 40) on the test copy (`xlrm_testing`), before and after the edit,
   inside a rolled-back transaction. Status codes and response bodies (with CSRF tokens and times removed) are
   compared, and the entry records the result. The related automated tests are run too.
+  Tool: `DB_DATABASE=xlrm_testing php artisan dev:route-snapshot 1,40 <spec> after.json --compare=before.json`
+  (`app/Console/Commands/RouteSnapshot.php`; the full booking spec is `tests/RouteSnapshots/booking-all.txt`).
 
 **To revert one change:** `git revert $(git log --format=%h --grep="BT-007")` (use the entry's number). Each change
 touches only the lines listed, so a revert does not affect the others. Changes that depend on an earlier one say so.

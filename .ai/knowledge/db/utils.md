@@ -7,7 +7,7 @@ id bigint unsigned PK, type varchar(255), participants longtext, created_at time
 id bigint unsigned PK, entityable_type varchar(255), entityable_id bigint unsigned, title varchar(255)?, description text?, status_id bigint unsigned?, action_id bigint unsigned?, extra_data json?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (entityable_type,entityable_id), (action_id), (status_id)
 
-## `xlr8_utils_comm_subscription` · ~0 rows · model: —
+## `xlr8_utils_comm_subscription` · ~0 rows · model: App\Models\Utilities\CommHistory\CommSubscription
 id bigint unsigned PK, comm_master_id bigint unsigned, user_id bigint unsigned, created_at timestamp?, updated_at timestamp?
 Indexes: UNIQUE (comm_master_id,user_id)
 
@@ -63,7 +63,7 @@ Indexes: (created_at), (created_by), (deleted_by), (is_read), (receiver_id), (se
 id bigint unsigned PK, user_id bigint unsigned, sender_id bigint unsigned?, type varchar(255), kind char(1), title varchar(255), description text, reference_type varchar(255)?, reference_id bigint unsigned?, is_read tinyint(1), read_at timestamp?, is_sent_via_fcm tinyint(1), sent_at timestamp?, priority varchar(255), category varchar(255)?, payload longtext?, metadata longtext?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?, dispatch_id bigint unsigned?, archived_at timestamp?
 Indexes: (created_at), (created_by), (deleted_by), (is_read), (priority), (reference_type,reference_id), (sender_id), (type), (updated_by), (user_id), (dispatch_id), (kind)
 
-## `xlr8_utils_setting_scope` · ~0 rows · model: —
+## `xlr8_utils_setting_scope` · ~0 rows · model: App\Models\Utilities\Settings\SettingScope
 id bigint unsigned PK, setting_key varchar(191), scope_type varchar(20), scope_code varchar(50), value text?, created_by bigint unsigned?, updated_by bigint unsigned?, created_at timestamp?, updated_at timestamp?
 Indexes: UNIQUE (setting_key,scope_type,scope_code)
 
@@ -95,7 +95,7 @@ Indexes: UNIQUE (task_id,user_id,role), (user_id)
 id bigint unsigned PK, number varchar(40), branch_code varchar(20), fy varchar(5), seq int unsigned, category varchar(50), priority varchar(5), status varchar(20), title varchar(250), details text?, requester_id bigint unsigned, owner_id bigint unsigned?, ref_type varchar(30)?, ref_id bigint unsigned?, due_at datetime?, sla_paused_at datetime?, sla_paused_minutes int unsigned, breached_at datetime?, acknowledged_at datetime?, resolved_at datetime?, closed_at datetime?, close_reason varchar(500)?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (due_at), UNIQUE (number), (owner_id), (ref_type,ref_id), (requester_id), (status)
 
-## `xlr8_utils_ticket_counter` · ~0 rows · model: —
+## `xlr8_utils_ticket_counter` · ~0 rows · model: App\Models\Utilities\Ticket\TicketCounter
 id bigint unsigned PK, branch_code varchar(20), fy varchar(5), last_seq int unsigned, created_at timestamp?, updated_at timestamp?
 Indexes: UNIQUE (branch_code,fy)
 

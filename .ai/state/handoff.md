@@ -1,7 +1,7 @@
 # Handoff — the one live state file (rewrite with every commit; `.ai/guidelines/10-workflow.md`)
 
-**Updated:** 01-10-2026 · **Branch:** `dev/admin` · **Pushed:** up to `7140141` (01-10, owner request); later commits
-are local only — pushing again needs the owner's approval in that turn. Not merged to `stage` (N2, owner).
+**Updated:** 01-10-2026 · **Branch:** `dev/admin` · **Pushed:** 01-10 (owner request) — `origin/dev/admin` = this branch after the
+W15 / DEC-094 records commit; later commits are local only until the owner approves another push. Not merged to `stage` (N2, owner).
 
 ## Where things are (DEC-086 layout)
 - Guides: `tech-guides/README.md` (load map) · project card `tech-guides/00-project.md`.
@@ -47,18 +47,29 @@ are local only — pushing again needs the owner's approval in that turn. Not me
   `docs/daily/30-09-2026/`.
 
 ## In progress / next
-- **W15 (DEC-093) — convert `DB::` queries to Eloquent** (362 uses / 45 files left). Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services.
-  Next step: W15a continued — `app/Jobs/ImportEnquiriesJob.php` (26), console (`DataScopeBackfill` 16, `RefreshAiContext` 4, `RefreshTestingDatabase` 3), imports (`StandaloneUsersImport`, `UserScopesSheetImport`), models (`CRM/Enquiry` 1; `Booking` 27 = dead helpers awaiting the owner). Then W16b.
-  Method: model per table (new models for tables without one), behaviour identical, run the file's tests, then lower
-  the baseline: `UPDATE_DB_FACADE_BASELINE=1 php artisan test --compact tests/Unit/Architecture/NoDbFacadeQueriesTest.php`.
-- Before W15: Every to-do row W1–W14 is ✅; the remaining 🟡 rows (S4/S5/S7/S9/S12/S14, SL6, O8, DA4, Q*, U2,
-  F3, N2) each wait on an owner decision, a package approval or are "converge when touched".
-- **Unblocked follow-ups, in order:**
-  - None left without the owner (BUG-221's remainder is a deletion — see *Waiting on the owner*).
+- **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (349 uses / 45 files left).
+  Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;
+  booking code **BT-001, BT-002** (numbered, one commit each, logged in `docs/booking-team-changes.md`: where, what, why,
+  before → after, checked, revert).
+  **Next step: BT-003** — `BookingCrudController` grid helpers `liveOrderCounts()` / `preloadGridLookups()` /
+  `mapBookingForGrid()` + `getBaseQuery()` (they feed ~30 list tabs; spec = the list-tab lines of
+  `tests/RouteSnapshots/booking-all.txt`). Then the reports (`fetchCbrData`, consolidated, branch, `fetchPendBkData`,
+  stock, live-order, pending-actions — most already 500, BUG-122), `QuotationCrudController`, `EnquiryCrudController`,
+  `ImportEnquiriesJob`, `SalesImportController`, the other controllers, console, imports, models, tests.
+  **Per change:** `DB_DATABASE=xlrm_testing php artisan dev:route-snapshot 1,40 <spec> before.json` on the unchanged
+  code → edit → pint the file (only sorts imports) → `php -l` → phpstan (no new errors) → the same command with
+  `--compare=before.json` (must report 0 differences) → Sales tests → lower the baseline
+  (`UPDATE_DB_FACADE_BASELINE=1 php artisan test --compact tests/Unit/Architecture`) → log entry → commit.
+  Keep behaviour identical: raw reads saw soft-deleted / out-of-scope rows → `withTrashed()` / `withoutGlobalScopes()`;
+  plain row objects → `->toBase()`.
+- **W16 (DEC-094) — help & support mechanism** (F1 pane, tours, support requests): after W15. **User manual + help
+  texts (W17) come last** (to-do §13 — after bugs are fixed and QA has vetted; owner 01-10).
+- **Owner request 01-10 (after this push):** deep study of open bugs / pending tasks / functionality / clean-up →
+  dependency-ordered execution plan + the list of owner decisions.
 
 ## Waiting on the owner
 - **DEC-093 defaults:** transaction control (`DB::transaction`) stays allowed and migrations are exempt — confirm.
-- **Push / merge:** push the local commits after `7140141`; merge `dev/admin` into `stage` (N2); delete
+- **Push / merge:** merge `dev/admin` into `stage` (N2); delete
   `backup/dev-admin-before-rewrite-30-09` + `git gc`.
 - **W14:** grant `VEH_CONT_VIEW` / `VEH_CONT_EDIT` / `VEH_CMPR_VIEW` to the designations that need them (only superadmin
   has them now); load the sample workbooks on UAT (Vehicle Content → Workbooks) and fix the unmatched names the report
@@ -70,6 +81,9 @@ are local only — pushing again needs the owner's approval in that turn. Not me
 - **BUG-221 deletions:** OK to delete the Booking model's dead `vehicle()` relation + nine dashboard helpers
   (`getDynamicBookingCounts()` … `getBookingsOlderThan()`, no callers, removed tables)? `XlSpareMaster` / `ProductionRBACSeeder` go
   with D5–D12.
+- **Booking bugs found 01-10 (booking team / owner):** BUG-223 finance view + payout-edit 500 without a finance record;
+  BUG-224 `invoiced-show` view missing; BUG-225 `refund-view` undefined `$receiptLogs` — fix with the booking team or
+  approve the agent fixing them.
 - **Bugs:** BUG-219 (should a `Dummy` booking still need the base fields?); BUG-207 remainder (narrow or retire
   `GET system-settings` / `topic` / `category` / `{key}`; move PUT / import onto SettingsService); BUG-218 (HR fills the
   missing employee primaries).

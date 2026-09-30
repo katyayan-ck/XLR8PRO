@@ -75,11 +75,11 @@ Indexes: UNIQUE (code), UNIQUE (item_key), (parent_id)
 id bigint unsigned PK, direction varchar(3), from_number varchar(20)?, to_number varchar(20)?, agent_user_id bigint unsigned?, person_code varchar(50)?, status varchar(12), started_at timestamp?, answered_at timestamp?, ended_at timestamp?, duration_seconds int unsigned?, disposition varchar(30)?, disposition_remark varchar(500)?, recording_doc_id bigint unsigned?, recording_missing tinyint(1), vendor_call_id varchar(100)?, driver varchar(30)?, caller_id varchar(50)?, is_campaign tinyint(1), ref_type varchar(30)?, ref_id bigint unsigned?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (agent_user_id), (person_code), (ref_type,ref_id), (status), UNIQUE (vendor_call_id)
 
-## `xlr8_comm_consent` · ~0 rows · model: —
+## `xlr8_comm_consent` · ~0 rows · model: App\Models\Comms\CommConsent
 id bigint unsigned PK, person_code varchar(50), channel varchar(10), granted tinyint(1), source varchar(50)?, changed_by bigint unsigned?, created_at timestamp?, updated_at timestamp?
 Indexes: UNIQUE (person_code,channel)
 
-## `xlr8_comm_otp` · ~0 rows · model: —
+## `xlr8_comm_otp` · ~0 rows · model: App\Models\Comms\CommOtp
 id bigint unsigned PK, person_code varchar(50), purpose varchar(30), destination_masked varchar(30)?, code_hash varchar(255), expires_at timestamp, attempts tinyint unsigned, used_at timestamp?, outbox_id bigint unsigned?, created_at timestamp?, updated_at timestamp?
 Indexes: (person_code), (person_code,purpose,created_at)
 
@@ -87,11 +87,11 @@ Indexes: (person_code), (person_code,purpose,created_at)
 id bigint unsigned PK, channel varchar(10), status varchar(12), driver varchar(30)?, to_address varchar(250)?, to_person_code varchar(50)?, envelope json?, subject varchar(250)?, body_preview text?, payload longtext?, template_code varchar(120)?, template_version int unsigned?, category varchar(15)?, ref_type varchar(30)?, ref_id bigint unsigned?, idempotency_key varchar(191), provider_message_id varchar(150)?, attempts smallint unsigned, error varchar(500)?, units smallint unsigned?, parent_outbox_id bigint unsigned?, actor_id bigint unsigned?, sent_at timestamp?, delivered_at timestamp?, created_at timestamp?, updated_at timestamp?
 Indexes: (channel), UNIQUE (idempotency_key), (provider_message_id), (ref_type,ref_id), (status), (template_code), (to_address), (to_person_code)
 
-## `xlr8_comm_sandbox` · ~0 rows · model: —
+## `xlr8_comm_sandbox` · ~0 rows · model: App\Models\Comms\CommSandbox
 id bigint unsigned PK, outbox_id bigint unsigned?, channel varchar(10), driver varchar(30), to_address varchar(250)?, payload json?, created_at timestamp?
 Indexes: (outbox_id)
 
-## `xlr8_comm_suppression` · ~0 rows · model: —
+## `xlr8_comm_suppression` · ~0 rows · model: App\Models\Comms\CommSuppression
 id bigint unsigned PK, channel varchar(10), address varchar(250), reason varchar(20), note varchar(250)?, created_at timestamp?, updated_at timestamp?
 Indexes: UNIQUE (channel,address)
 

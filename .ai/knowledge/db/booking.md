@@ -57,5 +57,5 @@ id int PK, vehicle_id int, permit varchar(25), inv int, rto_tax varchar(10), tax
 ## `xlr8_booking_stock_master` · ~895 rows · model: App\Models\Module\Booking\Stock
 id int PK, vehicle_oem_code varchar(20)?, model_code varchar(25), chasis_no varchar(25), location_id varchar(20), oem_invoice_no varchar(25)?, oem_invoice_date date?, so_number varchar(25)?, net_price decimal(11,2), v_status varchar(10), age int, stock_type varchar(10), alot_id varchar(15)?, alot_date datetime?, inv_id varchar(15)?, inv_date date?, pdi_ro_id int?, s_count int?, grn_no varchar(25)?, grn_date date?, damage tinyint(1), status int, created_at timestamp, created_by int, updated_at timestamp?, updated_by int?, deleted_at timestamp?, deleted_by int?
 
-## `xlr8_financer_statement` · ~1568 rows · model: —
+## `xlr8_financer_statement` · ~1568 rows · model: App\Models\Module\Finance\FinancerStatement
 id int PK, financier_code varchar(50), trans_date date, trans_description varchar(150), trans_type varchar(5), do_no varchar(150), debit_amount decimal(15,2)?, credit_amount decimal(15,2)?, running_balance bigint?, status int, created_at timestamp, created_by int, updated_at timestamp?, updated_by int?, deleted_at timestamp?, deleted_by int?

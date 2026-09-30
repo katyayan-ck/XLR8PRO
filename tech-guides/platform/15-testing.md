@@ -154,3 +154,11 @@ platform tests.
   for proving the `laravel` driver hands the message to Laravel.)
 - Don't run `php artisan testing:refresh-db` while DEC-051 is open (see `.ai/state/handoff.md`).
 - Don't assert on message wording; copy changes in Templates without a deploy.
+
+## Before / after snapshots of screens (W15, DEC-093)
+`php artisan dev:route-snapshot {users} {spec} {out} [--compare=before.json] [--save=dir]` — local + `xlrm_testing` only.
+Runs every line of a spec file (`GET sales/booking/5/edit`, `POST url {"json":1}`, `AJAX GET url?x=1`) as each user
+inside a rolled-back transaction, stores status + a hash of the normalised body (CSRF tokens, times, hashes and the
+random Backpack menu ids removed), flags 5xx / PHP errors, and with `--compare` lists every changed response. Use it
+before and after a refactor that must not change behaviour (the booking-team log records each run). Full booking spec:
+`tests/RouteSnapshots/booking-all.txt` (242 requests per user, ~10 min).

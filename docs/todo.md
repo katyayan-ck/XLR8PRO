@@ -406,7 +406,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W14b | **Variant level:** feature mapping and management per variant, and an image gallery per variant | ✅ 01-10 (features per trim; gallery bound to trim or colour) |
 | W14c | **Excel import / export** of specifications (per model) and features (per variant), with master-fed dropdowns like the Vehicle Info workbook | ✅ 01-10 (our workbook by codes + your sample format by name, with a match report) |
 | W14d | **Compare vehicles** within the same segment only: intra-model (variants of one model, by features) and inter-model (different models, by specifications) | ✅ 01-10 (admin screen + app API) |
-| W15 | **No `DB::` queries — convert to Eloquent** (your rule 01-10, DEC-093). Guard test + baseline (473 uses / 72 files). Order: W15a services / jobs / console / imports / models / support; W15b admin controllers outside Booking; W15c tests / seeders; W15d Booking controller + booking models (with the booking team) | 🟡 in progress — rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services; 362 uses / 45 files left |
+| W15 | **No `DB::` queries — convert to Eloquent** (your rule 01-10, DEC-093). Guard test + baseline (473 uses / 72 files). Order: W15a services / jobs / console / imports / models / support; W15b admin controllers outside Booking; W15c tests / seeders; W15d Booking controller + booking models (with the booking team) | 🟡 in progress — services / platform / Org / dashboard done; booking code BT-001, BT-002 done (log `docs/booking-team-changes.md`); 349 uses / 45 files left |
 | W16 | **Help & support utility** (your request 01-10, DEC-094) — F1 help pane, page tours, "Still need help?" support request with a diagnostic zip, support admin → executive routing; FRS `tech-guides/frs-and-workflows/frs/help-and-support-frs.md`, plan `…/plans/2026-10-01-help-and-support-DEC-094.md` | 🟡 planned — W16a ✅; build after W15a |
 | W16a | FRS + plan + DEC-094 + to-do | ✅ 01-10 |
 | W16b | Help engine: Markdown articles in `resources/help/`, route → article, `::: can CODE` sections, cache, search, coverage; F1 / `?` right-side pane; Help centre screen | 🔴 |
@@ -1195,3 +1195,20 @@ the workbook content is unchanged.
 models); the numbers and screens are unchanged.
 **Verified:** a new test calls every converted widget; Sales, Dashboard and booking-service tests passed; PHPStan clean.
 **Baseline now:** 362 `DB::` uses in 45 files.
+
+### W15 — booking code (booking team's merged work) brought under DEC-093, with a shareable log
+
+**Delivered:** owner instruction 01-10 — the booking team's final push is merged (`origin/stage` has nothing newer), so
+the booking code is converted too, each change numbered, logged for the booking team in `docs/booking-team-changes.md`
+(where, what, why, before → after, how checked, how to revert) and committed on its own:
+- BT-001 financier-statement lookups (OTF form, DO amount, TA statement) → `FinancerStatement` model;
+- BT-002 single-table lookups (consultant, delivered / RTO ids, variant colours, accessory, person / employee fallback).
+Every change is checked before and after with the new `dev:route-snapshot` command: every screen / AJAX call reaching
+the changed code, as superadmin and a scoped user, rolled back — BT-001 14 / 14 and BT-002 80 / 80 responses identical;
+Sales tests 74 passed.
+**Found:** a full sweep of all 90 booking screens on the unchanged code — 17 screens already fail (BUG-122 and the
+chassis endpoint, known; BUG-223 / 224 / 225, new).
+**Also:** user documentation (manual + help texts) moved to the end of the to-do list (your instruction).
+**Baseline now:** 349 `DB::` uses in 45 files. **Left:** the rest of `BookingCrudController` (grid base query,
+lookups, reports), `QuotationCrudController`, `EnquiryCrudController`, `ImportEnquiriesJob`, `SalesImportController`,
+the other controllers, console, imports, tests.

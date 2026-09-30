@@ -100,3 +100,20 @@ the workbook content is unchanged.
 models); the numbers and screens are unchanged.
 **Verified:** a new test calls every converted widget; Sales, Dashboard and booking-service tests passed; PHPStan clean.
 **Baseline now:** 362 `DB::` uses in 45 files.
+
+### W15 — booking code (booking team's merged work) brought under DEC-093, with a shareable log
+
+**Delivered:** owner instruction 01-10 — the booking team's final push is merged (`origin/stage` has nothing newer), so
+the booking code is converted too, each change numbered, logged for the booking team in `docs/booking-team-changes.md`
+(where, what, why, before → after, how checked, how to revert) and committed on its own:
+- BT-001 financier-statement lookups (OTF form, DO amount, TA statement) → `FinancerStatement` model;
+- BT-002 single-table lookups (consultant, delivered / RTO ids, variant colours, accessory, person / employee fallback).
+Every change is checked before and after with the new `dev:route-snapshot` command: every screen / AJAX call reaching
+the changed code, as superadmin and a scoped user, rolled back — BT-001 14 / 14 and BT-002 80 / 80 responses identical;
+Sales tests 74 passed.
+**Found:** a full sweep of all 90 booking screens on the unchanged code — 17 screens already fail (BUG-122 and the
+chassis endpoint, known; BUG-223 / 224 / 225, new).
+**Also:** user documentation (manual + help texts) moved to the end of the to-do list (your instruction).
+**Baseline now:** 349 `DB::` uses in 45 files. **Left:** the rest of `BookingCrudController` (grid base query,
+lookups, reports), `QuotationCrudController`, `EnquiryCrudController`, `ImportEnquiriesJob`, `SalesImportController`,
+the other controllers, console, imports, tests.
