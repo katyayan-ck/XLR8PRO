@@ -5,21 +5,30 @@ declare(strict_types=1);
 namespace App\Services\Platform\Settings;
 
 use App\Models\User;
+use App\Models\Vehicle\Pricing\TcsConfig;
+use App\Services\Vehicle\Pricing\PricingHoldService;
+use App\Services\Vehicle\Pricing\Rules\TcsConfigService;
 use App\Support\Result;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 /**
  * The categorised Settings interface (DEC-091, to-do W13): which tabs a user may open, the keys of each section with
  * their current values, and saving a section. The layout comes from `config/settings_ui.php`; values, types, defaults
  * and every write stay with SettingsService (the only writer). Keys stored or seeded but not in the layout are shown in
- * the "Other" tab, except the superseded legacy keys in `settings_ui.hidden`.
+ * the "Other" tab, except the superseded legacy keys in `settings_ui.hidden`. Service-backed sections (`handler`) show
+ * and save values owned by another service: price-list holds (PricingHoldService) and TCS (TcsConfigService).
  */
 final class SettingsCatalogue
 {
     /** @var array<string, array<string, mixed>>|null key => admin-list row */
     private ?array $rows = null;
 
-    public function __construct(private readonly SettingsService $settings) {}
+    public function __construct(
+        private readonly SettingsService $settings,
+        private readonly PricingHoldService $holds,
+        private readonly TcsConfigService $tcs,
+    ) {}
 
     /**
      * Tabs the user may open, with their sections and resolved keys (label, type, value, input, overrides …).
@@ -35,6 +44,12 @@ final class SettingsCatalogue
             }
             $sections = [];
             foreach ($def['sections'] as $section => $sectionDef) {
+                if (isset($sectionDef['handler'])) {
+                    $sections[$section] = ['label' => $sectionDef['label'], 'handler' => $sectionDef['handler'], 'keys' => [],
+                        'data' => $this->handlerData($sectionDef['handler'])];
+
+                    continue;
+                }
                 $sections[$section] = ['label' => $sectionDef['label'], 'keys' => array_map(
                     fn (string $key) => $this->describe($key, $sectionDef['keys'][$key]),
                     array_keys($sectionDef['keys']),
@@ -57,7 +72,7 @@ final class SettingsCatalogue
     {
         foreach (config('settings_ui.tabs', []) as $tab => $def) {
             foreach ($def['sections'] as $section) {
-                if (array_key_exists($key, $section['keys'])) {
+                if (array_key_exists($key, $section['keys'] ?? [])) {
                     return $tab;
                 }
             }
@@ -84,13 +99,17 @@ final class SettingsCatalogue
     public function saveSection(User $user, string $tab, string $section, array $input): Result
     {
         $def = $this->layout()[$tab] ?? null;
-        $keys = $def['sections'][$section]['keys'] ?? null;
-        if ($def === null || $keys === null) {
+        $sectionDef = $def['sections'][$section] ?? null;
+        if ($def === null || $sectionDef === null) {
             return Result::fail('SETTINGS_NOT_FOUND', __('errors.SETTINGS_NOT_FOUND'));
         }
         if (! $this->allowed($user, $def['permissions'])) {
             return Result::fail('AUTH_FORBIDDEN', __('errors.AUTH_FORBIDDEN'));
         }
+        if (isset($sectionDef['handler'])) {
+            return $this->saveHandler($sectionDef['handler'], $input, (int) $user->id);
+        }
+        $keys = $sectionDef['keys'];
 
         $values = [];
         $rules = [];
@@ -145,14 +164,14 @@ final class SettingsCatalogue
         return Result::ok(['saved' => $saved]);
     }
 
-    /** @return array<string, array{label: string, icon: string, permissions: list<string>, sections: array<string, array{label: string, keys: array<string, array<string, mixed>>}>}> */
+    /** @return array<string, array{label: string, icon: string, permissions: list<string>, sections: array<string, array{label: string, handler?: string, keys?: array<string, array<string, mixed>>}>}> */
     private function layout(): array
     {
         $tabs = config('settings_ui.tabs', []);
         $listed = [];
         foreach ($tabs as $def) {
             foreach ($def['sections'] as $section) {
-                $listed += array_flip(array_keys($section['keys']));
+                $listed += array_flip(array_keys($section['keys'] ?? []));
             }
         }
 
@@ -172,6 +191,66 @@ final class SettingsCatalogue
         }
 
         return $tabs;
+    }
+
+    /**
+     * Current values of a service-backed section.
+     *
+     * @return array<string, mixed>
+     */
+    private function handlerData(string $handler): array
+    {
+        if ($handler === 'pricing_holds') {
+            return ['lists' => PricingHoldService::LISTS, 'held' => $this->holds->heldLists()];
+        }
+        if ($handler === 'tcs') {
+            $current = TcsConfig::current();
+
+            return ['limit_amount' => $current->getAttribute('limit_amount'), 'rate_pct' => $current->getAttribute('rate_pct')];
+        }
+
+        return [];
+    }
+
+    /**
+     * Save a service-backed section: holds put on / reopen only the lists that changed; TCS goes through its entity
+     * service (its field rules apply).
+     *
+     * @param  array<string, mixed>  $input
+     */
+    private function saveHandler(string $handler, array $input, int $userId): Result
+    {
+        if ($handler === 'pricing_holds') {
+            $wanted = array_values(array_intersect(array_keys(PricingHoldService::LISTS), array_map('strtoupper', (array) ($input['held'] ?? []))));
+            $current = $this->holds->heldLists();
+            $on = array_values(array_diff($wanted, $current));
+            $off = array_values(array_diff($current, $wanted));
+            if ($on !== []) {
+                $this->holds->hold($on, null, 'Settings → Pricing', $userId);
+            }
+            if ($off !== []) {
+                $this->holds->reopen($off, 'Settings → Pricing', $userId);
+            }
+
+            return Result::ok(['saved' => array_merge($on, $off)]);
+        }
+
+        if ($handler === 'tcs') {
+            $data = ['limit_amount' => $input['limit_amount'] ?? null, 'rate_pct' => $input['rate_pct'] ?? null];
+            $before = $this->handlerData('tcs');
+            if ((float) $before['limit_amount'] === (float) $data['limit_amount'] && (float) $before['rate_pct'] === (float) $data['rate_pct']) {
+                return Result::ok(['saved' => []]);
+            }
+            try {
+                $this->tcs->saveCurrent($data);
+            } catch (ValidationException $e) {
+                return Result::fail('VALIDATION_FAILED', __('errors.VALIDATION_FAILED'), ['errors' => $e->errors()]);
+            }
+
+            return Result::ok(['saved' => ['tcs']]);
+        }
+
+        return Result::fail('SETTINGS_NOT_FOUND', __('errors.SETTINGS_NOT_FOUND'));
     }
 
     /** @return array<string, mixed> */

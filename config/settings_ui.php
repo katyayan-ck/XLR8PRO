@@ -10,6 +10,7 @@
 | the "Other" tab, so nothing is hidden.
 |
 | Tab `permissions`: any one of them opens the tab (DEC-091: UTL_SETTINGS_MANAGE for all; pricing also PRC_WKFL_MANAGE).
+| A section may instead name a `handler` (pricing_holds, tcs): its values live in their own service, not in settings.
 | Key options: input = text | url | email | number | switch | select | textarea | secret | image | json | readonly;
 | `options` (select), `min` / `max` (number), `help`.
 */
@@ -90,6 +91,9 @@ return [
         'pricing' => [
             'label' => 'Pricing', 'icon' => 'la-rupee-sign', 'permissions' => ['UTL_SETTINGS_MANAGE', 'PRC_WKFL_MANAGE'],
             'sections' => [
+                // service-backed (DEC-091 owner answer 2): holds through PricingHoldService, TCS through TcsConfigService
+                'holds' => ['label' => 'Price-list hold', 'handler' => 'pricing_holds'],
+                'tcs' => ['label' => 'TCS', 'handler' => 'tcs'],
                 'insurance' => ['label' => 'Insurance', 'keys' => [
                     'pricing.insurance.od_discount_pct' => ['input' => 'number', 'min' => 0, 'max' => 100],
                     'pricing.insurance.gst_pct' => ['input' => 'number', 'min' => 0, 'max' => 100],

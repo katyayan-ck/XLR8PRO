@@ -188,9 +188,6 @@
                 <a class="dropdown-item" href="{{ route('pricing.workflow.index') }}"><i class="la la-stream me-2"></i>Pricing Process</a>
                 <a class="dropdown-item" href="{{ route('pricing.lookup') }}"><i class="la la-search-dollar me-2"></i>Price Lookup</a>
             @endif
-            @if ($u->can('PRC_HOLD_VIEW'))
-                <a class="dropdown-item" href="{{ route('pricing.hold.index') }}"><i class="la la-pause-circle me-2"></i>Price Holds</a>
-            @endif
             @if ($pricingMasters !== [])
                 <div class="dropdown-divider"></div>
                 <h6 class="dropdown-header">Masters</h6>
@@ -202,9 +199,7 @@
                 @endif
                 <div class="dropdown-divider"></div>
             @endif
-            @if ($u->can('PRC_TCS_VIEW'))
-                <a class="dropdown-item" href="{{ route('pricing.tcs.index') }}"><i class="la la-percent me-2"></i>TCS</a>
-            @endif
+            {{-- Price holds and TCS live on Utilities → Settings → Pricing (DEC-091) --}}
             {{-- RTO / Insurance Rules are pricing masters now (DEC-083); the old screens keep their test calculators by URL --}}
         </x-backpack::menu-dropdown>
     @endif

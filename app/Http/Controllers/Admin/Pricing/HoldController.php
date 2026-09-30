@@ -8,20 +8,14 @@ use Illuminate\Http\Request;
 
 class HoldController extends Controller
 {
+    /** Holds are managed on Settings → Pricing now (DEC-091); the old address leads there. */
     public function index()
     {
         if (! backpack_user()->can('PRC_HOLD_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view price holds.');
         }
 
-        $holds = Hold::orderBy('scope')->get()->keyBy('scope');
-        $scopes = ['ALL', 'PV', 'CV', 'LMM', 'BEV', 'CSD', 'TAXI'];
-
-        return view('admin.pricing.hold.index', [
-            'title' => 'Price Hold Management',
-            'holds' => $holds,
-            'scopes' => $scopes,
-        ]);
+        return redirect()->route('utils.settings.index', ['tab' => 'pricing']);
     }
 
     public function hold(Request $request)

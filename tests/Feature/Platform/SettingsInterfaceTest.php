@@ -3,7 +3,10 @@
 namespace Tests\Feature\Platform;
 
 use App\Models\User;
+use App\Models\Vehicle\Pricing\Hold;
+use App\Models\Vehicle\Pricing\TcsConfig;
 use App\Services\Platform\Settings\SettingsService;
+use App\Services\Vehicle\Pricing\PricingHoldService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
@@ -49,6 +52,40 @@ class SettingsInterfaceTest extends TestCase
 
         $this->put('/admin/utils/settings/site/dealership', ['settings' => ['dealership__name' => 'X']])->assertForbidden();
         $this->put('/admin/utils/settings', ['key' => 'dealership.name', 'value' => 'X'])->assertForbidden();
+    }
+
+    public function test_the_pricing_tab_puts_lists_on_hold_and_reopens_them_through_the_hold_service(): void
+    {
+        Hold::query()->update(['is_held' => false]);
+        $this->actingAs($this->userWith('PRC_WKFL_MANAGE'), 'backpack');
+        $holds = app(PricingHoldService::class);
+
+        $this->put('/admin/utils/settings/pricing/holds', ['settings' => ['held' => ['PV', 'CSD']]])->assertSessionHasNoErrors();
+        $this->assertSame(['CSD', 'PV'], $holds->heldLists());
+
+        $this->put('/admin/utils/settings/pricing/holds', ['settings' => ['held' => ['CSD']]]);
+        $this->assertSame(['CSD'], $holds->heldLists());
+        $this->get('/admin/utils/settings?tab=pricing')->assertSee('On hold');
+    }
+
+    public function test_the_pricing_tab_saves_tcs_through_its_entity_service(): void
+    {
+        $this->actingAs($this->userWith('PRC_WKFL_MANAGE'), 'backpack');
+
+        $this->put('/admin/utils/settings/pricing/tcs', ['settings' => ['limit_amount' => '1200000', 'rate_pct' => '1.5']])->assertSessionHasNoErrors();
+        $current = TcsConfig::current();
+        $this->assertSame([1200000.0, 1.5], [(float) $current->limit_amount, (float) $current->rate_pct]);
+
+        $this->put('/admin/utils/settings/pricing/tcs', ['settings' => ['limit_amount' => '1200000', 'rate_pct' => '150']])
+            ->assertSessionHasErrors('settings.rate_pct');
+    }
+
+    public function test_the_old_hold_and_tcs_pages_lead_to_settings(): void
+    {
+        $this->actingAs(User::whereHas('roles', fn ($q) => $q->where('name', 'superadmin'))->firstOrFail(), 'backpack');
+
+        $this->get(route('pricing.hold.index'))->assertRedirect(route('utils.settings.index', ['tab' => 'pricing']));
+        $this->get(route('pricing.tcs.index'))->assertRedirect(route('utils.settings.index', ['tab' => 'pricing']));
     }
 
     public function test_others_cannot_open_settings(): void

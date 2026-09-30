@@ -233,3 +233,12 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - **Removed:** `app/Http/Middleware/ApplySiteSettings.php` and its registration (the app name stays "Xceler8 DMS").
 - **Rule:** `.ai/rules/ui.md` — image / file fields show the current file with Remove.
 - **Tests:** `SiteSettingsApplyTest` rewritten (4). Platform + admin suites 126 passed; full PHPStan clean.
+
+## W13 Phase 4 — Price-list holds and TCS on Settings → Pricing (DEC-091)
+- `config/settings_ui.php` (handler sections `holds`, `tcs`), `SettingsCatalogue` (`handlerData()`, `saveHandler()`:
+  holds via `PricingHoldService` — only changed lists; TCS via `TcsConfigService::saveCurrent()`), settings view (switch
+  per list with "On hold" badges; threshold / rate fields), `HoldController::index()` / `TcsConfigController::index()`
+  redirect to Settings → Pricing, menu entries "Price Holds" / "TCS" removed. Tests: `SettingsInterfaceTest` +3 (8).
+  Pricing + platform + sales suites 151 passed; full PHPStan clean.
+- **Unused now (deletion needs your OK):** `resources/views/admin/pricing/hold/index.blade.php`,
+  `resources/views/admin/pricing/tcs/index.blade.php`.

@@ -109,6 +109,15 @@ opens only Pricing; nobody else sees the screen or the menu item.
   `settings_ui.php` image keys take `default` (built-in path); `settings_ui.hidden` keeps superseded legacy keys
   (`site.name`, `site.slogan`, `site.logo`, `brand.name`) off the screen.
 
+## Service-backed sections (DEC-091 Phase 4)
+A section in `settings_ui.php` may name a `handler` instead of keys; `SettingsCatalogue` shows its data and saves it
+through the owning service:
+- `pricing_holds` — one switch per `PricingHoldService::LISTS`; save puts on hold / reopens only the lists that changed
+  (reason "Settings → Pricing"); the pricing process keeps its own hold steps on the same records.
+- `tcs` — threshold (₹) and rate (%) through `TcsConfigService::saveCurrent()` (entity rules apply; a change triggers the
+  automatic recalculation, DEC-083).
+The old `pricing.hold.index` / `pricing.tcs.index` pages redirect to Settings → Pricing; their menu entries are gone.
+
 ## Events & testing
 `SettingsChanged` (key, old, new, scope, actor; values hidden for encrypted keys). See [15-testing.md](15-testing.md); every code is in
 [16-reference.md](16-reference.md).

@@ -393,10 +393,10 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W5 | Q7 UI clean-up outside Sales (hex / inline styles → shared layer, same method as the Sales pass) | 🔴 |
 | W6 | U7 web side: admin flash messages through the error codes / language file (same wording) | ✅ 30-09 (225 calls → `{module}.flash.*`) |
 | W7 | U4 N+1 review of the big lists (enquiries, bookings, quotations) | 🔴 |
-| W13 | **One categorised Settings interface** (your request 30-09) — the only place settings are shown; changes apply at once on web and app / API. Today they are spread over Utilities → Settings (56 keys), the legacy System Setting screen, and the pricing TCS / Hold screens. Parts W13a–W13f; plan to be saved in `tech-guides/frs-and-workflows/plans/` | 🟡 in progress — Phases 1–3 ✅ + W13g ✅; Phase 4 (pricing holds / TCS) next; DEC-091 |
+| W13 | **One categorised Settings interface** (your request 30-09) — the only place settings are shown; changes apply at once on web and app / API. Today they are spread over Utilities → Settings (56 keys), the legacy System Setting screen, and the pricing TCS / Hold screens. Parts W13a–W13f; plan to be saved in `tech-guides/frs-and-workflows/plans/` | 🟡 in progress — Phases 1–4 ✅ + W13g ✅; Phase 5 (profile-field flags, appearance switch) next; DEC-091 |
 | W13a | **Site / dealership:** name (default "Bikaner Motors"), website URL (default https://www.BikanerMotors.com), logo, address, favicon, e-mail, phone, GSTIN …; applied across the interface (header, login, PDFs, mails) | ✅ 30-09 (Phase 2; mail from-name comes with Phase 3) |
 | W13b | **Communication:** global on / off per channel (mail, SMS, WhatsApp, push), SMTP settings used by the mail service, mail signature appended to every mail, plus the existing comms settings | ✅ 30-09 (Phase 3) |
-| W13c | **Pricing:** global / per-list price-list hold, TCS threshold and rate, and the existing pricing settings; also open to the pricing-manage permission | 🔴 |
+| W13c | **Pricing:** global / per-list price-list hold, TCS threshold and rate, and the existing pricing settings; also open to the pricing-manage permission | ✅ 30-09 (Phase 4) |
 | W13d | **User behaviour:** Appearance panel on / off; which profile fields a user may change (name, e-mail, profile photo, mobile, Aadhaar, PAN, password, DOB, DOJ, marital status, gender) — enforced on web and API | 🔴 |
 | W13e | **Other module / utility settings** (security, data scope, documents, tickets / SLA, chat, notifications, approvals, display / date format, density …) grouped in the same interface | ✅ 30-09 (Phase 1: Security, Modules & utilities, Other tabs) |
 | W13f | **Access and single place:** only the settings-manage permission (pricing group also pricing-manage); remove the other settings screens / menu entries; API reads the same values (cache flush on save) | 🔴 |
@@ -1009,3 +1009,13 @@ show the current (or built-in) image with a Remove button and the drop-zone uplo
 dealership name as text. The image-field rule is now in the project UI rules.
 
 **Verified:** 4 feature tests; platform + admin suites 126 passed; render smoke of the dashboard and the Site tab.
+
+### 20. Price-list holds and TCS on Settings → Pricing — W13 Phase 4 (DEC-091)
+
+**Delivered:** pricing managers (and settings managers) put price lists on hold / reopen them and set the TCS threshold
+and rate on Settings → Pricing; the pricing process keeps its own hold steps on the same records; TCS changes go through
+its entity rules and trigger the automatic recalculation. The old Price Holds and TCS pages lead to the new tab and are
+off the menu.
+
+**Verified:** 3 new feature tests (holds on / off, TCS save + validation, old pages redirect); pricing + platform + sales
+suites 151 passed. **Left:** delete the two unused views once you agree.

@@ -201,3 +201,13 @@ show the current (or built-in) image with a Remove button and the drop-zone uplo
 dealership name as text. The image-field rule is now in the project UI rules.
 
 **Verified:** 4 feature tests; platform + admin suites 126 passed; render smoke of the dashboard and the Site tab.
+
+### 20. Price-list holds and TCS on Settings → Pricing — W13 Phase 4 (DEC-091)
+
+**Delivered:** pricing managers (and settings managers) put price lists on hold / reopen them and set the TCS threshold
+and rate on Settings → Pricing; the pricing process keeps its own hold steps on the same records; TCS changes go through
+its entity rules and trigger the automatic recalculation. The old Price Holds and TCS pages lead to the new tab and are
+off the menu.
+
+**Verified:** 3 new feature tests (holds on / off, TCS save + validation, old pages redirect); pricing + platform + sales
+suites 151 passed. **Left:** delete the two unused views once you agree.

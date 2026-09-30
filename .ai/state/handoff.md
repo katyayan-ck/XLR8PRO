@@ -22,6 +22,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: W13 Phase 4 — holds and TCS on Settings → Pricing; old pages redirect.
 - 30-09: W13g — title / footer / menu brand / tagline / image fields as the owner asked.
 - 30-09: W13 Phase 3 — channel switches (OTP exempt), SMTP from settings, signature, default sender.
 - 30-09: W13 Phase 2 — dealership name / favicon / legal name applied (`ApplySiteSettings`, `dealership()`, `site_favicon_url()`).
@@ -54,7 +55,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-- **Now: W13 Phase 4** (DEC-091) — Pricing tab: price-list holds (global + per list) through `PricingHoldService` (`hold` / `reopen` / `heldLists`), TCS threshold / rate through `TcsConfigService::saveCurrent()` (service-backed sections in `SettingsCatalogue`); the Hold and TCS screens redirect to Settings → Pricing; tests. Phases 1–3 + W13g done.
+- **Now: W13 Phase 5** (DEC-091) — User behaviour: enforce `account.can_change_{email,mobile,aadhaar,pan,dob,doj,marital_status,gender}` (with the existing display name / photo / password flags) in `MyAccountService` + the My Account screen + the API profile endpoints (fields read-only when off); `ui.appearance_enabled` hides the Appearance panel / button; tests. Phases 1–4 + W13g done.
 0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). W3 ✅ (15 Sales HTTP tests; BUG-219 open, BUG-220 fixed). W4 ✅ (baseline, full analyse clean; BUG-221). W6 ✅ (225 flash calls → lang `flash` groups; FlashMessagesLangTest). Next step: W5 (UI clean-up outside Sales: hex / inline styles → shared layer, same method as the Sales pass), then W7 (N+1 review). Then W4 (PHPStan baseline), W5, W6, W7.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.
@@ -62,6 +63,7 @@
    booking forms.
 
 ## Waiting on the owner
+- Deletion OK? `resources/views/admin/pricing/hold/index.blade.php` and `resources/views/admin/pricing/tcs/index.blade.php` are unused since W13 Phase 4.
 - Deploy note (W13 Phase 2): set Settings → Site → Dealership name on UAT — a leftover demo value (local: "ABC Motors") would show in the header.
 - BUG-219: should a `Dummy` booking still need the base fields (name, mobile, branch, vehicle, sale type)? Today they are skipped.
 - DEC-090 (agent, within DEC-089): workbook `ALL` = unrestricted (no scope rows, so it also covers codes added later); `NONE` on an org add-on = primary only; a new employee must list vertical codes (no `ALL`). Say if `ALL` should mean today's codes only.

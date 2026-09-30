@@ -36,6 +36,50 @@
             @foreach ($tabs as $tabKey => $tab)
                 <div class="tab-pane fade @if ($tabKey === $active) show active @endif" id="tab-{{ $tabKey }}" role="tabpanel">
                     @foreach ($tab['sections'] as $sectionKey => $section)
+                        @if (isset($section['handler']))
+                            {{-- Service-backed section (DEC-091): holds → PricingHoldService, TCS → TcsConfigService --}}
+                            <div class="card mb-3 xl-settings-section">
+                                <div class="card-header"><h3 class="card-title mb-0">{{ $section['label'] }}</h3></div>
+                                <div class="card-body">
+                                    <form method="POST" action="{{ route('utils.settings.section', [$tabKey, $sectionKey]) }}" class="xl-settings-form">
+                                        @csrf @method('PUT')
+                                        @if ($section['handler'] === 'pricing_holds')
+                                            <p class="small text-body-secondary mb-2">A held list is not sold at the published price (quotations and bookings are blocked) until it is reopened. The pricing process uses the same holds.</p>
+                                            <div class="row g-2 xl-setting" data-search="price list hold {{ strtolower(implode(' ', $section['data']['lists'])) }}">
+                                                @foreach ($section['data']['lists'] as $code => $label)
+                                                    <div class="col-12 col-sm-6 col-lg-4">
+                                                        <label class="form-check form-switch mb-0">
+                                                            <input type="checkbox" name="settings[held][]" value="{{ $code }}" class="form-check-input" @checked(in_array($code, $section['data']['held'], true))>
+                                                            <span class="form-check-label">{{ $label }} @if (in_array($code, $section['data']['held'], true))<span class="badge bg-red-lt ms-1">On hold</span>@endif</span>
+                                                        </label>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @elseif ($section['handler'] === 'tcs')
+                                            <div class="row g-2 xl-setting" data-search="tcs threshold limit rate">
+                                                <div class="col-12 col-sm-6">
+                                                    <label for="tcs-limit" class="form-label mb-0 fw-medium">TCS threshold (₹)</label>
+                                                    <input type="number" id="tcs-limit" name="settings[limit_amount]" min="0" step="1" required
+                                                           value="{{ old('settings.limit_amount', $section['data']['limit_amount']) }}" class="form-control form-control-sm @error('settings.limit_amount') is-invalid @enderror">
+                                                    @error('settings.limit_amount')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                                </div>
+                                                <div class="col-12 col-sm-6">
+                                                    <label for="tcs-rate" class="form-label mb-0 fw-medium">TCS rate (%)</label>
+                                                    <input type="number" id="tcs-rate" name="settings[rate_pct]" min="0" max="100" step="0.01" required
+                                                           value="{{ old('settings.rate_pct', $section['data']['rate_pct']) }}" class="form-control form-control-sm @error('settings.rate_pct') is-invalid @enderror">
+                                                    @error('settings.rate_pct')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                                </div>
+                                                <div class="col-12 small text-body-secondary">Published prices are recalculated in the background within a few minutes; quotations then use the new rule.</div>
+                                            </div>
+                                        @endif
+                                        <div class="d-flex justify-content-end mt-2">
+                                            <button type="submit" class="btn btn-primary btn-sm"><i class="la la-save me-1"></i> Save {{ strtolower($section['label']) }}</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            @continue
+                        @endif
                         @php
                             $fields = array_filter($section['keys'], fn ($s) => $s['input'] !== 'image');
                             $images = array_filter($section['keys'], fn ($s) => $s['input'] === 'image');
