@@ -54,3 +54,11 @@ vehicle models, names each row's model and variant, and logs file, rows, size an
 **Verified:** new `AccessoryExportTest` (writes the file, checks the names and the log); full PHPStan clean, baseline
 2,500. **Left:** the dead Booking dashboard helpers, spare-master relations and production RBAC seeder need your OK
 to delete (BUG-221).
+
+### W15 — pricing session + vehicle content off the DB facade
+
+**Delivered:** the pricing process's change log (used by Discard) and impact summary, and the vehicle content screens,
+now reach the database only through Eloquent models (new `SessionChange` model). Discard still restores rows exactly as
+they were.
+**Verified:** Pricing + Vehicle feature tests (98) passed; PHPStan clean on the changed files.
+**Baseline now:** 460 `DB::` uses in 68 files.

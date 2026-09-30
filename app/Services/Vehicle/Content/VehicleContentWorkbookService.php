@@ -10,7 +10,6 @@ use App\Models\Vehicle\SpecItem;
 use App\Models\Vehicle\TrimFeature;
 use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
-use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -80,7 +79,7 @@ final class VehicleContentWorkbookService
         $items = FeatureItem::query()->where('is_active', true)->orderBy('feature_group')->orderBy('sort')->orderBy('name')->get();
         $values = TrimFeature::query()->get(['variant_code', 'feature_item_code', 'value'])->groupBy('variant_code')
             ->map(fn ($rows) => $rows->pluck('value', 'feature_item_code'));
-        $trims = Variant::query()->whereNotNull('model_code')->select('model_code', 'code', DB::raw('MAX(display_name) as label'))
+        $trims = Variant::query()->whereNotNull('model_code')->selectRaw('model_code, code, MAX(display_name) as label')
             ->groupBy('model_code', 'code')->orderBy('label')->get()->groupBy('model_code');
 
         foreach (VehicleModel::query()->where('is_active', true)->orderBy('name')->get(['code', 'name']) as $model) {

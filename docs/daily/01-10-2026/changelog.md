@@ -83,3 +83,15 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 - **Guard:** `tests/Unit/Architecture/NoDbFacadeQueriesTest.php` + `db-facade-baseline.json` (473 legacy uses in 72 files;
   ratchet — never grows, conversions lower it; comments ignored).
 - **To-do:** W15 (conversion plan W15a–d).
+
+## W15 — pricing session + vehicle content off the DB facade
+- **New model:** `App\Models\Vehicle\Pricing\SessionChange` (the Discard log table; `before` cast to array, `ofSession()` scope).
+- **Converted:** `PricingChangeRecorder` (log / rollback through `SessionChange` and each recorded model's query —
+  `withoutGlobalScopes()->whereKey()->toBase()`, so undo still writes the stored values without events, timestamps or
+  actor stamps; the recorded-model list moved from `AppServiceProvider` to `PricingChangeRecorder::MODELS`),
+  `PricingImpactService` (change reads via the model; calculable-vehicles join via `Variant::withTrashed()->from()` with
+  both soft-delete filters written out — same SQL), `VehicleContentService` / `VehicleContentWorkbookService`
+  (`DB::raw` → `selectRaw`).
+- **Guides:** `tech-guides/architecture/model-reference.md`, `tech-guides/modules/pricing.md`.
+- **Tests:** Pricing + Vehicle feature suites 98 passed.
+- **Baseline:** 460 uses in 68 files left.

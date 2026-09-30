@@ -28,6 +28,7 @@ are local only — pushing again needs the owner's approval in that turn. Not me
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 01-10: W15 — pricing session + vehicle content off the DB facade (baseline 460 / 68).
 - 01-10: DEC-093 — rule "no `DB::` queries, Eloquent only" + guard test with a shrinking baseline; W15 opened.
 - 01-10: BUG-221 part — accessory export repaired (SQL error on scoped rows, wrong export-log columns); PHPStan baseline 2,500.
 - 01-10: W6 remainder — 17 admin error messages no longer show raw exception text (`ErrorRef::userMessage()`).
@@ -40,10 +41,10 @@ are local only — pushing again needs the owner's approval in that turn. Not me
   `docs/daily/30-09-2026/`.
 
 ## In progress / next
-- **W15 (DEC-093) — convert `DB::` queries to Eloquent.** Rule + guard test done. Next step: W15a — `app/Services`,
-  `app/Jobs`, `app/Console`, `app/Imports`, `app/Models`, `app/Support` file by file (model per table; behaviour identical;
-  run the file's tests; lower `tests/Unit/Architecture/db-facade-baseline.json` with
-  `UPDATE_DB_FACADE_BASELINE=1 php artisan test --compact tests/Unit/Architecture/NoDbFacadeQueriesTest.php`).
+- **W15 (DEC-093) — convert `DB::` queries to Eloquent** (460 uses / 68 files left). Done: rule + guard; pricing session + vehicle content.
+  Next step: W15a continued — `app/Services/Vehicle/Pricing/{RtoService,InsuranceService,PricingResetService}.php`, `AccessoryService`, then Platform services (Settings, Comms, Chat, Ticket, Templates, Notify), Org / IAM services, Dashboard, Booking services, jobs, console, imports, models.
+  Method: model per table (new models for tables without one), behaviour identical, run the file's tests, then lower
+  the baseline: `UPDATE_DB_FACADE_BASELINE=1 php artisan test --compact tests/Unit/Architecture/NoDbFacadeQueriesTest.php`.
 - Before W15: Every to-do row W1–W14 is ✅; the remaining 🟡 rows (S4/S5/S7/S9/S12/S14, SL6, O8, DA4, Q*, U2,
   F3, N2) each wait on an owner decision, a package approval or are "converge when touched".
 - **Unblocked follow-ups, in order:**

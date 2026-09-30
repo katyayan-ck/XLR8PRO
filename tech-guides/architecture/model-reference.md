@@ -124,6 +124,7 @@ that is the only write path (DEC-050); blank = written by its owning service / c
 | `Vehicle\Pricing\PricingHistory` | `xlr8_vehicle_pricing_history` |  | [pricing](../modules/pricing.md) |
 | `Vehicle\Pricing\Profile` | `xlr8_vehicle_pricing_profile` |  | [pricing](../modules/pricing.md) |
 | `Vehicle\Pricing\RtoRule` | `xlr8_vehicle_pricing_rto_rules` | `Vehicle\Pricing\Rules\RtoRuleService` | [pricing](../modules/pricing.md) |
+| `Vehicle\Pricing\SessionChange` | `xlr8_vehicle_pricing_session_changes` | written only by `Session\PricingChangeRecorder` (append-only log) | [pricing](../modules/pricing.md) |
 | `Vehicle\Pricing\SheetHeader` | `xlr8_vehicle_pricing_sheet_headers` |  | [pricing](../modules/pricing.md) |
 | `Vehicle\Pricing\Snapshot` | `xlr8_vehicle_pricing_snapshots` |  | [pricing](../modules/pricing.md) |
 | `Vehicle\Pricing\TcsConfig` | `xlr8_vehicle_pricing_tcs_config` | `Vehicle\Pricing\Rules\TcsConfigService` | [pricing](../modules/pricing.md) |

@@ -13,7 +13,6 @@ use App\Models\Vehicle\VehicleModel;
 use App\Models\Vehicle\VehicleTrim;
 use App\Support\Result;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Exceptions\FileCannotBeAdded;
@@ -42,8 +41,8 @@ final class VehicleContentService
     public function overview(): array
     {
         $models = VehicleModel::query()->where('is_active', true)->orderBy('segment_code')->orderBy('name')->get(['id', 'code', 'name', 'segment_code']);
-        $specs = ModelSpec::query()->whereNotNull('value')->select('model_code', DB::raw('COUNT(*) as n'))->groupBy('model_code')->pluck('n', 'model_code');
-        $trims = Variant::query()->whereNotNull('model_code')->select('model_code', DB::raw('COUNT(DISTINCT code) as n'))->groupBy('model_code')->pluck('n', 'model_code');
+        $specs = ModelSpec::query()->whereNotNull('value')->selectRaw('model_code, COUNT(*) as n')->groupBy('model_code')->pluck('n', 'model_code');
+        $trims = Variant::query()->whereNotNull('model_code')->selectRaw('model_code, COUNT(DISTINCT code) as n')->groupBy('model_code')->pluck('n', 'model_code');
         $media = Media::query()->where('model_type', VehicleModel::class)->whereIn('collection_name', ['images', 'brochure'])
             ->get(['model_id', 'collection_name'])->groupBy('model_id');
 
@@ -75,9 +74,9 @@ final class VehicleContentService
         }
 
         $featureCounts = TrimFeature::query()->whereIn('variant_code', Variant::query()->where('model_code', $model->code)->select('code'))
-            ->whereNotNull('value')->select('variant_code', DB::raw('COUNT(*) as n'))->groupBy('variant_code')->pluck('n', 'variant_code');
+            ->whereNotNull('value')->selectRaw('variant_code, COUNT(*) as n')->groupBy('variant_code')->pluck('n', 'variant_code');
         $trims = Variant::query()->where('model_code', $model->code)
-            ->select('code', DB::raw('MAX(display_name) as name'), DB::raw('COUNT(*) as colours'))->groupBy('code')->orderBy('name')->get()
+            ->selectRaw('code, MAX(display_name) as name, COUNT(*) as colours')->groupBy('code')->orderBy('name')->get()
             ->map(fn ($v) => ['code' => (string) $v->code, 'name' => (string) $v->getAttribute('name'), 'colours' => (int) $v->getAttribute('colours'),
                 'features' => (int) ($featureCounts[$v->code] ?? 0)])->all();
 

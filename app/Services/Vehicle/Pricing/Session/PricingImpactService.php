@@ -6,12 +6,12 @@ namespace App\Services\Vehicle\Pricing\Session;
 
 use App\Models\Vehicle\Pricing\ImportSession;
 use App\Models\Vehicle\Pricing\Pricing;
+use App\Models\Vehicle\Pricing\SessionChange;
 use App\Models\Vehicle\Variant;
 use App\Services\Vehicle\Pricing\Import\AddonDiscountWorkbookService;
 use App\Services\Vehicle\Pricing\PricingHoldService;
 use App\Services\Vehicle\VehicleCompleteness;
 use App\Services\Vehicle\VehicleService;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Step 7 — the impact summary (DEC-073 / DEC-079), always shown before Calculate & Publish. Computed live from the
@@ -31,8 +31,6 @@ use Illuminate\Support\Facades\DB;
 class PricingImpactService
 {
     public const LISTS = ['PV', 'CV', 'BEV', 'LMM', 'LMM_TZU', 'CSD'];
-
-    private const CHANGES = 'xlr8_vehicle_pricing_session_changes';
 
     public function __construct(
         private readonly PricingHoldService $holds,
@@ -84,10 +82,10 @@ class PricingImpactService
     private function vehicleChanges(ImportSession $session): array
     {
         $table = (new Variant)->getTable();
-        $changes = DB::table(self::CHANGES)->where('import_session_id', $session->id)->where('table_name', $table)->get(['row_id', 'action', 'before']);
+        $changes = SessionChange::query()->ofSession($session->id)->where('table_name', $table)->get(['row_id', 'action', 'before']);
         $new = $changes->where('action', 'insert')->pluck('row_id')->unique();
         $wasInactive = $changes->where('action', 'update')
-            ->filter(fn ($c) => array_key_exists('is_active', $b = (array) json_decode((string) $c->before, true)) && ! $b['is_active'])
+            ->filter(fn (SessionChange $c) => array_key_exists('is_active', $b = (array) $c->before) && ! $b['is_active'])
             ->pluck('row_id')->unique();   // includes vehicles detected and completed in this process
 
         return [
@@ -100,10 +98,10 @@ class PricingImpactService
     private function priceChanges(ImportSession $session): array
     {
         $table = (new Pricing)->getTable();
-        $changes = DB::table(self::CHANGES)->where('import_session_id', $session->id)->where('table_name', $table)->get(['row_id', 'action', 'before']);
+        $changes = SessionChange::query()->ofSession($session->id)->where('table_name', $table)->get(['row_id', 'action', 'before']);
         $out = ['normal' => ['new' => 0, 'up' => 0, 'down' => 0, 'other' => 0], 'csd' => ['new' => 0, 'up' => 0, 'down' => 0, 'other' => 0]];
         $inserted = $changes->where('action', 'insert')->pluck('row_id')->unique();
-        $updates = $changes->where('action', 'update')->groupBy('row_id')->map(fn ($g) => (array) json_decode((string) $g->first()->before, true));
+        $updates = $changes->where('action', 'update')->groupBy('row_id')->map(fn ($g) => (array) $g->first()->before);
 
         // rows this session expired: row id => its row (the previous price of the same code / channel)
         $expiredIds = $updates->filter(fn (array $b) => ($b['is_active'] ?? null) == 1)->keys()->diff($inserted);
@@ -154,7 +152,8 @@ class PricingImpactService
         $all = in_array('ALL', $held, true);
         $variantTable = (new Variant)->getTable();
         $priceTable = (new Pricing)->getTable();
-        $base = fn (string $channel) => DB::table($variantTable.' as v')
+        // aliased join: the soft-delete filter is written out for both tables (withTrashed drops the unaliased one)
+        $base = fn (string $channel) => Variant::withTrashed()->from($variantTable.' as v')
             ->join($priceTable.' as p', fn ($j) => $j->on('p.model_code', '=', 'v.code')->where('p.channel', $channel)->where('p.is_active', 1)->whereNull('p.deleted_at'))
             ->where('v.is_active', 1)->whereNull('v.deleted_at');
 

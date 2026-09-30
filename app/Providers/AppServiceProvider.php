@@ -3,28 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Utilities\Settings\SystemSetting;
-use App\Models\Vehicle\Pricing\Addon;
-use App\Models\Vehicle\Pricing\AddonHistory;
-use App\Models\Vehicle\Pricing\ChangeFlag;
-use App\Models\Vehicle\Pricing\DealerCharge;
-use App\Models\Vehicle\Pricing\Discount;
-use App\Models\Vehicle\Pricing\DiscountHistory;
-use App\Models\Vehicle\Pricing\Hold;
-use App\Models\Vehicle\Pricing\InsAddonRate;
-use App\Models\Vehicle\Pricing\InsBaseRule;
-use App\Models\Vehicle\Pricing\InsDefault;
-use App\Models\Vehicle\Pricing\InsIdvSlot;
-use App\Models\Vehicle\Pricing\PermitMap;
 use App\Models\Vehicle\Pricing\Pricing;
-use App\Models\Vehicle\Pricing\PricingHistory;
-use App\Models\Vehicle\Pricing\Profile;
-use App\Models\Vehicle\Pricing\RtoRule;
-use App\Models\Vehicle\Pricing\Snapshot;
-use App\Models\Vehicle\Pricing\TcsConfig;
-use App\Models\Vehicle\Segment;
-use App\Models\Vehicle\SubSegment;
-use App\Models\Vehicle\Variant;
-use App\Models\Vehicle\VehicleModel;
 use App\Services\AuthService;
 use App\Services\DateFormatService;
 use App\Services\EnquiryReferenceService;
@@ -159,17 +138,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // DEC-073: a pricing session records every row it writes so Discard can undo exactly its own changes
-        foreach ([
-            Pricing::class, PricingHistory::class,
-            Addon::class, Discount::class, AddonHistory::class, DiscountHistory::class,
-            DealerCharge::class, RtoRule::class,
-            InsBaseRule::class, InsIdvSlot::class,
-            InsDefault::class, InsAddonRate::class, PermitMap::class,
-            TcsConfig::class, Snapshot::class,
-            Profile::class, Hold::class,
-            ChangeFlag::class, Variant::class,
-            VehicleModel::class, Segment::class, SubSegment::class,
-        ] as $model) {
+        foreach (PricingChangeRecorder::MODELS as $model) {
             $model::observe(PricingChangeObserver::class);
         }
 

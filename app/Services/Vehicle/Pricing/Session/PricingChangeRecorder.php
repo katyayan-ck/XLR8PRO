@@ -4,10 +4,31 @@ declare(strict_types=1);
 
 namespace App\Services\Vehicle\Pricing\Session;
 
+use App\Models\Vehicle\Pricing\Addon;
+use App\Models\Vehicle\Pricing\AddonHistory;
+use App\Models\Vehicle\Pricing\ChangeFlag;
+use App\Models\Vehicle\Pricing\DealerCharge;
+use App\Models\Vehicle\Pricing\Discount;
+use App\Models\Vehicle\Pricing\DiscountHistory;
+use App\Models\Vehicle\Pricing\Hold;
+use App\Models\Vehicle\Pricing\InsAddonRate;
+use App\Models\Vehicle\Pricing\InsBaseRule;
+use App\Models\Vehicle\Pricing\InsDefault;
+use App\Models\Vehicle\Pricing\InsIdvSlot;
+use App\Models\Vehicle\Pricing\PermitMap;
+use App\Models\Vehicle\Pricing\Pricing;
+use App\Models\Vehicle\Pricing\PricingHistory;
+use App\Models\Vehicle\Pricing\Profile;
+use App\Models\Vehicle\Pricing\RtoRule;
+use App\Models\Vehicle\Pricing\SessionChange;
+use App\Models\Vehicle\Pricing\Snapshot;
+use App\Models\Vehicle\Pricing\TcsConfig;
+use App\Models\Vehicle\Segment;
+use App\Models\Vehicle\SubSegment;
+use App\Models\Vehicle\Variant;
+use App\Models\Vehicle\VehicleModel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * Records every row a pricing session inserts, updates, soft-deletes or expires (DEC-073) into
@@ -15,11 +36,24 @@ use Illuminate\Support\Facades\Schema;
  *
  *   app(PricingChangeRecorder::class)->within($session->id, fn () => $importer->run(...));
  *
- * Model writes are captured by PricingChangeObserver (registered on the pricing and vehicle master models); bulk
- * expiries call captureBulk() before they update. Outside within() nothing is recorded.
+ * Model writes are captured by PricingChangeObserver (registered on MODELS in AppServiceProvider); bulk expiries call
+ * captureBulk() before they update. Outside within() nothing is recorded. The log is the SessionChange model (DEC-093).
  */
 class PricingChangeRecorder
 {
+    /** The models whose rows a pricing session records (and Discard undoes). */
+    public const MODELS = [
+        Pricing::class, PricingHistory::class,
+        Addon::class, Discount::class, AddonHistory::class, DiscountHistory::class,
+        DealerCharge::class, RtoRule::class,
+        InsBaseRule::class, InsIdvSlot::class,
+        InsDefault::class, InsAddonRate::class, PermitMap::class,
+        TcsConfig::class, Snapshot::class,
+        Profile::class, Hold::class,
+        ChangeFlag::class, Variant::class,
+        VehicleModel::class, Segment::class, SubSegment::class,
+    ];
+
     private ?int $sessionId = null;
 
     /**
@@ -93,24 +127,23 @@ class PricingChangeRecorder
      */
     public function rollback(int $sessionId): int
     {
-        $changes = DB::table('xlr8_vehicle_pricing_session_changes')
-            ->where('import_session_id', $sessionId)->orderByDesc('id')->get();
+        $changes = SessionChange::query()->ofSession($sessionId)->orderByDesc('id')->get();
+        $models = $this->modelsByTable();
 
         foreach ($changes as $change) {
-            if (! Schema::hasTable($change->table_name)) {
+            $model = $models[$change->table_name] ?? null;
+            if ($model === null) {
                 continue;
             }
-            $row = DB::table($change->table_name)->where('id', $change->row_id);
+            // the stored row as it was: no events, timestamps, actor stamps or scopes while undoing (DEC-073)
+            $row = $model::query()->withoutGlobalScopes()->whereKey($change->row_id)->toBase();
             if ($change->action === 'insert') {
                 $row->delete();   // the row did not exist before this session
-            } else {
-                $before = json_decode((string) $change->before, true) ?: [];
-                if ($before !== []) {
-                    $row->update($before);
-                }
+            } elseif (! empty($change->before)) {
+                $row->update($change->before);
             }
         }
-        DB::table('xlr8_vehicle_pricing_session_changes')->where('import_session_id', $sessionId)->delete();
+        SessionChange::query()->ofSession($sessionId)->delete();
 
         return $changes->count();
     }
@@ -118,18 +151,28 @@ class PricingChangeRecorder
     /** @param  array<string, mixed>|null  $before */
     private function log(string $table, int $rowId, string $action, ?array $before): void
     {
-        if ($this->sessionId === null || $table === 'xlr8_vehicle_pricing_session_changes') {
+        if ($this->sessionId === null || $table === (new SessionChange)->getTable()) {
             return;
         }
-        DB::table('xlr8_vehicle_pricing_session_changes')->insert([
+        SessionChange::query()->create([
             'import_session_id' => $this->sessionId,
             'table_name' => $table,
             'row_id' => $rowId,
             'action' => $action,
-            'before' => $before === null ? null : json_encode($this->plain($before)),
-            'created_at' => now(),
+            'before' => $before === null ? null : $this->plain($before),
             'created_by' => auth(backpack_guard_name())->id() ?? auth()->id(),
         ]);
+    }
+
+    /** @return array<string, class-string<Model>> table name => model */
+    private function modelsByTable(): array
+    {
+        $out = [];
+        foreach (self::MODELS as $model) {
+            $out[(new $model)->getTable()] = $model;
+        }
+
+        return $out;
     }
 
     /**
