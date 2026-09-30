@@ -24,19 +24,19 @@ return [
             'label' => 'Site / dealership', 'icon' => 'la-store', 'permissions' => $manage,
             'sections' => [
                 'dealership' => ['label' => 'Dealership', 'keys' => [
-                    'dealership.name' => ['input' => 'text', 'help' => 'Shown in the header, login page, PDFs and mails.'],
+                    'dealership.name' => ['input' => 'text', 'help' => 'Browser title ("<dealership> | Xceler8 DMS"), footer "Made for", menu text logo, mails.'],
+                    'dealership.tagline' => ['input' => 'text', 'help' => 'Shown when the footer link is hovered.'],
                     'dealership.legal_name' => ['input' => 'text', 'help' => 'Printed on receipts, OTF forms, quotations and PDFs.'],
                     'dealership.url' => ['input' => 'url'],
-                    'branding.logo' => ['input' => 'image', 'help' => 'Header, login page and PDFs / prints.'],
-                    'dealership.favicon' => ['input' => 'image', 'help' => 'Browser tab icon (square PNG or ICO-sized image).'],
+                    'branding.logo' => ['input' => 'image', 'default' => 'images/Logo-108x75.png', 'help' => 'Menu, login page and PDFs / prints.'],
+                    'dealership.favicon' => ['input' => 'image', 'default' => 'images/favicon-32x32.png', 'help' => 'Browser tab icon (square image).'],
                     'dealership.address' => ['input' => 'textarea'],
                     'dealership.email' => ['input' => 'email'],
                     'dealership.phone' => ['input' => 'text'],
                     'dealership.gstin' => ['input' => 'text'],
                 ]],
-                'application' => ['label' => 'Application', 'keys' => [
-                    'site.name' => ['input' => 'text', 'help' => 'Product name shown next to the logo.'],
-                    'site.slogan' => ['input' => 'text'],
+                'display' => ['label' => 'Display', 'keys' => [
+                    'branding.menu_logo' => ['input' => 'select', 'options' => ['logo' => 'Logo image', 'text' => 'Dealership name (text)'], 'help' => 'What the menu shows at the top left.'],
                     'display.date_format' => ['input' => 'select', 'options' => ['d-M-Y' => '23-Sep-2026', 'd-m-Y' => '23-09-2026', 'd/m/Y' => '23/09/2026', 'Y-m-d' => '2026-09-23', 'M d, Y' => 'Sep 23, 2026']],
                     'display.time_format' => ['input' => 'select', 'options' => ['H:i' => '14:30', 'h:i A' => '02:30 PM']],
                 ]],
@@ -166,6 +166,9 @@ return [
             ],
         ],
     ],
+
+    /* Legacy keys superseded by the ones above; never shown (owner 30-09: no site name / slogan). */
+    'hidden' => ['site.name', 'site.slogan', 'site.logo', 'brand.name'],
 
     /* Keys that exist but are not listed above land here (same permission as `site`). */
     'other' => ['label' => 'Other', 'icon' => 'la-ellipsis-h', 'permissions' => $manage],

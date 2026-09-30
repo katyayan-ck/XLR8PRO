@@ -23,14 +23,18 @@
                 </ul>
             </div>
             @endif
-            @if (backpack_theme_config('developer_link') && backpack_theme_config('developer_name'))
+            {{-- Owner 30-09 (DEC-091): "Made for <dealership>" linked to the dealership website, tagline on hover --}}
+            @php($xlDealer = dealership('name') ?: (string) backpack_theme_config('developer_name'))
+            @if ($xlDealer !== '')
             <div class="col-12 col-lg-auto mt-3 mt-lg-0">
                 <ul class="list-inline list-inline-dots mb-0">
                     <li class="list-inline-item">
-                        {{-- {{ trans('backpack::base.handcrafted_by') }} --}}
                         <b>Made for</b>
-                        <a href="{{ backpack_theme_config('developer_link') }}" rel="noopener" target="_blank">{{
-                            backpack_theme_config('developer_name') }}</a>
+                        @if ($xlUrl = dealership('url') ?: (string) backpack_theme_config('developer_link'))
+                            <a href="{{ $xlUrl }}" rel="noopener" target="_blank" @if (dealership('tagline') !== '') title="{{ dealership('tagline') }}" @endif>{{ $xlDealer }}</a>
+                        @else
+                            <span @if (dealership('tagline') !== '') title="{{ dealership('tagline') }}" @endif>{{ $xlDealer }}</span>
+                        @endif
                     </li>
                 </ul>
             </div>

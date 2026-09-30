@@ -9856,3 +9856,16 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   switched off), `SmsService.php`, `WhatsAppService.php` (same guard), `Drivers/LaravelMailDriver.php` (SMTP mailer from
   settings at send time), `app/Jobs/Platform/SendPushNotification.php` (push switch). Test `CommsSettingsTest` (5);
   guide `tech-guides/platform/10-email.md`. Platform + API suites 73 passed; full PHPStan clean.
+
+## W13g — Site tab feedback (owner 30-09, DEC-091)
+- **Title / metas:** new override `resources/views/vendor/backpack/theme-tabler/inc/head.blade.php` + helper
+  `site_title()` → "<page> :: <dealership> | Xceler8 DMS"; `header_metas` app-name metas use it.
+- **Footer:** `theme-tabler/inc/footer.blade.php` — "Made for <dealership>" → `dealership.url`, `dealership.tagline` on hover.
+- **Menu brand:** new partial `theme-tabler/inc/site_brand.blade.php` in both `menu_container` layouts; setting
+  `branding.menu_logo` (logo | text); `.xl-site-brand-text` in `public/css/xl-ui.css`.
+- **Settings:** `dealership.tagline` added; `site.name` / `site.slogan` seeds and screen entries removed, legacy keys
+  hidden (`settings_ui.hidden`); image keys show the current or built-in image, Remove button, shared drop-zone
+  (the section cards no longer opt out of the UI layer).
+- **Removed:** `app/Http/Middleware/ApplySiteSettings.php` and its registration (the app name stays "Xceler8 DMS").
+- **Rule:** `.ai/rules/ui.md` — image / file fields show the current file with Remove.
+- **Tests:** `SiteSettingsApplyTest` rewritten (4). Platform + admin suites 126 passed; full PHPStan clean.

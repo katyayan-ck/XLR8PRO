@@ -2,7 +2,6 @@
 
 use App\Console\Commands\ImportUsersCommand;
 use App\Exceptions\ApiExceptionRenderer;
-use App\Http\Middleware\ApplySiteSettings;
 use App\Http\Middleware\CheckSuperAdmin;
 use App\Http\Middleware\DataScopeOff;
 use App\Http\Middleware\SecurityHeaders;
@@ -33,8 +32,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         // Go-live to-do S10: baseline security headers + CSP (report-only by default, setting security.csp_mode).
         $middleware->append(SecurityHeaders::class);
-        // DEC-091: the Site / dealership settings (name) apply to every web page, the login page included.
-        $middleware->web(append: [ApplySiteSettings::class]);
         // DEC-067: the admin layout choice is written by the Appearance panel in the browser (public/js/xl-theme.js).
         $middleware->encryptCookies(except: ['xl_layout']);
     })

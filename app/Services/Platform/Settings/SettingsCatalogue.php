@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Validator;
  * The categorised Settings interface (DEC-091, to-do W13): which tabs a user may open, the keys of each section with
  * their current values, and saving a section. The layout comes from `config/settings_ui.php`; values, types, defaults
  * and every write stay with SettingsService (the only writer). Keys stored or seeded but not in the layout are shown in
- * the "Other" tab so nothing is hidden.
+ * the "Other" tab, except the superseded legacy keys in `settings_ui.hidden`.
  */
 final class SettingsCatalogue
 {
@@ -156,9 +156,10 @@ final class SettingsCatalogue
             }
         }
 
+        $hidden = array_flip((array) config('settings_ui.hidden', []));
         $other = [];
         foreach (array_keys($this->rows()) as $key) {
-            if (! isset($listed[$key])) {
+            if (! isset($listed[$key]) && ! isset($hidden[$key])) {
                 $type = $this->rows()[$key]['type'];
                 $other[$key] = ['input' => match ($type) {
                     'bool' => 'switch', 'int', 'decimal' => 'number', 'encrypted' => 'secret', 'image' => 'image', 'json' => 'json',
@@ -179,7 +180,8 @@ final class SettingsCatalogue
         $row = $this->rows()[$key] ?? ['key' => $key, 'label' => $key, 'type' => 'string', 'value' => null, 'editable' => true, 'updated_at' => null, 'overrides' => []];
 
         return $row + ['input' => $opt['input'], 'options' => $opt['options'] ?? [], 'min' => $opt['min'] ?? null,
-            'max' => $opt['max'] ?? null, 'help' => $opt['help'] ?? null];
+            'max' => $opt['max'] ?? null, 'help' => $opt['help'] ?? null,
+            'default_image' => isset($opt['default']) ? asset($opt['default']) : null];
     }
 
     /** @return list<mixed> */

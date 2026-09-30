@@ -192,3 +192,12 @@ recorded as suppressed for the audit; login OTPs still go out); a mail server en
 (password stored encrypted); the signature ends every mail; the default sender name falls back to the dealership name.
 
 **Verified:** 5 feature tests (switch, OTP exempt, signature, sender, SMTP mailer); platform + API suites 73 passed.
+
+### 19. Site tab as the owner asked — W13g (DEC-091)
+
+**Delivered:** browser title "<page> :: <dealership> | Xceler8 DMS"; footer "Made for <dealership>" linked to the
+dealership website with its tagline on hover; a tagline setting instead of the site name / slogan; logo and favicon
+show the current (or built-in) image with a Remove button and the drop-zone upload; the menu can show the logo or the
+dealership name as text. The image-field rule is now in the project UI rules.
+
+**Verified:** 4 feature tests; platform + admin suites 126 passed; render smoke of the dashboard and the Site tab.

@@ -12,8 +12,8 @@
 <link rel="mask-icon" href="{{ asset('/images/safari-pinned-tab.svg') }}" color="#161c2d">
 <link rel="shortcut icon" href="{{ site_favicon_url() ?? asset('/images/favicon.ico') }}">
 <meta name="theme-color" content="#161c2d">
-<meta name="apple-mobile-web-app-title" content="{{ backpack_theme_config('project_name') }}">
-<meta name="application-name" content="{{ backpack_theme_config('project_name') }}">
+<meta name="apple-mobile-web-app-title" content="{{ site_title() }}">
+<meta name="application-name" content="{{ site_title() }}">
 <meta name="msapplication-TileColor" content="#161c2d">
 <meta name="msapplication-config" content="{{asset('/images/browserconfig.xml')}}">
 

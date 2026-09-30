@@ -41,7 +41,7 @@
                             $images = array_filter($section['keys'], fn ($s) => $s['input'] === 'image');
                             $overrides = array_filter($section['keys'], fn ($s) => ! empty($s['overrides']));
                         @endphp
-                        <div class="card mb-3 xl-settings-section" data-xl="off">
+                        <div class="card mb-3 xl-settings-section">
                             <div class="card-header"><h3 class="card-title mb-0">{{ $section['label'] }}</h3></div>
                             <div class="card-body">
                                 @if ($fields !== [])
@@ -114,24 +114,27 @@
                                             <div class="small text-body-secondary"><code>{{ $s['key'] }}</code>@if ($s['help']) · {{ $s['help'] }}@endif</div>
                                         </div>
                                         <div class="col-12 col-lg-7">
-                                            @if ($s['value'])
-                                                <img src="{{ $s['value'] }}" alt="{{ $s['label'] }}" class="xl-site-logo border rounded p-1 mb-2">
-                                            @else
-                                                <div class="small text-body-secondary mb-2">Not set — the built-in image is used.</div>
-                                            @endif
-                                            <form method="POST" action="{{ route('utils.settings.image') }}" enctype="multipart/form-data" class="d-flex flex-wrap gap-2">
+                                            {{-- Current image: the uploaded one, else the built-in one (owner 30-09) --}}
+                                            @php($current = $s['value'] ?: $s['default_image'])
+                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                @if ($current)
+                                                    <img src="{{ $current }}" alt="{{ $s['label'] }} (current)" class="xl-site-logo border rounded p-1">
+                                                @endif
+                                                <span class="badge {{ $s['value'] ? 'bg-green-lt' : 'bg-secondary-lt' }}">{{ $s['value'] ? 'Uploaded' : 'Built-in' }}</span>
+                                                @if ($s['value'])
+                                                    <form method="POST" action="{{ route('utils.settings.reset') }}" class="ms-auto" onsubmit="return confirm('Remove this image and use the built-in one?')">
+                                                        @csrf
+                                                        <input type="hidden" name="key" value="{{ $s['key'] }}">
+                                                        <button class="btn btn-sm btn-outline-danger"><i class="la la-trash me-1"></i> Remove</button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                            <form method="POST" action="{{ route('utils.settings.image') }}" enctype="multipart/form-data">
                                                 @csrf
                                                 <input type="hidden" name="key" value="{{ $s['key'] }}">
                                                 <x-ui.upload name="file" accept="image/*" :id="'img-'.str_replace('.', '-', $s['key'])" required />
-                                                <button class="btn btn-sm btn-primary">Upload</button>
+                                                <button class="btn btn-sm btn-primary mt-2"><i class="la la-upload me-1"></i> Upload new {{ strtolower($s['label']) }}</button>
                                             </form>
-                                            @if ($s['value'])
-                                                <form method="POST" action="{{ route('utils.settings.reset') }}" class="mt-1">
-                                                    @csrf
-                                                    <input type="hidden" name="key" value="{{ $s['key'] }}">
-                                                    <button class="btn btn-sm btn-link px-0">Use the built-in image</button>
-                                                </form>
-                                            @endif
                                         </div>
                                     </div>
                                 @endforeach

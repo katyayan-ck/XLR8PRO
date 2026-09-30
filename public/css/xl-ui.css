@@ -5,6 +5,7 @@
 
 /* DEC-083 configurable site logo (setting branding.logo) */
 .xl-site-logo { height: 30px; width: auto; max-width: 180px; object-fit: contain; }
+.xl-site-brand-text { font-weight: 700; font-size: 1.05rem; color: var(--tblr-body-color); white-space: nowrap; letter-spacing: .01em; }
 .xl-site-logo-lg { height: 56px; max-width: 260px; }
 
 :root {

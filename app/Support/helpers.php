@@ -49,6 +49,17 @@ if (! function_exists('site_favicon_url')) {
     }
 }
 
+if (! function_exists('site_title')) {
+    /** Browser / app title (owner 30-09): "<dealership name> | <application name>", or the application name alone. */
+    function site_title(): string
+    {
+        $app = (string) backpack_theme_config('project_name');
+        $dealer = trim((string) setting('dealership.name', ''));
+
+        return $dealer !== '' ? $dealer.' | '.$app : $app;
+    }
+}
+
 if (! function_exists('dealership')) {
     /** A Site / dealership setting (DEC-091): dealership('name'), dealership('legal_name'), dealership('address') … */
     function dealership(string $field, string $default = ''): string

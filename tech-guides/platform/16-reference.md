@@ -165,8 +165,9 @@ Workers: `php artisan queue:work` must run for sends and push outside tests. The
 | `security.csp_mode` | report | string | Content Security Policy: off / report / enforce (`SecurityHeaders`) |
 | `branding.logo` | '' | image | site logo (DEC-083): admin header / sidebar (links to the dashboard), login page, quotation / OTF prints; upload on Settings (`utils.settings.image`); blank = the built-in images (`site_logo_url($fallback)`) |
 | `pricing.last_updated_at` | '' | string | ISO-8601 stamp set automatically (`PricingSyncStamp`, DEC-083) on any published-price, vehicle master or accessory change; the app re-syncs offline data when it moves (served by `v1/settings/category/pricing`) |
-| `dealership.*` | name 'Bikaner Motors', legal_name 'Bikaner Motors Private Limited', url 'https://www.BikanerMotors.com', favicon (image), address, email, phone, gstin | string / image | Site tab (DEC-091): name = project name (`ApplySiteSettings`), favicon in `header_metas`, legal name on prints (`dealership()`) |
-| `site.name`, `site.slogan`, `display.date_format`, `display.time_format` | 'Xceler8 DMS', '', 'd-M-Y', 'H:i' | string | application name / slogan; site date & time formats |
+| `dealership.*` | name 'Bikaner Motors', legal_name 'Bikaner Motors Private Limited', tagline '', url 'https://www.BikanerMotors.com', favicon (image), address, email, phone, gstin | string / image | Site tab (DEC-091): title `site_title()`, footer link + tagline, favicon in `header_metas`, legal name on prints (`dealership()`) |
+| `branding.menu_logo` | 'logo' | string | menu brand: `logo` (image) or `text` (dealership name) |
+| `display.date_format`, `display.time_format` | 'd-M-Y', 'H:i' | string | site date & time formats (`site.name` / `site.slogan` are superseded and hidden) |
 | `comms.enabled.{mail,sms,whatsapp,push}` | true | bool | global channel switches (enforced in W13 Phase 3) |
 | `mail.smtp.{host,port,encryption,username,password,from_address,from_name}`, `mail.signature` | '', 587, 'tls', '', '' (encrypted), '', '', '' | string / int / encrypted | SMTP used by the mail service and the signature added to every mail (W13 Phase 3; blank host = .env) |
 | `ui.appearance_enabled` | true | bool | show the Appearance panel (W13 Phase 5) |

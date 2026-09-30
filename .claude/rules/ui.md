@@ -47,6 +47,9 @@ Every multi-select (and any long single select) is a Select2 widget from the ONE
 
 ## File uploads use the shared drop-zone uploader
 Every file upload uses the shared drop-zone component: drag-and-drop + click-to-browse, thumbnail/icon preview per file, name/size, remove-from-list before upload, client-side type/size checks from Settings (`docs.allowed_mimes`, `docs.max_upload_kb`), progress, and server errors shown per file. No bare `<input type="file">` in screens. Files still go through DocsService/media library.
+An image / file field that already holds a file (logo, favicon, photo, brochure …) always shows the **current** file
+(or the built-in default, labelled so) next to the drop-zone, with a **Remove** button (confirm) that clears it —
+owner rule 30-09; reference: Utilities → Settings → Site.
 
 ## Modern, minimal, responsive screens (phone, tablet, desktop)
 Every screen is modern, elegant and minimal (Tabler tokens, consistent page shell/cards, clear hierarchy, empty/loading/error states) and must work at 360px (6" Android/iOS), 768px tablet and desktop: no fixed pixel widths, tables in `.table-responsive` or stacked cards on phones, forms single-column on phones, touch targets ≥ 40px, dropdowns fit the viewport. Verify at those three widths before shipping. No hex/`bg-white`/inline `<style>` blocks — shared CSS and Tabler variables (dark mode safe).
