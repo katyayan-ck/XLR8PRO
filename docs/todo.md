@@ -407,6 +407,18 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W14c | **Excel import / export** of specifications (per model) and features (per variant), with master-fed dropdowns like the Vehicle Info workbook | ✅ 01-10 (our workbook by codes + your sample format by name, with a match report) |
 | W14d | **Compare vehicles** within the same segment only: intra-model (variants of one model, by features) and inter-model (different models, by specifications) | ✅ 01-10 (admin screen + app API) |
 | W15 | **No `DB::` queries — convert to Eloquent** (your rule 01-10, DEC-093). Guard test + baseline (473 uses / 72 files). Order: W15a services / jobs / console / imports / models / support; W15b admin controllers outside Booking; W15c tests / seeders; W15d Booking controller + booking models (with the booking team) | 🟡 in progress — rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export; 377 uses / 49 files left |
+| W16 | **Help & support utility** (your request 01-10, DEC-094) — F1 help pane, page tours, "Still need help?" support request with a diagnostic zip, support admin → executive routing; FRS `tech-guides/frs-and-workflows/frs/help-and-support-frs.md`, plan `…/plans/2026-10-01-help-and-support-DEC-094.md` | 🟡 planned — W16a ✅; build after W15a |
+| W16a | FRS + plan + DEC-094 + to-do | ✅ 01-10 |
+| W16b | Help engine: Markdown articles in `resources/help/`, route → article, `::: can CODE` sections, cache, search, coverage; F1 / `?` right-side pane; Help centre screen | 🔴 |
+| W16c | On-demand page tour (Driver.js via Basset): steps from the article / `data-xl-tour`, skip missing elements, "new" dot | 🔴 |
+| W16d | Diagnostics collector: actions / AJAX / JS errors ring buffer (no typed values), server request trail, html2canvas screenshot with sensitive-field blanking + preview | 🔴 |
+| W16e | Support request: permissions `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`, categories + settings, `SupportRequestService` (masked zip → ticket, least-loaded admin as owner, executive-only assignment), screens, bundle rights, retention purge | 🔴 |
+| W16f | Guides: developer guide `tech-guides/platform/17-help-support.md` (+ reference), user guide articles, article-writing guide | 🔴 |
+| W17 | **User manual** (your request 01-10, DEC-094) — screen-wise and module / process-wise, with screenshots; same articles as F1 | 🔴 after W16 |
+| W17a | Article template, module / process overviews, coverage report in the Help centre | 🔴 |
+| W17b | Articles for every admin screen (~210 screen routes → ~120 articles), business wording flagged for owner review | 🔴 |
+| W17c | Playwright (dev-only) screenshot script with PII masking; superadmin + scoped-user runs | 🔴 |
+| W17d | Screenshots into the articles, print stylesheet, owner review list | 🔴 |
 
 **Needs you (not started):** D1–D29, N1, N3 / F2 formats, N4 security values (S3, S4, S5, S7), S6 / O3 / O6 / Q3 package
 approvals, O1 / O2 / O5 CI and server changes, V8 app-sync endpoint shape, V10 / DA6 deletions, the push to `stage`.

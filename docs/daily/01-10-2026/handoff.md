@@ -28,6 +28,7 @@ are local only — pushing again needs the owner's approval in that turn. Not me
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 01-10: DEC-094 — help & support utility planned (FRS, plan, to-do W16 / W17); build after W15a.
 - 01-10: W15 — users / RBAC workbook export off the DB facade (baseline 377 / 49).
 - 01-10: W15 — Org / data-scope services off the DB facade (baseline 399 / 50).
 - 01-10: W15 — platform services off the DB facade (settings overrides, comms, chat, tickets, templates) (baseline 414 / 54).
@@ -49,6 +50,8 @@ are local only — pushing again needs the owner's approval in that turn. Not me
   Next step: W15a continued — `Dashboard/DashboardService` (9), `Sales/Booking/Booking{Exchange,Kyc,Otf}Service`, then `app/Jobs/ImportEnquiriesJob.php` (26), console (`DataScopeBackfill`, `RefreshAiContext`, `RefreshTestingDatabase`), imports, models.
   Method: model per table (new models for tables without one), behaviour identical, run the file's tests, then lower
   the baseline: `UPDATE_DB_FACADE_BASELINE=1 php artisan test --compact tests/Unit/Architecture/NoDbFacadeQueriesTest.php`.
+- **W16 (DEC-094) — help & support, then W17 user manual:** planned; starts when W15a is done. First step W16b (help
+  engine + F1 pane): read the FRS and plan (links in DEC-094).
 - Before W15: Every to-do row W1–W14 is ✅; the remaining 🟡 rows (S4/S5/S7/S9/S12/S14, SL6, O8, DA4, Q*, U2,
   F3, N2) each wait on an owner decision, a package approval or are "converge when touched".
 - **Unblocked follow-ups, in order:**

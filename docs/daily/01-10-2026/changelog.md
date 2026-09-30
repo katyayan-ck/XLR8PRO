@@ -143,3 +143,9 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
   join conditions; `DB::raw` selects → `selectRaw`); the permission-denial lookup shared as `deniedNames()`.
 - **Tests:** Org feature suite (incl. `UserRbacWorkbookTest`) 33 passed; PHPStan clean.
 - **Baseline:** 377 uses in 49 files left.
+
+## DEC-094 — Help & support utility planned (W16 / W17)
+- **New:** FRS `tech-guides/frs-and-workflows/frs/help-and-support-frs.md`; plan
+  `tech-guides/frs-and-workflows/plans/2026-10-01-help-and-support-DEC-094.md` (+ index row); DEC-094; to-do W16a–f, W17a–d.
+- Owner answers: html2canvas + Driver.js; permissions `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`; manual screenshots via
+  Playwright (dev-only); build after W15a. No code yet.

@@ -31,6 +31,7 @@ pricing masters), each with a status header kept current — index and open item
 | Person / user identity | [frs/person-system-frs.md](frs/person-system-frs.md) | FRS (25-07-2026) |
 | Platform utilities (Settings, Notify, Chat, Docs, Task, Ticket, Approval, Topics, Templates, Email, SMS, WhatsApp, Telephony) | [frs/platform-utilities-frs.md](frs/platform-utilities-frs.md) | FRS v1.1 (26-09-2026); the approval engine §7–8 is the spec |
 | Support utilities (knowledge base, conversations, ticket extensions) | [frs/support-utilities-requirements.md](frs/support-utilities-requirements.md) | requirements draft (its "confirmed packages" section is not accurate for this repo) |
+| Help & support (F1 help, tours, support requests with diagnostics, user manual) | [frs/help-and-support-frs.md](frs/help-and-support-frs.md) | approved for build (DEC-094, W16 / W17) |
 | Accessory catalog | [frs/accessory-catalog-frs.md](frs/accessory-catalog-frs.md) | FRS + dev guide (01-08-2026; the importer is now the typed-sheet one, DEC-083) |
 | Shared services health | [frs/shared-services-audit-24-09-2026.md](frs/shared-services-audit-24-09-2026.md) | audit snapshot (24-09-2026); links to `.ai/rules/*` files it names are archived |
 | Formats and data dictionary | [../architecture/data-dictionary-draft.md](../architecture/data-dictionary-draft.md) | draft — waits for the owner's sign-off (to-do §2) |

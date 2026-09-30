@@ -1501,3 +1501,20 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Approved-by:** owner (01-10, the rule); points 2 / 4 agent defaults · **Risk:** LOW for the rule; each conversion is
   MEDIUM (behaviour must stay identical — soft-deleted rows, global scopes and data scoping now apply) and is tested ·
   **Reversal:** delete the guard test and the rule lines.
+
+### DEC-094 | 01-10-2026 | A (Platform / Help & Support) | F1 contextual help, page tours, support requests with diagnostics, user manual (to-do W16 / W17)
+- **Why:** owner request 01-10. FRS: `tech-guides/frs-and-workflows/frs/help-and-support-frs.md`; plan:
+  `tech-guides/frs-and-workflows/plans/2026-10-01-help-and-support-DEC-094.md`.
+- **Decision (owner answers 01-10):**
+  1. New JS libraries **html2canvas** (page screenshot) and **Driver.js** (tours), both MIT, served locally via Basset.
+  2. New permissions **`UTL_SUPP_ADMIN`** (receives every new support ticket; the least-loaded holder) and
+     **`UTL_SUPP_EXEC`** (assignable executives); superadmin only at first, the owner attaches them to designations.
+  3. User manual with screenshots taken by **Playwright** (dev dependency only), with PII masking.
+  4. Build after W15a.
+- **Agent design choices:** own Markdown help engine in `resources/help/` (route → article, permission sections,
+  cached) instead of Laradocs (kept for developer guides); support requests are ordinary tickets (existing engine); the
+  diagnostic zip is built on the server and never holds typed values, passwords, OTPs, tokens or unmasked PAN /
+  Aadhaar / mobile / bank numbers; retention `support.bundle_retention_days` (default 90).
+- **Approved-by:** owner (01-10) · **Risk:** LOW–MEDIUM (additive; privacy of the bundle is the main risk, covered by
+  masking rules and tests) · **Reversal:** remove the help layout include and routes; migrations' `down()` drop the new
+  permissions / settings.
