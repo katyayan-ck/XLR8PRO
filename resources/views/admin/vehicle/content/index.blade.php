@@ -15,6 +15,55 @@
     </div>
 </div>
 
+{{-- Workbooks (DEC-092 Phase 3): export ours; import ours or the OEM sample format (matched by name, report below) --}}
+<div class="card mb-3">
+    <div class="card-header"><h3 class="card-title mb-0">Workbooks</h3></div>
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <a href="{{ route('vehicle.content.export', 'specs') }}" class="btn btn-outline-primary btn-sm"><i class="la la-file-excel me-1"></i> Export specifications</a>
+            <a href="{{ route('vehicle.content.export', 'features') }}" class="btn btn-outline-primary btn-sm"><i class="la la-file-excel me-1"></i> Export features</a>
+        </div>
+        @if (backpack_user()->can('VEH_CONT_EDIT'))
+            <form method="POST" action="{{ route('vehicle.content.import') }}" enctype="multipart/form-data" class="row g-2">
+                @csrf
+                <div class="col-12 col-md-3">
+                    <label for="import-kind" class="form-label">Workbook</label>
+                    <select id="import-kind" name="kind" class="form-select form-select-sm">
+                        <option value="specs">Specifications</option>
+                        <option value="features">Features</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-9">
+                    <label for="import-file" class="form-label">File — our export (codes) or the OEM sheet (matched by name)</label>
+                    <x-ui.upload name="file" id="import-file" accept=".xlsx,.xls" required />
+                    @error('file') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-primary btn-sm"><i class="la la-upload me-1"></i> Import</button>
+                    <span class="small text-body-secondary ms-2">Unknown items are added; a blank cell keeps what is stored; “-” / “-NA-” = not applicable.</span>
+                </div>
+            </form>
+        @endif
+
+        @if ($report = session('content_import'))
+            <div class="alert alert-info mt-3 mb-0" role="status">
+                <div class="fw-semibold mb-1">{{ $report['kind'] === 'specs' ? 'Specifications' : 'Features' }} import ({{ $report['format'] === 'sample' ? 'OEM sample format' : 'our workbook' }}):
+                    {{ $report['values'] }} values, {{ count($report['items_added']) }} new items, {{ count($report['unmatched']) }} columns not matched.</div>
+                @if ($report['unmatched'] !== [])
+                    <details><summary>Not matched — rename in the master or use our workbook (codes)</summary>
+                        <ul class="small mb-0 mt-1">@foreach ($report['unmatched'] as $u)<li>{{ $u }}</li>@endforeach</ul>
+                    </details>
+                @endif
+                @if ($report['items_added'] !== [])
+                    <details><summary>New items</summary>
+                        <ul class="small mb-0 mt-1">@foreach ($report['items_added'] as $i)<li>{{ $i }}</li>@endforeach</ul>
+                    </details>
+                @endif
+            </div>
+        @endif
+    </div>
+</div>
+
 @forelse ($segments as $segment => $models)
     <div class="card mb-3 xl-content-segment">
         <div class="card-header"><h3 class="card-title mb-0">{{ $segment }} <span class="badge bg-secondary-lt ms-1">{{ count($models) }}</span></h3></div>

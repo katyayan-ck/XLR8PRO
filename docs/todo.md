@@ -401,10 +401,10 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W13e | **Other module / utility settings** (security, data scope, documents, tickets / SLA, chat, notifications, approvals, display / date format, density …) grouped in the same interface | ✅ 30-09 (Phase 1: Security, Modules & utilities, Other tabs) |
 | W13f | **Access and single place:** only the settings-manage permission (pricing group also pricing-manage); remove the other settings screens / menu entries; API reads the same values (cache flush on save) | ✅ 30-09 (Phase 6) |
 | W13g | **Site tab feedback** (your notes 30-09): browser title = dealership + app name; footer "Made for <dealership>" linked to its website, tagline on hover; no site name / slogan (dealership tagline instead); current logo / favicon shown with drop-zone and Remove; menu logo = logo or text | ✅ 30-09 |
-| W14 | **Vehicle content & compare** (your request 30-09) — parts W14a–W14d; plan to be written. Samples (root, not committed): `Vehicle_Specifications.xlsx` — one sheet per segment group (COMMERCIAL, LMM, LMM EV, PERSONAL, PERSONAL EV), rows Head → SubHead (Axle, Brakes, Engine, Battery, Dimensions, Warranty …), one column per model; `Vehicle-Features.xlsx` — one sheet per model, rows Feature group → Feature, one column per variant (by name), values Yes / --- | 🟡 in progress — Phases 1–2 ✅ (data, screens); Phase 3 (Excel + sample loader) next; DEC-092 |
+| W14 | **Vehicle content & compare** (your request 30-09) — parts W14a–W14d; plan to be written. Samples (root, not committed): `Vehicle_Specifications.xlsx` — one sheet per segment group (COMMERCIAL, LMM, LMM EV, PERSONAL, PERSONAL EV), rows Head → SubHead (Axle, Brakes, Engine, Battery, Dimensions, Warranty …), one column per model; `Vehicle-Features.xlsx` — one sheet per model, rows Feature group → Feature, one column per variant (by name), values Yes / --- | 🟡 in progress — Phases 1–3 ✅ (data, screens, workbooks); Phase 4 (compare) next; DEC-092 |
 | W14a | **Model level:** attach images, a PDF brochure and category-wise specifications (e.g. Engine, Dimensions, Safety …) to each vehicle model | ✅ 01-10 (Phase 2 screens) |
 | W14b | **Variant level:** feature mapping and management per variant, and an image gallery per variant | ✅ 01-10 (features per trim; gallery bound to trim or colour) |
-| W14c | **Excel import / export** of specifications (per model) and features (per variant), with master-fed dropdowns like the Vehicle Info workbook | 🔴 |
+| W14c | **Excel import / export** of specifications (per model) and features (per variant), with master-fed dropdowns like the Vehicle Info workbook | ✅ 01-10 (our workbook by codes + your sample format by name, with a match report) |
 | W14d | **Compare vehicles** within the same segment only: intra-model (variants of one model, by features) and inter-model (different models, by specifications) | 🔴 |
 
 **Needs you (not started):** D1–D29, N1, N3 / F2 formats, N4 security values (S3, S4, S5, S7), S6 / O3 / O6 / Q3 package
@@ -1083,3 +1083,14 @@ can be added from the pages; current files show with a Remove button.
 
 **Verified:** 6 feature tests (permissions, saves, uploads, level-bound gallery, ownership, refused file); render smoke.
 **Next:** Phase 3 — Excel import / export and the loader for your sample workbooks.
+
+### 2. Specifications / features workbooks — W14 Phase 3 (DEC-092)
+
+**Delivered:** Vehicle Content → Workbooks: export all models' specifications (sheet per segment) or all trims'
+features (sheet per model) with codes, edit, and import back; your OEM sheets can be imported as they are — models and
+trims are matched by name and every column that did not match is listed, new items are added and reported, blanks keep
+what is stored.
+
+**Verified:** 4 feature tests; your two sample files loaded on the test copy (rolled back): 765 specification values and
+4 571 feature values matched; the unmatched columns are names that differ from ours (e.g. "ALFA LOAD", "MAXX CITY 1.3 VXI
+BS6.2 - GOLD"). **Next:** Phase 4 — compare.

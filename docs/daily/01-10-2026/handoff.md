@@ -25,6 +25,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 01-10: W14 Phase 3 — specifications / features workbooks (ours by code, OEM sample by name with a match report).
 - 01-10: W14 Phase 2 — Vehicle Content screens (model specs / images / brochure; trim features / gallery by level).
 - 30-09: W14 Phase 1 — vehicle content tables, entity services, media collections, VEH_CONT / VEH_CMPR permissions.
 - 30-09: W7 — N+1 review: per-request memos (settings, legacy settings, OrgService lookups), booking grid batched, bell once per request.
@@ -64,7 +65,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-- **W5 ✅** (UI clean-up outside Sales). **W7 ✅** (lists: bookings 567 → 95 queries). **Now: W14 Phase 3** (DEC-092) — Excel: specifications workbook (sheet per segment, rows category / item, columns models `CODE`) and features workbook (sheet per model, rows group / feature, columns variant codes), import through the entity services (unknown items added + reported, blank keeps, `-` = N/A); plus the one-time loader for the owner's samples (`Vehicle_Specifications.xlsx`, `Vehicle-Features.xlsx` at the root, matched by normalised names, match report). Phases 1–2 ✅.
+- **W5 ✅** (UI clean-up outside Sales). **W7 ✅** (lists: bookings 567 → 95 queries). **Now: W14 Phase 4** (DEC-092) — compare: `CompareService::variants(modelCode, variantCodes[])` (feature matrix, differences flagged) and `models(modelCodes[])` (specification matrix, same segment enforced — new error code in ErrorCodeEnum + errors.php), admin screen (VEH_CMPR_VIEW), API `GET api/v1/vehicles/compare/{variants,models}` + docs / Postman; tests. Phases 1–3 ✅.
 0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). W3 ✅ (15 Sales HTTP tests; BUG-219 open, BUG-220 fixed). W4 ✅ (baseline, full analyse clean; BUG-221). W6 ✅ (225 flash calls → lang `flash` groups; FlashMessagesLangTest). Next step: W5 (UI clean-up outside Sales: hex / inline styles → shared layer, same method as the Sales pass), then W7 (N+1 review). Then W4 (PHPStan baseline), W5, W6, W7.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.
@@ -72,6 +73,7 @@
    booking forms.
 
 ## Waiting on the owner
+- W14: load your sample workbooks on UAT through Vehicle Content → Workbooks (import), then fix the unmatched names the report lists (local test copy: 11 model / 115 trim columns).
 - Environment: `CACHE_STORE=database` turns every cache read into a query (~20–30 per page after W7); Redis or file cache on UAT recommended.
 - BUG-207 remainder: narrow or retire `GET system-settings` / `topic` / `category` / `{key}` now that `app-settings` exists; move PUT / import onto SettingsService.
 - Deletion OK? `resources/views/admin/pricing/hold/index.blade.php` and `resources/views/admin/pricing/tcs/index.blade.php` are unused since W13 Phase 4.

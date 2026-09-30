@@ -58,6 +58,7 @@ return [
     'flash' => [
         // DEC-092 vehicle content
         'content_saved' => 'Saved (:count changed).',
+        'content_imported' => 'Import finished: :count values written. See the report below.',
         'item_added' => ':name added to the list.',
         'images_added' => ':count image(s) added.',
         'brochure_saved' => 'Brochure saved.',

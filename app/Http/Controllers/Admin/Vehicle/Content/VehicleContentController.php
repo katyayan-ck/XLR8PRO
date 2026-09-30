@@ -6,10 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Vehicle\VehicleModel;
 use App\Models\Vehicle\VehicleTrim;
 use App\Services\Vehicle\Content\VehicleContentService;
+use App\Services\Vehicle\Content\VehicleContentWorkbookService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Prologue\Alerts\Facades\Alert;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Vehicles → Vehicle content (DEC-092 Phase 2): per model — images, PDF brochure, category-wise specifications, its trims;
@@ -132,6 +136,29 @@ class VehicleContentController extends Controller
         $result->ok ? Alert::success(__('vehicle.flash.file_removed'))->flash() : Alert::error($result->message)->flash();
 
         return redirect()->route('vehicle.content.trim', [$variantCode, 'tab' => 'gallery']);
+    }
+
+    /** Specifications (`specs`) or features (`features`) workbook of every active model (DEC-092 Phase 3). */
+    public function export(string $kind, VehicleContentWorkbookService $workbooks): BinaryFileResponse
+    {
+        $this->allow('VEH_CONT_VIEW');
+        abort_unless(in_array($kind, ['specs', 'features'], true), 404);
+        $path = storage_path('app/vehicle-'.$kind.'-'.Str::random(8).'.xlsx');
+        $kind === 'specs' ? $workbooks->exportSpecs($path) : $workbooks->exportFeatures($path);
+
+        return response()->download($path, 'vehicle-'.($kind === 'specs' ? 'specifications' : 'features').'-'.now()->format('Ymd-Hi').'.xlsx')->deleteFileAfterSend();
+    }
+
+    /** Import our workbook or the OEM sample format; the match report is shown on the page. */
+    public function import(Request $request, VehicleContentWorkbookService $workbooks): RedirectResponse
+    {
+        $this->allow('VEH_CONT_EDIT');
+        $data = $request->validate(['kind' => 'required|in:specs,features', 'file' => 'required|file|mimes:xlsx,xls|max:'.$this->maxKb()]);
+        $path = $data['file']->getRealPath();
+        $report = DB::transaction(fn () => $data['kind'] === 'specs' ? $workbooks->importSpecs($path) : $workbooks->importFeatures($path));
+        Alert::success(__('vehicle.flash.content_imported', ['count' => $report['values']]))->flash();
+
+        return redirect()->route('vehicle.content.index')->with('content_import', ['kind' => $data['kind']] + $report);
     }
 
     private function allow(string $permission): void

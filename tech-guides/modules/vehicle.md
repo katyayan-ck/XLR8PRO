@@ -167,3 +167,10 @@ transaction; assert `missingFields()` for completeness rules.
   `trimSheet(VehicleTrim)`, `saveTrimFeatures(VehicleTrim, array): int`, `addGalleryImages(VehicleTrim, string $level, array): Result`
   (`trim` or a colour code), `removeGalleryImage(VehicleTrim, int): Result` (owner checked), `trim(string): ?VehicleTrim`.
   Screen saves: blank clears; a file the collection refuses is a validation error on the upload field.
+- **Workbooks (Phase 3):** `VehicleContentWorkbookService` — `exportSpecs(path)` (sheet per segment: Category |
+  Specification | Unit | Item code | "CODE · Name" per model), `exportFeatures(path)` (sheet per model code: Feature group |
+  Feature | Item code | "VARIANT · Name" per trim), `importSpecs(path)` / `importFeatures(path)` → `{format: workbook|sample,
+  values, items_added[], unmatched[]}`. The OEM sample format (Head / SubHead, Head Group / Head, columns by name) is
+  detected and matched by normalised name (a trim by the unique name that starts with the sample's); unknown items are
+  added, blanks keep, `-` / `-NA-` / `_` = N/A (features: No). Routes `vehicle.content.export` (`specs|features`,
+  VEH_CONT_VIEW), `vehicle.content.import` (VEH_CONT_EDIT; one transaction; report shown on the index page).

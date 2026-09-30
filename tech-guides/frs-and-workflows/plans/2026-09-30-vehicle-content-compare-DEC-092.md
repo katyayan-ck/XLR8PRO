@@ -1,6 +1,6 @@
 # Plan: vehicle specifications, features, galleries and compare (DEC-092, to-do W14)
 
-> **Status (30-09-2026): 🟡 in progress** — Phase 1 ✅ (data layer); Phase 2 ✅ (screens); Phase 3 (Excel + sample loader) next. To-do rows W14, W14a–W14d.
+> **Status (30-09-2026): 🟡 in progress** — Phase 1 ✅ (data layer); Phase 2 ✅ (screens); Phase 3 ✅ (workbooks + sample format); Phase 4 (compare) next. To-do rows W14, W14a–W14d.
 
 ## Context
 The owner asked (30-09) for: model-level images, a PDF brochure and category-wise specifications; variant-level

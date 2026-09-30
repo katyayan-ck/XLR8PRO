@@ -63,6 +63,8 @@ Route::group([
 
     // ==================== VEHICLE CONTENT (DEC-092): specifications, features, images, brochure, galleries ====================
     Route::get('vehicle/content', [VehicleContentController::class, 'index'])->name('vehicle.content.index');
+    Route::get('vehicle/content/export/{kind}', [VehicleContentController::class, 'export'])->whereIn('kind', ['specs', 'features'])->name('vehicle.content.export');
+    Route::post('vehicle/content/import', [VehicleContentController::class, 'import'])->name('vehicle.content.import');
     Route::get('vehicle/content/model/{code}', [VehicleContentController::class, 'model'])->name('vehicle.content.model');
     Route::put('vehicle/content/model/{code}/specs', [VehicleContentController::class, 'saveSpecs'])->name('vehicle.content.model.specs');
     Route::post('vehicle/content/model/{code}/spec-item', [VehicleContentController::class, 'addSpecItem'])->name('vehicle.content.model.spec-item');
