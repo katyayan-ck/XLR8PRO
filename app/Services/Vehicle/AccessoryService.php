@@ -93,8 +93,8 @@ class AccessoryService
 
             DB::transaction(function () use ($sheets) {
                 // Hard purge — fresh catalog every import
-                DB::table('xlr8_vehicle_accessory_scopes')->delete();
-                DB::table('xlr8_vehicle_accessories')->delete();
+                AccessoryScope::withTrashed()->forceDelete();   // every row, soft-deleted ones too; no model events
+                Accessory::withTrashed()->forceDelete();
 
                 foreach ($sheets as $sheetName => $collection) {
                     $type = $this->resolveSheetType((string) $sheetName);
@@ -924,8 +924,8 @@ class AccessoryService
             $sheets = Excel::toCollection(null, $path);
 
             DB::transaction(function () use ($sheets, $orderMap) {
-                DB::table('xlr8_vehicle_accessory_scopes')->delete();
-                DB::table('xlr8_vehicle_accessories')->delete();
+                AccessoryScope::withTrashed()->forceDelete();   // every row, soft-deleted ones too; no model events
+                Accessory::withTrashed()->forceDelete();
 
                 $index = 0;
                 foreach ($sheets as $sheetName => $collection) {

@@ -406,7 +406,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W14b | **Variant level:** feature mapping and management per variant, and an image gallery per variant | ✅ 01-10 (features per trim; gallery bound to trim or colour) |
 | W14c | **Excel import / export** of specifications (per model) and features (per variant), with master-fed dropdowns like the Vehicle Info workbook | ✅ 01-10 (our workbook by codes + your sample format by name, with a match report) |
 | W14d | **Compare vehicles** within the same segment only: intra-model (variants of one model, by features) and inter-model (different models, by specifications) | ✅ 01-10 (admin screen + app API) |
-| W15 | **No `DB::` queries — convert to Eloquent** (your rule 01-10, DEC-093). Guard test + baseline (473 uses / 72 files). Order: W15a services / jobs / console / imports / models / support; W15b admin controllers outside Booking; W15c tests / seeders; W15d Booking controller + booking models (with the booking team) | 🟡 in progress — rule + guard; pricing session + vehicle content; 460 uses / 68 files left |
+| W15 | **No `DB::` queries — convert to Eloquent** (your rule 01-10, DEC-093). Guard test + baseline (473 uses / 72 files). Order: W15a services / jobs / console / imports / models / support; W15b admin controllers outside Booking; W15c tests / seeders; W15d Booking controller + booking models (with the booking team) | 🟡 in progress — rule + guard; pricing session, vehicle content, rule testers, accessory import, pricing reset; 441 uses / 64 files left |
 
 **Needs you (not started):** D1–D29, N1, N3 / F2 formats, N4 security values (S3, S4, S5, S7), S6 / O3 / O6 / Q3 package
 approvals, O1 / O2 / O5 CI and server changes, V8 app-sync endpoint shape, V10 / DA6 deletions, the push to `stage`.
@@ -1134,3 +1134,11 @@ now reach the database only through Eloquent models (new `SessionChange` model).
 they were.
 **Verified:** Pricing + Vehicle feature tests (98) passed; PHPStan clean on the changed files.
 **Baseline now:** 460 `DB::` uses in 68 files.
+
+### W15 — pricing rule testers, accessory import and pricing reset off the DB facade
+
+**Delivered:** the RTO / insurance rule testers, the accessory catalogue import and the local pricing reset now use
+the Eloquent models only. The reset's queue flush, which had silently done nothing, now really clears the queue (BUG-222).
+**Verified:** 41 unit / feature tests + the 98 Pricing / Vehicle feature tests passed; PHPStan clean. The reset itself is not
+run in tests (TRUNCATE would empty the test database).
+**Baseline now:** 441 `DB::` uses in 64 files.

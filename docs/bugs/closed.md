@@ -212,6 +212,7 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-216 | Colour mode flashed dark / light many times a second with two or more admin tabs open — tabs re-set the mode on every `storage` event, and Backpack's `colorMode.set()` rewrites the key each time, so the tabs kept bouncing it | High | FIXED — debounced, compare-then-apply sync | 30-09-2026 | 30-09-2026 |
 | BUG-217 | v1 notification / alert lists passed `sort_by` / `sort_order` straight into orderBy() — an unknown column or direction was a 500 | Medium | FIXED — per-list allow-list, fallback newest first | 30-09-2026 | 30-09-2026 |
 | BUG-220 | Quotation history page kept a hard-coded list of 18 mock customers ("Rajesh Kumar" …) as the name fallback | Low | FIXED — mock block removed; no name shows `-` | 30-09-2026 | 30-09-2026 |
+| BUG-222 | Pricing reset's queue flush named tables that do not exist here (`jobs`, `job_batches`, `failed_jobs`) and never cleared the queue | Low | FIXED — flush through `queue:clear` / `queue:flush` / `queue:prune-batches` | 01-10-2026 | 01-10-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2644,3 +2645,15 @@ guessed at.
 - **Where:** `app/Http/Controllers/Admin/Sales/Quotation/QuotationCrudController.php` `history()`.
 - **Fixed:** 30-09-2026 — the `$mockEnquiries` fallback removed; the name comes from the quotation data or the enquiry,
   else `-`. Covered by `tests/Feature/Sales/QuotationFlowTest` (history page opens).
+
+### BUG-222 — Pricing reset's queue flush named tables that do not exist here and never cleared the queue
+
+- **Final status:** FIXED · **Fixed:** 01-10-2026
+- **Severity:** Low (local-only tool, DEC-082; queued pricing jobs survived a reset and could run against flushed data).
+- **Found:** 01-10-2026, converting `PricingResetService` to Eloquent (to-do W15, DEC-093).
+- **Where:** `app/Services/Vehicle/Pricing/PricingResetService.php` — `FLUSH_TABLES` listed `jobs`, `job_batches`,
+  `failed_jobs`; this app's queue tables are `xlr8_system_jobs` / `xlr8_system_job_batches` / `xlr8_system_failed_jobs`
+  (`config/queue.php`), so each was logged "SKIP missing table".
+- **Fixed:** 01-10-2026 — with the flush option the reset runs `queue:clear` (database connection), `queue:flush` and
+  `queue:prune-batches --hours=0 --unfinished=0 --cancelled=0`; the table lists became model lists (`FLUSH_MODELS`,
+  `KEEP_MODELS`). Not run by a test: MySQL `TRUNCATE` commits implicitly and would empty `xlrm_testing`.

@@ -14,9 +14,9 @@
 
 namespace App\Services\Vehicle\Pricing;
 
+use App\Models\Vehicle\Pricing\RtoRule;
 use App\Services\Vehicle\Pricing\Rules\RuleFormula;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
@@ -48,14 +48,7 @@ class RtoService
         }
 
         $rules = Cache::flexible('pricing.rto.rules', [300, 900], function () {
-            return DB::table('xlr8_vehicle_pricing_rto_rules')
-                ->where(function ($q) {
-                    if (Schema::hasColumn('xlr8_vehicle_pricing_rto_rules', 'is_active')) {
-                        $q->where('is_active', 1);
-                    }
-                })
-                ->when(Schema::hasColumn('xlr8_vehicle_pricing_rto_rules', 'deleted_at'), fn ($q) => $q->whereNull('deleted_at'))
-                ->get();
+            return RtoRule::query()->where('is_active', 1)->toBase()->get();   // plain rows, as the matcher reads them
         });
 
         $matched = [];

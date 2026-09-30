@@ -206,7 +206,8 @@ fieldMap]`), `val($row, $map, $field, $default)`, `requiredFieldCodes($sheet)`, 
 `info/warning/error/debug($msg, $ctx)`, `dumpSheetPreview(...)` → `pricing_process_session_N.log`.
 
 `PricingResetService::run($afterDate, $flushQueue = true)` **destroys** pricing sessions, profiles, prices, history,
-snapshots … after a date (keeps sheet headers, add-ons, discounts, rules) — **local only**; the admin route is a GET
+snapshots … after a date (models in `FLUSH_MODELS`; `KEEP_MODELS` are only counted; with `$flushQueue` the database queue is
+cleared through `queue:clear` / `queue:flush` / `queue:prune-batches`, BUG-222) — **local only**; the admin route is a GET
 preview + POST with the typed `RESET` (`pricing.reset` / `pricing.reset.run`, DEC-082).
 
 ---

@@ -10,41 +10,54 @@
 
 namespace App\Services\Vehicle\Pricing;
 
+use App\Models\Utilities\Synonym;
+use App\Models\Vehicle\Pricing\Addon;
+use App\Models\Vehicle\Pricing\AddonHistory;
+use App\Models\Vehicle\Pricing\Affected;
+use App\Models\Vehicle\Pricing\ChangeFlag;
+use App\Models\Vehicle\Pricing\Csd;
+use App\Models\Vehicle\Pricing\DealerCharge;
+use App\Models\Vehicle\Pricing\Discount;
+use App\Models\Vehicle\Pricing\DiscountHistory;
+use App\Models\Vehicle\Pricing\Draft;
+use App\Models\Vehicle\Pricing\Hold;
+use App\Models\Vehicle\Pricing\ImportSession;
+use App\Models\Vehicle\Pricing\InsAddonRate;
+use App\Models\Vehicle\Pricing\InsBaseRule;
+use App\Models\Vehicle\Pricing\InsDefault;
+use App\Models\Vehicle\Pricing\Pricing;
+use App\Models\Vehicle\Pricing\PricingHistory;
+use App\Models\Vehicle\Pricing\Profile;
+use App\Models\Vehicle\Pricing\RtoRule;
+use App\Models\Vehicle\Pricing\SheetHeader;
+use App\Models\Vehicle\Pricing\Snapshot;
+use App\Models\Vehicle\Pricing\TcsConfig;
+use App\Models\Vehicle\Variant;
+use App\Models\Vehicle\VehicleModel;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Local-only pricing reset (DEC-082): empties the workflow / price / snapshot tables, deletes vehicles created after a
+ * date, clears the database queue, and reports the kept rule tables. All table work goes through the models (DEC-093);
+ * counts and deletes include soft-deleted rows, as a reset must.
+ */
 class PricingResetService
 {
-    public const FLUSH_TABLES = [
-        'xlr8_vehicle_pricing_import_sessions',
-        'xlr8_vehicle_pricing_profile',
-        'xlr8_vehicle_pricing',
-        'xlr8_vehicle_pricing_history',
-        'xlr8_vehicle_pricing_change_flags',
-        'xlr8_vehicle_pricing_draft',
-        'xlr8_vehicle_pricing_affected',
-        'xlr8_vehicle_pricing_snapshots',
-        'xlr8_vehicle_pricing_holds',
-        'xlr8_vehicle_pricing_csd',
-        'jobs',
-        'job_batches',
-        'failed_jobs',
+    /** @var list<class-string<Model>> emptied (TRUNCATE) */
+    public const FLUSH_MODELS = [
+        ImportSession::class, Profile::class, Pricing::class, PricingHistory::class, ChangeFlag::class,
+        Draft::class, Affected::class, Snapshot::class, Hold::class, Csd::class,
     ];
 
-    public const KEEP_TABLES = [
-        'xlr8_vehicle_pricing_sheet_headers',
-        'xlr8_vehicle_pricing_addons',
-        'xlr8_vehicle_pricing_addon_history',
-        'xlr8_vehicle_pricing_discounts',
-        'xlr8_vehicle_pricing_discount_history',
-        'xlr8_vehicle_pricing_dealer_charges',
-        'xlr8_vehicle_pricing_rto_rules',
-        'xlr8_vehicle_pricing_ins_defaults',
-        'xlr8_vehicle_pricing_ins_base_rules',
-        'xlr8_vehicle_pricing_ins_addon_rates',
-        'xlr8_vehicle_pricing_tcs_config',
-        'xlr8_utils_synonyms',
+    /** @var list<class-string<Model>> never touched; their row counts are reported */
+    public const KEEP_MODELS = [
+        SheetHeader::class, Addon::class, AddonHistory::class, Discount::class, DiscountHistory::class,
+        DealerCharge::class, RtoRule::class, InsDefault::class, InsBaseRule::class, InsAddonRate::class,
+        TcsConfig::class, Synonym::class,
     ];
 
     /**
@@ -54,42 +67,43 @@ class PricingResetService
     {
         $log = [];
         $after = date('Y-m-d 00:00:00', strtotime($afterDate));
-        $log[] = '[' . now()->toDateTimeString() . '] Pricing reset start';
-        $log[] = 'Cutoff (created_at >=): ' . $after;
+        $log[] = '['.now()->toDateTimeString().'] Pricing reset start';
+        $log[] = 'Cutoff (created_at >=): '.$after;
         $log[] = 'KEEP: headers, addons, discounts, dealer charges, RTO, insurance, TCS, synonyms';
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        Schema::disableForeignKeyConstraints();
 
-        $tables = self::FLUSH_TABLES;
-        if (! $flushQueue) {
-            $tables = array_values(array_diff($tables, ['jobs', 'job_batches', 'failed_jobs']));
-        }
-
-        foreach ($tables as $table) {
+        foreach (self::FLUSH_MODELS as $model) {
+            $table = (new $model)->getTable();
             if (! Schema::hasTable($table)) {
                 $log[] = "SKIP missing table {$table}";
+
                 continue;
             }
-            $before = DB::table($table)->count();
-            DB::table($table)->truncate();
+            $before = $this->all($model)->count();
+            $model::query()->truncate();
             $log[] = "FLUSH {$table} ({$before} → 0)";
         }
 
         $log = array_merge($log, $this->deleteVehiclesAfter($after));
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        Schema::enableForeignKeyConstraints();
+
+        if ($flushQueue) {
+            $log = array_merge($log, $this->flushQueue());
+        }
 
         Cache::flush();
         $log[] = 'Cache::flush() done';
 
-        foreach (self::KEEP_TABLES as $table) {
-            if (! Schema::hasTable($table)) {
-                continue;
+        foreach (self::KEEP_MODELS as $model) {
+            $table = (new $model)->getTable();
+            if (Schema::hasTable($table)) {
+                $log[] = 'KEEP '.$table.' rows='.$this->all($model)->count();
             }
-            $log[] = 'KEEP ' . $table . ' rows=' . DB::table($table)->count();
         }
 
-        $log[] = '[' . now()->toDateTimeString() . '] Pricing reset finished';
+        $log[] = '['.now()->toDateTimeString().'] Pricing reset finished';
 
         return $log;
     }
@@ -100,40 +114,54 @@ class PricingResetService
     protected function deleteVehiclesAfter(string $after): array
     {
         $log = [];
-        $variantTable = Schema::hasTable('xlr8_vehicle_variant')
-            ? 'xlr8_vehicle_variant'
-            : (Schema::hasTable('vehicle_variant') ? 'vehicle_variant' : null);
-        $modelTable = Schema::hasTable('xlr8_vehicle_model')
-            ? 'xlr8_vehicle_model'
-            : (Schema::hasTable('vehicle_model') ? 'vehicle_model' : null);
+        $variantTable = (new Variant)->getTable();
+        $modelTable = (new VehicleModel)->getTable();
 
-        if ($variantTable) {
-            $q = DB::table($variantTable)->where('created_at', '>=', $after);
-            $n = (clone $q)->count();
-            $q->delete();
-            $log[] = "DELETE {$variantTable} created_at >= {$after} ({$n} rows)";
-        } else {
-            $log[] = 'SKIP variant table not found';
-        }
+        $q = Variant::withTrashed()->where('created_at', '>=', $after);
+        $n = (clone $q)->count();
+        $q->forceDelete();
+        $log[] = "DELETE {$variantTable} created_at >= {$after} ({$n} rows)";
 
-        if ($modelTable) {
-            $keepCodes = [];
-            if ($variantTable) {
-                $keepCodes = DB::table($variantTable)->pluck('model_code')->unique()->filter()->all();
-            }
-            $q = DB::table($modelTable)->where('created_at', '>=', $after);
-            if ($keepCodes !== []) {
-                $q->whereNotIn('code', $keepCodes);
-            }
-            $n = (clone $q)->count();
-            $q->delete();
-            $log[] = "DELETE {$modelTable} created_at >= {$after} with no remaining variants ({$n} rows)";
-            $log[] = "REMAIN {$modelTable}=" . DB::table($modelTable)->count()
-                . " {$variantTable}=" . ($variantTable ? DB::table($variantTable)->count() : 0);
-        } else {
-            $log[] = 'SKIP model table not found';
+        $keepCodes = Variant::withTrashed()->pluck('model_code')->unique()->filter()->all();
+        $q = VehicleModel::withTrashed()->where('created_at', '>=', $after);
+        if ($keepCodes !== []) {
+            $q->whereNotIn('code', $keepCodes);
         }
+        $n = (clone $q)->count();
+        $q->forceDelete();
+        $log[] = "DELETE {$modelTable} created_at >= {$after} with no remaining variants ({$n} rows)";
+        $log[] = "REMAIN {$modelTable}=".VehicleModel::withTrashed()->count()." {$variantTable}=".Variant::withTrashed()->count();
 
         return $log;
+    }
+
+    /**
+     * Pending, failed and batch records of the database queue, through the framework's own commands (the queue tables
+     * have no models). Before DEC-093 this step named tables that do not exist here (`jobs`, …) and was a no-op.
+     *
+     * @return list<string>
+     */
+    protected function flushQueue(): array
+    {
+        $connection = (string) config('queue.default');
+        if (config("queue.connections.{$connection}.driver") !== 'database') {
+            return ["SKIP queue flush (connection {$connection} is not the database driver)"];
+        }
+        Artisan::call('queue:clear', ['connection' => $connection, '--force' => true]);
+        Artisan::call('queue:flush');
+        Artisan::call('queue:prune-batches', ['--hours' => 0, '--unfinished' => 0, '--cancelled' => 0]);
+
+        return ["FLUSH queue {$connection}: pending, failed and batch records"];
+    }
+
+    /**
+     * Every row of the model's table, soft-deleted ones included.
+     *
+     * @param  class-string<Model>  $model
+     * @return Builder<Model>
+     */
+    private function all(string $model): Builder
+    {
+        return $model::query()->withoutGlobalScopes();
     }
 }

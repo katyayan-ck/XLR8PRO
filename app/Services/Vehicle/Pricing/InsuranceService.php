@@ -17,9 +17,12 @@
 
 namespace App\Services\Vehicle\Pricing;
 
+use App\Models\Vehicle\Pricing\InsAddonRate;
+use App\Models\Vehicle\Pricing\InsBaseRule;
+use App\Models\Vehicle\Pricing\InsDefault;
+use App\Models\Vehicle\Pricing\InsIdvSlot;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class InsuranceService
@@ -42,50 +45,26 @@ class InsuranceService
         }
 
         $rules = Cache::flexible('pricing.ins.base_rules', [300, 900], function () {
-            $q = DB::table('xlr8_vehicle_pricing_ins_base_rules');
-            if (Schema::hasColumn('xlr8_vehicle_pricing_ins_base_rules', 'deleted_at')) {
-                $q->whereNull('deleted_at');
-            }
-            if (Schema::hasColumn('xlr8_vehicle_pricing_ins_base_rules', 'is_active')) {
-                $q->where('is_active', 1);
-            }
-
-            return $q->get();
+            return InsBaseRule::query()->where('is_active', 1)->toBase()->get();   // plain rows, as the matchers read them
         });
 
         $slotsByRule = collect();
         if (Schema::hasTable('xlr8_vehicle_pricing_ins_idv_slots')) {
             $slotsByRule = Cache::flexible('pricing.ins.idv_slots', [300, 900], function () {
-                $q = DB::table('xlr8_vehicle_pricing_ins_idv_slots');
-                if (Schema::hasColumn('xlr8_vehicle_pricing_ins_idv_slots', 'deleted_at')) {
-                    $q->whereNull('deleted_at');
-                }
-
-                return $q->orderBy('year_no')->get()->groupBy('base_rule_id');
+                return InsIdvSlot::query()->orderBy('year_no')->toBase()->get()->groupBy('base_rule_id');
             });
         }
 
         $addons = collect();
         if (Schema::hasTable('xlr8_vehicle_pricing_ins_addon_rates')) {
             $addons = Cache::flexible('pricing.ins.addon_rates', [300, 900], function () {
-                $q = DB::table('xlr8_vehicle_pricing_ins_addon_rates');
-                if (Schema::hasColumn('xlr8_vehicle_pricing_ins_addon_rates', 'deleted_at')) {
-                    $q->whereNull('deleted_at');
-                }
-                if (Schema::hasColumn('xlr8_vehicle_pricing_ins_addon_rates', 'is_active')) {
-                    $q->where('is_active', 1);
-                }
-
-                return $q->get();
+                return InsAddonRate::query()->where('is_active', 1)->toBase()->get();
             });
         }
 
         $defaults = collect();
         if (Schema::hasTable('xlr8_vehicle_pricing_ins_defaults')) {
-            $defaults = DB::table('xlr8_vehicle_pricing_ins_defaults')
-                ->when(Schema::hasColumn('xlr8_vehicle_pricing_ins_defaults', 'deleted_at'), fn ($q) => $q->whereNull('deleted_at'))
-                ->when(Schema::hasColumn('xlr8_vehicle_pricing_ins_defaults', 'is_active'), fn ($q) => $q->where('is_active', 1))
-                ->get();
+            $defaults = InsDefault::query()->where('is_active', 1)->toBase()->get();
         }
 
         $invoice = (float) ($ctx['invoice'] ?? 0);

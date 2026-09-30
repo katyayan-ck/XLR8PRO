@@ -10041,3 +10041,14 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 - **Guides:** `tech-guides/architecture/model-reference.md`, `tech-guides/modules/pricing.md`.
 - **Tests:** Pricing + Vehicle feature suites 98 passed.
 - **Baseline:** 460 uses in 68 files left.
+
+## W15 — pricing rule testers, accessory import and pricing reset off the DB facade
+- **Converted:** `RtoService`, `InsuranceService` (rule-tester reads via `RtoRule` / `InsBaseRule` / `InsIdvSlot` /
+  `InsAddonRate` / `InsDefault` `->toBase()` — same plain rows; the model adds the soft-delete filter; column guards
+  removed, the columns exist), `AccessoryService` (catalogue purge → `withTrashed()->forceDelete()` — same hard delete,
+  no events), `PricingResetService` (model lists `FLUSH_MODELS` / `KEEP_MODELS`, `Schema::disable/enableForeignKeyConstraints()`,
+  vehicle deletes via `withTrashed()->forceDelete()`).
+- **Fixed on the way (BUG-222):** the reset's queue flush never ran (wrong table names); now `queue:clear` / `queue:flush` /
+  `queue:prune-batches`.
+- **Tests:** pricing service unit tests + reset screen + accessory model, 41 passed; Pricing + Vehicle feature suites 98.
+- **Baseline:** 441 uses in 64 files left.

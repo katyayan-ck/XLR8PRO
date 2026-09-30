@@ -62,3 +62,11 @@ now reach the database only through Eloquent models (new `SessionChange` model).
 they were.
 **Verified:** Pricing + Vehicle feature tests (98) passed; PHPStan clean on the changed files.
 **Baseline now:** 460 `DB::` uses in 68 files.
+
+### W15 — pricing rule testers, accessory import and pricing reset off the DB facade
+
+**Delivered:** the RTO / insurance rule testers, the accessory catalogue import and the local pricing reset now use
+the Eloquent models only. The reset's queue flush, which had silently done nothing, now really clears the queue (BUG-222).
+**Verified:** 41 unit / feature tests + the 98 Pricing / Vehicle feature tests passed; PHPStan clean. The reset itself is not
+run in tests (TRUNCATE would empty the test database).
+**Baseline now:** 441 `DB::` uses in 64 files.

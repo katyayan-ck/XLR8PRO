@@ -90,7 +90,7 @@ Indexes: (status,created_at)
 id bigint unsigned PK, import_session_id bigint unsigned?, code varchar(50)?, permit varchar(30), wheels tinyint unsigned?, reg_type varchar(20)?, body_type varchar(30)?, gvw_range varchar(30)?, seater varchar(20)?, fuel_type varchar(30)?, cc_range varchar(30)?, assessable_range varchar(40)?, tax_factor decimal(10,6), tax_basis varchar(120)?, tax_slab varchar(50)?, surcharge decimal(12,2), surcharge_formula varchar(120)?, hypothecation decimal(12,2), green_tax decimal(12,2), registration_fee decimal(12,2), duplicate_tax_card decimal(12,2), fitness decimal(12,2), penalty decimal(12,2), rto_tape decimal(12,2), wef_date date?, expired_on date?, is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?, extra_json json?
 Indexes: (import_session_id), (permit,is_active)
 
-## `xlr8_vehicle_pricing_session_changes` · ~0 rows · model: —
+## `xlr8_vehicle_pricing_session_changes` · ~0 rows · model: App\Models\Vehicle\Pricing\SessionChange
 id bigint unsigned PK, import_session_id bigint unsigned, table_name varchar(64), row_id bigint unsigned, action varchar(16), before json?, created_at timestamp?, created_by bigint unsigned?
 Indexes: (import_session_id,id)
 
