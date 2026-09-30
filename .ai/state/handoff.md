@@ -22,6 +22,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: W13 settings interface added to the to-do; owner answered (DEC-091: UTL_SETTINGS_MANAGE / PRC_WKFL_MANAGE, hold in Settings + process, encrypted secrets); plan saved. Next after W5 / W7 or on request: W13 Phase 1 (catalogue `config/settings_ui.php` + tabbed screen).
 - 30-09: W6 — admin flash messages from `resources/lang/en/{module}.php` 'flash' groups (+ new `utils.php`), same wording.
 - 30-09: W4 — `phpstan-baseline.neon` (2 511 legacy errors), full analyse clean, 2 missing imports fixed, BUG-221 logged.
 - 30-09: W3 — Sales HTTP feature tests (`tests/Feature/Sales/`), BUG-220 fixed, BUG-219 logged.

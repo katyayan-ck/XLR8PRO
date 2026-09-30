@@ -393,6 +393,13 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W5 | Q7 UI clean-up outside Sales (hex / inline styles → shared layer, same method as the Sales pass) | 🔴 |
 | W6 | U7 web side: admin flash messages through the error codes / language file (same wording) | ✅ 30-09 (225 calls → `{module}.flash.*`) |
 | W7 | U4 N+1 review of the big lists (enquiries, bookings, quotations) | 🔴 |
+| W13 | **One categorised Settings interface** (your request 30-09) — the only place settings are shown; changes apply at once on web and app / API. Today they are spread over Utilities → Settings (56 keys), the legacy System Setting screen, and the pricing TCS / Hold screens. Parts W13a–W13f; plan to be saved in `tech-guides/frs-and-workflows/plans/` | 🟡 planned — DEC-091 (owner answers 30-09), plan `2026-09-30-settings-interface-DEC-091.md` |
+| W13a | **Site / dealership:** name (default "Bikaner Motors"), website URL (default https://www.BikanerMotors.com), logo, address, favicon, e-mail, phone, GSTIN …; applied across the interface (header, login, PDFs, mails) | 🔴 |
+| W13b | **Communication:** global on / off per channel (mail, SMS, WhatsApp, push), SMTP settings used by the mail service, mail signature appended to every mail, plus the existing comms settings | 🔴 |
+| W13c | **Pricing:** global / per-list price-list hold, TCS threshold and rate, and the existing pricing settings; also open to the pricing-manage permission | 🔴 |
+| W13d | **User behaviour:** Appearance panel on / off; which profile fields a user may change (name, e-mail, profile photo, mobile, Aadhaar, PAN, password, DOB, DOJ, marital status, gender) — enforced on web and API | 🔴 |
+| W13e | **Other module / utility settings** (security, data scope, documents, tickets / SLA, chat, notifications, approvals, display / date format, density …) grouped in the same interface | 🔴 |
+| W13f | **Access and single place:** only the settings-manage permission (pricing group also pricing-manage); remove the other settings screens / menu entries; API reads the same values (cache flush on save) | 🔴 |
 
 **Needs you (not started):** D1–D29, N1, N3 / F2 formats, N4 security values (S3, S4, S5, S7), S6 / O3 / O6 / Q3 package
 approvals, O1 / O2 / O5 CI and server changes, V8 app-sync endpoint shape, V10 / DA6 deletions, the push to `stage`.

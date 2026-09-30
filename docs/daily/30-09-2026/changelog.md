@@ -185,3 +185,7 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - **Rule:** `.ai/rules/app.md` — admin flash wording only from the lang files or a Result.
 - **Test:** new `tests/Unit/Lang/FlashMessagesLangTest.php` (every key exists, placeholders passed, wording kept).
   Full suite: 511 passed, 1 skipped. Full `phpstan analyse`: No errors.
+
+## W13 planned — Settings interface (DEC-091)
+- **To-do:** W13, W13a–W13f added (owner request 30-09). **Decision:** DEC-091 (permission mapping, hold placement,
+  encrypted secrets). **Plan:** `tech-guides/frs-and-workflows/plans/2026-09-30-settings-interface-DEC-091.md` (+ index).

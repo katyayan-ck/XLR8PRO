@@ -1456,3 +1456,16 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
      `admin/org/user/export/rbac` (audit) and its files still import.
 - **Approved-by:** agent (within DEC-089; flagged to the owner in the handoff) · **Risk:** LOW · **Reversal:** change the
   cell mapping in `UserRowService` / `UsersWorkbookService::cell()`.
+
+### DEC-091 | 30-09-2026 | A (Platform / Settings) | One categorised Settings interface (to-do W13)
+- **Why:** owner request 30-09 — settings appear on several screens; wants one categorised interface (site / dealership,
+  communication, pricing, user behaviour, other modules), managers only, effective immediately on web and API, shown
+  nowhere else. Plan: `tech-guides/frs-and-workflows/plans/2026-09-30-settings-interface-DEC-091.md`.
+- **Decision (owner answers 30-09):**
+  1. Permissions map to existing codes: settings manage = `UTL_SETTINGS_MANAGE`; pricing settings also
+     `PRC_WKFL_MANAGE`.
+  2. Price-list hold: in Settings → Pricing and kept in the pricing process, both through `PricingHoldService`; the
+     separate Hold screen is removed.
+  3. Secrets (SMTP password …) are stored encrypted (masked, blank = keep) and read at send time.
+- **Approved-by:** owner (30-09) · **Risk:** MEDIUM (every screen reads branding / flags; mail transport) ·
+  **Reversal:** revert the phases; keys keep their defaults in `config/platform.php`.
