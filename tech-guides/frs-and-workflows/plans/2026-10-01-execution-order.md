@@ -45,4 +45,4 @@ Parallel, any time: remaining W15 in tests / console (no behaviour change); Q5 P
 lands; X-series extras only after Phase 9 (X5 is W16).
 
 ## Owner decisions and involvement (⚑), in the order they unblock work
-See the chat hand-over of 01-10 and `docs/todo.md` §3. Each item has the agent's recommendation.
+Answer sheet: [`docs/owner-decisions-2026-10-01.md`](../../../docs/owner-decisions-2026-10-01.md) (37 items, grouped by phase, with the agent's recommendation).

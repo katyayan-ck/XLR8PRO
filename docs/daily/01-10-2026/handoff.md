@@ -71,6 +71,7 @@ W15 / DEC-094 records commit; later commits are local only until the owner appro
   decisions listed to the owner). Until the owner answers, continue with work that is not blocked (BT-003 grid helpers).
 
 ## Waiting on the owner
+- **Answer sheet:** `docs/owner-decisions-2026-10-01.md` (37 items, phases 1–9) — read the answers before starting each phase.
 - **DEC-093 defaults:** transaction control (`DB::transaction`) stays allowed and migrations are exempt — confirm.
 - **Push / merge:** merge `dev/admin` into `stage` (N2); delete
   `backup/dev-admin-before-rewrite-30-09` + `git gc`.

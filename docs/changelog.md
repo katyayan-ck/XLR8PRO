@@ -10136,3 +10136,6 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 ## Execution order to go-live (owner request 01-10)
 - New plan `tech-guides/frs-and-workflows/plans/2026-10-01-execution-order.md` (+ index row): open bugs, pending to-do
   rows, decisions and clean-up ordered by dependency in phases 0–10; `docs/todo.md` §12 now points to it.
+
+## Owner decision sheet
+- New `docs/owner-decisions-2026-10-01.md`: the 37 decisions the execution plan needs, grouped by phase, with recommendations and an answer column.
