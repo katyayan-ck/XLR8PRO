@@ -22,6 +22,7 @@ touches only the lines listed, so a revert does not affect the others. Changes t
 | # | Where (file · method) | What changed | Why | Checked | Commit |
 |---|---|---|---|---|---|
 | BT-001 | `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` · `liveNotInvoiced()` (trade-advance statement per row), `getDoAmount()`, `getTAStatement()` | Financier-statement lookups by DO number read through the `FinancerStatement` model | DEC-093 (no `DB::` queries). New model `App\Models\Module\Finance\FinancerStatement` (table `xlr8_financer_statement`). | OTF form (`sales/booking/otf-form`), `get-do-amount` (existing DO, unknown DO, empty), `get-ta-statement` (existing, `0`, unknown) as superadmin + user 40: 14 / 14 identical; booking tests 63 passed | `git log --grep=BT-001` |
+| BT-002 | `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` · `getAccessoriesList()` (unused helper), `getConsultantDetails()`, `delivered()`, `pendingDeliveries()`, `setupUpdateOperation()` (consultant fallback), `addAmountForm()`, `pendingEdit()`, `dealerInvoice()`, `pendingRto()` | Single-table lookups (accessory name, consultant, delivered / RTO-done ids, person / employee fallback, variant colour rows) read through their models | DEC-093. Models `Accessory`, `Employee` + `Person`, `XlDelivery`, `XlRto`, `Variant`. The raw queries read every row, so the model queries keep that: `withTrashed()` (soft-deleted rows included) and, for `XlDelivery` / `XlRto` (which carry the automatic data scope), `withoutGlobalScopes()`. | delivered, delivered/list, pending-rto, pending-deliveries, otf-form, and for one booking per status (7): edit, add-amount, pending-edit, dealer-invoice, otf-form/{id} — superadmin + user 40: 80 / 80 identical; Sales tests 74 passed; PHPStan no new errors | `git log --grep=BT-002` |
 
 ## Entries
 
@@ -38,3 +39,18 @@ touches only the lines listed, so a revert does not affect the others. Changes t
 - **Depends on:** none
 - **Checked:** OTF form (`sales/booking/otf-form`), `get-do-amount` (existing DO, unknown DO, empty), `get-ta-statement` (existing, `0`, unknown) as superadmin + user 40: 14 / 14 identical; booking tests 63 passed
 - **Revert:** `git revert $(git log --format=%h --grep="BT-001")`
+
+### BT-002 — Single-table lookups (accessory name, consultant, delivered / RTO-done ids, person / employee fallback, variant colour rows) read through their models
+- **Where:** `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` · `getAccessoriesList()` (unused helper), `getConsultantDetails()`, `delivered()`, `pendingDeliveries()`, `setupUpdateOperation()` (consultant fallback), `addAmountForm()`, `pendingEdit()`, `dealerInvoice()`, `pendingRto()`
+- **Why:** DEC-093. Models `Accessory`, `Employee` + `Person`, `XlDelivery`, `XlRto`, `Variant`. The raw queries read every row, so the model queries keep that: `withTrashed()` (soft-deleted rows included) and, for `XlDelivery` / `XlRto` (which carry the automatic data scope), `withoutGlobalScopes()`.
+- **Details (before → after):**
+  - accessory name: `DB::table('xlr8_vehicle_accessories')->where('part_no', …)->first()` → `Accessory::withTrashed()->where(…)->toBase()->first()` (in `getAccessoriesList()`, which nothing calls — converted, not removed).
+  - consultant: `DB::table('xlr8_admin_employee as e')->join('xlr8_admin_person as p', …)` → `Employee::withoutGlobalScopes()->from('xlr8_admin_employee as e')->join('xlr8_admin_person as p', …)->…->toBase()->first()`.
+  - delivered ids (2 places): `DB::table('xlr8_booking_delivered')->where('status', 1)->pluck('bid')` → `XlDelivery::withoutGlobalScopes()->where('status', 1)->pluck('bid')`.
+  - RTO-done ids: `DB::table('xlr8_booking_rto')->where('status', 2)->pluck('bid')` → `XlRto::withoutGlobalScopes()->…`.
+  - consultant fallback: `DB::table('xlr8_admin_person' / 'xlr8_admin_employee')->where('person_code', …)->first()` → `Person::withTrashed()` / `Employee::withTrashed()` `->…->toBase()->first()`.
+  - variant colour rows (3 places): `DB::table('xlr8_vehicle_variant')->where('code', …)->get([...])` → `Variant::withTrashed()->where(…)->toBase()->get([...])`.
+  - imports `Employee`, `Person` added (Pint also sorted BT-001's import into place).
+- **Depends on:** none
+- **Checked:** delivered, delivered/list, pending-rto, pending-deliveries, otf-form, and for one booking per status (7): edit, add-amount, pending-edit, dealer-invoice, otf-form/{id} — superadmin + user 40: 80 / 80 identical; Sales tests 74 passed; PHPStan no new errors
+- **Revert:** `git revert $(git log --format=%h --grep="BT-002")`

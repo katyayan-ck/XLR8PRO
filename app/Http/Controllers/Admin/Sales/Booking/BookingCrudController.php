@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Admin\Sales\Booking;
 
-use App\Models\Module\Finance\FinancerStatement;
 use App\Http\Requests\BookingRequest;
 use App\Models\Admin\Branch;
+use App\Models\Admin\Employee;
 use App\Models\Admin\Location;
+use App\Models\Admin\Person;
 use App\Models\Admin\PinCodes;
 use App\Models\CRM\Enquiry;
 use App\Models\CRM\Quotation;
@@ -19,6 +20,7 @@ use App\Models\Module\Booking\XlDelivery;
 use App\Models\Module\Booking\XlFinancier;
 use App\Models\Module\Booking\XlRto;
 use App\Models\Module\Booking\XlRtoRules;
+use App\Models\Module\Finance\FinancerStatement;
 use App\Models\Module\Finance\XFinance;
 use App\Models\Module\Insurance\XlInsurance;
 use App\Models\Module\Insurance\XlInsurer;
@@ -2104,9 +2106,9 @@ class BookingCrudController extends CrudController
 
         $names = [];
         foreach ($accIds as $accId) {
-            $accessory = DB::table('xlr8_vehicle_accessories')
+            $accessory = Accessory::withTrashed()   // BT-002
                 ->where('part_no', trim($accId))
-                ->first();
+                ->toBase()->first();
             if ($accessory) {
                 $names[] = $accessory->item;
             }
@@ -2150,9 +2152,10 @@ class BookingCrudController extends CrudController
 
         $consultantCode = trim((string) $consultantCode);
 
-        $employee = DB::table('xlr8_admin_employee as e')
+        // BT-002: aliased join from the model, scopes off (the raw query saw every row)
+        $employee = Employee::withoutGlobalScopes()->from((new Employee)->getTable().' as e')
             ->join(
-                'xlr8_admin_person as p',
+                (new Person)->getTable().' as p',
                 'p.person_code',
                 '=',
                 'e.person_code'
@@ -2167,7 +2170,7 @@ class BookingCrudController extends CrudController
                 'e.person_code',
                 'p.display_name',
             ])
-            ->first();
+            ->toBase()->first();
 
         if (! $employee) {
             return [
@@ -2447,7 +2450,7 @@ class BookingCrudController extends CrudController
 
         $query = $this->getBaseQuery()->where('bookings.status', 2);
 
-        $deliveredIds = DB::table('xlr8_booking_delivered')
+        $deliveredIds = XlDelivery::withoutGlobalScopes()   // BT-002: all rows, unscoped, as before
             ->where('status', 1)
             ->pluck('bid')
             ->toArray();
@@ -2972,13 +2975,13 @@ class BookingCrudController extends CrudController
             // add that consultant manually.
             if (! $existsInList) {
 
-                $person = DB::table('xlr8_admin_person')
+                $person = Person::withTrashed()   // BT-002
                     ->where('person_code', $savedScCode)
-                    ->first();
+                    ->toBase()->first();
 
-                $employee = DB::table('xlr8_admin_employee')
+                $employee = Employee::withTrashed()
                     ->where('person_code', $savedScCode)
-                    ->first();
+                    ->toBase()->first();
 
                 Log::info('SALES CONSULTANT FALLBACK LOOKUP', [
                     'person_found' => $person ? true : false,
@@ -3210,9 +3213,9 @@ class BookingCrudController extends CrudController
 
         if (! empty($variantCode)) {
 
-            $variantRows = DB::table('xlr8_vehicle_variant')
+            $variantRows = Variant::withTrashed()   // BT-002: every row of the code, as before
                 ->where('code', $variantCode)
-                ->get([
+                ->toBase()->get([
                     'custom_name',
                     'color',
                     'color_code',
@@ -5742,7 +5745,7 @@ class BookingCrudController extends CrudController
 
         $query->where('bookings.status', 2);
 
-        $rtoDoneIds = DB::table('xlr8_booking_rto')
+        $rtoDoneIds = XlRto::withoutGlobalScopes()   // BT-002: all rows, unscoped, as before
             ->where('status', 2)
             ->pluck('bid')
             ->toArray();
@@ -5834,7 +5837,7 @@ class BookingCrudController extends CrudController
 
         $query->where('bookings.status', 2);
 
-        $deliveredIds = DB::table('xlr8_booking_delivered')
+        $deliveredIds = XlDelivery::withoutGlobalScopes()   // BT-002: all rows, unscoped, as before
             ->where('status', 1)
             ->pluck('bid')
             ->toArray();
@@ -6280,9 +6283,9 @@ class BookingCrudController extends CrudController
 
         if (! empty($variantCode)) {
 
-            $variantRows = DB::table('xlr8_vehicle_variant')
+            $variantRows = Variant::withTrashed()   // BT-002: every row of the code, as before
                 ->where('code', $variantCode)
-                ->get([
+                ->toBase()->get([
                     'custom_name',
                     'color',
                     'color_code',
@@ -7032,9 +7035,9 @@ class BookingCrudController extends CrudController
 
         if (! empty($variantCode)) {
 
-            $variantRows = DB::table('xlr8_vehicle_variant')
+            $variantRows = Variant::withTrashed()   // BT-002: every row of the code, as before
                 ->where('code', $variantCode)
-                ->get([
+                ->toBase()->get([
                     'custom_name',
                     'color',
                     'color_code',

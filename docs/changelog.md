@@ -10117,3 +10117,8 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 - `docs/todo.md`: W17a–d (user manual) and new W17e (help-article content) moved to a new §13 "LAST — user
   documentation", written after all bugs are fixed and QA has vetted the functionality; W16f keeps only the developer
   guide. DEC-094 amended; plan status header updated.
+
+## BT-002 (booking code, DEC-093) — Single-table lookups (accessory name, consultant, delivered / RTO-done ids, person / employee fallback, variant colour rows) read through their models
+- `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` · `getAccessoriesList()` (unused helper), `getConsultantDetails()`, `delivered()`, `pendingDeliveries()`, `setupUpdateOperation()` (consultant fallback), `addAmountForm()`, `pendingEdit()`, `dealerInvoice()`, `pendingRto()`. DEC-093. Models `Accessory`, `Employee` + `Person`, `XlDelivery`, `XlRto`, `Variant`. The raw queries read every row, so the model queries keep that: `withTrashed()` (soft-deleted rows included) and, for `XlDelivery` / `XlRto` (which carry the automatic data scope), `withoutGlobalScopes()`.
+- Checked: delivered, delivered/list, pending-rto, pending-deliveries, otf-form, and for one booking per status (7): edit, add-amount, pending-edit, dealer-invoice, otf-form/{id} — superadmin + user 40: 80 / 80 identical; Sales tests 74 passed; PHPStan no new errors. Log: `docs/booking-team-changes.md`.
+- **Baseline:** 349 `DB::` uses in 45 files left.
