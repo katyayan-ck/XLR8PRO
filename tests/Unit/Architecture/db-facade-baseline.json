@@ -6,7 +6,7 @@
     "app/Http/Controllers/Admin/Accounts/Receipt/ReceiptCrudController.php": 2,
     "app/Http/Controllers/Admin/Import/AdminImportController.php": 1,
     "app/Http/Controllers/Admin/Import/SalesImportController.php": 11,
-    "app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php": 70,
+    "app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php": 35,
     "app/Http/Controllers/Admin/Sales/Enquiry/EnquiryCrudController.php": 21,
     "app/Http/Controllers/Admin/Sales/Quotation/QuotationCrudController.php": 22,
     "app/Http/Controllers/Admin/Spares/SpareRequest/SpareRequestCrudController.php": 5,

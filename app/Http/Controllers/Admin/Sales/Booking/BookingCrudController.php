@@ -67,6 +67,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -935,14 +936,9 @@ class BookingCrudController extends CrudController
     {
         $query = Booking::withoutGlobalScope(SoftDeletingScope::class)
             ->from('xlr8_booking_master as bookings')
-            ->leftJoin('xlr8_crm_enquiries as enq', function ($join) {
-                // Raw-SQL equivalent of EnquiryReferenceService::toReference() - see the same note
-                // on Enquiry.php's whereRaw() CONCAT() for why this can't call the PHP service.
-                $join->on('enq.id', '=', 'bookings.enq_no')
-                    ->orOn(DB::raw("BINARY CONCAT('XENQ-', enq.id)"), '=', DB::raw('BINARY bookings.enq_no'))
-                    ->orOn(DB::raw('BINARY enq.enquiry_no'), '=', DB::raw('BINARY bookings.enq_no'))
-                    ->orOn(DB::raw('BINARY enq.quick_enquiry_no'), '=', DB::raw('BINARY bookings.enq_no'));
-            })
+            // Raw-SQL equivalent of EnquiryReferenceService::toReference() - see the same note
+            // on Enquiry.php's whereRaw() CONCAT() for why this can't call the PHP service.
+            ->leftJoin('xlr8_crm_enquiries as enq', fn (JoinClause $join) => $this->onEnquiryReference($join, 'enq', 'bookings'))   // BT-003
             ->select([
                 // 1. Native Booking Master Fields
                 'bookings.id',
@@ -1026,19 +1022,14 @@ class BookingCrudController extends CrudController
                 'enq.referee_variant as r_variant',
                 'enq.referee_chassis as r_chassis',
                 'enq.referred_by as referred_by',
-                DB::raw('NULL as accessories'),
-                DB::raw('NULL as apack_amount'),
                 'enq.x8_sc_code as consultant',
                 'enq.remarks as details',
-
-                // 3. Fallbacks
-                DB::raw('NULL as location_other'),
-                DB::raw('NULL as vehicle_oem_code'),
-
-            ]);
+            ])
+            // 3. Constant columns / fallbacks (BT-003: selectRaw instead of DB::raw)
+            ->selectRaw('NULL as accessories, NULL as apack_amount, NULL as location_other, NULL as vehicle_oem_code');
 
         $query->leftJoin('xlr8_booking_refund as ref', function ($join) {
-            $join->on('bookings.id', '=', DB::raw('CAST(ref.entity_id AS UNSIGNED)'))
+            $join->whereRaw('bookings.id = CAST(ref.entity_id AS UNSIGNED)')   // BT-003
                 ->where('ref.entity_type', 'booking');
         })->addSelect([
             'ref.amount as refund_amount',
@@ -1089,10 +1080,8 @@ class BookingCrudController extends CrudController
             'f.consideration_no_gst',
             'f.difference',
 
-            DB::raw('COALESCE(f.fin_mode, enq.fin_mode) as fin_mode'),
-            DB::raw('COALESCE(f.financier, enq.financier) as financier'),
             'f.loan_status',
-        ]);
+        ])->selectRaw('COALESCE(f.fin_mode, enq.fin_mode) as fin_mode, COALESCE(f.financier, enq.financier) as financier');   // BT-003
 
         return $query->orderBy('bookings.id', 'DESC');
     }
@@ -1134,20 +1123,17 @@ class BookingCrudController extends CrudController
             return [];
         }
 
-        return DB::table('xlr8_booking_master as b')
-            ->join('xlr8_crm_enquiries as e', function ($join) {
-                $join->on('e.id', '=', 'b.enq_no')
-                    ->orOn(DB::raw("BINARY CONCAT('XENQ-', e.id)"), '=', DB::raw('BINARY b.enq_no'))
-                    ->orOn(DB::raw('BINARY e.enquiry_no'), '=', DB::raw('BINARY b.enq_no'))
-                    ->orOn(DB::raw('BINARY e.quick_enquiry_no'), '=', DB::raw('BINARY b.enq_no'));
-            })
+        // BT-003: from the model, scopes off (the raw query counted every booking), deleted_at filter written out
+        return Booking::withoutGlobalScopes()->from('xlr8_booking_master as b')
+            ->join('xlr8_crm_enquiries as e', fn (JoinClause $join) => $this->onEnquiryReference($join, 'e', 'b'))
             ->whereIn('e.model_code', $tuples->pluck('model_code')->unique()->values())
             ->whereIn('e.variant_code', $tuples->pluck('variant_code')->unique()->values())
             ->whereIn('e.color_code', $tuples->pluck('color_code')->unique()->values())
             ->whereIn('b.status', [1, 8])
             ->whereNull('b.deleted_at')
             ->groupBy('e.model_code', 'e.variant_code', 'e.color_code')
-            ->get([DB::raw('e.model_code as m'), DB::raw('e.variant_code as v'), DB::raw('e.color_code as c'), DB::raw('COUNT(*) as n')])
+            ->selectRaw('e.model_code as m, e.variant_code as v, e.color_code as c, COUNT(*) as n')
+            ->toBase()->get()
             // the per-row count compares with the column collation (case-insensitive): fold the keys the same way
             ->reduce(function (array $carry, $r) {
                 $key = strtoupper(trim((string) $r->m).'|'.trim((string) $r->v).'|'.trim((string) $r->c));
@@ -1155,6 +1141,19 @@ class BookingCrudController extends CrudController
 
                 return $carry;
             }, []);
+    }
+
+    /**
+     * BT-003 (DEC-093): a booking matches its enquiry by any reference it may hold — the enquiry id, `XENQ-{id}`, the
+     * enquiry number or the quick-enquiry number (BINARY, as before). Shared by the grid base query and the live-order
+     * counts; the SQL is the same as the former `orOn(DB::raw(...))` chain.
+     */
+    private function onEnquiryReference(JoinClause $join, string $enq, string $booking): void
+    {
+        $join->on("{$enq}.id", '=', "{$booking}.enq_no")
+            ->orWhereRaw("BINARY CONCAT('XENQ-', {$enq}.id) = BINARY {$booking}.enq_no")
+            ->orWhereRaw("BINARY {$enq}.enquiry_no = BINARY {$booking}.enq_no")
+            ->orWhereRaw("BINARY {$enq}.quick_enquiry_no = BINARY {$booking}.enq_no");
     }
 
     private function preloadGridLookups($bookings): array
@@ -1169,10 +1168,10 @@ class BookingCrudController extends CrudController
         $colorCodes = $bookings->pluck('color_code')->filter()->unique()->values();
 
         return [
-            'consultants' => DB::table('xlr8_admin_employee as e')
+            'consultants' => Employee::withoutGlobalScopes()->from('xlr8_admin_employee as e')   // BT-003
                 ->join('xlr8_admin_person as p', 'p.person_code', '=', 'e.person_code')
                 ->whereIn('e.code', $consultantCodes)
-                ->pluck('p.display_name', 'e.code'),
+                ->toBase()->pluck('p.display_name', 'e.code'),
 
             'dsas' => Xl_DSA_Master::whereIn('id', $dsaIds)->pluck('name', 'id'),
 
@@ -1198,12 +1197,12 @@ class BookingCrudController extends CrudController
 
             'stockCounts' => Stock::where('status', 'available')
                 ->whereIn('model_code', $modelCodes)
-                ->select('model_code', DB::raw('COUNT(*) as cnt'))
+                ->selectRaw('model_code, COUNT(*) as cnt')   // BT-003
                 ->groupBy('model_code')
                 ->pluck('cnt', 'model_code'),
 
             // W7: consultants stored as person_code (Sales rule) — names batched instead of one query per row
-            'personNames' => DB::table('xlr8_admin_person')->whereIn('person_code', $consultantCodes)->pluck('display_name', 'person_code'),
+            'personNames' => Person::withTrashed()->whereIn('person_code', $consultantCodes)->toBase()->pluck('display_name', 'person_code'),   // BT-003
 
             // W7: the latest refund per booking (newest created_at), one query per page instead of one per row
             'refunds' => Xl_Refunds::query()->where('entity_type', 'booking')->whereIn('entity_id', $bookings->pluck('id'))
@@ -1238,7 +1237,7 @@ class BookingCrudController extends CrudController
         $consultantName = $lookups['consultants'][$booking->consultant]
             ?? (array_key_exists('personNames', $lookups)
                 ? ($lookups['personNames'][$booking->consultant] ?? 'N/A')
-                : (filled($booking->consultant) ? (DB::table('xlr8_admin_person')->where('person_code', $booking->consultant)->value('display_name') ?? 'N/A') : 'N/A'));
+                : (filled($booking->consultant) ? (Person::withTrashed()->where('person_code', $booking->consultant)->toBase()->value('display_name') ?? 'N/A') : 'N/A'));   // BT-003
 
         $collectedByName = OrgService::getUserNameByCode($booking->col_by, $booking->col_type);
 
@@ -1287,14 +1286,9 @@ class BookingCrudController extends CrudController
         $liveCount = isset($lookups['liveCounts']) && filled($booking->model_code) && filled($booking->variant_code) && filled($booking->color_code)
             ? (int) ($lookups['liveCounts'][$liveKey] ?? 0)
             // a missing code keeps the per-row query (IS NULL); identical tuples share one result per request (W7)
-            : $this->liveCountMemo[var_export([$booking->model_code, $booking->variant_code, $booking->color_code], true)] ??= DB::table('xlr8_booking_master as b')
-                ->join('xlr8_crm_enquiries as e', function ($join) {
-                    // Same raw-SQL XENQ- pattern as getBaseQuery() above - see its comment.
-                    $join->on('e.id', '=', 'b.enq_no')
-                        ->orOn(DB::raw("BINARY CONCAT('XENQ-', e.id)"), '=', DB::raw('BINARY b.enq_no'))
-                        ->orOn(DB::raw('BINARY e.enquiry_no'), '=', DB::raw('BINARY b.enq_no'))
-                        ->orOn(DB::raw('BINARY e.quick_enquiry_no'), '=', DB::raw('BINARY b.enq_no'));
-                })
+            : $this->liveCountMemo[var_export([$booking->model_code, $booking->variant_code, $booking->color_code], true)] ??= Booking::withoutGlobalScopes()->from('xlr8_booking_master as b')   // BT-003 (scopes off, as the raw count)
+                // Same raw-SQL XENQ- pattern as getBaseQuery() above - see its comment.
+                ->join('xlr8_crm_enquiries as e', fn (JoinClause $join) => $this->onEnquiryReference($join, 'e', 'b'))
                 ->where('e.model_code', $booking->model_code)
                 ->where('e.variant_code', $booking->variant_code)
                 ->where('e.color_code', $booking->color_code)

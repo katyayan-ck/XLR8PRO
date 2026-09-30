@@ -25,6 +25,7 @@ W15 / DEC-094 records commit; later commits are local only until the owner appro
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 01-10: BT-003 (booking code) — Booking grid queries without the DB facade: enquiry-reference join as one helper, computed columns via selectRaw, counts / names through the models.
 - 01-10: BT-002 (booking code) — Single-table lookups (accessory name, consultant, delivered / RTO-done ids, person / employee fallback, variant colour rows) read through their models.
 - 01-10: user documentation (W17 manual + help-article content) moved to the end of the to-do list (owner).
 - 01-10: BT-001 (booking code) — Financier-statement lookups by DO number read through the `FinancerStatement` model.
@@ -51,7 +52,7 @@ W15 / DEC-094 records commit; later commits are local only until the owner appro
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;
   booking code **BT-001, BT-002** (numbered, one commit each, logged in `docs/booking-team-changes.md`: where, what, why,
   before → after, checked, revert).
-  **Next step: BT-003** — `BookingCrudController` grid helpers `liveOrderCounts()` / `preloadGridLookups()` /
+  **Next step: BT-004** — (BT-003 grid helpers ✅) next:
   `mapBookingForGrid()` + `getBaseQuery()` (they feed ~30 list tabs; spec = the list-tab lines of
   `tests/RouteSnapshots/booking-all.txt`). Then the reports (`fetchCbrData`, consolidated, branch, `fetchPendBkData`,
   stock, live-order, pending-actions — most already 500, BUG-122), `QuotationCrudController`, `EnquiryCrudController`,
