@@ -158,3 +158,12 @@ transaction; assert `missingFields()` for completeness rules.
   `VehicleTrim` `gallery` (all colours); `Variant` `gallery` (that colour only). A colour shows its own + the trim's images.
 - **Relations:** `VehicleModel::specs()`, `ModelSpec::item()`, `TrimFeature::item()`, `VehicleTrim::features()`.
 - **Permissions:** `VEH_CONT_VIEW`, `VEH_CONT_EDIT`, `VEH_CMPR_VIEW` (migration `2026_09_30_221447_create_vehicle_content_tables_dec092`).
+- **Screens (Phase 2):** Vehicles → Vehicle Content (`Admin\Vehicle\Content\VehicleContentController`, routes
+  `vehicle.content.*`): index (models by segment with what they have) → model page (tabs Specifications / Images &
+  brochure / Trims) → trim page (tabs Features / Gallery with the level choice "all colours" or one colour).
+  `VEH_CONT_VIEW` to see, `VEH_CONT_EDIT` to change.
+- **`VehicleContentService`:** `overview()`, `modelSheet(VehicleModel)`, `saveModelSpecs(VehicleModel, array): int`,
+  `addSpecItem()`, `addFeatureItem()`, `addModelImages()`, `setBrochure()`, `removeModelMedia(VehicleModel, int): Result`,
+  `trimSheet(VehicleTrim)`, `saveTrimFeatures(VehicleTrim, array): int`, `addGalleryImages(VehicleTrim, string $level, array): Result`
+  (`trim` or a colour code), `removeGalleryImage(VehicleTrim, int): Result` (owner checked), `trim(string): ?VehicleTrim`.
+  Screen saves: blank clears; a file the collection refuses is a validation error on the upload field.

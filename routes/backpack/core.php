@@ -32,6 +32,7 @@ use App\Http\Controllers\Admin\Utils\KeyValue\KeyValueCrudController;
 use App\Http\Controllers\Admin\Utils\KeywordMaster\KeywordMasterCrudController;
 use App\Http\Controllers\Admin\Utils\SystemSetting\SystemSettingCrudController;
 use App\Http\Controllers\Admin\Vehicle\Color\ColorCrudController;
+use App\Http\Controllers\Admin\Vehicle\Content\VehicleContentController;
 use App\Http\Controllers\Admin\Vehicle\Model\VehicleModelCrudController;
 use App\Http\Controllers\Admin\Vehicle\Segment\SegmentCrudController;
 use App\Http\Controllers\Admin\Vehicle\SubSegment\SubSegmentCrudController;
@@ -59,6 +60,20 @@ Route::group([
     Route::get('home', [DashboardController::class, 'index'])->name('backpack.dashboard.home');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('backpack.dashboard');
     Route::get('dashboard/widget/{key}', [DashboardController::class, 'widget'])->where('key', '[a-z_]+')->name('dashboard.widget');   // DEC-072
+
+    // ==================== VEHICLE CONTENT (DEC-092): specifications, features, images, brochure, galleries ====================
+    Route::get('vehicle/content', [VehicleContentController::class, 'index'])->name('vehicle.content.index');
+    Route::get('vehicle/content/model/{code}', [VehicleContentController::class, 'model'])->name('vehicle.content.model');
+    Route::put('vehicle/content/model/{code}/specs', [VehicleContentController::class, 'saveSpecs'])->name('vehicle.content.model.specs');
+    Route::post('vehicle/content/model/{code}/spec-item', [VehicleContentController::class, 'addSpecItem'])->name('vehicle.content.model.spec-item');
+    Route::post('vehicle/content/model/{code}/images', [VehicleContentController::class, 'uploadImages'])->name('vehicle.content.model.images');
+    Route::post('vehicle/content/model/{code}/brochure', [VehicleContentController::class, 'uploadBrochure'])->name('vehicle.content.model.brochure');
+    Route::delete('vehicle/content/model/{code}/media/{media}', [VehicleContentController::class, 'removeModelMedia'])->whereNumber('media')->name('vehicle.content.model.media.remove');
+    Route::get('vehicle/content/trim/{variantCode}', [VehicleContentController::class, 'trim'])->name('vehicle.content.trim');
+    Route::put('vehicle/content/trim/{variantCode}/features', [VehicleContentController::class, 'saveFeatures'])->name('vehicle.content.trim.features');
+    Route::post('vehicle/content/trim/{variantCode}/feature-item', [VehicleContentController::class, 'addFeatureItem'])->name('vehicle.content.trim.feature-item');
+    Route::post('vehicle/content/trim/{variantCode}/gallery', [VehicleContentController::class, 'uploadGallery'])->name('vehicle.content.trim.gallery');
+    Route::delete('vehicle/content/trim/{variantCode}/gallery/{media}', [VehicleContentController::class, 'removeGallery'])->whereNumber('media')->name('vehicle.content.trim.gallery.remove');
 
     // ==================== VEHICLE MODEL (Manual Routes, no Operation traits) ====================
     Route::get('vehicle/model', [VehicleModelCrudController::class, 'index'])->name('vehicle.model.index');

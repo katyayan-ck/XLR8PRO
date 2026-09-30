@@ -135,7 +135,8 @@
                 backpack_user()->can('VEH_SEG_VIEW') ||
                 backpack_user()->can('VEH_MDL_VIEW') ||
                 backpack_user()->can('VEH_VAR_VIEW') ||
-                backpack_user()->can('VEH_CLR_VIEW')))
+                backpack_user()->can('VEH_CLR_VIEW') ||
+                backpack_user()->can('VEH_CONT_VIEW')))
 <x-backpack::menu-dropdown title="Vehicles Info" icon="la la-car" nested="true">
         <!--
         @if (backpack_user() && backpack_user()->can('VEH_BRND_VIEW'))
@@ -167,6 +168,12 @@
                 <span><i class="la la-clone me-2"></i>Variant</span>
             </a>
 @endif
+        {{-- DEC-092: specifications, features, images, brochure, galleries --}}
+        @if (backpack_user() && backpack_user()->can('VEH_CONT_VIEW'))
+            <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('vehicle.content.index') }}">
+                <span><i class="la la-images me-2"></i>Vehicle Content</span>
+            </a>
+        @endif
         <!--
         @if (backpack_user() && backpack_user()->can('VEH_CLR_VIEW'))
 <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ backpack_url('vehicle/color') }}">

@@ -56,6 +56,12 @@ return [
 
     // Flash messages shown on admin screens (to-do W6): wording lives here, controllers call __('vehicle.flash.key').
     'flash' => [
+        // DEC-092 vehicle content
+        'content_saved' => 'Saved (:count changed).',
+        'item_added' => ':name added to the list.',
+        'images_added' => ':count image(s) added.',
+        'brochure_saved' => 'Brochure saved.',
+        'file_removed' => 'File removed.',
         'import_failed' => 'Import failed: :message',
         'brand_updated_successfully' => 'Brand updated successfully!',
         'color_created_successfully' => 'Color created successfully!',
