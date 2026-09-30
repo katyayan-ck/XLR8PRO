@@ -81,8 +81,20 @@ Settings::setImage('branding.logo', $request->file('file'));
 Event::listen(\App\Events\Platform\SettingsChanged::class, fn ($e) => $e->key === 'display.date_format' && cache()->forget('x'));
 ```
 
-## Screens & permissions
-`/admin/utils/settings` — `UTL_SETTINGS_VIEW` to see, `UTL_SETTINGS_MANAGE` to change / reset / add overrides.
+## Screens & permissions (DEC-091)
+`/admin/utils/settings` is the one categorised settings interface (to-do W13): tabs → sections from
+`config/settings_ui.php` (Site / dealership, Communication, Pricing, User behaviour, Security, Modules & utilities, and
+"Other" for any stored / seeded key not listed there). `UTL_SETTINGS_MANAGE` opens every tab; `PRC_WKFL_MANAGE` alone
+opens only Pricing; nobody else sees the screen or the menu item.
+- `SettingsCatalogue` (`App\Services\Platform\Settings`): `tabsFor(User): array` (visible tabs, sections, keys with
+  label / type / value / input / options / overrides), `canOpen(User): bool`, `tabOf(string $key): string`,
+  `canEdit(User, string $key): bool`, `saveSection(User, string $tab, string $section, array $input): Result`
+  (`ok` data `{saved: [...]}`; `VALIDATION_FAILED` data `{errors: {key: [...]}}`; `AUTH_FORBIDDEN`; `SETTINGS_NOT_FOUND`).
+  Only changed values are written (through `set()`); a blank secret keeps the stored one; images upload separately.
+- Routes: `utils.settings.index` (`?tab=`), `utils.settings.section` (PUT `settings/{tab}/{section}`, fields
+  `settings[<key with . → __>]`), `utils.settings.update` / `reset` / `image` (per key, authorised by the key's tab).
+- A new setting = its seed in `config/platform.php` + one line in `config/settings_ui.php` (input: text, url, email,
+  number, switch, select, textarea, secret, image, json, readonly).
 
 ## Events & testing
 `SettingsChanged` (key, old, new, scope, actor; values hidden for encrypted keys). See [15-testing.md](15-testing.md); every code is in

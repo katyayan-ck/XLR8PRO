@@ -162,3 +162,16 @@ key resolves and every placeholder is passed; a unit test keeps it so.
 
 **Verified:** `FlashMessagesLangTest`; full suite 511 passed, 1 skipped; full PHPStan clean. **Left:** validator / Result messages already
 come from their own sources; exception texts appended to some error flashes (`:message`) are unchanged behaviour.
+
+### 16. One categorised Settings interface — W13 Phase 1 (DEC-091)
+
+**Delivered:** Utilities → Settings is now a tabbed interface — Site / dealership, Communication, Pricing, User
+behaviour, Security, Modules & utilities, and Other (legacy keys) — with proper inputs per setting (switches, selects,
+e-mail / URL / number fields, masked secrets, image uploads), one save per section, search across all tabs and
+branch / desk overrides kept. Only settings managers open it; pricing managers see just the Pricing tab. New settings
+for the dealership (default "Bikaner Motors" / https://www.BikanerMotors.com), channel switches, SMTP, mail signature,
+Appearance and profile-field flags are in place (their effects arrive in Phases 2–5).
+
+**Verified:** 5 new feature tests (access matrix, save, validation, secrets encrypted and kept); platform + admin suites
+117 passed; HTTP smoke of every tab. **Left:** Phases 2–6 (apply site settings, comms, pricing holds / TCS, profile
+flags, single place + API).

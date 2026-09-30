@@ -3,126 +3,242 @@
 @section('title', $title)
 
 @section('content')
-<div class="container-fluid">
-    <div class="card mb-3">
-        <div class="card-body">
-            <form method="GET" action="{{ route('utils.settings.index') }}" class="d-flex gap-2">
-                <input type="search" name="q" value="{{ $search }}" class="form-control" placeholder="Search key or label (e.g. sla, docs, whatsapp)">
-                <button class="btn btn-primary">Search</button>
-                @if ($search !== '')
-                    <a href="{{ route('utils.settings.index') }}" class="btn btn-outline-secondary">Clear</a>
-                @endif
-            </form>
+{{-- The one categorised settings interface (DEC-091): tabs / sections from config/settings_ui.php, one form per section. --}}
+<div class="xl-page-head">
+    <div>
+        <div class="text-body-secondary small text-uppercase fw-semibold">Utilities</div>
+        <h2 class="mb-0 fw-bold">{{ $title }}</h2>
+    </div>
+    <div class="xl-toolbar">
+        <label for="settingsSearch" class="visually-hidden">Search settings</label>
+        <input type="search" id="settingsSearch" class="form-control form-control-sm xl-toolbar-search" placeholder="Search all settings…">
+    </div>
+</div>
+
+@if ($errors->any())
+    <div class="alert alert-danger" role="alert">{{ __('errors.VALIDATION_FAILED') }}</div>
+@endif
+
+<div class="row g-3">
+    <div class="col-12 col-md-3">
+        <div class="list-group" role="tablist" id="settingsTabs">
+            @foreach ($tabs as $tabKey => $tab)
+                <a href="#tab-{{ $tabKey }}" class="list-group-item list-group-item-action d-flex align-items-center gap-2 @if ($tabKey === $active) active @endif"
+                   data-bs-toggle="list" role="tab" data-tab="{{ $tabKey }}" aria-controls="tab-{{ $tabKey }}">
+                    <i class="la {{ $tab['icon'] }}" aria-hidden="true"></i> {{ $tab['label'] }}
+                </a>
+            @endforeach
         </div>
     </div>
 
-    @forelse ($groups as $group => $settings)
-        <div class="card mb-3">
-            <div class="card-header"><h3 class="card-title mb-0 text-capitalize">{{ str_replace('_', ' ', $group) }}</h3></div>
-            <div class="table-responsive">
-                <table class="table table-vcenter card-table">
-                    <thead>
-                        <tr><th>Setting</th><th>Value</th><th>Last changed</th></tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($settings as $setting)
-                            @php
-                                $display = is_bool($setting['value']) ? ($setting['value'] ? 'true' : 'false') : (is_array($setting['value']) ? json_encode($setting['value']) : (string) $setting['value']);
-                                $secret = $setting['type'] === 'encrypted';
-                            @endphp
-                            <tr>
-                                <td>
-                                    <div class="fw-medium">{{ $setting['label'] }}</div>
-                                    <code class="small">{{ $setting['key'] }}</code> <span class="badge bg-secondary-lt">{{ $setting['type'] }}</span>
-                                </td>
-                                <td>
-                                    @if ($setting['type'] === 'image')
-                                        <div class="d-flex flex-wrap align-items-center gap-2">
-                                            @if ($display !== '')
-                                                <img src="{{ $display }}" alt="{{ $setting['label'] }}" class="xl-site-logo border rounded p-1">
-                                            @else
-                                                <span class="text-body-secondary small">Not set — the built-in image is used.</span>
-                                            @endif
+    <div class="col-12 col-md-9">
+        <div class="tab-content">
+            @foreach ($tabs as $tabKey => $tab)
+                <div class="tab-pane fade @if ($tabKey === $active) show active @endif" id="tab-{{ $tabKey }}" role="tabpanel">
+                    @foreach ($tab['sections'] as $sectionKey => $section)
+                        @php
+                            $fields = array_filter($section['keys'], fn ($s) => $s['input'] !== 'image');
+                            $images = array_filter($section['keys'], fn ($s) => $s['input'] === 'image');
+                            $overrides = array_filter($section['keys'], fn ($s) => ! empty($s['overrides']));
+                        @endphp
+                        <div class="card mb-3 xl-settings-section" data-xl="off">
+                            <div class="card-header"><h3 class="card-title mb-0">{{ $section['label'] }}</h3></div>
+                            <div class="card-body">
+                                @if ($fields !== [])
+                                    <form method="POST" action="{{ route('utils.settings.section', [$tabKey, $sectionKey]) }}" class="xl-settings-form">
+                                        @csrf @method('PUT')
+                                        @foreach ($fields as $s)
+                                            @php
+                                                $field = str_replace('.', '__', $s['key']);
+                                                $name = "settings[{$field}]";
+                                                $id = 'set-'.$field;
+                                                $value = old("settings.{$field}", is_array($s['value']) ? json_encode($s['value'], JSON_PRETTY_PRINT) : $s['value']);
+                                                $error = $errors->first("settings.{$field}");
+                                            @endphp
+                                            <div class="row g-2 align-items-start mb-2 xl-setting" data-search="{{ strtolower($s['label'].' '.$s['key'].' '.$section['label']) }}">
+                                                <div class="col-12 col-lg-5">
+                                                    <label for="{{ $id }}" class="form-label mb-0 fw-medium">{{ $s['label'] }}</label>
+                                                    <div class="small text-body-secondary"><code>{{ $s['key'] }}</code>@if ($s['help']) · {{ $s['help'] }}@endif</div>
+                                                </div>
+                                                <div class="col-12 col-lg-7">
+                                                    @switch($s['input'])
+                                                        @case('switch')
+                                                            <input type="hidden" name="{{ $name }}" value="0">
+                                                            <label class="form-check form-switch mb-0">
+                                                                <input type="checkbox" id="{{ $id }}" name="{{ $name }}" value="1" class="form-check-input" @checked((bool) $value)>
+                                                                <span class="form-check-label">{{ (bool) $value ? 'On' : 'Off' }}</span>
+                                                            </label>
+                                                            @break
+                                                        @case('select')
+                                                            <select id="{{ $id }}" name="{{ $name }}" class="form-select form-select-sm @if ($error) is-invalid @endif">
+                                                                @foreach ($s['options'] as $optValue => $optLabel)
+                                                                    <option value="{{ $optValue }}" @selected((string) $value === (string) $optValue)>{{ $optLabel }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                            @break
+                                                        @case('textarea')
+                                                        @case('json')
+                                                            <textarea id="{{ $id }}" name="{{ $name }}" rows="3" class="form-control form-control-sm @if ($s['input'] === 'json') font-monospace @endif @if ($error) is-invalid @endif">{{ $value }}</textarea>
+                                                            @break
+                                                        @case('secret')
+                                                            <input type="password" id="{{ $id }}" name="{{ $name }}" autocomplete="new-password" class="form-control form-control-sm @if ($error) is-invalid @endif"
+                                                                   placeholder="{{ $s['value'] !== '' ? 'Set — leave blank to keep' : 'Not set' }}">
+                                                            @break
+                                                        @case('readonly')
+                                                            <div id="{{ $id }}" class="form-control-plaintext form-control-sm">{{ $value !== '' && $value !== null ? $value : '—' }}</div>
+                                                            @break
+                                                        @default
+                                                            <input type="{{ in_array($s['input'], ['url', 'email', 'number'], true) ? $s['input'] : 'text' }}" id="{{ $id }}" name="{{ $name }}" value="{{ $value }}"
+                                                                   @if ($s['min'] !== null) min="{{ $s['min'] }}" @endif @if ($s['max'] !== null) max="{{ $s['max'] }}" @endif
+                                                                   class="form-control form-control-sm @if ($error) is-invalid @endif">
+                                                    @endswitch
+                                                    @if ($error)
+                                                        <div class="invalid-feedback d-block">{{ $error }}</div>
+                                                    @endif
+                                                    @if ($s['updated_at'])
+                                                        <div class="small text-body-secondary mt-1">Changed {{ site_datetime($s['updated_at']) }}</div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                        <div class="d-flex justify-content-end">
+                                            <button type="submit" class="btn btn-primary btn-sm"><i class="la la-save me-1"></i> Save {{ strtolower($section['label']) }}</button>
                                         </div>
-                                        @if ($canManage && $setting['editable'])
-                                            <form method="POST" action="{{ route('utils.settings.image') }}" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 mt-2">
+                                    </form>
+                                @endif
+
+                                @foreach ($images as $s)
+                                    <div class="row g-2 align-items-start mt-2 pt-2 border-top xl-setting" data-search="{{ strtolower($s['label'].' '.$s['key'].' '.$section['label']) }}">
+                                        <div class="col-12 col-lg-5">
+                                            <div class="fw-medium">{{ $s['label'] }}</div>
+                                            <div class="small text-body-secondary"><code>{{ $s['key'] }}</code>@if ($s['help']) · {{ $s['help'] }}@endif</div>
+                                        </div>
+                                        <div class="col-12 col-lg-7">
+                                            @if ($s['value'])
+                                                <img src="{{ $s['value'] }}" alt="{{ $s['label'] }}" class="xl-site-logo border rounded p-1 mb-2">
+                                            @else
+                                                <div class="small text-body-secondary mb-2">Not set — the built-in image is used.</div>
+                                            @endif
+                                            <form method="POST" action="{{ route('utils.settings.image') }}" enctype="multipart/form-data" class="d-flex flex-wrap gap-2">
                                                 @csrf
-                                                <input type="hidden" name="key" value="{{ $setting['key'] }}">
-                                                <label class="visually-hidden" for="img-{{ $loop->index }}">{{ $setting['label'] }}</label>
-                                                <x-ui.upload name="file" accept="image/*" :id="'img-'.$loop->index" required />
+                                                <input type="hidden" name="key" value="{{ $s['key'] }}">
+                                                <x-ui.upload name="file" accept="image/*" :id="'img-'.str_replace('.', '-', $s['key'])" required />
                                                 <button class="btn btn-sm btn-primary">Upload</button>
                                             </form>
-                                            @if ($display !== '')
+                                            @if ($s['value'])
                                                 <form method="POST" action="{{ route('utils.settings.reset') }}" class="mt-1">
                                                     @csrf
-                                                    <input type="hidden" name="key" value="{{ $setting['key'] }}">
+                                                    <input type="hidden" name="key" value="{{ $s['key'] }}">
                                                     <button class="btn btn-sm btn-link px-0">Use the built-in image</button>
                                                 </form>
                                             @endif
-                                        @endif
-                                    @elseif ($canManage && $setting['editable'])
-                                        <form method="POST" action="{{ route('utils.settings.update') }}" class="d-flex gap-2">
-                                            @csrf @method('PUT')
-                                            <input type="hidden" name="key" value="{{ $setting['key'] }}">
-                                            @if ($secret)
-                                                <input type="hidden" name="keep_if_blank" value="1">
-                                                <input type="password" name="value" autocomplete="new-password" class="form-control form-control-sm" placeholder="{{ $display !== '' ? 'Set (leave blank to keep)' : 'Not set' }}">
-                                            @elseif ($setting['type'] === 'bool')
-                                                <select name="value" class="form-select form-select-sm">
-                                                    <option value="1" @selected($setting['value'])>true</option>
-                                                    <option value="0" @selected(! $setting['value'])>false</option>
-                                                </select>
-                                            @else
-                                                <input type="text" name="value" value="{{ $display }}" class="form-control form-control-sm">
-                                            @endif
-                                            <button class="btn btn-sm btn-primary">Save</button>
-                                        </form>
-                                        <details class="mt-1 small">
-                                            <summary class="text-muted">Overrides ({{ count($setting['overrides']) }}) · reset</summary>
-                                            @foreach ($setting['overrides'] as $override)
-                                                <form method="POST" action="{{ route('utils.settings.reset') }}" class="d-flex align-items-center gap-2 mt-1">
-                                                    @csrf
-                                                    <input type="hidden" name="key" value="{{ $setting['key'] }}">
-                                                    <input type="hidden" name="scope_type" value="{{ $override->scope_type }}">
-                                                    <input type="hidden" name="scope_code" value="{{ $override->scope_code }}">
-                                                    <span>{{ $override->scope_type }} {{ $override->scope_code }} = <code>{{ $secret ? '••••••' : $override->value }}</code></span>
-                                                    <button class="btn btn-link btn-sm p-0 text-danger">Remove</button>
-                                                </form>
-                                            @endforeach
-                                            <form method="POST" action="{{ route('utils.settings.update') }}" class="d-flex gap-2 mt-2">
-                                                @csrf @method('PUT')
-                                                <input type="hidden" name="key" value="{{ $setting['key'] }}">
-                                                <select name="scope_type" class="form-select form-select-sm">
-                                                    <option value="COMPANY">Company</option>
-                                                    <option value="BRANCH">Branch</option>
-                                                    <option value="DESK">Desk</option>
-                                                </select>
-                                                <input type="text" name="scope_code" required maxlength="50" class="form-control form-control-sm" placeholder="Code">
-                                                <input type="{{ $secret ? 'password' : 'text' }}" name="value" class="form-control form-control-sm" placeholder="Value">
-                                                <button class="btn btn-sm btn-outline-primary">Add</button>
-                                            </form>
-                                            <form method="POST" action="{{ route('utils.settings.reset') }}" class="mt-2" onsubmit="return confirm('Reset {{ $setting['key'] }} to its default?')">
+                                        </div>
+                                    </div>
+                                @endforeach
+
+                                <details class="mt-2 small">
+                                    <summary class="text-body-secondary">Branch / desk overrides ({{ array_sum(array_map(fn ($s) => count($s['overrides']), $section['keys'])) }})</summary>
+                                    @foreach ($overrides as $s)
+                                        @foreach ($s['overrides'] as $override)
+                                            <form method="POST" action="{{ route('utils.settings.reset') }}" class="d-flex align-items-center gap-2 mt-1">
                                                 @csrf
-                                                <input type="hidden" name="key" value="{{ $setting['key'] }}">
-                                                <button class="btn btn-sm btn-outline-danger">Reset to default</button>
+                                                <input type="hidden" name="key" value="{{ $s['key'] }}">
+                                                <input type="hidden" name="scope_type" value="{{ $override->scope_type }}">
+                                                <input type="hidden" name="scope_code" value="{{ $override->scope_code }}">
+                                                <span>{{ $s['label'] }} — {{ $override->scope_type }} {{ $override->scope_code }} = <code>{{ $s['input'] === 'secret' ? '••••••' : $override->value }}</code></span>
+                                                <button class="btn btn-link btn-sm p-0 text-danger">Remove</button>
                                             </form>
-                                        </details>
-                                    @else
-                                        <code>{{ $display }}</code>
-                                        @if (! $setting['editable'])
-                                            <span class="badge bg-secondary-lt ms-1">read-only</span>
-                                        @endif
-                                    @endif
-                                </td>
-                                <td class="small text-muted">{{ $setting['updated_at'] ? site_datetime($setting['updated_at']) : 'default' }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+                                        @endforeach
+                                    @endforeach
+                                    <form method="POST" action="{{ route('utils.settings.update') }}" class="row g-2 mt-2">
+                                        @csrf @method('PUT')
+                                        <div class="col-12 col-lg-4">
+                                            <label class="visually-hidden" for="ov-key-{{ $tabKey }}-{{ $sectionKey }}">Setting</label>
+                                            <select id="ov-key-{{ $tabKey }}-{{ $sectionKey }}" name="key" class="form-select form-select-sm">
+                                                @foreach ($fields as $s)
+                                                    @if (! in_array($s['input'], ['readonly', 'json'], true))
+                                                        <option value="{{ $s['key'] }}">{{ $s['label'] }}</option>
+                                                    @endif
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-6 col-lg-2">
+                                            <label class="visually-hidden" for="ov-type-{{ $tabKey }}-{{ $sectionKey }}">Scope</label>
+                                            <select id="ov-type-{{ $tabKey }}-{{ $sectionKey }}" name="scope_type" class="form-select form-select-sm">
+                                                <option value="COMPANY">Company</option><option value="BRANCH">Branch</option><option value="DESK">Desk</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6 col-lg-2">
+                                            <label class="visually-hidden" for="ov-code-{{ $tabKey }}-{{ $sectionKey }}">Code</label>
+                                            <input id="ov-code-{{ $tabKey }}-{{ $sectionKey }}" type="text" name="scope_code" required maxlength="50" class="form-control form-control-sm" placeholder="Code">
+                                        </div>
+                                        <div class="col-8 col-lg-3">
+                                            <label class="visually-hidden" for="ov-val-{{ $tabKey }}-{{ $sectionKey }}">Value</label>
+                                            <input id="ov-val-{{ $tabKey }}-{{ $sectionKey }}" type="text" name="value" class="form-control form-control-sm" placeholder="Value">
+                                        </div>
+                                        <div class="col-4 col-lg-1"><button class="btn btn-sm btn-outline-primary w-100">Add</button></div>
+                                    </form>
+                                </details>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endforeach
         </div>
-    @empty
-        <div class="card"><div class="card-body text-muted text-center">No settings match.</div></div>
-    @endforelse
+        <div id="settingsNoMatch" class="xl-empty d-none">No setting matches the search.</div>
+    </div>
 </div>
 @endsection
+
+@push('after_scripts')
+<script>
+    (function () {
+        const url = new URL(window.location.href);
+        // Remember the open tab in the address (a reload or a save comes back to it).
+        document.querySelectorAll('#settingsTabs [data-tab]').forEach((a) => a.addEventListener('shown.bs.tab', () => {
+            url.searchParams.set('tab', a.dataset.tab);
+            window.history.replaceState(null, '', url);
+        }));
+        // Search across every tab: matching settings stay, empty sections / tabs hide.
+        const search = document.getElementById('settingsSearch');
+        search.addEventListener('input', () => {
+            const q = search.value.trim().toLowerCase();
+            let any = false;
+            document.querySelectorAll('.tab-pane').forEach((pane) => {
+                let paneHit = false;
+                pane.querySelectorAll('.xl-settings-section').forEach((card) => {
+                    let hit = false;
+                    card.querySelectorAll('.xl-setting').forEach((row) => {
+                        const ok = q === '' || row.dataset.search.includes(q);
+                        row.classList.toggle('d-none', !ok);
+                        hit = hit || ok;
+                    });
+                    card.classList.toggle('d-none', !hit);
+                    paneHit = paneHit || hit;
+                });
+                if (q !== '') {
+                    pane.classList.toggle('show', paneHit);
+                    pane.classList.toggle('active', paneHit);
+                }
+                any = any || paneHit;
+            });
+            if (q === '') {
+                const current = url.searchParams.get('tab') || document.querySelector('#settingsTabs .active')?.dataset.tab;
+                document.querySelectorAll('.tab-pane').forEach((pane) => {
+                    const on = pane.id === 'tab-' + current;
+                    pane.classList.toggle('show', on);
+                    pane.classList.toggle('active', on);
+                });
+            }
+            document.getElementById('settingsNoMatch').classList.toggle('d-none', any);
+        });
+        // Unsaved changes guard.
+        let dirty = false;
+        document.querySelectorAll('.xl-settings-form').forEach((form) => {
+            form.addEventListener('input', () => { dirty = true; });
+            form.addEventListener('submit', () => { dirty = false; });
+        });
+        window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+    }());
+</script>
+@endpush

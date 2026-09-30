@@ -165,13 +165,21 @@ Workers: `php artisan queue:work` must run for sends and push outside tests. The
 | `security.csp_mode` | report | string | Content Security Policy: off / report / enforce (`SecurityHeaders`) |
 | `branding.logo` | '' | image | site logo (DEC-083): admin header / sidebar (links to the dashboard), login page, quotation / OTF prints; upload on Settings (`utils.settings.image`); blank = the built-in images (`site_logo_url($fallback)`) |
 | `pricing.last_updated_at` | '' | string | ISO-8601 stamp set automatically (`PricingSyncStamp`, DEC-083) on any published-price, vehicle master or accessory change; the app re-syncs offline data when it moves (served by `v1/settings/category/pricing`) |
+| `dealership.*` | name 'Bikaner Motors', url 'https://www.BikanerMotors.com', favicon (image), address, email, phone, gstin | string / image | Site tab (DEC-091); applied across the interface in W13 Phase 2 |
+| `site.name`, `site.slogan`, `display.date_format`, `display.time_format` | 'Xceler8 DMS', '', 'd-M-Y', 'H:i' | string | application name / slogan; site date & time formats |
+| `comms.enabled.{mail,sms,whatsapp,push}` | true | bool | global channel switches (enforced in W13 Phase 3) |
+| `mail.smtp.{host,port,encryption,username,password,from_address,from_name}`, `mail.signature` | '', 587, 'tls', '', '' (encrypted), '', '', '' | string / int / encrypted | SMTP used by the mail service and the signature added to every mail (W13 Phase 3; blank host = .env) |
+| `ui.appearance_enabled` | true | bool | show the Appearance panel (W13 Phase 5) |
+| `account.can_change_{email,mobile,aadhaar,pan,dob,doj,marital_status,gender}` | false | bool | profile fields users may change (W13 Phase 5) |
+| `feature.live_chat`, `feature.notifications` | true | bool | module switches |
 | `scope.enabled` | true | bool | user data scoping master switch (DEC-071) |
 | `scope.unassigned_rows` | visible | string | `visible` / `hidden`: rows with an empty scope code for scoped users |
 
 ## 6. Permissions (`UTL_*`, minted by `2026_09_28_100000_platform_permissions`)
 | Permission | Grants |
 |---|---|
-| `UTL_SETTINGS_VIEW` / `UTL_SETTINGS_MANAGE` | see / change settings |
+| `UTL_SETTINGS_MANAGE` | open and change every Settings tab (DEC-091; `UTL_SETTINGS_VIEW` no longer opens the screen) |
+| `PRC_WKFL_MANAGE` | also opens the Settings → Pricing tab (DEC-091) |
 | `UTL_NOTY_BROADCAST` | reserved for a broadcast screen (not used by any screen yet) |
 | `UTL_CHAT_MODERATE` | read internal remarks, delete anyone's remark, read any conversation |
 | `UTL_DOCS_VIEW` / `UTL_DOCS_UPLOAD` / `UTL_DOCS_MANAGE` | browse library / upload / manage and delete any document |

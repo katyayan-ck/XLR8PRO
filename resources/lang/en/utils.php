@@ -9,6 +9,8 @@ return [
 
     // Flash messages shown on admin screens (to-do W6): wording lives here, controllers call __('utils.flash.key').
     'flash' => [
+        'settings_section_saved' => 'Settings saved (:count changed). They apply everywhere straight away.',
+        'settings_nothing_changed' => 'Nothing changed.',
         'drafts_imported' => ':count draft(s) imported.',
         'import_errors' => 'Errors: :errors',
         'power_sheet_applied' => 'Power sheet applied.',

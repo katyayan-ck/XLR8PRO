@@ -25,6 +25,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: W13 Phase 1 — categorised Settings interface (7 tabs, managers only; pricing tab for pricing managers).
 - 30-09: W13 settings interface added to the to-do; owner answered (DEC-091: UTL_SETTINGS_MANAGE / PRC_WKFL_MANAGE, hold in Settings + process, encrypted secrets); plan saved. Next after W5 / W7 or on request: W13 Phase 1 (catalogue `config/settings_ui.php` + tabbed screen).
 - 30-09: W6 — admin flash messages from `resources/lang/en/{module}.php` 'flash' groups (+ new `utils.php`), same wording.
 - 30-09: W4 — `phpstan-baseline.neon` (2 511 legacy errors), full analyse clean, 2 missing imports fixed, BUG-221 logged.
@@ -53,6 +54,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
+- **Now: W13 Phase 2** (DEC-091) — apply the Site / dealership settings everywhere: a per-request applier (middleware or provider) setting Backpack `project_name` / logo / favicon from `site.name` / `dealership.name` / `branding.logo` / `dealership.favicon`; login page, PDFs, mail from-name; tests. Phase 1 ✅ (`config/settings_ui.php`, `SettingsCatalogue`, tabbed screen).
 0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). W3 ✅ (15 Sales HTTP tests; BUG-219 open, BUG-220 fixed). W4 ✅ (baseline, full analyse clean; BUG-221). W6 ✅ (225 flash calls → lang `flash` groups; FlashMessagesLangTest). Next step: W5 (UI clean-up outside Sales: hex / inline styles → shared layer, same method as the Sales pass), then W7 (N+1 review). Then W4 (PHPStan baseline), W5, W6, W7.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.

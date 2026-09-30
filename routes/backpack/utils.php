@@ -51,6 +51,7 @@ Route::group([
     // Settings
     Route::get('settings', [SettingsAdminController::class, 'index'])->name('utils.settings.index');
     Route::put('settings', [SettingsAdminController::class, 'update'])->name('utils.settings.update');
+    Route::put('settings/{tab}/{section}', [SettingsAdminController::class, 'saveSection'])->name('utils.settings.section');   // DEC-091
     Route::post('settings/reset', [SettingsAdminController::class, 'reset'])->name('utils.settings.reset');
     Route::post('settings/image', [SettingsAdminController::class, 'image'])->name('utils.settings.image');   // DEC-083 image settings (branding.logo)
 

@@ -64,11 +64,14 @@
                     <span><i class="la la-folder-open me-2"></i>Documents</span>
                 </a>
             @endif
-            @if (backpack_user()->can('UTL_SETTINGS_VIEW'))
+            {{-- DEC-091: settings managers see every tab, pricing managers only the Pricing tab --}}
+            @if (backpack_user()->can('UTL_SETTINGS_MANAGE') || backpack_user()->can('PRC_WKFL_MANAGE'))
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
                     href="{{ route('utils.settings.index') }}">
                     <span><i class="la la-sliders-h me-2"></i>Settings</span>
                 </a>
+            @endif
+            @if (backpack_user()->can('UTL_SETTINGS_VIEW'))
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
                     href="{{ backpack_url('utils/keyword-master') }}">
                     <span><i class="la la-tag me-2"></i>Keyword Master</span>

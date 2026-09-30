@@ -9828,3 +9828,14 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
 
 ## W14 added — vehicle specifications, features, galleries, compare
 - **To-do:** W14, W14a–W14d (owner request 30-09); the referenced sample `docs/vehicle_specifications` is missing.
+
+## W13 Phase 1 — categorised Settings interface (DEC-091)
+- **New:** `config/settings_ui.php` (tabs → sections → keys with inputs), `App\Services\Platform\Settings\SettingsCatalogue`
+  (visible tabs, save a section through SettingsService, per-key authorisation), `tests/Feature/Platform/SettingsInterfaceTest.php` (5).
+- **Changed:** `SettingsAdminController` (tabbed index, `saveSection()`, key-level permission: UTL_SETTINGS_MANAGE for all,
+  PRC_WKFL_MANAGE for Pricing — was UTL_SETTINGS_VIEW / MANAGE), route `utils.settings.section`, view
+  `admin/utils/platform/settings/index.blade.php` rewritten (left tab list, one form per section, image uploads, overrides,
+  search across tabs, unsaved-changes guard), menu entry gated the same way, `config/platform.php` seeds for dealership /
+  application / channel switches / SMTP / signature / appearance / profile-field flags / feature switches,
+  `resources/lang/en/utils.php` (2 flash lines). Guides `tech-guides/platform/01-settings.md`, `16-reference.md`.
+- **Before → after:** one flat list by key prefix, visible with UTL_SETTINGS_VIEW → 7 tabs, managers only.
