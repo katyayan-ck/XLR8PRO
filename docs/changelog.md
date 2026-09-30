@@ -9825,3 +9825,6 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
 ## W13 planned — Settings interface (DEC-091)
 - **To-do:** W13, W13a–W13f added (owner request 30-09). **Decision:** DEC-091 (permission mapping, hold placement,
   encrypted secrets). **Plan:** `tech-guides/frs-and-workflows/plans/2026-09-30-settings-interface-DEC-091.md` (+ index).
+
+## W14 added — vehicle specifications, features, galleries, compare
+- **To-do:** W14, W14a–W14d (owner request 30-09); the referenced sample `docs/vehicle_specifications` is missing.

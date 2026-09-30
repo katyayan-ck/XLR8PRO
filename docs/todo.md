@@ -400,6 +400,11 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W13d | **User behaviour:** Appearance panel on / off; which profile fields a user may change (name, e-mail, profile photo, mobile, Aadhaar, PAN, password, DOB, DOJ, marital status, gender) — enforced on web and API | 🔴 |
 | W13e | **Other module / utility settings** (security, data scope, documents, tickets / SLA, chat, notifications, approvals, display / date format, density …) grouped in the same interface | 🔴 |
 | W13f | **Access and single place:** only the settings-manage permission (pricing group also pricing-manage); remove the other settings screens / menu entries; API reads the same values (cache flush on save) | 🔴 |
+| W14 | **Vehicle content & compare** (your request 30-09) — parts W14a–W14d; plan to be written. ⚠ The sample specifications (`docs/vehicle_specifications`) are not in the repository yet: please copy them there | 🔴 (waiting for the sample file) |
+| W14a | **Model level:** attach images, a PDF brochure and category-wise specifications (e.g. Engine, Dimensions, Safety …) to each vehicle model | 🔴 |
+| W14b | **Variant level:** feature mapping and management per variant, and an image gallery per variant | 🔴 |
+| W14c | **Excel import / export** of specifications (per model) and features (per variant), with master-fed dropdowns like the Vehicle Info workbook | 🔴 |
+| W14d | **Compare vehicles** within the same segment only: intra-model (variants of one model, by features) and inter-model (different models, by specifications) | 🔴 |
 
 **Needs you (not started):** D1–D29, N1, N3 / F2 formats, N4 security values (S3, S4, S5, S7), S6 / O3 / O6 / Q3 package
 approvals, O1 / O2 / O5 CI and server changes, V8 app-sync endpoint shape, V10 / DA6 deletions, the push to `stage`.
