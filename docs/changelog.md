@@ -10107,3 +10107,8 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 - **Tests:** new `DashboardTest::test_the_model_based_widgets_answer` (7 widgets); Sales + Dashboard + booking service
   tests 83 passed.
 - **Baseline:** 362 uses in 45 files left.
+
+## BT-001 (booking code, DEC-093) — Financier-statement lookups by DO number read through the `FinancerStatement` model
+- `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` · `liveNotInvoiced()` (trade-advance statement per row), `getDoAmount()`, `getTAStatement()`. DEC-093 (no `DB::` queries). New model `App\Models\Module\Finance\FinancerStatement` (table `xlr8_financer_statement`).
+- Checked: OTF form (`sales/booking/otf-form`), `get-do-amount` (existing DO, unknown DO, empty), `get-ta-statement` (existing, `0`, unknown) as superadmin + user 40: 14 / 14 identical; booking tests 63 passed. Log: `docs/booking-team-changes.md`.
+- **Baseline:** 359 `DB::` uses in 45 files left.

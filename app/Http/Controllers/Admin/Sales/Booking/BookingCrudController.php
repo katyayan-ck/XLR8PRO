@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Sales\Booking;
 
+use App\Models\Module\Finance\FinancerStatement;
 use App\Http\Requests\BookingRequest;
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
@@ -10670,11 +10671,10 @@ class BookingCrudController extends CrudController
             $taStatement = null;
 
             if ($financeDoNumber !== '') {
-                $taStatement = DB::table('xlr8_financer_statement')
+                $taStatement = FinancerStatement::query()   // BT-001 (DEC-093)
                     ->where('do_no', $financeDoNumber)
-                    ->whereNull('deleted_at')
                     ->orderByDesc('created_at')
-                    ->first();
+                    ->toBase()->first();
             }
 
             $mapped->do_number_delivery =
@@ -10774,11 +10774,10 @@ class BookingCrudController extends CrudController
         }
 
         // Find exact DO Number in Financer Statement
-        $statement = DB::table('xlr8_financer_statement')
+        $statement = FinancerStatement::query()   // BT-001 (DEC-093)
             ->where('do_no', $doNo)
-            ->whereNull('deleted_at')
             ->orderByDesc('created_at')
-            ->first();
+            ->toBase()->first();
 
         if (! $statement) {
             return response()->json([
@@ -10804,10 +10803,9 @@ class BookingCrudController extends CrudController
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
         }
 
-        $statement = DB::table('xlr8_financer_statement')
+        $statement = FinancerStatement::query()   // BT-001 (DEC-093)
             ->where('do_no', trim($request->do_no))
-            ->whereNull('deleted_at')
-            ->first();
+            ->toBase()->first();
 
         return response()->json([
             'do_no' => $statement->do_no ?? '',
