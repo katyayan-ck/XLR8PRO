@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Services\Dashboard;
 
 use App\Models\CRM\Enquiry;
+use App\Models\CRM\EnquiryFollowup;
 use App\Models\CRM\Quotation;
+use App\Models\CRM\TestDrive;
 use App\Models\Module\Booking\Booking;
 use App\Models\Module\Booking\Bookingamount;
 use App\Models\Module\Booking\Stock;
@@ -14,13 +16,15 @@ use App\Models\Module\Booking\XlDelivery;
 use App\Models\Module\Booking\XlRto;
 use App\Models\Module\Insurance\XlInsurance;
 use App\Models\User;
+use App\Models\Vehicle\Segment;
+use App\Models\Vehicle\Variant;
+use App\Models\Vehicle\VehicleModel;
 use App\Services\Platform\Approval\ApprovalService;
 use App\Services\Platform\Notify\NotifyService;
 use App\Services\Platform\Task\TaskService;
 use App\Services\Platform\Ticket\TicketService;
 use App\Support\Facades\DataScope;
 use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Dashboard widget data (DEC-072). One public method per widget in config/dashboard.php; each returns a plain array:
@@ -257,7 +261,7 @@ class DashboardService
     public function receipts(DashboardPeriod $p, User $u): array
     {
         $today = [now()->startOfDay()->toDateString(), now()->toDateString()];
-        $sum = fn ($q) => (float) $q->sum(DB::raw('CAST(amount AS DECIMAL(15,2))'));
+        $sum = fn ($q) => (float) $q->selectRaw('SUM(CAST(amount AS DECIMAL(15,2))) as total')->value('total');
 
         return $this->kpi($sum($this->receiptQuery()->whereBetween('date', $this->dates($p))), [
             ['label' => 'Receipts', 'value' => $this->receiptQuery()->whereBetween('date', $this->dates($p))->count()],
@@ -271,7 +275,7 @@ class DashboardService
         $q = fn () => Bookingamount::query()->where('type', 2)->whereBetween('date', $this->dates($p));
 
         return $this->kpi($q()->count(), [
-            ['label' => 'Amount', 'value' => (float) $q()->sum(DB::raw('CAST(amount AS DECIMAL(15,2))')), 'format' => 'money'],
+            ['label' => 'Amount', 'value' => (float) $q()->selectRaw('SUM(CAST(amount AS DECIMAL(15,2))) as total')->value('total'), 'format' => 'money'],
         ], lcfirst($p->label()));
     }
 
@@ -280,7 +284,7 @@ class DashboardService
     {
         return $this->kpi(Booking::query()->where('status', '4')->count(), [
             ['label' => 'Refunded '.lcfirst($p->label()), 'value' => Booking::query()->whereBetween('refund_date', $this->dates($p))->count(), 'tone' => 'green'],
-            ['label' => 'Amount refunded', 'value' => (float) Xl_Refunds::query()->whereBetween('ref_date', $this->dates($p))->sum(DB::raw('CAST(amount AS DECIMAL(15,2))')), 'format' => 'money'],
+            ['label' => 'Amount refunded', 'value' => (float) Xl_Refunds::query()->whereBetween('ref_date', $this->dates($p))->selectRaw('SUM(CAST(amount AS DECIMAL(15,2))) as total')->value('total'), 'format' => 'money'],
             ['label' => 'Rejected', 'value' => Booking::query()->where('status', '7')->whereBetween('refund_rejection_date', $this->dates($p))->count(), 'tone' => 'red'],
         ], 'Queued for refund');
     }
@@ -331,24 +335,25 @@ class DashboardService
     /** @return array<string, mixed> */
     public function catalogue(DashboardPeriod $p, User $u): array
     {
-        $count = fn (string $table) => DB::table($table)->whereNull('deleted_at')->where('is_active', 1)->count();
+        $count = fn (string $model) => $model::query()->where('is_active', 1)->count();
 
-        return $this->kpi($count('xlr8_vehicle_variant'), [
-            ['label' => 'Models', 'value' => $count('xlr8_vehicle_model')],
-            ['label' => 'Segments', 'value' => $count('xlr8_vehicle_segment')],
+        return $this->kpi($count(Variant::class), [
+            ['label' => 'Models', 'value' => $count(VehicleModel::class)],
+            ['label' => 'Segments', 'value' => $count(Segment::class)],
         ], 'Active variants (per colour)');
     }
 
     /** @return array<string, mixed> */
     public function stockByModel(DashboardPeriod $p, User $u): array
     {
-        $rows = DB::table('xlr8_booking_stock_master as s')
-            ->leftJoin('xlr8_vehicle_variant as v', DB::raw('v.code COLLATE utf8mb4_unicode_ci'), '=', DB::raw('s.model_code COLLATE utf8mb4_unicode_ci'))
+        // aliased join: scopes off, soft-delete filter written out
+        $rows = Stock::query()->withoutGlobalScopes()->from((new Stock)->getTable().' as s')
+            ->leftJoin((new Variant)->getTable().' as v', fn ($j) => $j->whereRaw('v.code COLLATE utf8mb4_unicode_ci = s.model_code COLLATE utf8mb4_unicode_ci'))
             ->whereNull('s.deleted_at')->where('s.status', 1)->where('s.v_status', 'Received')
             ->where(fn ($q) => $q->whereNull('s.alot_id')->orWhere('s.alot_id', ''))
             ->where(fn ($q) => $q->whereNull('s.inv_id')->orWhere('s.inv_id', ''))
             ->selectRaw("COALESCE(v.model_code, 'Unmapped') AS model, COUNT(*) AS n")
-            ->groupBy('model')->orderByDesc('n')->limit(12)->get();
+            ->groupBy('model')->orderByDesc('n')->limit(12)->toBase()->get();
 
         return ['labels' => $rows->pluck('model')->all(), 'series' => [['name' => 'Free stock', 'data' => $rows->pluck('n')->map(fn ($n) => (int) $n)->all()]], 'format' => 'number'];
     }
@@ -364,10 +369,11 @@ class DashboardService
     /** Open follow-ups joined to their enquiry, filtered by the viewer's enquiry scope. */
     private function openFollowups(): Builder
     {
-        $q = DB::table('xlr8_crm_enquiries_fup as f')
-            ->join('xlr8_crm_enquiries as e', 'e.enquiry_no', '=', 'f.enquiry_no')   // same collation — keeps the index
+        $q = EnquiryFollowup::query()->withoutGlobalScopes()->from((new EnquiryFollowup)->getTable().' as f')
+            ->join((new Enquiry)->getTable().' as e', 'e.enquiry_no', '=', 'f.enquiry_no')   // same collation — keeps the index
             ->whereNull('f.deleted_at')->whereNull('e.deleted_at')
-            ->where('f.followup_status', 'Open');
+            ->where('f.followup_status', 'Open')
+            ->toBase();
 
         return DataScope::apply($q, Enquiry::class, 'e');
     }
@@ -375,9 +381,10 @@ class DashboardService
     /** Test drives, filtered through their enquiry's scope (a test drive without an enquiry counts as unassigned). */
     private function testDriveQuery(): Builder
     {
-        $q = DB::table('xlr8_crm_testdrive as t')
-            ->leftJoin('xlr8_crm_enquiries as e', 'e.enquiry_no', '=', 't.enquiry_no')
-            ->whereNull('t.deleted_at');
+        $q = TestDrive::query()->withoutGlobalScopes()->from((new TestDrive)->getTable().' as t')
+            ->leftJoin((new Enquiry)->getTable().' as e', 'e.enquiry_no', '=', 't.enquiry_no')
+            ->whereNull('t.deleted_at')
+            ->toBase();
 
         return DataScope::apply($q, Enquiry::class, 'e');
     }

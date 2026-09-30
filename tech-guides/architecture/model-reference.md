@@ -143,3 +143,5 @@ that is the only write path (DEC-050); blank = written by its owning service / c
 | `Vehicle\Variant` | `xlr8_vehicle_variant` | `Vehicle\VariantService` | [vehicle](../modules/vehicle.md) |
 | `Vehicle\VehicleModel` | `xlr8_vehicle_model` | `Vehicle\VehicleModelService` | [vehicle](../modules/vehicle.md) |
 | `User` | `users` | `IAM\UserService` | [core](core.md) |
+| `CRM\EnquiryFollowup` | `xlr8_crm_enquiries_fup` | enquiry import / screens (scope via its enquiry) | [crm-enquiry-quotation](../modules/crm-enquiry-quotation.md) |
+| `Module\Finance\FinancerStatement` | `xlr8_financer_statement` | Imports → Sales (financier statement) | [booking](../modules/sales-booking.md) |

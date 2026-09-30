@@ -149,3 +149,15 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
   `tech-guides/frs-and-workflows/plans/2026-10-01-help-and-support-DEC-094.md` (+ index row); DEC-094; to-do W16a–f, W17a–d.
 - Owner answers: html2canvas + Driver.js; permissions `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`; manual screenshots via
   Playwright (dev-only); build after W15a. No code yet.
+
+## W15 — dashboard and booking services off the DB facade
+- **New models:** `CRM\EnquiryFollowup` (`xlr8_crm_enquiries_fup`), `Module\Finance\FinancerStatement`
+  (`xlr8_financer_statement`).
+- **Converted:** `DashboardService` (amount sums via `selectRaw(SUM(CAST …)))`; catalogue counts via the vehicle models;
+  free-stock chart, open follow-ups and test drives via `Stock` / `EnquiryFollowup` / `TestDrive` with aliased joins,
+  still scoped by `DataScope::apply()` on `toBase()`), `BookingExchangeService` (consultant), `BookingKycService`
+  (variant / colour names), `BookingOtfService` (accessories, accessory list, trade-advance statement) — booking-team
+  area, so identical rows are kept (`withTrashed()->…->toBase()`).
+- **Tests:** new `DashboardTest::test_the_model_based_widgets_answer` (7 widgets); Sales + Dashboard + booking service
+  tests 83 passed.
+- **Baseline:** 362 uses in 45 files left.

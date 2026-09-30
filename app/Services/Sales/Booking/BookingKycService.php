@@ -6,11 +6,11 @@ use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
 use App\Models\CRM\Enquiry;
 use App\Models\Module\Booking\Booking;
+use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
 use App\Services\IdentifierService;
 use App\Services\OrgService;
 use App\Services\Vehicle\VehicleService;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Business logic for the Booking KYC sub-domain (Pending KYC list ->
@@ -86,9 +86,9 @@ class BookingKycService
         $colorName = '—';
 
         if (! empty($variantCode)) {
-            $variantRows = DB::table('xlr8_vehicle_variant')
+            $variantRows = Variant::withTrashed()
                 ->where('code', $variantCode)
-                ->get(['custom_name', 'color', 'color_code']);
+                ->toBase()->get(['custom_name', 'color', 'color_code']);
 
             if ($variantRows->isNotEmpty()) {
                 $variantName = $variantRows->first()->custom_name ?? '—';

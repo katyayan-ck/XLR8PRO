@@ -406,7 +406,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W14b | **Variant level:** feature mapping and management per variant, and an image gallery per variant | ✅ 01-10 (features per trim; gallery bound to trim or colour) |
 | W14c | **Excel import / export** of specifications (per model) and features (per variant), with master-fed dropdowns like the Vehicle Info workbook | ✅ 01-10 (our workbook by codes + your sample format by name, with a match report) |
 | W14d | **Compare vehicles** within the same segment only: intra-model (variants of one model, by features) and inter-model (different models, by specifications) | ✅ 01-10 (admin screen + app API) |
-| W15 | **No `DB::` queries — convert to Eloquent** (your rule 01-10, DEC-093). Guard test + baseline (473 uses / 72 files). Order: W15a services / jobs / console / imports / models / support; W15b admin controllers outside Booking; W15c tests / seeders; W15d Booking controller + booking models (with the booking team) | 🟡 in progress — rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export; 377 uses / 49 files left |
+| W15 | **No `DB::` queries — convert to Eloquent** (your rule 01-10, DEC-093). Guard test + baseline (473 uses / 72 files). Order: W15a services / jobs / console / imports / models / support; W15b admin controllers outside Booking; W15c tests / seeders; W15d Booking controller + booking models (with the booking team) | 🟡 in progress — rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services; 362 uses / 45 files left |
 | W16 | **Help & support utility** (your request 01-10, DEC-094) — F1 help pane, page tours, "Still need help?" support request with a diagnostic zip, support admin → executive routing; FRS `tech-guides/frs-and-workflows/frs/help-and-support-frs.md`, plan `…/plans/2026-10-01-help-and-support-DEC-094.md` | 🟡 planned — W16a ✅; build after W15a |
 | W16a | FRS + plan + DEC-094 + to-do | ✅ 01-10 |
 | W16b | Help engine: Markdown articles in `resources/help/`, route → article, `::: can CODE` sections, cache, search, coverage; F1 / `?` right-side pane; Help centre screen | 🔴 |
@@ -1177,3 +1177,10 @@ Deleted masters no longer resolve.
 the workbook content is unchanged.
 **Verified:** Org tests (33, incl. the RBAC workbook) passed; PHPStan clean.
 **Baseline now:** 377 `DB::` uses in 49 files.
+
+### W15 — dashboard and booking services off the DB facade
+
+**Delivered:** the dashboard widgets and the booking exchange / KYC / OTF services read through models (2 new
+models); the numbers and screens are unchanged.
+**Verified:** a new test calls every converted widget; Sales, Dashboard and booking-service tests passed; PHPStan clean.
+**Baseline now:** 362 `DB::` uses in 45 files.

@@ -4,6 +4,7 @@ namespace App\Services\Sales\Booking;
 
 use App\Models\Admin\Branch;
 use App\Models\Admin\Location;
+use App\Models\Admin\Person;
 use App\Models\CRM\Enquiry;
 use App\Models\Module\Booking\Booking;
 use App\Models\Module\Booking\Stock;
@@ -17,7 +18,6 @@ use App\Models\Vehicle\Segment;
 use App\Services\OrgService;
 use App\Services\Vehicle\VehicleService;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Business logic for the Booking Exchange/Scrappage sub-domain
@@ -174,9 +174,9 @@ class BookingExchangeService
         $data['saleconsultants'] = OrgService::usersByDesignation('CNS') ?? [];
 
         $consultantCode = trim((string) ($booking->consultant ?? ''));
-        $consultant = DB::table('xlr8_admin_person')
+        $consultant = Person::withTrashed()
             ->where('person_code', $consultantCode)
-            ->first();
+            ->toBase()->first();
 
         $data['consultant_name'] = $consultant?->display_name ?? 'N/A';
         $data['consultant_mile_id'] = $consultant?->employee_code ?? 'N/A';

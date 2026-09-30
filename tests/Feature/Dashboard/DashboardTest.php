@@ -27,6 +27,17 @@ class DashboardTest extends TestCase
         return $user;
     }
 
+    /** DEC-093: the widgets that moved from raw queries to models still answer with their shape. */
+    public function test_the_model_based_widgets_answer(): void
+    {
+        $this->actingAs(User::role('superadmin')->firstOrFail(), 'backpack');
+
+        foreach (['followups', 'test_drives', 'receipts', 'journal_vouchers', 'refunds', 'catalogue'] as $kpi) {
+            $this->getJson(route('dashboard.widget', ['key' => $kpi, 'period' => 'fy']))->assertOk()->assertJsonStructure(['data' => ['value']]);
+        }
+        $this->getJson(route('dashboard.widget', ['key' => 'stock_by_model']))->assertOk()->assertJsonStructure(['data' => ['labels', 'series']]);
+    }
+
     public function test_the_page_shows_only_permitted_widgets(): void
     {
         $user = $this->userWith(['SLS_BKNG_VIEW']);

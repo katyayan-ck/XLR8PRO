@@ -10,9 +10,11 @@ use App\Models\Module\Booking\Bookingamount;
 use App\Models\Module\Booking\Xl_DSA_Master;
 use App\Models\Module\Booking\XlFinancier;
 use App\Models\Module\Booking\XlRto;
+use App\Models\Module\Finance\FinancerStatement;
 use App\Models\Module\Finance\XFinance;
 use App\Models\Module\Insurance\XlInsurance;
 use App\Models\Module\Insurance\XlInsurer;
+use App\Models\Vehicle\Accessory;
 use App\Models\Vehicle\Color;
 use App\Models\Vehicle\Segment;
 use App\Models\Vehicle\Variant;
@@ -20,7 +22,6 @@ use App\Models\Vehicle\VehicleModel;
 use App\Services\OrgService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -207,7 +208,7 @@ class BookingOtfService
 
             $accNames = [];
             foreach ($selectedAccessories as $accId) {
-                $accessory = DB::table('xlr8_vehicle_accessories')->where('part_no', trim($accId))->first();
+                $accessory = Accessory::withTrashed()->where('part_no', trim($accId))->toBase()->first();
                 if ($accessory) {
                     $accNames[] = $accessory->item.' (₹'.number_format((float) $accessory->ndp, 2).')';
                 }
@@ -218,7 +219,7 @@ class BookingOtfService
             }
         }
 
-        $accessoryList = DB::table('xlr8_vehicle_accessories')->orderBy('item')->get();
+        $accessoryList = Accessory::withTrashed()->orderBy('item')->toBase()->get();
 
         $permit_map = OrgService::getKeyValuesByCode('RTO_PERMIT')
             ->sortBy('id')
@@ -301,11 +302,10 @@ class BookingOtfService
         $financeDoNumber = trim((string) ($finance?->instrument_ref_no ?? ''));
 
         if ($financeDoNumber !== '') {
-            $taStatement = DB::table('xlr8_financer_statement')
+            $taStatement = FinancerStatement::query()
                 ->where('do_no', $financeDoNumber)
-                ->whereNull('deleted_at')
                 ->orderByDesc('created_at')
-                ->first();
+                ->toBase()->first();
         }
 
         $insurancePrintData = [];
@@ -346,7 +346,7 @@ class BookingOtfService
 
         if (! empty($otfAccessories) && is_array($otfAccessories)) {
             foreach ($otfAccessories as $accCode) {
-                $accessory = DB::table('xlr8_vehicle_accessories')->where('part_no', trim($accCode))->first();
+                $accessory = Accessory::withTrashed()->where('part_no', trim($accCode))->toBase()->first();
                 if ($accessory) {
                     $accessoriesPrintData[] = [
                         'name' => $accessory->item,

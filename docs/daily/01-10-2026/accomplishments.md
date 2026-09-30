@@ -93,3 +93,10 @@ Deleted masters no longer resolve.
 the workbook content is unchanged.
 **Verified:** Org tests (33, incl. the RBAC workbook) passed; PHPStan clean.
 **Baseline now:** 377 `DB::` uses in 49 files.
+
+### W15 — dashboard and booking services off the DB facade
+
+**Delivered:** the dashboard widgets and the booking exchange / KYC / OTF services read through models (2 new
+models); the numbers and screens are unchanged.
+**Verified:** a new test calls every converted widget; Sales, Dashboard and booking-service tests passed; PHPStan clean.
+**Baseline now:** 362 `DB::` uses in 45 files.
