@@ -28,6 +28,12 @@ final class SettingsService
 {
     public const SCOPES = ['DESK', 'BRANCH', 'COMPANY'];
 
+    /** Cached marker for a key with no row (W7): the cache does not store null, so missing keys were re-queried. */
+    private const MISSING = '__setting_missing__';
+
+    /** @var array<string, SystemSetting|null> per-request (per-job) memo of rows — W7: pages read ~30 keys, some many times */
+    private array $rows = [];
+
     /** DB type names used by existing rows ⇄ FRS type names. */
     private const TYPE_ALIASES = ['integer' => 'int', 'float' => 'decimal', 'boolean' => 'bool', 'array' => 'json'];
 
@@ -122,6 +128,7 @@ final class SettingsService
                     'user_agent' => substr((string) request()?->userAgent(), 0, 250),
                 ]);
                 SystemSetting::flushCache($key);
+                unset($this->rows[$key]);
 
                 SettingsChanged::dispatch($key, $secret ? null : $this->cast($old, $type, null), $secret ? null : $this->cast($stored, $type, null), $scopeType, $scopeCode, $actorId);
 
@@ -216,8 +223,15 @@ final class SettingsService
         return $keys->count();
     }
 
+    /** Forget the in-memory rows (queue workers call this before every job; writes forget their own key). */
+    public function flushMemo(): void
+    {
+        $this->rows = [];
+    }
+
     public function clearCache(): void
     {
+        $this->rows = [];
         SystemSetting::flushAllCache();
         DB::table('xlr8_utils_setting_scope')->get(['setting_key', 'scope_type', 'scope_code'])
             ->each(fn ($s) => Cache::forget("setting.scope.{$s->setting_key}.{$s->scope_type}.{$s->scope_code}"));
@@ -225,13 +239,19 @@ final class SettingsService
 
     private function row(string $key): ?SystemSetting
     {
-        return Cache::rememberForever("setting.row.{$key}", fn () => SystemSetting::query()->where('key', $key)->first()) ?: null;
+        if (array_key_exists($key, $this->rows)) {
+            return $this->rows[$key];
+        }
+        $cached = Cache::rememberForever("setting.row.{$key}", fn () => SystemSetting::query()->where('key', $key)->first() ?? self::MISSING);
+
+        return $this->rows[$key] = $cached instanceof SystemSetting ? $cached : null;
     }
 
     /** The row for a key, created from the config seed — or, for an undeclared key, typed from its first value. */
     private function ensureRow(string $key, mixed $firstValue = null): SystemSetting
     {
         Cache::forget("setting.row.{$key}");
+        unset($this->rows[$key]);
         $seed = $this->seed($key);
         $type = $seed['type'] ?? match (true) {
             is_bool($firstValue) => 'bool',

@@ -2017,12 +2017,6 @@ parameters:
 			path: app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Module\\Booking\\Xl_Refunds\:\:\$amount\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\Module\\Booking\\Xl_Refunds\:\:\$ref_date\.$#'
 			identifier: property.notFound
 			count: 1
@@ -5830,18 +5824,6 @@ parameters:
 			message: '#^Using nullsafe property access "\?\-\>designation_code" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 3
-			path: app/Services/OrgService.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>display_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Services/OrgService.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
 			path: app/Services/OrgService.php
 
 		-

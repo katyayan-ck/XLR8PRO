@@ -155,8 +155,18 @@ class SystemSetting extends BaseModel
      */
     public static function flushCache(string $key): void
     {
+        unset(static::$memo['setting.'.$key]);
         Cache::forget('setting.'.$key);
         Cache::forget('setting.row.'.$key); // Platform SettingsService row cache (DEC-061)
+    }
+
+    /** @var array<string, mixed> per-request memo of getValue() (W7) */
+    protected static array $memo = [];
+
+    /** Forget the per-request memo (queue workers call this before every job). */
+    public static function flushMemo(): void
+    {
+        static::$memo = [];
     }
 
     /**
@@ -254,8 +264,12 @@ class SystemSetting extends BaseModel
     public static function getValue(string $key, $default = null)
     {
         $cacheKey = 'setting.'.$key;
+        // W7: per-request memo — the date format alone was read ~100 times per list page
+        if (array_key_exists($cacheKey, static::$memo)) {
+            return static::$memo[$cacheKey] ?? $default;
+        }
 
-        return Cache::rememberForever($cacheKey, function () use ($key, $default) {
+        return static::$memo[$cacheKey] = Cache::rememberForever($cacheKey, function () use ($key, $default) {
             $setting = static::where('key', $key)->first();
 
             if (! $setting) {

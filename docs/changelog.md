@@ -9909,3 +9909,24 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   JS strings and the colour master's own placeholders). No JS / AJAX changed.
 - **Verified:** every view compiles (`view:cache`); full admin smoke sweep (`--group=smoke`, ~350 screens) — no screen
   errors (run with `BASSET_CACHE_MAP=false`: this sandbox can't write `storage/basset`).
+
+## W7 — N+1 review of the big lists
+- **Measured** (one request, query log, `xlrm_testing`): booking list 567 queries / 42 s SQL, quotations 147, enquiries
+  142 — causes: settings without a row re-queried on every read, per-request repeats of settings / keyword lists / user
+  names, and per-row queries in the booking grid.
+- **`SettingsService`:** per-request memo of rows + a cached "missing" marker; `flushMemo()`; write paths forget the key.
+- **`SystemSetting::getValue()`:** per-request memo (`flushMemo()`; `flushCache()` forgets the key).
+- **`OrgService`:** per-request memo for `getKeyValuesByCode()`, `keywordValueByCode()`, `getUserNameByCode()` (incl. DSA);
+  `flushMemo()`.
+- **`AppServiceProvider`:** `Queue::before` clears the three memos for every job (long-lived workers).
+- **`BookingCrudController`:** `preloadGridLookups()` batches consultant names by person_code, the latest refund per
+  booking and the live-order counts per (model, variant, colour) — same join and filters as before, grouped once
+  (`liveOrderCounts()`, keys folded like the column collation); rows missing a code keep the per-row query, memoised per
+  tuple. No query for an empty consultant.
+- **Notification bell** (`components/notify/bell.blade.php`): counts and tab lists read once per request (the bell
+  renders twice).
+- **Result:** bookings 567 → 95 queries (SQL ~42 s → ~3 s), quotations 147 → 42 (~3.2 s → 0.24 s), enquiries 142 → 37
+  (~2.1 s → 0.13 s). New test `tests/Feature/Sales/BookingGridLookupsTest.php` (every row identical with batched vs
+  per-row lookups). PHPStan baseline 2 511 → 2 508 (errors fixed). Full suite: 536 passed, 1 skipped; PricingRecalcTest errors only in the full run in this sandbox (storage/basset not writable) and passes alone; tests/TestCase now clears the static memos per test.
+- **Not changed (environment, owner):** `CACHE_STORE=database` makes every cache read a query (~20–30 per page remain);
+  Redis or file cache on UAT would remove them.

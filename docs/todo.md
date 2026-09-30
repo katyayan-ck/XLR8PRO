@@ -392,7 +392,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W4 | Q5 PHPStan baseline for the legacy controllers | ✅ 30-09 (`phpstan-baseline.neon`, 2 511 legacy errors; full run clean; BUG-221) |
 | W5 | Q7 UI clean-up outside Sales (hex / inline styles → shared layer, same method as the Sales pass) | ✅ 30-09 (131 views; style blocks ~100 → 22 files; no hex in style blocks; PDFs excluded) |
 | W6 | U7 web side: admin flash messages through the error codes / language file (same wording) | ✅ 30-09 (225 calls → `{module}.flash.*`) |
-| W7 | U4 N+1 review of the big lists (enquiries, bookings, quotations) | 🔴 |
+| W7 | U4 N+1 review of the big lists (enquiries, bookings, quotations) | ✅ 30-09 (bookings 567 → 95 queries / 42 s → ~3 s SQL; quotations 147 → 42; enquiries 142 → 37) |
 | W13 | **One categorised Settings interface** (your request 30-09) — the only place settings are shown; changes apply at once on web and app / API. Today they are spread over Utilities → Settings (56 keys), the legacy System Setting screen, and the pricing TCS / Hold screens. Parts W13a–W13f; plan to be saved in `tech-guides/frs-and-workflows/plans/` | ✅ 30-09 — DEC-091 Phases 1–6 + W13g (one categorised Settings screen, applied everywhere, `GET app-settings`) |
 | W13a | **Site / dealership:** name (default "Bikaner Motors"), website URL (default https://www.BikanerMotors.com), logo, address, favicon, e-mail, phone, GSTIN …; applied across the interface (header, login, PDFs, mails) | ✅ 30-09 (Phase 2; mail from-name comes with Phase 3) |
 | W13b | **Communication:** global on / off per channel (mail, SMS, WhatsApp, push), SMTP settings used by the mail service, mail signature appended to every mail, plus the existing comms settings | ✅ 30-09 (Phase 3) |
@@ -1051,3 +1051,14 @@ moved into the shared stylesheet (they were light-only in dark mode). No behavio
 
 **Verified:** all views compile; full admin smoke sweep — no screen errors. **Left:** 22 files keep small screen-specific
 style blocks (layout only, no colours); PDFs keep print colours by design.
+
+### 24. Big lists much faster — W7 (N+1 review)
+
+**Delivered:** measured every query on the booking, quotation and enquiry lists and removed the repeats: settings and
+keyword lists are read once per request, the booking grid fetches consultant names, refunds and live-order counts in one
+query per page instead of one per row (proved identical row by row), and the notification bell no longer counts twice.
+Booking list: 567 → 95 queries, about 42 s → 3 s of database time on the test copy; quotations 147 → 42; enquiries
+142 → 37.
+
+**Verified:** equivalence test on the booking grid; full suite 536 passed, 1 skipped; PricingRecalcTest errors only in the full run in this sandbox (storage/basset not writable) and passes alone; tests/TestCase now clears the static memos per test; full PHPStan clean. **Suggested:** a Redis or
+file cache on UAT (today every cache read is a database query).

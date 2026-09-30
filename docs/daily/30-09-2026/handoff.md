@@ -25,6 +25,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: W7 — N+1 review: per-request memos (settings, legacy settings, OrgService lookups), booking grid batched, bell once per request.
 - 30-09: W5 — 131 admin views outside Sales on the shared UI layer; smoke sweep clean. Note: in this sandbox run the smoke group with `BASSET_CACHE_MAP=false` (storage/basset is not writable here).
 - 30-09: W13 Phase 6 — legacy settings screen → Settings, `GET api/v1/app-settings`, secrets never returned by the settings API (BUG-207 partly).
 - 30-09: W13 Phase 5 — self-service personal details by switch, Appearance switch.
@@ -61,7 +62,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-- **W5 ✅** (UI clean-up outside Sales). **Now: W7** — N+1 review of the big lists (enquiries, bookings, quotations): count queries per list data request, eager-load / batch where a row triggers queries; no behaviour change. Then W14 (plan first).
+- **W5 ✅** (UI clean-up outside Sales). **W7 ✅** (lists: bookings 567 → 95 queries). **Next: W14** — vehicle specifications / features / galleries / compare: write the plan first (samples at the project root, git-ignored) and ask the owner the open design points.
 0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). W3 ✅ (15 Sales HTTP tests; BUG-219 open, BUG-220 fixed). W4 ✅ (baseline, full analyse clean; BUG-221). W6 ✅ (225 flash calls → lang `flash` groups; FlashMessagesLangTest). Next step: W5 (UI clean-up outside Sales: hex / inline styles → shared layer, same method as the Sales pass), then W7 (N+1 review). Then W4 (PHPStan baseline), W5, W6, W7.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.
@@ -69,6 +70,7 @@
    booking forms.
 
 ## Waiting on the owner
+- Environment: `CACHE_STORE=database` turns every cache read into a query (~20–30 per page after W7); Redis or file cache on UAT recommended.
 - BUG-207 remainder: narrow or retire `GET system-settings` / `topic` / `category` / `{key}` now that `app-settings` exists; move PUT / import onto SettingsService.
 - Deletion OK? `resources/views/admin/pricing/hold/index.blade.php` and `resources/views/admin/pricing/tcs/index.blade.php` are unused since W13 Phase 4.
 - Deploy note (W13 Phase 2): set Settings → Site → Dealership name on UAT — a leftover demo value (local: "ABC Motors") would show in the header.

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Utilities\Settings\SystemSetting;
 use App\Models\Vehicle\Pricing\Addon;
 use App\Models\Vehicle\Pricing\AddonHistory;
 use App\Models\Vehicle\Pricing\ChangeFlag;
@@ -34,7 +35,9 @@ use App\Services\IAM\DataScope\DataScopeManager;
 use App\Services\IAM\DataScope\ScopeResolver;
 use App\Services\IdentifierService;
 use App\Services\NotificationService;
+use App\Services\OrgService;
 use App\Services\OtpNotificationService;
+use App\Services\Platform\Settings\SettingsService;
 use App\Services\RBACService;
 use App\Services\Sales\Booking\BookingCoreService;
 use App\Services\Sales\Booking\BookingDeliveryService;
@@ -174,6 +177,12 @@ class AppServiceProvider extends ServiceProvider
         foreach (PricingParamRegistry::all() as $model) {
             $model::observe(PricingParamObserver::class);
         }
+        // W7: the settings singleton memoises rows per request; a long-lived worker starts every job with fresh values
+        Queue::before(function () {
+            $this->app->make(SettingsService::class)->flushMemo();
+            OrgService::flushMemo();
+            SystemSetting::flushMemo();
+        });
         Queue::after(function () {   // once per queued job (workers never "terminate")
             $this->app->make(PricingSyncStamp::class)->flush();
             $this->app->make(PricingRecalcService::class)->dispatchPending();

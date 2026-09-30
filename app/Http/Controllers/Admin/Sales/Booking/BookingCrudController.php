@@ -1113,6 +1113,46 @@ class BookingCrudController extends CrudController
      * @param  Collection  $bookings  the current page's raw booking rows
      * @return array<string, mixed>
      */
+    /** @var array<string, int> W7: per-row live-order counts for bookings missing a code, by exact tuple */
+    private array $liveCountMemo = [];
+
+    /**
+     * Live-order counts per exact (model, variant, colour) of a page's bookings (W7): the per-row query of
+     * mapBookingForGrid() — same enquiry join, status 1 / 8, not deleted — grouped once. Keys "MODEL|VARIANT|COLOUR" (upper-case,
+     * trimmed: the per-row query matched case-insensitively).
+     *
+     * @return array<string, int>
+     */
+    private function liveOrderCounts($bookings): array
+    {
+        $tuples = $bookings->filter(fn ($b) => filled($b->model_code) && filled($b->variant_code) && filled($b->color_code));
+        if ($tuples->isEmpty()) {
+            return [];
+        }
+
+        return DB::table('xlr8_booking_master as b')
+            ->join('xlr8_crm_enquiries as e', function ($join) {
+                $join->on('e.id', '=', 'b.enq_no')
+                    ->orOn(DB::raw("BINARY CONCAT('XENQ-', e.id)"), '=', DB::raw('BINARY b.enq_no'))
+                    ->orOn(DB::raw('BINARY e.enquiry_no'), '=', DB::raw('BINARY b.enq_no'))
+                    ->orOn(DB::raw('BINARY e.quick_enquiry_no'), '=', DB::raw('BINARY b.enq_no'));
+            })
+            ->whereIn('e.model_code', $tuples->pluck('model_code')->unique()->values())
+            ->whereIn('e.variant_code', $tuples->pluck('variant_code')->unique()->values())
+            ->whereIn('e.color_code', $tuples->pluck('color_code')->unique()->values())
+            ->whereIn('b.status', [1, 8])
+            ->whereNull('b.deleted_at')
+            ->groupBy('e.model_code', 'e.variant_code', 'e.color_code')
+            ->get([DB::raw('e.model_code as m'), DB::raw('e.variant_code as v'), DB::raw('e.color_code as c'), DB::raw('COUNT(*) as n')])
+            // the per-row count compares with the column collation (case-insensitive): fold the keys the same way
+            ->reduce(function (array $carry, $r) {
+                $key = strtoupper(trim((string) $r->m).'|'.trim((string) $r->v).'|'.trim((string) $r->c));
+                $carry[$key] = ($carry[$key] ?? 0) + (int) $r->n;
+
+                return $carry;
+            }, []);
+    }
+
     private function preloadGridLookups($bookings): array
     {
         $consultantCodes = $bookings->pluck('consultant')->filter()->unique()->values();
@@ -1158,6 +1198,17 @@ class BookingCrudController extends CrudController
                 ->groupBy('model_code')
                 ->pluck('cnt', 'model_code'),
 
+            // W7: consultants stored as person_code (Sales rule) — names batched instead of one query per row
+            'personNames' => DB::table('xlr8_admin_person')->whereIn('person_code', $consultantCodes)->pluck('display_name', 'person_code'),
+
+            // W7: the latest refund per booking (newest created_at), one query per page instead of one per row
+            'refunds' => Xl_Refunds::query()->where('entity_type', 'booking')->whereIn('entity_id', $bookings->pluck('id'))
+                ->orderByDesc('created_at')->get()->unique('entity_id')->keyBy('entity_id'),
+
+            // W7: "live orders for this model / variant / colour" — the SAME join and filters as the per-row count in
+            // mapBookingForGrid(), grouped once per page and read back by the exact (model, variant, colour) tuple
+            'liveCounts' => $this->liveOrderCounts($bookings),
+
             // Static keyword-value reference data (RTO permit labels) — identical
             // for every row on every page, so it is resolved once per request here
             // instead of once per row inside mapBookingForGrid().
@@ -1179,8 +1230,11 @@ class BookingCrudController extends CrudController
      */
     private function mapBookingForGrid($booking, array $lookups = [])
     {
+        // W7: an empty consultant needs no lookup; a person_code (Sales rule) is batched in preloadGridLookups()
         $consultantName = $lookups['consultants'][$booking->consultant]
-            ?? (DB::table('xlr8_admin_person')->where('person_code', $booking->consultant)->value('display_name') ?? 'N/A');
+            ?? (array_key_exists('personNames', $lookups)
+                ? ($lookups['personNames'][$booking->consultant] ?? 'N/A')
+                : (filled($booking->consultant) ? (DB::table('xlr8_admin_person')->where('person_code', $booking->consultant)->value('display_name') ?? 'N/A') : 'N/A'));
 
         $collectedByName = OrgService::getUserNameByCode($booking->col_by, $booking->col_type);
 
@@ -1213,12 +1267,10 @@ class BookingCrudController extends CrudController
         }
         $financierName = $financierRecord ? ($financierRecord->name ?? 'N/A') : 'N/A';
 
-        // NOT batched — see preloadGridLookups() docblock: needs a
-        // per-booking "latest" record, left as a per-row query for now.
-        $refundRecord = Xl_Refunds::where('entity_id', $booking->id)
-            ->where('entity_type', 'booking')
-            ->latest('created_at')
-            ->first();
+        // W7: the latest refund per booking comes batched from preloadGridLookups() (same rule: newest created_at)
+        $refundRecord = array_key_exists('refunds', $lookups)
+            ? ($lookups['refunds'][$booking->id] ?? null)
+            : Xl_Refunds::where('entity_id', $booking->id)->where('entity_type', 'booking')->latest('created_at')->first();
 
         $refundAmount = $refundRecord ? (float) $refundRecord->amount : 0;
 
@@ -1227,20 +1279,24 @@ class BookingCrudController extends CrudController
         // fragile enquiry-matching join used in getBaseQuery(); batching
         // this changes a business-critical number and deserves its own
         // reviewed change rather than being folded in here.
-        $liveCount = DB::table('xlr8_booking_master as b')
-            ->join('xlr8_crm_enquiries as e', function ($join) {
-                // Same raw-SQL XENQ- pattern as getBaseQuery() above - see its comment.
-                $join->on('e.id', '=', 'b.enq_no')
-                    ->orOn(DB::raw("BINARY CONCAT('XENQ-', e.id)"), '=', DB::raw('BINARY b.enq_no'))
-                    ->orOn(DB::raw('BINARY e.enquiry_no'), '=', DB::raw('BINARY b.enq_no'))
-                    ->orOn(DB::raw('BINARY e.quick_enquiry_no'), '=', DB::raw('BINARY b.enq_no'));
-            })
-            ->where('e.model_code', $booking->model_code)
-            ->where('e.variant_code', $booking->variant_code)
-            ->where('e.color_code', $booking->color_code)
-            ->whereIn('b.status', [1, 8])
-            ->whereNull('b.deleted_at')
-            ->count();
+        $liveKey = strtoupper(implode('|', array_map(fn ($v) => trim((string) $v), [$booking->model_code, $booking->variant_code, $booking->color_code])));
+        $liveCount = isset($lookups['liveCounts']) && filled($booking->model_code) && filled($booking->variant_code) && filled($booking->color_code)
+            ? (int) ($lookups['liveCounts'][$liveKey] ?? 0)
+            // a missing code keeps the per-row query (IS NULL); identical tuples share one result per request (W7)
+            : $this->liveCountMemo[var_export([$booking->model_code, $booking->variant_code, $booking->color_code], true)] ??= DB::table('xlr8_booking_master as b')
+                ->join('xlr8_crm_enquiries as e', function ($join) {
+                    // Same raw-SQL XENQ- pattern as getBaseQuery() above - see its comment.
+                    $join->on('e.id', '=', 'b.enq_no')
+                        ->orOn(DB::raw("BINARY CONCAT('XENQ-', e.id)"), '=', DB::raw('BINARY b.enq_no'))
+                        ->orOn(DB::raw('BINARY e.enquiry_no'), '=', DB::raw('BINARY b.enq_no'))
+                        ->orOn(DB::raw('BINARY e.quick_enquiry_no'), '=', DB::raw('BINARY b.enq_no'));
+                })
+                ->where('e.model_code', $booking->model_code)
+                ->where('e.variant_code', $booking->variant_code)
+                ->where('e.color_code', $booking->color_code)
+                ->whereIn('b.status', [1, 8])
+                ->whereNull('b.deleted_at')
+                ->count();
 
         $accessoriesAmount = $booking->apack_amount ?? 0;
 

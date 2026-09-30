@@ -130,6 +130,12 @@ The old `pricing.hold.index` / `pricing.tcs.index` pages redirect to Settings â†
 `SettingsChanged` (key, old, new, scope, actor; values hidden for encrypted keys). See [15-testing.md](15-testing.md); every code is in
 [16-reference.md](16-reference.md).
 
+## Performance (W7)
+`SettingsService` memoises rows per request (it is a singleton) and caches a marker for keys that have no row (the cache
+does not store null, so default-only keys were re-queried on every read). `SystemSetting::getValue()` and
+`OrgService::getKeyValuesByCode()` / `keywordValueByCode()` / `getUserNameByCode()` memoise per request too. Queue
+workers clear all three before every job (`Queue::before` in `AppServiceProvider`); writes forget their own key.
+
 ## Gotchas
 - Never `config("platform.settings.{$key}")` â€” dotted keys are read as nesting. Use the service.
 - Don't cache settings yourself; the service caches and busts on write.

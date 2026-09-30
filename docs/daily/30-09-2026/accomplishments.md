@@ -243,3 +243,14 @@ moved into the shared stylesheet (they were light-only in dark mode). No behavio
 
 **Verified:** all views compile; full admin smoke sweep — no screen errors. **Left:** 22 files keep small screen-specific
 style blocks (layout only, no colours); PDFs keep print colours by design.
+
+### 24. Big lists much faster — W7 (N+1 review)
+
+**Delivered:** measured every query on the booking, quotation and enquiry lists and removed the repeats: settings and
+keyword lists are read once per request, the booking grid fetches consultant names, refunds and live-order counts in one
+query per page instead of one per row (proved identical row by row), and the notification bell no longer counts twice.
+Booking list: 567 → 95 queries, about 42 s → 3 s of database time on the test copy; quotations 147 → 42; enquiries
+142 → 37.
+
+**Verified:** equivalence test on the booking grid; full suite 536 passed, 1 skipped; PricingRecalcTest errors only in the full run in this sandbox (storage/basset not writable) and passes alone; tests/TestCase now clears the static memos per test; full PHPStan clean. **Suggested:** a Redis or
+file cache on UAT (today every cache read is a database query).

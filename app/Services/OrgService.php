@@ -65,6 +65,25 @@ class OrgService
 
     private const CACHE_TTL = 3600;
 
+    /** @var array<string, mixed> per-request memo of repeated look-ups (W7: grids called them once per row) */
+    private static array $memo = [];
+
+    /** Forget the per-request memo (queue workers call this before every job; keyword-value writes after saving). */
+    public static function flushMemo(): void
+    {
+        self::$memo = [];
+    }
+
+    /** Remember a look-up for the rest of the request (null results included). */
+    private static function memo(string $key, \Closure $resolve): mixed
+    {
+        if (! array_key_exists($key, self::$memo)) {
+            self::$memo[$key] = $resolve();
+        }
+
+        return self::$memo[$key];
+    }
+
     // ── Master Entities (code-based) ─────────────────────────────────────
     public static function branches(): array
     {
@@ -884,13 +903,13 @@ class OrgService
      */
     public static function getKeyValuesByCode(string $keywordCode): ?Collection
     {
-        return Cache::remember(
+        return self::memo('kv.'.strtoupper(trim($keywordCode)), fn () => Cache::remember(
             'org.keyvalues_by_code.v2.'.strtoupper(trim($keywordCode)),
             self::CACHE_TTL,
             fn () => Keyvalue::where('keyword_code', strtoupper(trim($keywordCode)))
                 ->where('is_active', true)
                 ->get()
-        );
+        ));
     }
 
     public static function getKeyValuesByColName(string $colName): ?Collection
@@ -941,7 +960,7 @@ class OrgService
      */
     public static function keywordValueByCode(string $keywordCode): array
     {
-        return Cache::remember(
+        return self::memo('kvbc.'.strtoupper(trim($keywordCode)), fn () => Cache::remember(
             'org.keyword_value_by_code.'.strtoupper(trim($keywordCode)),
             self::CACHE_TTL,
             fn () => Keyvalue::where('keyword_code', strtoupper(trim($keywordCode)))
@@ -950,7 +969,7 @@ class OrgService
                 ->select('code', 'value')
                 ->get()
                 ->toArray()
-        );
+        ));
     }
 
     public static function users(array $filters = []): array
@@ -965,15 +984,17 @@ class OrgService
         }
 
         if ($colType === 3) {
-            return Xl_DSA_Master::find((int) $code)?->name ?? $default;
+            return self::memo('dsa.'.(int) $code, fn () => Xl_DSA_Master::find((int) $code)?->name) ?? $default;
         }
 
-        $user = User::with('person')
-            ->where('person_code', $code)
-            ->orWhere('employee_code', $code)
-            ->first();
+        return self::memo('uname.'.$code, function () use ($code) {
+            $user = User::with('person')
+                ->where('person_code', $code)
+                ->orWhere('employee_code', $code)
+                ->first();
 
-        return $user?->display_name ?? $default;
+            return $user?->display_name;
+        }) ?? $default;
     }
 
     public static function checkReceiptX($rn)

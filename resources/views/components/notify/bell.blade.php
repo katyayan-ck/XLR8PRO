@@ -6,7 +6,16 @@
 @php
     $notify = app(\App\Services\Platform\Notify\NotifyService::class);
     $userId = backpack_user()?->id;
-    $counts = $userId ? $notify->counts($userId) : ['notifications' => ['unread' => 0], 'alerts' => ['unread' => 0], 'messages' => ['unread' => 0]];
+    // W7: the bell renders more than once per page (desktop + mobile bars) — counts and lists are read once per request
+    $bell = request()->attributes->get('xl.bell.'.$limit);
+    if ($bell === null) {
+        $bell = ['counts' => $userId ? $notify->counts($userId) : ['notifications' => ['unread' => 0], 'alerts' => ['unread' => 0], 'messages' => ['unread' => 0]], 'rows' => []];
+        foreach (['N', 'A', 'M'] as $kindKey) {
+            $bell['rows'][$kindKey] = $userId ? $notify->list($userId, $kindKey, 'UNREAD', $limit)->items() : [];
+        }
+        request()->attributes->set('xl.bell.'.$limit, $bell);
+    }
+    $counts = $bell['counts'];
     $tabs = [
         'N' => ['Notifications', 'notifications', 'la-bell'],
         'A' => ['Alerts', 'alerts', 'la-exclamation-triangle'],
@@ -33,7 +42,7 @@
             @endforeach
         </div>
         @foreach ($tabs as $kind => [$label, $bucket, $icon])
-            @php $rows = $userId ? $notify->list($userId, $kind, 'UNREAD', $limit)->items() : []; @endphp
+            @php $rows = $bell['rows'][$kind] ?? []; @endphp
             <div class="xl-panel-list" data-list="{{ $kind }}" @if ($kind !== $firstTab) hidden @endif>
                 @forelse ($rows as $row)
                     <div class="xl-panel-item" data-row>
