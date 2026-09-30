@@ -3,8 +3,8 @@
 
 # Handoff — the one live state file (rewrite with every commit; `.ai/guidelines/10-workflow.md`)
 
-**Updated:** 01-10-2026 · **Branch:** `dev/admin` · **Pushed:** 01-10 (owner request) — `origin/dev/admin` = this branch after the
-W15 / DEC-094 records commit; later commits are local only until the owner approves another push. Not merged to `stage` (N2, owner).
+**Updated:** 01-10-2026 · **Branch:** `dev/admin` · **Pushed:** 01-10 end of day (owner request) — `origin/dev/admin` = this branch;
+nothing local is unpushed. Next push only when the owner asks.
 
 ## Where things are (DEC-086 layout)
 - Guides: `tech-guides/README.md` (load map) · project card `tech-guides/00-project.md`.
@@ -28,6 +28,7 @@ W15 / DEC-094 records commit; later commits are local only until the owner appro
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 01-10 end of day: BT-003 booking grids, execution plan (phases 0–10), owner decision sheet (37 items), records; pushed. Baseline 314 / 45.
 - 01-10: BT-003 (booking code) — Booking grid queries without the DB facade: enquiry-reference join as one helper, computed columns via selectRaw, counts / names through the models.
 - 01-10: BT-002 (booking code) — Single-table lookups (accessory name, consultant, delivered / RTO-done ids, person / employee fallback, variant colour rows) read through their models.
 - 01-10: user documentation (W17 manual + help-article content) moved to the end of the to-do list (owner).

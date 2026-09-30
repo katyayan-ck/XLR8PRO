@@ -406,7 +406,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W14b | **Variant level:** feature mapping and management per variant, and an image gallery per variant | ✅ 01-10 (features per trim; gallery bound to trim or colour) |
 | W14c | **Excel import / export** of specifications (per model) and features (per variant), with master-fed dropdowns like the Vehicle Info workbook | ✅ 01-10 (our workbook by codes + your sample format by name, with a match report) |
 | W14d | **Compare vehicles** within the same segment only: intra-model (variants of one model, by features) and inter-model (different models, by specifications) | ✅ 01-10 (admin screen + app API) |
-| W15 | **No `DB::` queries — convert to Eloquent** (your rule 01-10, DEC-093). Guard test + baseline (473 uses / 72 files). Order: W15a services / jobs / console / imports / models / support; W15b admin controllers outside Booking; W15c tests / seeders; W15d Booking controller + booking models (with the booking team) | 🟡 in progress — services / platform / Org / dashboard done; booking code BT-001, BT-002 done (log `docs/booking-team-changes.md`); 349 uses / 45 files left |
+| W15 | **No `DB::` queries — convert to Eloquent** (your rule 01-10, DEC-093). Guard test + baseline (473 uses / 72 files). Order: W15a services / jobs / console / imports / models / support; W15b admin controllers outside Booking; W15c tests / seeders; W15d Booking controller + booking models (with the booking team) | 🟡 in progress — services / platform / Org / dashboard done; booking BT-001…003 done (controller left: reports → D23, uncalled helpers → deletion); next BT-004 quotation; 314 uses / 45 files left |
 | W16 | **Help & support utility** (your request 01-10, DEC-094) — F1 help pane, page tours, "Still need help?" support request with a diagnostic zip, support admin → executive routing; FRS `tech-guides/frs-and-workflows/frs/help-and-support-frs.md`, plan `…/plans/2026-10-01-help-and-support-DEC-094.md` | 🟡 planned — W16a ✅; build after W15a |
 | W16a | FRS + plan + DEC-094 + to-do | ✅ 01-10 |
 | W16b | Help engine: Markdown articles in `resources/help/`, route → article, `::: can CODE` sections, cache, search, coverage; F1 / `?` right-side pane; Help centre screen | 🔴 |
@@ -1195,3 +1195,22 @@ chassis endpoint, known; BUG-223 / 224 / 225, new).
 **Baseline now:** 349 `DB::` uses in 45 files. **Left:** the rest of `BookingCrudController` (grid base query,
 lookups, reports), `QuotationCrudController`, `EnquiryCrudController`, `ImportEnquiriesJob`, `SalesImportController`,
 the other controllers, console, imports, tests.
+
+### Booking grids (BT-003), execution plan and decision sheet — end of day 01-10
+
+**Delivered:**
+- **BT-003** — the booking grid base query (feeds ~30 list tabs), live-order counts and grid lookups no longer use the
+  `DB` facade; the booking ↔ enquiry reference match, written three times, is one helper with the same SQL. Checked
+  with `dev:route-snapshot`: all 41 list tabs 82 / 82 and the per-booking pages 80 / 80 identical (superadmin + user 40);
+  Sales tests 74 passed. Logged in `docs/booking-team-changes.md`.
+- **Execution order to go-live** — `tech-guides/frs-and-workflows/plans/2026-10-01-execution-order.md`: open bugs (34),
+  pending to-do rows, decisions and clean-up ordered by dependency in phases 0–10 (dead code before conversion, booking
+  convert + carve-out in one touch, keys before data migration, formats before importers, HR data before approvals,
+  QA before user docs); `docs/todo.md` §12 points to it.
+- **Owner decision sheet** — `docs/owner-decisions-2026-10-01.md`: 37 decisions by phase, with recommendations and an
+  answer column.
+**State of the booking controller:** done except the 5 reports (already 500, BUG-122 — decision D23) and the uncalled
+`fetchCbrData()` / `fetchPendBkData()` (deletion list).
+**Baseline now:** 314 `DB::` uses in 45 files (473 at the start of the day).
+**Left:** BT-004 onward — `QuotationCrudController`, `EnquiryCrudController`, `ImportEnquiriesJob`,
+`SalesImportController`, other controllers, console, imports, tests; owner answers to the decision sheet.

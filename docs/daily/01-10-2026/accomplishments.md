@@ -117,3 +117,22 @@ chassis endpoint, known; BUG-223 / 224 / 225, new).
 **Baseline now:** 349 `DB::` uses in 45 files. **Left:** the rest of `BookingCrudController` (grid base query,
 lookups, reports), `QuotationCrudController`, `EnquiryCrudController`, `ImportEnquiriesJob`, `SalesImportController`,
 the other controllers, console, imports, tests.
+
+### Booking grids (BT-003), execution plan and decision sheet — end of day 01-10
+
+**Delivered:**
+- **BT-003** — the booking grid base query (feeds ~30 list tabs), live-order counts and grid lookups no longer use the
+  `DB` facade; the booking ↔ enquiry reference match, written three times, is one helper with the same SQL. Checked
+  with `dev:route-snapshot`: all 41 list tabs 82 / 82 and the per-booking pages 80 / 80 identical (superadmin + user 40);
+  Sales tests 74 passed. Logged in `docs/booking-team-changes.md`.
+- **Execution order to go-live** — `tech-guides/frs-and-workflows/plans/2026-10-01-execution-order.md`: open bugs (34),
+  pending to-do rows, decisions and clean-up ordered by dependency in phases 0–10 (dead code before conversion, booking
+  convert + carve-out in one touch, keys before data migration, formats before importers, HR data before approvals,
+  QA before user docs); `docs/todo.md` §12 points to it.
+- **Owner decision sheet** — `docs/owner-decisions-2026-10-01.md`: 37 decisions by phase, with recommendations and an
+  answer column.
+**State of the booking controller:** done except the 5 reports (already 500, BUG-122 — decision D23) and the uncalled
+`fetchCbrData()` / `fetchPendBkData()` (deletion list).
+**Baseline now:** 314 `DB::` uses in 45 files (473 at the start of the day).
+**Left:** BT-004 onward — `QuotationCrudController`, `EnquiryCrudController`, `ImportEnquiriesJob`,
+`SalesImportController`, other controllers, console, imports, tests; owner answers to the decision sheet.

@@ -235,6 +235,7 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 - **Current status (index):** OPEN (booking team — D23)
 - **Verified 29-09-2026:** `xlr8_vehicle_master` and `xlr8_us_location` still do not exist (booking team, D23).
 - **Re-verified 01-10-2026:** after the booking team's final merge the 5 reports (and their `/list` endpoints) still 500 for the same reason.
+- **01-10-2026:** the reports' queries were left untouched in the W15 booking changes (BT-001…003) — rewriting them waits on D23 (`docs/owner-decisions-2026-10-01.md` #7).
 
 - **Status:** OPEN (booking team — D23)
 - **Severity:** High — these are real, currently-unusable reporting screens (branch-booking, consolidated-booking, live-order, pending-actions, stock).

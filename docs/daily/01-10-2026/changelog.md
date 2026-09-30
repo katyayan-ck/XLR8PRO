@@ -198,3 +198,7 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 - `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` · `getBaseQuery()` (the base of ~30 list tabs), `liveOrderCounts()`, `preloadGridLookups()`, `mapBookingForGrid()`; new private `onEnquiryReference()`. DEC-093. The booking ↔ enquiry match (id, `XENQ-{id}`, enquiry no., quick enquiry no., BINARY) was written three times with `orOn(DB::raw(…))`; it is now one helper using `orWhereRaw` (same SQL). Booking counts and person names keep the raw behaviour: `Booking::withoutGlobalScopes()` (every booking, not the user's data scope; `deleted_at` filter written out as before), `Person::withTrashed()`, `toBase()` (no model accessors).
 - Checked: all 41 list tabs (`tests/RouteSnapshots/booking-lists.txt`) as superadmin + user 40: 82 / 82 identical; per-booking pages (edit, add-amount, pending-edit, dealer-invoice, otf-form/{id} × 7 statuses): 80 / 80 identical; Sales tests 74 passed; PHPStan no new errors. Log: `docs/booking-team-changes.md`.
 - **Baseline:** 314 `DB::` uses in 45 files left.
+
+## End of day 01-10 — push
+- BT-003 (booking grids), execution plan, owner decision sheet, records; pushed to `origin/dev/admin`.
+- Open bugs: 34 (BUG-223 / 224 / 225 new today; BUG-221 partly, BUG-222 fixed). Baseline 314 / 45.
