@@ -25,6 +25,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: W13 Phase 6 — legacy settings screen → Settings, `GET api/v1/app-settings`, secrets never returned by the settings API (BUG-207 partly).
 - 30-09: W13 Phase 5 — self-service personal details by switch, Appearance switch.
 - 30-09: W13 Phase 4 — holds and TCS on Settings → Pricing; old pages redirect.
 - 30-09: W13g — title / footer / menu brand / tagline / image fields as the owner asked.
@@ -59,7 +60,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-- **Now: W13 Phase 6** (DEC-091) — single place + API: legacy System Setting screen (`utils/system-setting`, `SystemSettingCrudController`) redirects to Settings and leaves the menu; `GET /api/v1/app-settings` (public subset: dealership name / legal name / tagline / url / logo / favicon URLs, channel switches, editable profile fields, appearance switch, date format, pricing.last_updated_at) + API docs; smoke as superadmin, settings manager, pricing manager, plain user. Phases 1–5 + W13g done.
+- **W13 ✅ done** (DEC-091, Phases 1–6 + W13g). Next: W5 (UI clean-up outside Sales), W7 (N+1 review), then W14 (vehicle specifications / features / compare — plan first; samples at the project root, git-ignored).
 0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). W3 ✅ (15 Sales HTTP tests; BUG-219 open, BUG-220 fixed). W4 ✅ (baseline, full analyse clean; BUG-221). W6 ✅ (225 flash calls → lang `flash` groups; FlashMessagesLangTest). Next step: W5 (UI clean-up outside Sales: hex / inline styles → shared layer, same method as the Sales pass), then W7 (N+1 review). Then W4 (PHPStan baseline), W5, W6, W7.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.
@@ -67,6 +68,7 @@
    booking forms.
 
 ## Waiting on the owner
+- BUG-207 remainder: narrow or retire `GET system-settings` / `topic` / `category` / `{key}` now that `app-settings` exists; move PUT / import onto SettingsService.
 - Deletion OK? `resources/views/admin/pricing/hold/index.blade.php` and `resources/views/admin/pricing/tcs/index.blade.php` are unused since W13 Phase 4.
 - Deploy note (W13 Phase 2): set Settings → Site → Dealership name on UAT — a leftover demo value (local: "ABC Motors") would show in the header.
 - BUG-219: should a `Dummy` booking still need the base fields (name, mobile, branch, vehicle, sale type)? Today they are skipped.

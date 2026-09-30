@@ -22,7 +22,7 @@ class UiDensityTest extends TestCase
     {
         parent::setUp();
         $this->user = User::create(['username' => 'density_'.uniqid(), 'password' => bcrypt('password'), 'user_type' => 'Emp', 'is_active' => 1]);
-        $this->user->givePermissionTo(Permission::findOrCreate('UTL_SETTINGS_VIEW', 'web'));
+        $this->user->givePermissionTo(Permission::findOrCreate('UTL_SETTINGS_MANAGE', 'web'));   // DEC-091: the Settings screen is for managers
     }
 
     public function test_the_site_default_density_is_applied_before_paint_and_the_panel_offers_a_choice(): void

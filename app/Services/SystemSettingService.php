@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Validator;
 
 /**
  * SystemSettingService
- * 
+ *
  * Centralized service for system settings with validation,
  * formatting, and business logic
  */
@@ -52,21 +52,21 @@ class SystemSettingService
     {
         $setting = SystemSetting::where('key', $key)->first();
 
-        if (!$setting) {
+        if (! $setting) {
             throw new \InvalidArgumentException("Setting '{$key}' does not exist");
         }
 
         // Validate value if rules exist
         if ($setting->validation_rules) {
             $rules = [
-                'value' => $setting->validation_rules
+                'value' => $setting->validation_rules,
             ];
 
             $validator = Validator::make(['value' => $value], $rules);
 
             if ($validator->fails()) {
                 throw new \InvalidArgumentException(
-                    "Validation failed for '{$key}': " . implode(', ', $validator->errors()->all())
+                    "Validation failed for '{$key}': ".implode(', ', $validator->errors()->all())
                 );
             }
         }
@@ -90,7 +90,7 @@ class SystemSettingService
 
         return $query->get()
             ->groupBy('topic')
-            ->map(fn($topicSettings) => $topicSettings->groupBy('group'))
+            ->map(fn ($topicSettings) => $topicSettings->groupBy('group'))
             ->toArray();
     }
 
@@ -117,7 +117,7 @@ class SystemSettingService
             ->byGroup($group)
             ->orderBy('sort_order')
             ->get()
-            ->mapWithKeys(fn($row) => [$row->key => $row->value])
+            ->mapWithKeys(fn ($row) => [$row->key => $row->value])
             ->toArray();
     }
 
@@ -222,6 +222,7 @@ class SystemSettingService
     public function getLogoUrl(string $type = 'header'): string
     {
         $path = $this->get("site.logo.{$type}", "images/logo-{$type}.png");
+
         return asset($path);
     }
 
@@ -230,7 +231,7 @@ class SystemSettingService
      */
     public function getFooterText(): string
     {
-        return (string) $this->get('site.footer.text', '&copy; ' . date('Y'));
+        return (string) $this->get('site.footer.text', '&copy; '.date('Y'));
     }
 
     /**
@@ -305,7 +306,8 @@ class SystemSettingService
      */
     public function getSetting(string $key): ?SystemSetting
     {
-        return SystemSetting::where('key', $key)->first();
+        // BUG-207: only visible, non-secret settings are readable through the API
+        return SystemSetting::query()->visible()->where('key', $key)->first();
     }
 
     /**

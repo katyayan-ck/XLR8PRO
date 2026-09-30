@@ -221,3 +221,15 @@ Turning the Appearance switch off removes the Appearance button, menu entry and 
 
 **Verified:** 3 feature tests; platform + admin + IAM suites 158 passed. **Note:** tabs TCS threshold / rate were
 already moved to Settings → Pricing in Phase 4 (owner note 30-09).
+
+### 22. Settings in one place, for the web and the app — W13 Phase 6 (DEC-091); W13 complete
+
+**Delivered:** the old System Setting pages now lead to the categorised Settings screen, so settings are shown in one
+place only; the mobile app has `GET /api/v1/app-settings` with the dealership branding, channel switches, editable
+profile fields and display formats, read live. Found on the way: the older settings API returned encrypted secrets
+(as ciphertext) to any signed-in app user — they are never returned now (BUG-207 partly fixed; narrowing the rest of
+that API is your call).
+
+**W13 as a whole:** one Settings interface with Site / dealership, Communication, Pricing, User behaviour, Security and
+Modules tabs; managers only (pricing managers: Pricing tab); every change applies at once on the web, in mails and in
+the app. **Verified:** full suite 536 passed, 1 skipped (UiDensityTest fixture now grants UTL_SETTINGS_MANAGE); full PHPStan clean.

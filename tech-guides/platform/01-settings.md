@@ -118,6 +118,14 @@ through the owning service:
   automatic recalculation, DEC-083).
 The old `pricing.hold.index` / `pricing.tcs.index` pages redirect to Settings → Pricing; their menu entries are gone.
 
+## One place + the app (DEC-091 Phase 6)
+- The legacy System Setting screen (`utils/system-setting` list / create / edit / show) redirects to Utilities →
+  Settings; its search lists only visible, non-secret rows.
+- `SettingsCatalogue::appSettings(?User): array` → `GET /api/v1/app-settings` (`AppSettingsController`; docs
+  `tech-guides/api/app-settings.md`): dealership branding, channel switches, editable profile fields, UI formats,
+  `pricing_last_updated_at`. No secrets.
+- Secrets (type `encrypted`) are never listed by `SystemSetting::visible()` / the system-settings API (BUG-207).
+
 ## Events & testing
 `SettingsChanged` (key, old, new, scope, actor; values hidden for encrypted keys). See [15-testing.md](15-testing.md); every code is in
 [16-reference.md](16-reference.md).

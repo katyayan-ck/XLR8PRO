@@ -7,7 +7,7 @@ Indexes: (auditable_type,auditable_id), (user_id,user_type), (user_id,created_at
 ## `bmpl_pincodes` · ~158215 rows · model: App\Models\Admin\PinCodes
 id int, status int, created_at timestamp, created_by int, updated_at timestamp?, updated_by int?, deleted_at timestamp?, deleted_by int?, name varchar(150), level enum('STATE','DISTRICT','TEHSIL','POSTOFFICE'), pincode int, parent int
 
-## `cache` · ~158 rows · model: —
+## `cache` · ~191 rows · model: —
 key varchar(255) PK, value mediumtext, expiration int
 
 ## `cache_locks` · ~0 rows · model: —

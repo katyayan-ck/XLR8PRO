@@ -6,6 +6,7 @@ use App\Models\BaseModel;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -28,7 +29,7 @@ use Illuminate\Support\Facades\Cache;
  * @property string|null $validation_rules
  * @property bool $iseditable
  * @property bool $is_visible
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $updated_at
  */
 class SystemSetting extends BaseModel
 {
@@ -96,7 +97,8 @@ class SystemSetting extends BaseModel
      */
     public function scopeVisible($query)
     {
-        return $query->where('is_visible', true);
+        // BUG-207: secrets (type encrypted) are never listed, whatever their is_visible flag says
+        return $query->where('is_visible', true)->where('type', '!=', 'encrypted');
     }
 
     /**
@@ -287,7 +289,7 @@ class SystemSetting extends BaseModel
      */
     public static function getAllAsArray(): array
     {
-        return static::where('is_visible', true)
+        return static::query()->visible()
             ->get()
             ->mapWithKeys(fn ($row) => [$row->key => static::castValue($row)])
             ->toArray();

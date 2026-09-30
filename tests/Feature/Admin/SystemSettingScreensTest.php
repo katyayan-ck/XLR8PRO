@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\User;
+use App\Services\Platform\Settings\SettingsService;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
@@ -31,28 +32,25 @@ class SystemSettingScreensTest extends TestCase
             ->assertJsonStructure(['data']);
     }
 
-    public function test_show_page_renders(): void
+    /** DEC-091: settings are shown only on Utilities → Settings; the legacy pages lead there. */
+    public function test_legacy_pages_lead_to_the_settings_screen(): void
     {
-        $id = DB::table('xlr8_utils_system_setting')->whereNull('deleted_at')->value('id');
-        if (! $id) {
-            $this->markTestSkipped('No system settings in the test database.');
-        }
+        $id = DB::table('xlr8_utils_system_setting')->whereNull('deleted_at')->value('id') ?? 1;
 
-        $this->get("/admin/utils/system-setting/{$id}/show")->assertOk();
+        foreach (['/admin/utils/system-setting', '/admin/utils/system-setting/create', "/admin/utils/system-setting/{$id}/edit", "/admin/utils/system-setting/{$id}/show"] as $url) {
+            $this->get($url)->assertRedirect(route('utils.settings.index'));
+        }
     }
 
-    public function test_show_page_needs_the_view_permission(): void
+    /** BUG-207: the legacy search never returns secrets. */
+    public function test_list_search_leaves_out_secrets(): void
     {
-        $id = DB::table('xlr8_utils_system_setting')->whereNull('deleted_at')->value('id');
-        $user = User::where('is_active', 1)->get()->first(fn (User $u) => ! $u->isSuperAdmin() && ! $u->can('UTL_SETTINGS_VIEW'));
-        if (! $id || ! $user) {
-            $this->markTestSkipped('Needs a setting and a user without UTL_SETTINGS_VIEW.');
-        }
+        app(SettingsService::class)->set('mail.smtp.password', 'hidden-one');
 
-        $this->app['auth']->guard('backpack')->logout();
-        $this->actingAs($user, 'backpack');
+        $keys = collect($this->post('/admin/utils/system-setting/search', ['draw' => 1, 'start' => 0, 'length' => 500])->json('data'))
+            ->map(fn ($row) => strip_tags((string) ($row[0] ?? '').(string) ($row[1] ?? '')))->implode(' ');
 
-        $this->get("/admin/utils/system-setting/{$id}/show")->assertForbidden();
+        $this->assertStringNotContainsString('mail.smtp.password', $keys);
     }
 
     /** Their search/details routes lacked the `operation` key, so the list gate never ran (BUG-167). */

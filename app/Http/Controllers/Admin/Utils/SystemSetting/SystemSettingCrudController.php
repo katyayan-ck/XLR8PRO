@@ -10,15 +10,41 @@ use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 
+/**
+ * Legacy settings CRUD. Settings live on the one categorised screen now (Utilities → Settings, DEC-091): the list,
+ * create, edit and show pages lead there; delete stays gated (BUG-063).
+ */
 class SystemSettingCrudController extends CrudController
 {
-    use CreateOperation;
+    use CreateOperation {
+        create as traitCreate;
+    }
     use DeleteOperation;
-    use ListOperation;
+    use ListOperation {
+        index as traitIndex;
+    }
     use ShowOperation {
         show as traitShow;
     }
-    use UpdateOperation;
+    use UpdateOperation {
+        edit as traitEdit;
+    }
+
+    /** DEC-091: settings are shown only on Utilities → Settings. */
+    public function index()
+    {
+        return redirect()->route('utils.settings.index');
+    }
+
+    public function create()
+    {
+        return redirect()->route('utils.settings.index');
+    }
+
+    public function edit($id)
+    {
+        return redirect()->route('utils.settings.index');
+    }
 
     public function setup()
     {
@@ -49,14 +75,10 @@ class SystemSettingCrudController extends CrudController
         return $this->crud->delete($id);
     }
 
-    /** The trait's show() had no permission check (BUG-167). */
+    /** DEC-091: leads to Utilities → Settings (the trait's show() had no permission check, BUG-167). */
     public function show($id)
     {
-        if (! backpack_user()->can('UTL_SETTINGS_VIEW')) {
-            abort(403, 'Unauthorized. You do not have permission to view system settings.');
-        }
-
-        return $this->traitShow($id);
+        return redirect()->route('utils.settings.index');
     }
 
     protected function setupListOperation()
@@ -64,6 +86,7 @@ class SystemSettingCrudController extends CrudController
         if (! backpack_user()->can('UTL_SETTINGS_VIEW')) {
             abort(403, 'Unauthorized. You do not have permission to view system settings.');
         }
+        $this->crud->addClause('visible');   // BUG-207: never list secrets
 
         $this->crud->addColumn([
             'name' => 'topic',

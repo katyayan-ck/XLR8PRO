@@ -244,7 +244,7 @@ final class SettingsService
             'label' => $seed['label'] ?? $key,
             'type' => $type,
             'value' => array_key_exists('value', $seed) ? $this->serialise($seed['value'], $type) : null,
-            'is_visible' => true,
+            'is_visible' => $type !== 'encrypted',   // BUG-207: secrets are never listed
             'iseditable' => true,
         ]);
         if ($row->wasRecentlyCreated && array_key_exists('value', $seed)) {

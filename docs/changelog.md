@@ -9886,3 +9886,13 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   Appearance button / user-menu entry / panel behind `ui.appearance_enabled` (`theme-tabler/inc/menu`,
   `menu_user_dropdown`, `layouts/{horizontal,vertical}`). Test `UserBehaviourSettingsTest` (3); guide `iam-auth.md`.
   Platform + admin + IAM suites 158 passed; PHPStan clean.
+
+## W13 Phase 6 — one place for settings + app settings API (DEC-091, BUG-207 partly fixed)
+- **New:** `app/Http/Controllers/Api/V1/AppSettingsController.php` + route `api.app-settings` (`GET /api/v1/app-settings`,
+  auth + device), `SettingsCatalogue::appSettings()`, docs `tech-guides/api/app-settings.md` + Postman collection +
+  index row, tests `tests/Feature/Api/AppSettingsApiTest.php` (3).
+- **Legacy screen:** `SystemSettingCrudController` list / create / edit / show redirect to Utilities → Settings; its
+  search lists only visible, non-secret rows (`SystemSettingScreensTest` rewritten: redirect + no secrets).
+- **BUG-207 (partly):** `SystemSetting::scopeVisible()` excludes encrypted rows (and `getAllAsArray()` uses it),
+  `SystemSettingService::getSetting()` reads only visible rows, `SettingsService` stores new secrets hidden.
+- **Verified:** full suite 536 passed, 1 skipped (UiDensityTest fixture now grants UTL_SETTINGS_MANAGE); full PHPStan clean; smoke superadmin 200 / user 40 403 on Settings.

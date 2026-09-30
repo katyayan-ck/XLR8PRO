@@ -393,13 +393,13 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W5 | Q7 UI clean-up outside Sales (hex / inline styles → shared layer, same method as the Sales pass) | 🔴 |
 | W6 | U7 web side: admin flash messages through the error codes / language file (same wording) | ✅ 30-09 (225 calls → `{module}.flash.*`) |
 | W7 | U4 N+1 review of the big lists (enquiries, bookings, quotations) | 🔴 |
-| W13 | **One categorised Settings interface** (your request 30-09) — the only place settings are shown; changes apply at once on web and app / API. Today they are spread over Utilities → Settings (56 keys), the legacy System Setting screen, and the pricing TCS / Hold screens. Parts W13a–W13f; plan to be saved in `tech-guides/frs-and-workflows/plans/` | 🟡 in progress — Phases 1–5 ✅ + W13g ✅; Phase 6 (single place + app-settings API) next; DEC-091 |
+| W13 | **One categorised Settings interface** (your request 30-09) — the only place settings are shown; changes apply at once on web and app / API. Today they are spread over Utilities → Settings (56 keys), the legacy System Setting screen, and the pricing TCS / Hold screens. Parts W13a–W13f; plan to be saved in `tech-guides/frs-and-workflows/plans/` | ✅ 30-09 — DEC-091 Phases 1–6 + W13g (one categorised Settings screen, applied everywhere, `GET app-settings`) |
 | W13a | **Site / dealership:** name (default "Bikaner Motors"), website URL (default https://www.BikanerMotors.com), logo, address, favicon, e-mail, phone, GSTIN …; applied across the interface (header, login, PDFs, mails) | ✅ 30-09 (Phase 2; mail from-name comes with Phase 3) |
 | W13b | **Communication:** global on / off per channel (mail, SMS, WhatsApp, push), SMTP settings used by the mail service, mail signature appended to every mail, plus the existing comms settings | ✅ 30-09 (Phase 3) |
 | W13c | **Pricing:** global / per-list price-list hold, TCS threshold and rate, and the existing pricing settings; also open to the pricing-manage permission | ✅ 30-09 (Phase 4) |
 | W13d | **User behaviour:** Appearance panel on / off; which profile fields a user may change (name, e-mail, profile photo, mobile, Aadhaar, PAN, password, DOB, DOJ, marital status, gender) — enforced on web and API | ✅ 30-09 (Phase 5; the API has no profile-edit endpoint — the flags go to the app via `app-settings` in Phase 6) |
 | W13e | **Other module / utility settings** (security, data scope, documents, tickets / SLA, chat, notifications, approvals, display / date format, density …) grouped in the same interface | ✅ 30-09 (Phase 1: Security, Modules & utilities, Other tabs) |
-| W13f | **Access and single place:** only the settings-manage permission (pricing group also pricing-manage); remove the other settings screens / menu entries; API reads the same values (cache flush on save) | 🔴 |
+| W13f | **Access and single place:** only the settings-manage permission (pricing group also pricing-manage); remove the other settings screens / menu entries; API reads the same values (cache flush on save) | ✅ 30-09 (Phase 6) |
 | W13g | **Site tab feedback** (your notes 30-09): browser title = dealership + app name; footer "Made for <dealership>" linked to its website, tagline on hover; no site name / slogan (dealership tagline instead); current logo / favicon shown with drop-zone and Remove; menu logo = logo or text | ✅ 30-09 |
 | W14 | **Vehicle content & compare** (your request 30-09) — parts W14a–W14d; plan to be written. Samples (root, not committed): `Vehicle_Specifications.xlsx` — one sheet per segment group (COMMERCIAL, LMM, LMM EV, PERSONAL, PERSONAL EV), rows Head → SubHead (Axle, Brakes, Engine, Battery, Dimensions, Warranty …), one column per model; `Vehicle-Features.xlsx` — one sheet per model, rows Feature group → Feature, one column per variant (by name), values Yes / --- | 🔴 (after W13) |
 | W14a | **Model level:** attach images, a PDF brochure and category-wise specifications (e.g. Engine, Dimensions, Safety …) to each vehicle model | 🔴 |
@@ -1029,3 +1029,15 @@ Turning the Appearance switch off removes the Appearance button, menu entry and 
 
 **Verified:** 3 feature tests; platform + admin + IAM suites 158 passed. **Note:** tabs TCS threshold / rate were
 already moved to Settings → Pricing in Phase 4 (owner note 30-09).
+
+### 22. Settings in one place, for the web and the app — W13 Phase 6 (DEC-091); W13 complete
+
+**Delivered:** the old System Setting pages now lead to the categorised Settings screen, so settings are shown in one
+place only; the mobile app has `GET /api/v1/app-settings` with the dealership branding, channel switches, editable
+profile fields and display formats, read live. Found on the way: the older settings API returned encrypted secrets
+(as ciphertext) to any signed-in app user — they are never returned now (BUG-207 partly fixed; narrowing the rest of
+that API is your call).
+
+**W13 as a whole:** one Settings interface with Site / dealership, Communication, Pricing, User behaviour, Security and
+Modules tabs; managers only (pricing managers: Pricing tab); every change applies at once on the web, in mails and in
+the app. **Verified:** full suite 536 passed, 1 skipped (UiDensityTest fixture now grants UTL_SETTINGS_MANAGE); full PHPStan clean.

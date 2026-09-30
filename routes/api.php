@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\CommsWebhookController;
+use App\Http\Controllers\Api\V1\AppSettingsController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DocController;
 use App\Http\Controllers\Api\V1\EntityHistoryController;
@@ -77,6 +78,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/messages/user/{user_id}', [NotificationController::class, 'getConversationMessages']);
         Route::post('/messages/user/{user_id}', [NotificationController::class, 'sendMessage']);
         Route::post('/messages/{id}/read', [NotificationController::class, 'markMessageAsRead']);
+        // DEC-091: the settings the app needs, same values as Utilities → Settings
+        Route::get('/app-settings', [AppSettingsController::class, 'show'])->name('api.app-settings');
+
         // System Settings routes (protected)
         Route::prefix('system-settings')->group(function () {
 

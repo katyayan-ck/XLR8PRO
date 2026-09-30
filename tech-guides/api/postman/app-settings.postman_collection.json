@@ -1,0 +1,126 @@
+{
+ "info": {
+  "name": "Xceler8 API v1 — App settings",
+  "_postman_id": "xlrm-app-settings-v1",
+  "description": "Settings the app needs (branding, channel switches, editable profile fields). Docs: tech-guides/api/app-settings.md.",
+  "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+ },
+ "variable": [
+  {
+   "key": "base_url",
+   "value": "https://dev.xceler8.in"
+  },
+  {
+   "key": "token",
+   "value": ""
+  }
+ ],
+ "item": [
+  {
+   "name": "Get app settings",
+   "request": {
+    "method": "GET",
+    "header": [
+     {
+      "key": "Accept",
+      "value": "application/json"
+     },
+     {
+      "key": "Authorization",
+      "value": "Bearer {{token}}"
+     }
+    ],
+    "url": {
+     "raw": "{{base_url}}/api/v1/app-settings",
+     "host": [
+      "{{base_url}}"
+     ],
+     "path": [
+      "api",
+      "v1",
+      "app-settings"
+     ]
+    },
+    "description": "Branding, channel switches, editable profile fields, display formats and the pricing sync stamp — no secrets."
+   },
+   "response": [
+    {
+     "name": "200 — app settings",
+     "originalRequest": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "Accept",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/v1/app-settings",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "v1",
+        "app-settings"
+       ]
+      },
+      "description": "Branding, channel switches, editable profile fields, display formats and the pricing sync stamp — no secrets."
+     },
+     "status": "OK",
+     "code": 200,
+     "_postman_previewlanguage": "json",
+     "header": [
+      {
+       "key": "Content-Type",
+       "value": "application/json"
+      }
+     ],
+     "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"App settings retrieved\",\n  \"data\": {\n    \"dealership\": {\n      \"name\": \"Bikaner Motors\",\n      \"legal_name\": \"Bikaner Motors Private Limited\",\n      \"tagline\": \"\",\n      \"url\": \"https://www.BikanerMotors.com\",\n      \"email\": \"\",\n      \"phone\": \"\",\n      \"address\": \"\",\n      \"logo_url\": \"https://dev.xceler8.in/images/Logo-108x75.png\",\n      \"favicon_url\": null\n    },\n    \"channels\": {\n      \"mail\": true,\n      \"sms\": true,\n      \"whatsapp\": true,\n      \"push\": true\n    },\n    \"account\": {\n      \"editable_fields\": [\n        \"gender\"\n      ],\n      \"can_change_display_name\": true,\n      \"can_change_photo\": true,\n      \"can_change_password\": true\n    },\n    \"ui\": {\n      \"appearance_enabled\": true,\n      \"menu_logo\": \"logo\",\n      \"date_format\": \"d-M-Y\",\n      \"time_format\": \"H:i\"\n    },\n    \"pricing_last_updated_at\": \"\"\n  }\n}"
+    },
+    {
+     "name": "401 — no / invalid token",
+     "originalRequest": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "Accept",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/v1/app-settings",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "v1",
+        "app-settings"
+       ]
+      },
+      "description": "Branding, channel switches, editable profile fields, display formats and the pricing sync stamp — no secrets."
+     },
+     "status": "Unauthorized",
+     "code": 401,
+     "_postman_previewlanguage": "json",
+     "header": [
+      {
+       "key": "Content-Type",
+       "value": "application/json"
+      }
+     ],
+     "body": "{\n  \"http_status\": 401,\n  \"success\": false,\n  \"code\": \"AUTH_UNAUTHORIZED\",\n  \"message\": \"You are not authorized to perform this action.\",\n  \"data\": null\n}"
+    }
+   ]
+  }
+ ]
+}

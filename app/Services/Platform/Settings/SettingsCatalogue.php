@@ -6,6 +6,7 @@ namespace App\Services\Platform\Settings;
 
 use App\Models\User;
 use App\Models\Vehicle\Pricing\TcsConfig;
+use App\Services\IAM\MyAccountService;
 use App\Services\Vehicle\Pricing\PricingHoldService;
 use App\Services\Vehicle\Pricing\Rules\TcsConfigService;
 use App\Support\Result;
@@ -59,6 +60,49 @@ final class SettingsCatalogue
         }
 
         return $tabs;
+    }
+
+    /**
+     * What the mobile app needs from Settings (DEC-091 Phase 6, `GET /api/v1/app-settings`): branding, channel switches,
+     * self-service fields, display formats and the pricing sync stamp. Never secrets. Read live from the cached
+     * settings, so a change on the screen shows on the next call.
+     *
+     * @return array{dealership: array<string, string|null>, channels: array<string, bool>, account: array{editable_fields: list<string>, can_change_display_name: bool, can_change_photo: bool, can_change_password: bool}, ui: array<string, mixed>, pricing_last_updated_at: string}
+     */
+    public function appSettings(?User $user = null): array
+    {
+        $get = fn (string $key, mixed $default = null) => $this->settings->get($key, $default);
+        $editable = [];
+        foreach (MyAccountService::PERSONAL_FIELDS as $field => $setting) {
+            if ((bool) $get($setting, false) && ($field !== 'joining_date' || $user?->employee !== null)) {
+                $editable[] = $field;
+            }
+        }
+
+        return [
+            'dealership' => [
+                'name' => (string) $get('dealership.name', ''), 'legal_name' => (string) $get('dealership.legal_name', ''),
+                'tagline' => (string) $get('dealership.tagline', ''), 'url' => (string) $get('dealership.url', ''),
+                'email' => (string) $get('dealership.email', ''), 'phone' => (string) $get('dealership.phone', ''),
+                'address' => (string) $get('dealership.address', ''),
+                'logo_url' => site_logo_url(), 'favicon_url' => site_favicon_url(),
+            ],
+            'channels' => [
+                'mail' => (bool) $get('comms.enabled.mail', true), 'sms' => (bool) $get('comms.enabled.sms', true),
+                'whatsapp' => (bool) $get('comms.enabled.whatsapp', true), 'push' => (bool) $get('comms.enabled.push', true),
+            ],
+            'account' => [
+                'editable_fields' => $editable,
+                'can_change_display_name' => (bool) $get('account.can_change_display_name', true),
+                'can_change_photo' => (bool) $get('account.can_change_photo', true),
+                'can_change_password' => (bool) $get('account.can_change_password', true),
+            ],
+            'ui' => [
+                'appearance_enabled' => (bool) $get('ui.appearance_enabled', true), 'menu_logo' => (string) $get('branding.menu_logo', 'logo'),
+                'date_format' => (string) $get('display.date_format', 'd-M-Y'), 'time_format' => (string) $get('display.time_format', 'H:i'),
+            ],
+            'pricing_last_updated_at' => (string) $get('pricing.last_updated_at', ''),
+        ];
     }
 
     /** True when the user may open at least one tab. */
