@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Module\Booking\Bookingamount;
 use App\Services\EnquiryReferenceService;
 use App\Services\OrgService;
+use App\Support\ErrorRef;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -128,7 +129,7 @@ class JournalVoucherCrudController extends Controller
             return redirect()->route('accounts.journal-voucher.index');
         } catch (\Exception $e) {
             DB::rollBack();
-            Alert::error(__('accounts.flash.error_creating_voucher', ['message' => $e->getMessage()]))->flash();
+            Alert::error(__('accounts.flash.error_creating_voucher', ['message' => ErrorRef::userMessage($e)]))->flash();
 
             return redirect()->back()->withInput();
         }
@@ -175,7 +176,7 @@ class JournalVoucherCrudController extends Controller
             return redirect()->route('accounts.journal-voucher.index');
         } catch (\Exception $e) {
             DB::rollBack();
-            Alert::error(__('accounts.flash.error_updating_voucher', ['message' => $e->getMessage()]))->flash();
+            Alert::error(__('accounts.flash.error_updating_voucher', ['message' => ErrorRef::userMessage($e)]))->flash();
 
             return redirect()->back()->withInput();
         }

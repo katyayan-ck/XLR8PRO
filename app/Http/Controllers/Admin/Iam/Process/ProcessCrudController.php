@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Iam\Process;
 use App\Http\Requests\ProcessRequest;
 use App\Models\IAM\Process;
 use App\Services\IAM\RbacService;
+use App\Support\ErrorRef;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -141,7 +142,7 @@ class ProcessCrudController extends CrudController
         try {
             $rbacService->updateProcess($process, $validated);
         } catch (Exception $e) {
-            \Alert::error($e->getMessage())->flash();
+            \Alert::error(ErrorRef::userMessage($e))->flash();
 
             return redirect()->back()->withInput();
         }

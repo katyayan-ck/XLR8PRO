@@ -25,6 +25,7 @@ are local only — pushing again needs the owner's approval in that turn. Not me
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 01-10: W6 remainder — 17 admin error messages no longer show raw exception text (`ErrorRef::userMessage()`).
 - 01-10: records tidy-up — this handoff rewritten (stale "next" items removed), to-do / bug index verified.
 - 01-10: W14 complete (DEC-092) — Phase 4–5 compare (`CompareService`, Vehicles → Compare Vehicles,
   `GET api/v1/vehicles/compare/{variants,models}` + docs / Postman); Phase 3 workbooks (ours by code, OEM samples by name
@@ -40,8 +41,6 @@ are local only — pushing again needs the owner's approval in that turn. Not me
   1. BUG-221 — point the dead-class references at the current models where the path is still used
      (`AccessoryExportService`, `Booking` helper); dead files (`XlSpareMaster` relations, `ProductionRBACSeeder`) only
      with the owner's deletion list (D5–D12).
-  2. W6 remainder — exception texts appended to admin error flashes (`… : $e->getMessage()`) → log the exception, show
-     the lang message only.
 
 ## Waiting on the owner
 - **Push / merge:** push the local commits after `7140141`; merge `dev/admin` into `stage` (N2); delete

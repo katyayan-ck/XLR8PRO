@@ -36,3 +36,12 @@ with a clear message.
 colours or one colour); Excel export / import including your OEM sheets; compare on the web and the app.
 **Verified:** Vehicle suite 26 passed; full PHPStan clean. **Left:** load your samples on UAT and fix the names the
 import report lists; grant `VEH_CONT_VIEW` / `VEH_CONT_EDIT` / `VEH_CMPR_VIEW` to the designations that need them.
+
+### 4. No raw exception text on admin screens — W6 remainder
+
+**Delivered:** 17 admin error messages that showed the raw exception text (for a database error: the SQL and its values,
+which could include customer mobile numbers) now go through `ErrorRef::userMessage()`. Messages written on purpose by
+our code still appear as before; technical failures show "A technical error stopped this action (reference XXXXXXXX)"
+and the same reference is in the log, so IT support can find the details.
+**Verified:** new `ErrorRefUserMessageTest` (4) + flash-language and error-page tests, 10 passed; PHPStan clean on the
+12 controllers. **Left:** nothing for W6.

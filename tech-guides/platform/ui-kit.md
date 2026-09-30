@@ -154,6 +154,11 @@ XL.theme.onChange(state => rebuildMyChart());
   page = `@extends('errors.xl')` + the `code` / `title` / `message` sections (optional: `reference`, `actions`).
 - **Admin panel:** `resources/views/vendor/backpack/theme-tabler/errors/layout.blade.php` (in-shell; dashboard + back).
 - **500s** show `App\Support\ErrorRef::get()`; the same id is in the log context of every exception.
+- **Caught exceptions on admin screens** show `ErrorRef::userMessage(Throwable $e): string` — never `$e->getMessage()`.
+  Business messages (any exception our code throws on purpose) pass through; a `ValidationException` gives its first
+  field message; SQL / PDO failures and PHP errors are logged (`Admin action failed`, with `error_ref`) and become
+  `utils.flash.technical_error` with the reference. Example:
+  `Alert::error(__('accounts.flash.error_creating_receipt', ['message' => ErrorRef::userMessage($e)]))->flash();`
 
 ## Permission tree + person picker (W5)
 Shared in `public/css/xl-ui.css` (tokens, dark-mode safe): `.rbac-tree`, `.rbac-module`, `.rbac-row(-module|-process|-perm)`,

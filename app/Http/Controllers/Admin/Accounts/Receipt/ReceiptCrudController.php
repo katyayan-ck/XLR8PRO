@@ -8,6 +8,7 @@ use App\Models\Module\Booking\Bookingamount;
 use App\Models\Module\Booking\XlFinancier;
 use App\Services\EnquiryReferenceService;
 use App\Services\OrgService;
+use App\Support\ErrorRef;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -209,7 +210,7 @@ class ReceiptCrudController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Alert::error(__('accounts.flash.error_creating_receipt', ['message' => $e->getMessage()]))->flash();
+            Alert::error(__('accounts.flash.error_creating_receipt', ['message' => ErrorRef::userMessage($e)]))->flash();
 
             return redirect()->back()->withInput();
         }
@@ -303,7 +304,7 @@ class ReceiptCrudController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Alert::error(__('accounts.flash.error_updating_receipt', ['message' => $e->getMessage()]))->flash();
+            Alert::error(__('accounts.flash.error_updating_receipt', ['message' => ErrorRef::userMessage($e)]))->flash();
 
             return redirect()->back()->withInput();
         }

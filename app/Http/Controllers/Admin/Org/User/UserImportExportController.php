@@ -12,6 +12,7 @@ use App\Imports\UsersImportWorkbook;
 use App\Services\IAM\UserRbacExportService;
 use App\Services\Org\UsersWorkbook\UsersWorkbookColumns;
 use App\Services\Org\UsersWorkbook\UsersWorkbookService;
+use App\Support\ErrorRef;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -73,7 +74,7 @@ class UserImportExportController extends Controller
             }
         } catch (Throwable $e) {
             report($e);
-            $error = 'The file could not be imported: '.$e->getMessage();
+            $error = 'The file could not be imported: '.ErrorRef::userMessage($e);
         } finally {
             $log = (string) ob_get_clean();
             @unlink($fullPath);

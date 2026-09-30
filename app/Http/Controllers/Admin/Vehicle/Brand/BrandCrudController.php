@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Vehicle\Brand;
 
 use App\Http\Requests\BrandRequest;
 use App\Models\Vehicle\Brand;
+use App\Support\ErrorRef;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -529,7 +530,7 @@ class BrandCrudController extends CrudController
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            \Alert::error(__('vehicle.flash.import_failed', ['message' => $e->getMessage()]))->flash();
+            \Alert::error(__('vehicle.flash.import_failed', ['message' => ErrorRef::userMessage($e)]))->flash();
         }
 
         return redirect()->back();

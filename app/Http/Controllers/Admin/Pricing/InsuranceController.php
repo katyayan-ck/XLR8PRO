@@ -7,6 +7,7 @@ use App\Models\Vehicle\Pricing\InsAddonRate;
 use App\Models\Vehicle\Pricing\InsBaseRule;
 use App\Models\Vehicle\Pricing\InsDefault;
 use App\Services\Vehicle\Pricing\InsuranceService;
+use App\Support\ErrorRef;
 use Illuminate\Http\Request;
 
 class InsuranceController extends Controller
@@ -97,7 +98,7 @@ class InsuranceController extends Controller
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => ErrorRef::userMessage($e),
             ], 422);
         }
     }

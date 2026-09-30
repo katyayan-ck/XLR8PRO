@@ -13,6 +13,7 @@ use App\Services\Vehicle\SegmentService;
 use App\Services\Vehicle\SubSegmentService;
 use App\Services\Vehicle\VariantService;
 use App\Services\Vehicle\VehicleModelService;
+use App\Support\ErrorRef;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Revolution\Google\Sheets\Facades\Sheets;
@@ -269,7 +270,7 @@ class AdminImportController extends Controller
             }
         } catch (\Exception $e) {
             \Log::error('Vehicle Import (Google Sheet) failed', ['error' => $e->getMessage()]);
-            \Alert::error(__('utils.flash.import_failed', ['message' => $e->getMessage()]))->flash();
+            \Alert::error(__('utils.flash.import_failed', ['message' => ErrorRef::userMessage($e)]))->flash();
         }
 
         return redirect()->back();

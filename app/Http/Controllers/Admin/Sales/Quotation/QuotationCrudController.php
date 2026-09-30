@@ -10,6 +10,7 @@ use App\Models\Module\Booking\XlFinancier;
 use App\Models\Vehicle\Accessory;
 use App\Services\OrgService;
 use App\Services\Sales\Quotation\QuotationPricingService;
+use App\Support\ErrorRef;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -685,7 +686,7 @@ class QuotationCrudController extends CrudController
             );
 
             \Alert::error(
-                __('sales.flash.error_saving_quotation', ['message' => $e->getMessage()])
+                __('sales.flash.error_saving_quotation', ['message' => ErrorRef::userMessage($e)])
             )->flash();
 
             return back()->withInput();
@@ -1641,7 +1642,7 @@ class QuotationCrudController extends CrudController
             DB::rollBack();
             \Log::error('Quotation Update Error: '.$e->getMessage());
             \Log::error($e->getTraceAsString());
-            \Alert::error(__('sales.flash.error_updating_quotation', ['message' => $e->getMessage()]))->flash();
+            \Alert::error(__('sales.flash.error_updating_quotation', ['message' => ErrorRef::userMessage($e)]))->flash();
 
             return back()->withInput();
         }

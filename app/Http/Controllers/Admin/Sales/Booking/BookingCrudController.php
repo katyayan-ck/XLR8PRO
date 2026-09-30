@@ -51,6 +51,7 @@ use App\Services\Sales\Booking\BookingRefundService;
 use App\Services\Sales\Booking\BookingRtoService;
 use App\Services\SystemSettingService;
 use App\Services\Vehicle\VehicleService;
+use App\Support\ErrorRef;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -6807,7 +6808,7 @@ class BookingCrudController extends CrudController
                 'booking_id' => $id,
             ]);
 
-            return redirect()->back()->with('error', __('booking.flash.something_went_wrong', ['message' => $e->getMessage()]));
+            return redirect()->back()->with('error', __('booking.flash.something_went_wrong', ['message' => ErrorRef::userMessage($e)]));
         }
     }
 
@@ -7512,7 +7513,7 @@ class BookingCrudController extends CrudController
 
             return redirect()
                 ->back()
-                ->with('error', __('booking.flash.failed_save_rto_data', ['message' => $e->getMessage()]))
+                ->with('error', __('booking.flash.failed_save_rto_data', ['message' => ErrorRef::userMessage($e)]))
                 ->withInput();
         }
     }
@@ -7597,7 +7598,7 @@ class BookingCrudController extends CrudController
             ]);
 
             return redirect()->back()
-                ->with('error', __('booking.flash.photo_upload_failed', ['message' => $e->getMessage()]))
+                ->with('error', __('booking.flash.photo_upload_failed', ['message' => ErrorRef::userMessage($e)]))
                 ->withInput();
         } catch (Exception $e) {
             \Log::critical('PendDeliveryUpdate failed', [

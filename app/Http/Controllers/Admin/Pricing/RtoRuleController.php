@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Vehicle\Pricing\RtoRule;
 use App\Services\Vehicle\Pricing\RtoService;
 use App\Services\Vehicle\Pricing\Rules\RtoRuleService;
+use App\Support\ErrorRef;
 use Illuminate\Http\Request;
 
 class RtoRuleController extends Controller
@@ -115,7 +116,7 @@ class RtoRuleController extends Controller
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => ErrorRef::userMessage($e),
             ], 422);
         }
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Iam\Modules;
 use App\Http\Requests\ModulesRequest;
 use App\Models\IAM\Module;
 use App\Services\IAM\RbacService;
+use App\Support\ErrorRef;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -137,7 +138,7 @@ class ModulesCrudController extends CrudController
         try {
             $rbacService->updateModule($module, $validated);
         } catch (Exception $e) {
-            \Alert::error($e->getMessage())->flash();
+            \Alert::error(ErrorRef::userMessage($e))->flash();
 
             return redirect()->back()->withInput();
         }

@@ -9,6 +9,7 @@ return [
 
     // Flash messages shown on admin screens (to-do W6): wording lives here, controllers call __('utils.flash.key').
     'flash' => [
+        'technical_error' => 'A technical error stopped this action (reference :ref). Please try again, or quote the reference to IT support.',
         'settings_section_saved' => 'Settings saved (:count changed). They apply everywhere straight away.',
         'settings_nothing_changed' => 'Nothing changed.',
         'drafts_imported' => ':count draft(s) imported.',

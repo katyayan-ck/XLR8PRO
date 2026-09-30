@@ -391,7 +391,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W3 | Q1 Sales / booking feature tests (enquiry, quotation, booking flows) | ✅ 30-09 (15 HTTP tests; BUG-219 logged, BUG-220 fixed) |
 | W4 | Q5 PHPStan baseline for the legacy controllers | ✅ 30-09 (`phpstan-baseline.neon`, 2 511 legacy errors; full run clean; BUG-221) |
 | W5 | Q7 UI clean-up outside Sales (hex / inline styles → shared layer, same method as the Sales pass) | ✅ 30-09 (131 views; style blocks ~100 → 22 files; no hex in style blocks; PDFs excluded) |
-| W6 | U7 web side: admin flash messages through the error codes / language file (same wording) | ✅ 30-09 (225 calls → `{module}.flash.*`) |
+| W6 | U7 web side: admin flash messages through the error codes / language file (same wording) | ✅ 30-09 (225 calls → `{module}.flash.*`); 01-10 exception texts → `ErrorRef::userMessage()` |
 | W7 | U4 N+1 review of the big lists (enquiries, bookings, quotations) | ✅ 30-09 (bookings 567 → 95 queries / 42 s → ~3 s SQL; quotations 147 → 42; enquiries 142 → 37) |
 | W13 | **One categorised Settings interface** (your request 30-09) — the only place settings are shown; changes apply at once on web and app / API. Today they are spread over Utilities → Settings (56 keys), the legacy System Setting screen, and the pricing TCS / Hold screens. Parts W13a–W13f; plan to be saved in `tech-guides/frs-and-workflows/plans/` | ✅ 30-09 — DEC-091 Phases 1–6 + W13g (one categorised Settings screen, applied everywhere, `GET app-settings`) |
 | W13a | **Site / dealership:** name (default "Bikaner Motors"), website URL (default https://www.BikanerMotors.com), logo, address, favicon, e-mail, phone, GSTIN …; applied across the interface (header, login, PDFs, mails) | ✅ 30-09 (Phase 2; mail from-name comes with Phase 3) |
@@ -1107,3 +1107,12 @@ with a clear message.
 colours or one colour); Excel export / import including your OEM sheets; compare on the web and the app.
 **Verified:** Vehicle suite 26 passed; full PHPStan clean. **Left:** load your samples on UAT and fix the names the
 import report lists; grant `VEH_CONT_VIEW` / `VEH_CONT_EDIT` / `VEH_CMPR_VIEW` to the designations that need them.
+
+### 4. No raw exception text on admin screens — W6 remainder
+
+**Delivered:** 17 admin error messages that showed the raw exception text (for a database error: the SQL and its values,
+which could include customer mobile numbers) now go through `ErrorRef::userMessage()`. Messages written on purpose by
+our code still appear as before; technical failures show "A technical error stopped this action (reference XXXXXXXX)"
+and the same reference is in the log, so IT support can find the details.
+**Verified:** new `ErrorRefUserMessageTest` (4) + flash-language and error-page tests, 10 passed; PHPStan clean on the
+12 controllers. **Left:** nothing for W6.

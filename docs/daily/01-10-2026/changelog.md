@@ -56,3 +56,13 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 - **Fix:** `DerivesItemCode` typed on `BaseModel` (pint had imported `Model`, which has no `withTrashed()`).
 - **Tests:** `tests/Feature/Vehicle/VehicleCompareTest.php` (4); Vehicle suite 26 passed; API + lang tests 20 passed; full
   PHPStan clean. Smoke: superadmin 200 on the compare page, user 40 → 403.
+
+## W6 remainder — no raw exception text on admin screens
+- **New:** `App\Support\ErrorRef::userMessage(Throwable $e)` — business messages pass through, a validation exception gives
+  its first message, SQL / PDO / PHP errors are logged with the request's `error_ref` and shown as
+  `utils.flash.technical_error` ("A technical error stopped this action (reference …)").
+- **Changed (17 places, 12 controllers):** error flashes / AJAX messages that appended `$e->getMessage()` — accounts
+  journal voucher + receipt, IAM modules + processes, admin import, bookings (restore, RTO save, photo upload), quotation
+  save / update, brand import, user delete, users workbook import, pricing insurance / RTO rule checks.
+  Before: a SQL error showed the query and its values (possibly customer data); after: the reference text.
+- **Guides:** `tech-guides/platform/ui-kit.md`, `.ai/rules/app.md`. **Test:** `tests/Feature/Utils/ErrorRefUserMessageTest.php` (4).

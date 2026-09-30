@@ -32,6 +32,7 @@ use App\Services\IAM\UserScopeService;
 use App\Services\IAM\UserService;
 use App\Services\Org\EmployeeService;
 use App\Services\RBACService;
+use App\Support\ErrorRef;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
 use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
@@ -919,7 +920,7 @@ class UserCrudController extends CrudController
                 'deleted_by' => backpack_user()->id,
             ]);
 
-            return back()->withError('Failed to delete user: '.$e->getMessage());
+            return back()->withError('Failed to delete user: '.ErrorRef::userMessage($e));
         }
     }
 }
