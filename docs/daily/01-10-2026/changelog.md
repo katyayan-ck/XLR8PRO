@@ -106,3 +106,18 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
   `queue:prune-batches`.
 - **Tests:** pricing service unit tests + reset screen + accessory model, 41 passed; Pricing + Vehicle feature suites 98.
 - **Baseline:** 441 uses in 64 files left.
+
+## W15 — platform services off the DB facade (settings overrides, comms, chat, tickets, templates)
+- **New models:** `Utilities\Settings\SettingScope`, `Comms\{CommConsent,CommSuppression,CommSandbox,CommOtp}`,
+  `Utilities\CommHistory\CommSubscription`, `Utilities\Ticket\TicketCounter` (plain `Model`: these tables have no soft
+  deletes; `CommOtp` hides `code_hash`).
+- **Converted:** `SettingsService` (scoped overrides), `ContactService` (consent / suppression via `updateOrCreate`),
+  sandbox SMS / telephony drivers, `OutboxService::stats()` (`selectRaw`), `SmsService` OTP issue / verify,
+  `Notify\Audience` watcher lookup, `TemplateService::recordUse()` (`increment()`), `TicketService` numbering (still
+  `insertOrIgnore` + `lockForUpdate`), `ChatService` subscriptions (`firstOrCreate`).
+- **Small differences (improvements):** an updated override / consent / suppression row keeps its `created_at` (the raw
+  upserts reset it); a scoped override records `created_by`.
+- **Tests:** new `tests/Feature/Platform/PlatformEloquentStoresTest.php` (5: OTP, consent / suppression, subscriptions,
+  branch override, outbox stats); Platform feature + service unit tests 203 passed.
+- **Guides:** `tech-guides/architecture/model-reference.md`.
+- **Baseline:** 414 uses in 54 files left.

@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Services\Platform\Comms;
 
 use App\Models\Admin\Person;
+use App\Models\Comms\CommConsent;
+use App\Models\Comms\CommSuppression;
 use App\Models\User;
 use App\Services\IdentifierService;
 use App\Services\PersonService;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Identity resolution, consent, suppression and masking for the comms wrappers (FRS Part B laws
@@ -79,32 +80,32 @@ final class ContactService
             return false;
         }
 
-        return (bool) DB::table('xlr8_comm_consent')->where('person_code', $personCode)->where('channel', strtoupper($channel))->value('granted');
+        return (bool) CommConsent::query()->where('person_code', $personCode)->where('channel', strtoupper($channel))->value('granted');
     }
 
     public function hasOptedOut(?string $personCode, string $channel): bool
     {
-        return $personCode !== null && DB::table('xlr8_comm_consent')->where('person_code', $personCode)->where('channel', strtoupper($channel))->where('granted', false)->exists();
+        return $personCode !== null && CommConsent::query()->where('person_code', $personCode)->where('channel', strtoupper($channel))->where('granted', false)->exists();
     }
 
     public function setConsent(string $personCode, string $channel, bool $granted, string $source, ?int $actorId = null): void
     {
-        DB::table('xlr8_comm_consent')->updateOrInsert(
+        CommConsent::query()->updateOrCreate(
             ['person_code' => $personCode, 'channel' => strtoupper($channel)],
-            ['granted' => $granted, 'source' => $source, 'changed_by' => $actorId, 'updated_at' => now(), 'created_at' => now()],
+            ['granted' => $granted, 'source' => $source, 'changed_by' => $actorId],
         );
     }
 
     public function suppressed(string $channel, string $address): bool
     {
-        return DB::table('xlr8_comm_suppression')->where('channel', strtoupper($channel))->where('address', strtolower($address))->exists();
+        return CommSuppression::query()->where('channel', strtoupper($channel))->where('address', strtolower($address))->exists();
     }
 
     public function suppress(string $channel, string $address, string $reason, ?string $note = null): void
     {
-        DB::table('xlr8_comm_suppression')->updateOrInsert(
+        CommSuppression::query()->updateOrCreate(
             ['channel' => strtoupper($channel), 'address' => strtolower($address)],
-            ['reason' => $reason, 'note' => $note, 'updated_at' => now(), 'created_at' => now()],
+            ['reason' => $reason, 'note' => $note],
         );
     }
 

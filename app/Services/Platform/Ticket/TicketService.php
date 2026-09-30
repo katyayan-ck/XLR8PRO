@@ -7,6 +7,7 @@ namespace App\Services\Platform\Ticket;
 use App\Events\Platform\TicketChanged;
 use App\Models\User;
 use App\Models\Utilities\Ticket\Ticket;
+use App\Models\Utilities\Ticket\TicketCounter;
 use App\Models\Utilities\Ticket\TicketPerson;
 use App\Services\KeywordValueService;
 use App\Services\Platform\Chat\ChatService;
@@ -489,10 +490,10 @@ final class TicketService
 
     private function nextSeq(string $branch, string $fy): int
     {
-        DB::table('xlr8_utils_ticket_counter')->insertOrIgnore(['branch_code' => $branch, 'fy' => $fy, 'last_seq' => 0, 'created_at' => now(), 'updated_at' => now()]);
-        $row = DB::table('xlr8_utils_ticket_counter')->where('branch_code', $branch)->where('fy', $fy)->lockForUpdate()->first();
-        $next = (int) $row->last_seq + 1;
-        DB::table('xlr8_utils_ticket_counter')->where('id', $row->id)->update(['last_seq' => $next, 'updated_at' => now()]);
+        TicketCounter::query()->insertOrIgnore(['branch_code' => $branch, 'fy' => $fy, 'last_seq' => 0, 'created_at' => now(), 'updated_at' => now()]);
+        $row = TicketCounter::query()->where('branch_code', $branch)->where('fy', $fy)->lockForUpdate()->firstOrFail();
+        $next = $row->last_seq + 1;
+        $row->update(['last_seq' => $next]);
 
         return $next;
     }

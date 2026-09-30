@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Platform\Comms\Drivers;
 
 use App\Models\Comms\CommOutbox;
-use Illuminate\Support\Facades\DB;
+use App\Models\Comms\CommSandbox;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -33,9 +33,9 @@ final class SandboxDriver implements ChannelDriver
         if (isset($record['attachments'])) {
             $record['attachments'] = array_map(fn ($a) => array_diff_key((array) $a, ['content' => 1]), (array) $record['attachments']);
         }
-        DB::table('xlr8_comm_sandbox')->insert([
+        CommSandbox::query()->create([
             'outbox_id' => $outbox->id, 'channel' => $this->channel, 'driver' => $this->name(),
-            'to_address' => $outbox->to_address, 'payload' => json_encode($record), 'created_at' => now(),
+            'to_address' => $outbox->to_address, 'payload' => $record,
         ]);
         Log::channel(config('logging.default'))->info("[Comms sandbox] {$this->channel} #{$outbox->id} → {$outbox->to_address}");
 

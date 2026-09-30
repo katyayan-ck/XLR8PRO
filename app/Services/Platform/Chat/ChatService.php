@@ -7,6 +7,7 @@ namespace App\Services\Platform\Chat;
 use App\Events\Platform\ChatEntryAdded;
 use App\Models\User;
 use App\Models\Utilities\CommHistory\CommMaster;
+use App\Models\Utilities\CommHistory\CommSubscription;
 use App\Models\Utilities\CommHistory\CommThread;
 use App\Services\KeywordValueService;
 use App\Services\Platform\Docs\DocsService;
@@ -177,17 +178,14 @@ final class ChatService
     /** Follow the conversation: new remarks notify the subscriber (FRS CHAT-10). */
     public function subscribe(Model $model, int $userId): Result
     {
-        DB::table('xlr8_utils_comm_subscription')->updateOrInsert(
-            ['comm_master_id' => $this->master($model)->id, 'user_id' => $userId],
-            ['created_at' => now(), 'updated_at' => now()],
-        );
+        CommSubscription::query()->firstOrCreate(['comm_master_id' => $this->master($model)->id, 'user_id' => $userId]);
 
         return Result::ok();
     }
 
     public function unsubscribe(Model $model, int $userId): Result
     {
-        DB::table('xlr8_utils_comm_subscription')->where('comm_master_id', $this->master($model)->id)->where('user_id', $userId)->delete();
+        CommSubscription::query()->where('comm_master_id', $this->master($model)->id)->where('user_id', $userId)->delete();
 
         return Result::ok();
     }
@@ -196,7 +194,7 @@ final class ChatService
     {
         $master = CommMaster::query()->where('entityable_type', $model::class)->where('entityable_id', $model->getKey())->first();
 
-        return $master !== null && DB::table('xlr8_utils_comm_subscription')->where('comm_master_id', $master->id)->where('user_id', $userId)->exists();
+        return $master !== null && CommSubscription::query()->where('comm_master_id', $master->id)->where('user_id', $userId)->exists();
     }
 
     /** The record behind an entity type code and id, or null when the type or record is unknown. */

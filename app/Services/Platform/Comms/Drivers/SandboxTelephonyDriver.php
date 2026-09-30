@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Platform\Comms\Drivers;
 
 use App\Models\Comms\CommCall;
-use Illuminate\Support\Facades\DB;
+use App\Models\Comms\CommSandbox;
 use Illuminate\Support\Str;
 
 /**
@@ -23,10 +23,9 @@ final class SandboxTelephonyDriver implements TelephonyDriver
     public function dial(CommCall $call, string $agentNumber, string $customerNumber, array $options): array
     {
         $vendorId = 'sbx-call-'.Str::lower(Str::random(12));
-        DB::table('xlr8_comm_sandbox')->insert([
+        CommSandbox::query()->create([
             'outbox_id' => null, 'channel' => 'TELEPHONY', 'driver' => 'sandbox', 'to_address' => $this->mask($customerNumber),
-            'payload' => json_encode(['call_id' => $call->id, 'vendor_call_id' => $vendorId, 'agent' => $this->mask($agentNumber), 'options' => $options]),
-            'created_at' => now(),
+            'payload' => ['call_id' => $call->id, 'vendor_call_id' => $vendorId, 'agent' => $this->mask($agentNumber), 'options' => $options],
         ]);
 
         return ['ok' => true, 'vendor_call_id' => $vendorId];

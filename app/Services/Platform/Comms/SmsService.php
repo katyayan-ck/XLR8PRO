@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services\Platform\Comms;
 
+use App\Models\Comms\CommOtp;
 use App\Models\Comms\CommOutbox;
 use App\Models\User;
 use App\Services\Platform\Chat\ChatService;
 use App\Services\Platform\Settings\SettingsService;
 use App\Services\Platform\Templates\TemplateService;
 use App\Support\Result;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -64,7 +64,7 @@ final class SmsService
         $purpose = strtoupper($purpose);
         $ttl ??= (int) $this->settings->get('sms.otp_ttl_seconds', 300);
         $max = (int) $this->settings->get('sms.otp_max_per_15min', 3);
-        $recent = DB::table('xlr8_comm_otp')->where('person_code', $personCode)->where('purpose', $purpose)->where('created_at', '>=', now()->subMinutes(15))->count();
+        $recent = CommOtp::query()->where('person_code', $personCode)->where('purpose', $purpose)->where('created_at', '>=', now()->subMinutes(15))->count();
         if ($recent >= $max) {
             return Result::fail('RATE_LIMITED', "At most {$max} codes every 15 minutes.");
         }
@@ -89,9 +89,9 @@ final class SmsService
         $outbox = CommOutbox::query()->find($queued->get('outbox_id'));
         $sent = $this->outbox->deliver($outbox, ['to' => $resolved['address'], 'text' => $render->get('text'), 'header' => $render->get('dlt')['header'] ?? null, 'dlt' => $render->get('dlt'), 'otp' => true]);
 
-        DB::table('xlr8_comm_otp')->insert([
+        CommOtp::query()->create([
             'person_code' => $personCode, 'purpose' => $purpose, 'destination_masked' => $masked, 'code_hash' => Hash::make($code),
-            'expires_at' => now()->addSeconds($ttl), 'outbox_id' => $outbox->id, 'created_at' => now(), 'updated_at' => now(),
+            'expires_at' => now()->addSeconds($ttl), 'outbox_id' => $outbox->id,
         ]);
 
         return $sent->ok ? Result::ok(['outbox_id' => $outbox->id, 'destination' => $masked, 'expires_in' => $ttl]) : $sent;
@@ -100,7 +100,7 @@ final class SmsService
     /** Check the latest live OTP (5 wrong tries burn it). */
     public function verify(string $personCode, string $purpose, string $code): Result
     {
-        $otp = DB::table('xlr8_comm_otp')->where('person_code', $personCode)->where('purpose', strtoupper($purpose))
+        $otp = CommOtp::query()->where('person_code', $personCode)->where('purpose', strtoupper($purpose))
             ->whereNull('used_at')->where('expires_at', '>', now())->latest('id')->first();
         if (! $otp) {
             return Result::fail('OTP_EXPIRED', 'No valid code; request a new one.');
@@ -109,11 +109,11 @@ final class SmsService
             return Result::fail('OTP_LOCKED', 'Too many wrong attempts; request a new code.');
         }
         if (! Hash::check(trim($code), $otp->code_hash)) {
-            DB::table('xlr8_comm_otp')->where('id', $otp->id)->increment('attempts');
+            $otp->increment('attempts');
 
             return Result::fail('OTP_INVALID', 'The code is not correct.');
         }
-        DB::table('xlr8_comm_otp')->where('id', $otp->id)->update(['used_at' => now(), 'updated_at' => now()]);
+        $otp->update(['used_at' => now()]);
 
         return Result::ok();
     }

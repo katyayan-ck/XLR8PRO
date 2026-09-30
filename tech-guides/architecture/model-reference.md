@@ -37,6 +37,10 @@ that is the only write path (DEC-050); blank = written by its owning service / c
 | `CRM\QuoteAction` | `xlr8_crm_quote_actions` |  | [crm-enquiry-quotation](../modules/crm-enquiry-quotation.md) |
 | `CRM\TestDrive` | `xlr8_crm_testdrive` |  | [crm-enquiry-quotation](../modules/crm-enquiry-quotation.md) |
 | `Comms\CommCall` | `xlr8_comm_call` |  | [13-telephony](../platform/13-telephony.md) |
+| `Comms\CommConsent` | `xlr8_comm_consent` | written by `ContactService::setConsent()` | [11-sms](../platform/11-sms.md) |
+| `Comms\CommOtp` | `xlr8_comm_otp` | written by `SmsService::otp()` / `verify()` (hash only) | [11-sms](../platform/11-sms.md) |
+| `Comms\CommSandbox` | `xlr8_comm_sandbox` | written by the sandbox drivers (append-only) | [10-email](../platform/10-email.md) |
+| `Comms\CommSuppression` | `xlr8_comm_suppression` | written by `ContactService::suppress()` | [10-email](../platform/10-email.md) |
 | `Comms\CommOutbox` | `xlr8_comm_outbox` |  | [10-email](../platform/10-email.md) |
 | `Comms\CommTemplate` | `xlr8_comm_template` |  | [09-templates](../platform/09-templates.md) |
 | `Comms\CommTemplateVersion` | `xlr8_comm_template_version` |  | [09-templates](../platform/09-templates.md) |
@@ -83,6 +87,7 @@ that is the only write path (DEC-050); blank = written by its owning service / c
 | `Module\Spare\XlSpareRequestDetail` | `xlr8_spare_req_details` |  | [spares](../modules/spares.md) |
 | `Module\Spare\XlSpareStock` | `xlr8_spare_stock` |  | [spares](../modules/spares.md) |
 | `Utilities\CommHistory\CommMaster` | `xlr8_utils_comm_master` |  | [03-chat](../platform/03-chat.md) |
+| `Utilities\CommHistory\CommSubscription` | `xlr8_utils_comm_subscription` | written by `ChatService::subscribe()` / `unsubscribe()` | [03-chat](../platform/03-chat.md) |
 | `Utilities\CommHistory\CommThread` | `xlr8_utils_comm_thread` |  | [03-chat](../platform/03-chat.md) |
 | `Utilities\Docs\DocAccess` | `xlr8_utils_docs_access` |  | [04-docs](../platform/04-docs.md) |
 | `Utilities\Docs\DocGroup` | `xlr8_utils_docs_group` |  | [04-docs](../platform/04-docs.md) |
@@ -95,12 +100,14 @@ that is the only write path (DEC-050); blank = written by its owning service / c
 | `Utilities\Noty\NotificationDispatch` | `xlr8_utils_noty_dispatch` |  | [02-notify](../platform/02-notify.md) |
 | `Utilities\Noty\NotificationsMaster` | `xlr8_utils_noty_master` |  | [02-notify](../platform/02-notify.md) |
 | `Utilities\Settings\SystemSetting` | `xlr8_utils_system_setting` |  | [utils-legacy](legacy-utils.md) |
+| `Utilities\Settings\SettingScope` | `xlr8_utils_setting_scope` | written by `SettingsService::set(…, $scopeType, $scopeCode)` / `clearScope()` | [01-settings](../platform/01-settings.md) |
 | `Utilities\Settings\SystemSettingAudit` | `xlr8_utils_system_setting_audit` |  | [utils-legacy](legacy-utils.md) |
 | `Utilities\Synonym` | `xlr8_utils_synonyms` |  | [utils-legacy](legacy-utils.md) |
 | `Utilities\Task\Task` | `xlr8_utils_task` |  | [05-tasks](../platform/05-tasks.md) |
 | `Utilities\Task\TaskPerson` | `xlr8_utils_task_person` |  | [05-tasks](../platform/05-tasks.md) |
 | `Utilities\Ticket\Ticket` | `xlr8_utils_ticket` |  | [06-tickets](../platform/06-tickets.md) |
 | `Utilities\Ticket\TicketPerson` | `xlr8_utils_ticket_person` |  | [06-tickets](../platform/06-tickets.md) |
+| `Utilities\Ticket\TicketCounter` | `xlr8_utils_ticket_counter` | advanced by `TicketService` under `lockForUpdate()` | [06-tickets](../platform/06-tickets.md) |
 | `Vehicle\Accessory` | `xlr8_vehicle_accessories` |  | [vehicle](../modules/vehicle.md) |
 | `Vehicle\AccessoryScope` | `xlr8_vehicle_accessory_scopes` |  | [vehicle](../modules/vehicle.md) |
 | `Vehicle\Brand` | `xlr8_vehicle_brand` |  | [vehicle](../modules/vehicle.md) |

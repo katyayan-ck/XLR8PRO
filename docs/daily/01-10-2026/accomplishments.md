@@ -70,3 +70,11 @@ the Eloquent models only. The reset's queue flush, which had silently done nothi
 **Verified:** 41 unit / feature tests + the 98 Pricing / Vehicle feature tests passed; PHPStan clean. The reset itself is not
 run in tests (TRUNCATE would empty the test database).
 **Baseline now:** 441 `DB::` uses in 64 files.
+
+### W15 — platform services off the DB facade (settings overrides, comms, chat, tickets, templates)
+
+**Delivered:** the platform utilities — settings overrides, SMS OTP, consent and suppression lists, sandbox drivers,
+timeline subscriptions, ticket numbering and template usage counts — use Eloquent models only (7 new models).
+**Verified:** a new test covers the stores that had none (OTP issue / wrong code / correct code / reuse; consent and
+suppression; subscribe / unsubscribe; branch override and clear; outbox counts); Platform tests 203 passed; PHPStan clean.
+**Baseline now:** 414 `DB::` uses in 54 files.

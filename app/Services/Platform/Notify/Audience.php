@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Platform\Notify;
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use App\Models\Utilities\CommHistory\CommMaster;
+use App\Models\Utilities\CommHistory\CommSubscription;
 
 /**
  * Who receives a notification (FRS §2.2 audience builders). Combines users, designations,
@@ -129,8 +130,8 @@ final class Audience
         foreach ($this->watchers as [$refType, $refId]) {
             $class = config("platform.entities.{$refType}.model");
             if ($class) {
-                $ids = array_merge($ids, DB::table('xlr8_utils_comm_subscription as s')
-                    ->join('xlr8_utils_comm_master as m', 'm.id', '=', 's.comm_master_id')
+                $ids = array_merge($ids, CommSubscription::query()->from('xlr8_utils_comm_subscription as s')
+                    ->join((new CommMaster)->getTable().' as m', 'm.id', '=', 's.comm_master_id')
                     ->where('m.entityable_type', $class)->where('m.entityable_id', $refId)
                     ->pluck('s.user_id')->all());
             }

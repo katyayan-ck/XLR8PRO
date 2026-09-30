@@ -282,7 +282,7 @@ final class TemplateService
     public function recordUse(string $code, string $channel, int $version): void
     {
         CommTemplateVersion::query()->whereHas('template', fn ($q) => $q->where('code', $code)->where('channel', strtoupper($channel)))
-            ->where('version', $version)->update(['usage_count' => DB::raw('usage_count + 1'), 'last_used_at' => now()]);
+            ->where('version', $version)->increment('usage_count', 1, ['last_used_at' => now()]);
     }
 
     /**

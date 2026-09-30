@@ -12,7 +12,6 @@ use App\Services\Platform\Comms\Drivers\DriverRegistry;
 use App\Services\Platform\Settings\SettingsService;
 use App\Support\Result;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Outbox (FRS Part B laws 2, 3, 8, 10): every send writes a row first, then a job talks to the
@@ -177,6 +176,6 @@ final class OutboxService
     public function stats(int $days = 7): array
     {
         return CommOutbox::query()->where('created_at', '>=', now()->subDays($days))->groupBy('status')
-            ->select('status', DB::raw('count(*) as n'))->pluck('n', 'status')->map(fn ($n) => (int) $n)->all();
+            ->selectRaw('status, count(*) as n')->pluck('n', 'status')->map(fn ($n) => (int) $n)->all();
     }
 }

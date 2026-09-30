@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Platform\Settings;
 
 use App\Events\Platform\SettingsChanged;
+use App\Models\Utilities\Settings\SettingScope;
 use App\Models\Utilities\Settings\SystemSetting;
 use App\Models\Utilities\Settings\SystemSettingAudit;
 use App\Support\Result;
@@ -62,8 +63,8 @@ final class SettingsService
             if ($code === null || $code === '') {
                 continue;
             }
-            $override = Cache::rememberForever("setting.scope.{$key}.{$scopeType}.{$code}", fn () => DB::table('xlr8_utils_setting_scope')
-                ->where('setting_key', $key)->where('scope_type', $scopeType)->where('scope_code', $code)->value('value') ?? '__none__');
+            $override = Cache::rememberForever("setting.scope.{$key}.{$scopeType}.{$code}", fn () => SettingScope::query()
+                ->for($key, $scopeType, $code)->value('value') ?? '__none__');
             if ($override !== '__none__') {
                 return $this->cast($override, $type, $default);
             }
@@ -109,11 +110,9 @@ final class SettingsService
                     if (! in_array($scopeType, self::SCOPES, true) || ! $scopeCode) {
                         return Result::fail('INVALID_SCOPE', 'Scope must be COMPANY, BRANCH or DESK with a code.');
                     }
-                    $old = DB::table('xlr8_utils_setting_scope')->where(['setting_key' => $key, 'scope_type' => $scopeType, 'scope_code' => $scopeCode])->value('value');
-                    DB::table('xlr8_utils_setting_scope')->updateOrInsert(
-                        ['setting_key' => $key, 'scope_type' => $scopeType, 'scope_code' => $scopeCode],
-                        ['value' => $stored, 'updated_by' => $actorId, 'updated_at' => now(), 'created_at' => now()]
-                    );
+                    $override = SettingScope::query()->firstOrNew(['setting_key' => $key, 'scope_type' => $scopeType, 'scope_code' => $scopeCode]);
+                    $old = $override->exists ? $override->value : null;
+                    $override->fill(['value' => $stored, 'updated_by' => $actorId, 'created_by' => $override->created_by ?? $actorId])->save();
                     Cache::forget("setting.scope.{$key}.{$scopeType}.{$scopeCode}");
                 }
 
@@ -176,7 +175,7 @@ final class SettingsService
     /** Remove a scoped override (the scope falls back to the next level). */
     public function clearScope(string $key, string $scopeType, string $scopeCode): Result
     {
-        DB::table('xlr8_utils_setting_scope')->where(['setting_key' => $key, 'scope_type' => strtoupper($scopeType), 'scope_code' => $scopeCode])->delete();
+        SettingScope::query()->for($key, strtoupper($scopeType), $scopeCode)->delete();
         Cache::forget("setting.scope.{$key}.".strtoupper($scopeType).".{$scopeCode}");
 
         return Result::ok();
@@ -206,7 +205,7 @@ final class SettingsService
                     'value' => $type === 'encrypted' ? ($row?->value ? '••••••' : '') : $value,
                     'editable' => $row ? (bool) $row->iseditable : true,
                     'updated_at' => $row?->updated_at,
-                    'overrides' => DB::table('xlr8_utils_setting_scope')->where('setting_key', $key)->get(['scope_type', 'scope_code', 'value'])->all(),
+                    'overrides' => SettingScope::query()->where('setting_key', $key)->toBase()->get(['scope_type', 'scope_code', 'value'])->all(),
                 ];
             })
             ->groupBy(fn (array $s) => strstr($s['key'], '.', true) ?: 'general')
@@ -233,7 +232,7 @@ final class SettingsService
     {
         $this->rows = [];
         SystemSetting::flushAllCache();
-        DB::table('xlr8_utils_setting_scope')->get(['setting_key', 'scope_type', 'scope_code'])
+        SettingScope::query()->get(['setting_key', 'scope_type', 'scope_code'])
             ->each(fn ($s) => Cache::forget("setting.scope.{$s->setting_key}.{$s->scope_type}.{$s->scope_code}"));
     }
 
