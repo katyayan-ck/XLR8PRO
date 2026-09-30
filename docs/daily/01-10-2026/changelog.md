@@ -186,3 +186,7 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
   chassis-number endpoint (wrong column, logged 28-09), and new **BUG-223** (finance view / payout-edit null finance),
   **BUG-224** (`invoiced-show` view missing), **BUG-225** (`refund-view` undefined `$receiptLogs`).
 - **Baseline:** 349 `DB::` uses in 45 files left.
+
+## Execution order to go-live (owner request 01-10)
+- New plan `tech-guides/frs-and-workflows/plans/2026-10-01-execution-order.md` (+ index row): open bugs, pending to-do
+  rows, decisions and clean-up ordered by dependency in phases 0–10; `docs/todo.md` §12 now points to it.

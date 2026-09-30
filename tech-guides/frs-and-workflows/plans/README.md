@@ -14,6 +14,7 @@ from it also appears as rows in `docs/todo.md`.
 | [One categorised Settings interface](2026-09-30-settings-interface-DEC-091.md) | DEC-091 | ✅ done 30-09 (Phases 1–6 + W13g) | phases 1–6 |
 | [Vehicle specifications, features, galleries, compare](2026-09-30-vehicle-content-compare-DEC-092.md) | DEC-092 | ✅ done 01-10 (Phases 1–5) | phases 1–5 |
 | [Help (F1), tours, support requests, user manual](2026-10-01-help-and-support-DEC-094.md) | DEC-094 | 📝 planned 01-10 (build after W15a) | W16b–f, W17a–d |
+| [Execution order to go-live (dependency-ordered)](2026-10-01-execution-order.md) | — | 📝 proposed 01-10 | phases 0–10 |
 | Go-live to-do (the programme plan) | — | 🟡 live | lives in `docs/todo.md` Part 1 |
 
 **New plan:** save it here as `YYYY-MM-DD-{topic}-DEC-NNN.md` (the plan-mode file in `~/.claude/plans/` is only a

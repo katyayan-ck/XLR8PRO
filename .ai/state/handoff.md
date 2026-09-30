@@ -64,8 +64,8 @@ W15 / DEC-094 records commit; later commits are local only until the owner appro
   plain row objects → `->toBase()`.
 - **W16 (DEC-094) — help & support mechanism** (F1 pane, tours, support requests): after W15. **User manual + help
   texts (W17) come last** (to-do §13 — after bugs are fixed and QA has vetted; owner 01-10).
-- **Owner request 01-10 (after this push):** deep study of open bugs / pending tasks / functionality / clean-up →
-  dependency-ordered execution plan + the list of owner decisions.
+- **Execution order:** `tech-guides/frs-and-workflows/plans/2026-10-01-execution-order.md` (phases 0–10, proposed 01-10;
+  decisions listed to the owner). Until the owner answers, continue with work that is not blocked (BT-003 grid helpers).
 
 ## Waiting on the owner
 - **DEC-093 defaults:** transaction control (`DB::transaction`) stays allowed and migrations are exempt — confirm.

@@ -418,31 +418,14 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 **Needs you (not started):** D1–D29, N1, N3 / F2 formats, N4 security values (S3, S4, S5, S7), S6 / O3 / O6 / Q3 package
 approvals, O1 / O2 / O5 CI and server changes, V8 app-sync endpoint shape, V10 / DA6 deletions, the push to `stage`.
 
-## 12. Suggested order
+## 12. Execution order (dependency-ordered, 01-10-2026)
 
-1. **This week (P0):**
-   - owner decisions D1–D3, D13, D23, D29, N2;
-   - S1, S3, S4, S11;
-   - V1–V4, V7;
-   - O1–O4, O9;
-   - DA1, DA2.
-2. **Next:**
-   - §2 formats: F1–F3, then your sign-off, then F4, F5, F7;
-   - S2, S5–S8, S10, S12, S15, S16;
-   - SL3, SL4;
-   - O5, O6, O8, O10;
-   - Q1.
-3. **After go-live:** P2 / P3 items and Track B.
-
-Each implementation step follows the usual loop:
-- a DEC entry before the change;
-- tests;
-- changelog;
-- guides;
-- a commit per phase;
-- a push / merge only with your approval.
-
----
+The order to work in is `tech-guides/frs-and-workflows/plans/2026-10-01-execution-order.md` (phases 0–10 with the
+reasons: dead code before conversion, booking convert + carve-out in one touch, keys before data migration, formats
+before importers, HR data before approvals, stable code before QA, QA before user docs). Summary:
+0 decisions → 1 security quick fixes → 2 dead-code removal → 3 booking to project level (BT-series) → 4 merge to
+`stage` + hand the booking log to the team → 5 data foundations → 6 pricing sign-off → 7 platform in sales + security
+features → 8 help & support (W16) → 9 go-live readiness → 10 QA sign-off, then user docs (§13).
 
 ## 13. LAST — user documentation (your instruction 01-10)
 
