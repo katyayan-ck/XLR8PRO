@@ -31,4 +31,6 @@ to a model, service, module, business rule or API — in the same commit, not la
   in the page alert.
 - **Admin flash messages** (`Alert::*`, `->with('success'|'error'|'warning'|'info', …)`) never carry typed wording: use
   `__('{module}.flash.{key}', [...])` from `resources/lang/en/{module}.php` (`utils.php` for Utilities / imports), or a
-  `Result->message` (to-do W6). `tests/Unit/Lang/FlashMessagesLangTest` checks every key and placeholder.
+  `Result->message` (to-do W6). `tests/Unit/Lang/FlashMessagesLangTest` checks every key and placeholder. A caught
+  exception's text goes through `App\Support\ErrorRef::userMessage($e)`, never `$e->getMessage()` (SQL / PHP errors
+  become a reference id).
