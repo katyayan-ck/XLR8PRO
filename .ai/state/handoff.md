@@ -48,7 +48,7 @@ W15 / DEC-094 records commit; later commits are local only until the owner appro
   `docs/daily/30-09-2026/`.
 
 ## In progress / next
-- **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (349 uses / 45 files left).
+- **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (314 uses / 45 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;
   booking code **BT-001, BT-002, BT-003** (numbered, one commit each, logged in `docs/booking-team-changes.md`: where, what, why,
   before → after, checked, revert).
