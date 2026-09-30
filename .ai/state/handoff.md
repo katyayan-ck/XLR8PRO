@@ -25,6 +25,7 @@ are local only — pushing again needs the owner's approval in that turn. Not me
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 01-10: user documentation (W17 manual + help-article content) moved to the end of the to-do list (owner).
 - 01-10: BT-001 (booking code) — Financier-statement lookups by DO number read through the `FinancerStatement` model.
 - 01-10: W15 — dashboard and booking services off the DB facade (baseline 362 / 45).
 - 01-10: DEC-094 — help & support utility planned (FRS, plan, to-do W16 / W17); build after W15a.

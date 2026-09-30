@@ -413,12 +413,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W16c | On-demand page tour (Driver.js via Basset): steps from the article / `data-xl-tour`, skip missing elements, "new" dot | 🔴 |
 | W16d | Diagnostics collector: actions / AJAX / JS errors ring buffer (no typed values), server request trail, html2canvas screenshot with sensitive-field blanking + preview | 🔴 |
 | W16e | Support request: permissions `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`, categories + settings, `SupportRequestService` (masked zip → ticket, least-loaded admin as owner, executive-only assignment), screens, bundle rights, retention purge | 🔴 |
-| W16f | Guides: developer guide `tech-guides/platform/17-help-support.md` (+ reference), user guide articles, article-writing guide | 🔴 |
-| W17 | **User manual** (your request 01-10, DEC-094) — screen-wise and module / process-wise, with screenshots; same articles as F1 | 🔴 after W16 |
-| W17a | Article template, module / process overviews, coverage report in the Help centre | 🔴 |
-| W17b | Articles for every admin screen (~210 screen routes → ~120 articles), business wording flagged for owner review | 🔴 |
-| W17c | Playwright (dev-only) screenshot script with PII masking; superadmin + scoped-user runs | 🔴 |
-| W17d | Screenshots into the articles, print stylesheet, owner review list | 🔴 |
+| W16f | Developer guide `tech-guides/platform/17-help-support.md` (+ reference) with the build; the **user-facing** help texts / "Getting help" articles move to §13 (last) | 🔴 |
 
 **Needs you (not started):** D1–D29, N1, N3 / F2 formats, N4 security values (S3, S4, S5, S7), S6 / O3 / O6 / Q3 package
 approvals, O1 / O2 / O5 CI and server changes, V8 app-sync endpoint shape, V10 / DA6 deletions, the push to `stage`.
@@ -448,6 +443,22 @@ Each implementation step follows the usual loop:
 - a push / merge only with your approval.
 
 ---
+
+## 13. LAST — user documentation (your instruction 01-10)
+
+Written only after every open bug is fixed and QA has tested and vetted all functionality, so the user manual and the
+help articles are written once and not rewritten after every fix. Until then the F1 pane (W16b) ships with the engine
+and a "help for this screen is being prepared" page plus the support button; developer guides stay current with every
+change as before.
+
+| # | Item | Status |
+|---|---|---|
+| W17 | **User manual** (your request 01-10, DEC-094) — screen-wise and module / process-wise, with screenshots; same articles as F1 | ⏸ last — after QA sign-off |
+| W17a | Article template, module / process overviews, coverage report in the Help centre | ⏸ |
+| W17b | Articles for every admin screen (~210 screen routes → ~120 articles), business wording flagged for owner review | ⏸ |
+| W17c | Playwright (dev-only) screenshot script with PII masking; superadmin + scoped-user runs | ⏸ |
+| W17d | Screenshots into the articles, print stylesheet, owner review list | ⏸ |
+| W17e | Help articles (F1 pane content) for every admin screen, incl. tours' step texts and "Getting help" / "Support requests" user guides | ⏸ last — after QA sign-off |
 
 # Part 2 — Accomplishments
 

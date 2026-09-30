@@ -1515,6 +1515,8 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   cached) instead of Laradocs (kept for developer guides); support requests are ordinary tickets (existing engine); the
   diagnostic zip is built on the server and never holds typed values, passwords, OTPs, tokens or unmasked PAN /
   Aadhaar / mobile / bank numbers; retention `support.bundle_retention_days` (default 90).
+- **Amended 01-10 (owner):** the user manual (W17) and all help-article content are written last, after every bug is
+  fixed and QA has vetted the functionality (to-do §13); the help / support mechanism is built as planned. (content after QA sign-off)
 - **Approved-by:** owner (01-10) · **Risk:** LOW–MEDIUM (additive; privacy of the bundle is the main risk, covered by
   masking rules and tests) · **Reversal:** remove the help layout include and routes; migrations' `down()` drop the new
   permissions / settings.

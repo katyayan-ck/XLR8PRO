@@ -10112,3 +10112,8 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 - `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` · `liveNotInvoiced()` (trade-advance statement per row), `getDoAmount()`, `getTAStatement()`. DEC-093 (no `DB::` queries). New model `App\Models\Module\Finance\FinancerStatement` (table `xlr8_financer_statement`).
 - Checked: OTF form (`sales/booking/otf-form`), `get-do-amount` (existing DO, unknown DO, empty), `get-ta-statement` (existing, `0`, unknown) as superadmin + user 40: 14 / 14 identical; booking tests 63 passed. Log: `docs/booking-team-changes.md`.
 - **Baseline:** 359 `DB::` uses in 45 files left.
+
+## To-do: user documentation moved last (owner 01-10)
+- `docs/todo.md`: W17a–d (user manual) and new W17e (help-article content) moved to a new §13 "LAST — user
+  documentation", written after all bugs are fixed and QA has vetted the functionality; W16f keeps only the developer
+  guide. DEC-094 amended; plan status header updated.
