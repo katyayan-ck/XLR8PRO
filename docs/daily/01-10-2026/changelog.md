@@ -21,3 +21,28 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
   test copy (rolled back): specifications 765 values / 54 new items / 11 model columns not matched; features 4 571 values
   / 274 new items / 115 columns not matched (names that differ from ours — listed by the report).
 - **Tests:** `tests/Feature/Vehicle/VehicleContentWorkbookTest.php` (4); Vehicle suite 22 passed.
+
+## Push checkpoint — `dev/admin` → `origin/dev/admin` (owner request 01-10, intermediate)
+First push since `a22ae4c` (DEC-072): **89 commits**, fast-forward (the 30-09 history rewrite only touched unpushed
+commits). Outgoing check: no workbooks, SQL, env files or blobs over 2 MB are added (the pricing reference workbooks /
+docs are deletions — moved to the git-ignored `_backup/` in DEC-086). `booking.sql`, the owner's sample workbooks and
+`storage/basset/.basset` (local cache map) stay out.
+
+**What the push carries (see the dated entries above for files, before → after and tests):**
+- **28–29-09 pricing (DEC-073…083):** process engine and steps 0–11, Calculate & Publish, getPricing API + price lookup,
+  quotation on published prices, pricing masters kit, automatic recalculation (`30eb92e` … `b310827`).
+- **29-09 platform & quality:** security (idle logout, screen lock, CSP), branded error pages, API error envelope (U7),
+  form cards / density (U1–U4), API docs + Postman (U11), BUG-198 / 210; the team's enquiry / import refactors (PRs #21–#26).
+- **29–30-09 repository (DEC-086 / 087 / 088):** tech-guides + records layout, date-wise records, /docs behind login,
+  stage merge, enquiries schema aligned with the booking team, Sales UI pass, colour-mode fix (BUG-216).
+- **30-09 users & org (DEC-089 / 090):** My Account permissions (W8), Vehicle Info dropdowns (W9), users workbook (W10),
+  bulk edit screen (W11), org rules (W12).
+- **30-09 quality:** Sales HTTP tests (W3; BUG-220 fixed, BUG-219 logged), PHPStan baseline (W4), flash wording in lang
+  files (W6), UI clean-up outside Sales (W5), N+1 review — booking list 567 → 95 queries (W7).
+- **30-09 settings (DEC-091, W13):** one categorised Settings screen (site, communication, pricing, user behaviour,
+  security, modules), applied everywhere, `GET api/v1/app-settings`; BUG-207 partly fixed (secrets never returned).
+- **30-09 / 01-10 vehicle content (DEC-092, W14):** data layer, content screens, specifications / features workbooks
+  (Phases 1–3); compare (Phase 4) in progress.
+
+**State at the push:** full suite 536 passed / 1 skipped (one pricing test errors only in the full run in the agent
+sandbox — storage/basset not writable — and passes alone); full PHPStan clean.
