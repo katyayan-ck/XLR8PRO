@@ -294,3 +294,7 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
   per-row lookups). PHPStan baseline 2 511 → 2 508 (errors fixed). Full suite: 536 passed, 1 skipped; PricingRecalcTest errors only in the full run in this sandbox (storage/basset not writable) and passes alone; tests/TestCase now clears the static memos per test.
 - **Not changed (environment, owner):** `CACHE_STORE=database` makes every cache read a query (~20–30 per page remain);
   Redis or file cache on UAT would remove them.
+
+## W14 planned — vehicle content & compare (DEC-092)
+- **Decision:** DEC-092 (features per trim; gallery bound to trim or colour; imports add unknown items; compare screen +
+  API). **Plan:** `tech-guides/frs-and-workflows/plans/2026-09-30-vehicle-content-compare-DEC-092.md` (+ index).

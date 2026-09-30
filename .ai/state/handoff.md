@@ -59,7 +59,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-- **W5 ✅** (UI clean-up outside Sales). **W7 ✅** (lists: bookings 567 → 95 queries). **Next: W14** — vehicle specifications / features / galleries / compare: write the plan first (samples at the project root, git-ignored) and ask the owner the open design points.
+- **W5 ✅** (UI clean-up outside Sales). **W7 ✅** (lists: bookings 567 → 95 queries). **Now: W14 Phase 1** (DEC-092, plan `tech-guides/frs-and-workflows/plans/2026-09-30-vehicle-content-compare-DEC-092.md`) — migrations for `xlr8_vehicle_{spec_item,model_spec,feature_item,trim,trim_feature}`, models + entity services, media collections (model images / brochure, trim gallery, colour gallery), permissions VEH_CMPR_VIEW / VEH_CONT_EDIT; tests.
 0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). W3 ✅ (15 Sales HTTP tests; BUG-219 open, BUG-220 fixed). W4 ✅ (baseline, full analyse clean; BUG-221). W6 ✅ (225 flash calls → lang `flash` groups; FlashMessagesLangTest). Next step: W5 (UI clean-up outside Sales: hex / inline styles → shared layer, same method as the Sales pass), then W7 (N+1 review). Then W4 (PHPStan baseline), W5, W6, W7.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.

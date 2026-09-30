@@ -1469,3 +1469,16 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   3. Secrets (SMTP password …) are stored encrypted (masked, blank = keep) and read at send time.
 - **Approved-by:** owner (30-09) · **Risk:** MEDIUM (every screen reads branding / flags; mail transport) ·
   **Reversal:** revert the phases; keys keep their defaults in `config/platform.php`.
+
+### DEC-092 | 30-09-2026 | A (Vehicle) | Vehicle specifications, features, galleries and compare (to-do W14)
+- **Why:** owner request 30-09 (model images / brochure / category-wise specifications; variant features and gallery;
+  Excel import / export; intra- and inter-model compare in the same segment). Plan:
+  `tech-guides/frs-and-workflows/plans/2026-09-30-vehicle-content-compare-DEC-092.md`.
+- **Decision (owner answers 30-09):**
+  1. Features belong to the variant code (trim), shared by all its colours.
+  2. Gallery at both levels; each image is bound by the user to the trim or to one colour.
+  3. Specification / feature items are master lists; an import adds unknown items and reports them.
+  4. Compare in an admin screen and an app API.
+  New permissions `VEH_CMPR_VIEW`, `VEH_CONT_EDIT` are minted with the feature and granted to superadmin only.
+- **Approved-by:** owner (30-09) · **Risk:** LOW–MEDIUM (new tables only; nothing existing changes) ·
+  **Reversal:** migrations' `down()` drop only the new tables.
