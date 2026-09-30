@@ -136,7 +136,8 @@
                 backpack_user()->can('VEH_MDL_VIEW') ||
                 backpack_user()->can('VEH_VAR_VIEW') ||
                 backpack_user()->can('VEH_CLR_VIEW') ||
-                backpack_user()->can('VEH_CONT_VIEW')))
+                backpack_user()->can('VEH_CONT_VIEW') ||
+                backpack_user()->can('VEH_CMPR_VIEW')))
 <x-backpack::menu-dropdown title="Vehicles Info" icon="la la-car" nested="true">
         <!--
         @if (backpack_user() && backpack_user()->can('VEH_BRND_VIEW'))
@@ -172,6 +173,11 @@
         @if (backpack_user() && backpack_user()->can('VEH_CONT_VIEW'))
             <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('vehicle.content.index') }}">
                 <span><i class="la la-images me-2"></i>Vehicle Content</span>
+            </a>
+        @endif
+        @if (backpack_user() && backpack_user()->can('VEH_CMPR_VIEW'))
+            <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('vehicle.compare') }}">
+                <span><i class="la la-columns me-2"></i>Compare Vehicles</span>
             </a>
         @endif
         <!--

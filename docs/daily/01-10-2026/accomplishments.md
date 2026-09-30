@@ -23,3 +23,16 @@ what is stored.
 **Verified:** 4 feature tests; your two sample files loaded on the test copy (rolled back): 765 specification values and
 4 571 feature values matched; the unmatched columns are names that differ from ours (e.g. "ALFA LOAD", "MAXX CITY 1.3 VXI
 BS6.2 - GOLD"). **Next:** Phase 4 — compare.
+
+### 3. Compare vehicles — W14 Phase 4 (DEC-092); W14 complete
+
+**Delivered:** Vehicles → Compare Vehicles: pick a model and 2–6 of its trims to see their features side by side, or a
+segment and 2–6 of its models to see their specifications side by side; differing rows are highlighted, "only
+differences" hides the rest, and the page prints cleanly. The mobile app gets the same comparison through
+`GET api/v1/vehicles/compare/variants` and `/models` (documented, with a Postman collection). Mixing segments is refused
+with a clear message.
+
+**W14 as a whole:** model images, brochure and category-wise specifications; trim features and galleries (bound to all
+colours or one colour); Excel export / import including your OEM sheets; compare on the web and the app.
+**Verified:** Vehicle suite 26 passed; full PHPStan clean. **Left:** load your samples on UAT and fix the names the
+import report lists; grant `VEH_CONT_VIEW` / `VEH_CONT_EDIT` / `VEH_CMPR_VIEW` to the designations that need them.

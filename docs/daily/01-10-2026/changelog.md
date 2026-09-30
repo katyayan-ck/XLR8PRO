@@ -46,3 +46,13 @@ docs are deletions — moved to the git-ignored `_backup/` in DEC-086). `booking
 
 **State at the push:** full suite 536 passed / 1 skipped (one pricing test errors only in the full run in the agent
 sandbox — storage/basset not writable — and passes alone); full PHPStan clean.
+
+## W14 Phase 4–5 — compare (DEC-092); W14 complete
+- **New:** `app/Services/Vehicle/Content/CompareService.php`, `app/Http/Controllers/Admin/Vehicle/Content/VehicleCompareController.php`
+  (route `vehicle.compare`, view `admin/vehicle/content/compare.blade.php`, menu "Compare Vehicles"),
+  `app/Http/Controllers/Api/V1/Vehicle/CompareController.php` (routes `api.vehicles.compare.{variants,models}`),
+  error codes `VEHICLE_COMPARE_SEGMENT` / `VEHICLE_COMPARE_SELECTION` (422) in `ErrorCodeEnum` + `lang/en/errors.php`,
+  compare table styles in `public/css/xl-ui.css`, API docs `tech-guides/api/vehicles-compare.md` + Postman + index row.
+- **Fix:** `DerivesItemCode` typed on `BaseModel` (pint had imported `Model`, which has no `withTrashed()`).
+- **Tests:** `tests/Feature/Vehicle/VehicleCompareTest.php` (4); Vehicle suite 26 passed; API + lang tests 20 passed; full
+  PHPStan clean. Smoke: superadmin 200 on the compare page, user 40 → 403.

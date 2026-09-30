@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Vehicle\Content;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\BaseModel;
 use Illuminate\Support\Str;
 
 /**
@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
  */
 trait DerivesItemCode
 {
-    /** @param  class-string<Model>  $model */
+    /** @param  class-string<BaseModel>  $model */
     protected function deriveCode(string $model, string $group, string $name): string
     {
         $base = Str::limit(strtoupper(Str::slug($group.' '.$name, '_')), 56, '');

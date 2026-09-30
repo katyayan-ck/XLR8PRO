@@ -25,6 +25,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 01-10: W14 Phase 4–5 — compare screen + API (`CompareService`), docs; W14 complete.
 - 01-10: pushed `dev/admin` to `origin/dev/admin` (89 commits, fast-forward; owner request). Not merged to `stage`.
 - 01-10: W14 Phase 3 — specifications / features workbooks (ours by code, OEM sample by name with a match report).
 - 01-10: W14 Phase 2 — Vehicle Content screens (model specs / images / brochure; trim features / gallery by level).
@@ -66,7 +67,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-- **W5 ✅** (UI clean-up outside Sales). **W7 ✅** (lists: bookings 567 → 95 queries). **Now: W14 Phase 4** (DEC-092) — compare: `CompareService::variants(modelCode, variantCodes[])` (feature matrix, differences flagged) and `models(modelCodes[])` (specification matrix, same segment enforced — new error code in ErrorCodeEnum + errors.php), admin screen (VEH_CMPR_VIEW), API `GET api/v1/vehicles/compare/{variants,models}` + docs / Postman; tests. Phases 1–3 ✅.
+- **W5 ✅** (UI clean-up outside Sales). **W7 ✅** (lists: bookings 567 → 95 queries). **W14 ✅ done** (DEC-092: content data, screens, workbooks, compare screen + API). Next: the to-do list has no unblocked item left — waiting on the owner (see *Waiting on the owner*); smaller follow-ups: BUG-221 dead-class paths, the W6 remainder (exception texts in error flashes).
 0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). W3 ✅ (15 Sales HTTP tests; BUG-219 open, BUG-220 fixed). W4 ✅ (baseline, full analyse clean; BUG-221). W6 ✅ (225 flash calls → lang `flash` groups; FlashMessagesLangTest). Next step: W5 (UI clean-up outside Sales: hex / inline styles → shared layer, same method as the Sales pass), then W7 (N+1 review). Then W4 (PHPStan baseline), W5, W6, W7.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.
@@ -74,6 +75,7 @@
    booking forms.
 
 ## Waiting on the owner
+- W14: grant `VEH_CONT_VIEW` / `VEH_CONT_EDIT` / `VEH_CMPR_VIEW` to the designations that need them (only superadmin has them now).
 - W14: load your sample workbooks on UAT through Vehicle Content → Workbooks (import), then fix the unmatched names the report lists (local test copy: 11 model / 115 trim columns).
 - Environment: `CACHE_STORE=database` turns every cache read into a query (~20–30 per page after W7); Redis or file cache on UAT recommended.
 - BUG-207 remainder: narrow or retire `GET system-settings` / `topic` / `category` / `{key}` now that `app-settings` exists; move PUT / import onto SettingsService.

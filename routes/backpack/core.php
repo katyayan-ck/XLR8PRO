@@ -32,6 +32,7 @@ use App\Http\Controllers\Admin\Utils\KeyValue\KeyValueCrudController;
 use App\Http\Controllers\Admin\Utils\KeywordMaster\KeywordMasterCrudController;
 use App\Http\Controllers\Admin\Utils\SystemSetting\SystemSettingCrudController;
 use App\Http\Controllers\Admin\Vehicle\Color\ColorCrudController;
+use App\Http\Controllers\Admin\Vehicle\Content\VehicleCompareController;
 use App\Http\Controllers\Admin\Vehicle\Content\VehicleContentController;
 use App\Http\Controllers\Admin\Vehicle\Model\VehicleModelCrudController;
 use App\Http\Controllers\Admin\Vehicle\Segment\SegmentCrudController;
@@ -63,6 +64,7 @@ Route::group([
 
     // ==================== VEHICLE CONTENT (DEC-092): specifications, features, images, brochure, galleries ====================
     Route::get('vehicle/content', [VehicleContentController::class, 'index'])->name('vehicle.content.index');
+    Route::get('vehicle/compare', [VehicleCompareController::class, 'index'])->name('vehicle.compare');
     Route::get('vehicle/content/export/{kind}', [VehicleContentController::class, 'export'])->whereIn('kind', ['specs', 'features'])->name('vehicle.content.export');
     Route::post('vehicle/content/import', [VehicleContentController::class, 'import'])->name('vehicle.content.import');
     Route::get('vehicle/content/model/{code}', [VehicleContentController::class, 'model'])->name('vehicle.content.model');

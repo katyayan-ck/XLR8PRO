@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\DocController;
 use App\Http\Controllers\Api\V1\EntityHistoryController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\SystemSettingApiController;
+use App\Http\Controllers\Api\V1\Vehicle\CompareController;
 use App\Http\Controllers\Api\V1\Vehicle\Pricing\PricingController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +41,10 @@ Route::prefix('v1')->group(function () {
         });
 
         // getPricing — published snapshot as the fixed-key contract v2 (DEC-073 step 11, DEC-080)
+        // DEC-092: compare trims of one model (features) / models of one segment (specifications); VEH_CMPR_VIEW
+        Route::get('vehicles/compare/variants', [CompareController::class, 'variants'])->name('api.vehicles.compare.variants');
+        Route::get('vehicles/compare/models', [CompareController::class, 'models'])->name('api.vehicles.compare.models');
+
         Route::get('vehicle/pricing/{oemCode}', [PricingController::class, 'show'])
             ->name('api.vehicle.pricing.show');
 

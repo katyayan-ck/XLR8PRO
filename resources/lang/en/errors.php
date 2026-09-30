@@ -63,6 +63,10 @@ return [
     'PRICING_NOT_FOUND' => 'No published price for this vehicle with these options.',
     'PRICING_ON_HOLD' => 'This price list is on hold.',
 
+    // ── Vehicle compare (VEH, DEC-092) ─────────────────────────────────────────────────────────────
+    'VEHICLE_COMPARE_SEGMENT' => 'Only models of the same segment can be compared.',
+    'VEHICLE_COMPARE_SELECTION' => 'Choose between 2 and 6 vehicles to compare.',
+
     // ── Settings (UTL) ─────────────────────────────────────────────────────────────────────────────
     'SETTINGS_NOT_FOUND' => 'Setting not found.',
     'SETTINGS_UPDATE_FAILED' => 'Failed to update setting.',

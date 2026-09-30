@@ -306,3 +306,10 @@ label .required-mark { display: inline !important; }
 .ov-removed .rbac-label-perm { color: var(--rbac-removed); text-decoration: line-through; }
 .ov-removed .rbac-state-badge { display: inline-block; background: rgba(var(--tblr-danger-rgb), .15); color: var(--rbac-removed); }
 .ov-inherited .rbac-state-badge { display: inline-block; background: rgba(var(--tblr-primary-rgb), .15); color: var(--rbac-inherited); }
+
+/* ── Vehicle compare (DEC-092): sticky first column, highlighted differing rows, print-friendly ─────────────── */
+.xl-compare .xl-compare-sticky { position: sticky; left: 0; z-index: 1; background: var(--tblr-bg-surface); min-width: 12rem; }
+.xl-compare tr.table-active .xl-compare-sticky { background: var(--tblr-bg-surface-secondary); }
+.xl-compare tr.xl-compare-differs > td { background: rgba(var(--tblr-warning-rgb), .08); }
+.xl-compare tr.xl-compare-differs > td.xl-compare-sticky { background: color-mix(in srgb, var(--tblr-bg-surface) 92%, var(--tblr-warning)); }
+@media print { .xl-compare { overflow: visible !important; } .xl-compare .xl-compare-sticky { position: static; } }

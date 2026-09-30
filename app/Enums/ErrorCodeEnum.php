@@ -86,6 +86,10 @@ enum ErrorCodeEnum: string
     case PRICING_NOT_FOUND = 'PRICING_NOT_FOUND';
     case PRICING_ON_HOLD = 'PRICING_ON_HOLD';
 
+    // Vehicle compare (VEH, DEC-092)
+    case VEHICLE_COMPARE_SEGMENT = 'VEHICLE_COMPARE_SEGMENT';
+    case VEHICLE_COMPARE_SELECTION = 'VEHICLE_COMPARE_SELECTION';
+
     case SYSTEM_ERROR = 'SYSTEM_ERROR';
     case SYSTEM_MAINTENANCE = 'SYSTEM_MAINTENANCE';
     case SYSTEM_CONFIGURATION_ERROR = 'SYSTEM_CONFIGURATION_ERROR';
@@ -170,6 +174,8 @@ enum ErrorCodeEnum: string
             self::DATABASE_CONNECTION_FAILED => 503,
 
             self::PRICING_NOT_FOUND => 404,
+            self::VEHICLE_COMPARE_SEGMENT,
+            self::VEHICLE_COMPARE_SELECTION => 422,
             self::PRICING_ON_HOLD,
             self::RESOURCE_LOCKED => 423,
 

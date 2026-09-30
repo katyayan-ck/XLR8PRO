@@ -1,0 +1,228 @@
+{
+ "info": {
+  "name": "Xceler8 API v1 — Vehicle compare",
+  "_postman_id": "xlrm-vehicles-compare-v1",
+  "description": "Compare trims by features / models by specifications (DEC-092). Docs: tech-guides/api/vehicles-compare.md.",
+  "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+ },
+ "variable": [
+  {
+   "key": "base_url",
+   "value": "https://dev.xceler8.in"
+  },
+  {
+   "key": "token",
+   "value": ""
+  }
+ ],
+ "item": [
+  {
+   "name": "Compare trims of one model",
+   "request": {
+    "method": "GET",
+    "header": [
+     {
+      "key": "Accept",
+      "value": "application/json"
+     },
+     {
+      "key": "Authorization",
+      "value": "Bearer {{token}}"
+     }
+    ],
+    "url": {
+     "raw": "{{base_url}}/api/v1/vehicles/compare/variants?model=BOLERO-NEO&variants[]=AU36NPXZ7TX33C00&variants[]=AU36MPXZ7TX33C00&only_differences=0",
+     "host": [
+      "{{base_url}}"
+     ],
+     "path": [
+      "api",
+      "v1",
+      "vehicles",
+      "compare",
+      "variants"
+     ],
+     "query": [
+      {
+       "key": "model",
+       "value": "BOLERO-NEO"
+      },
+      {
+       "key": "variants[]",
+       "value": "AU36NPXZ7TX33C00"
+      },
+      {
+       "key": "variants[]",
+       "value": "AU36MPXZ7TX33C00"
+      },
+      {
+       "key": "only_differences",
+       "value": "0"
+      }
+     ]
+    },
+    "description": "Features of 2–6 trims of one model."
+   },
+   "response": [
+    {
+     "name": "200 — comparison",
+     "originalRequest": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "Accept",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/v1/vehicles/compare/variants?model=BOLERO-NEO&variants[]=AU36NPXZ7TX33C00&variants[]=AU36MPXZ7TX33C00&only_differences=0",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "v1",
+        "vehicles",
+        "compare",
+        "variants"
+       ],
+       "query": [
+        {
+         "key": "model",
+         "value": "BOLERO-NEO"
+        },
+        {
+         "key": "variants[]",
+         "value": "AU36NPXZ7TX33C00"
+        },
+        {
+         "key": "variants[]",
+         "value": "AU36MPXZ7TX33C00"
+        },
+        {
+         "key": "only_differences",
+         "value": "0"
+        }
+       ]
+      },
+      "description": "Features of 2–6 trims of one model."
+     },
+     "status": "OK",
+     "code": 200,
+     "_postman_previewlanguage": "json",
+     "header": [
+      {
+       "key": "Content-Type",
+       "value": "application/json"
+      }
+     ],
+     "body": "{\n  \"http_status\": 200,\n  \"success\": true,\n  \"code\": \"S200\",\n  \"message\": \"Comparison ready\",\n  \"data\": {\n    \"kind\": \"variants\",\n    \"model\": {\n      \"code\": \"BOLERO-NEO\",\n      \"name\": \"BOLERO NEO\",\n      \"segment\": \"PV\"\n    },\n    \"columns\": [\n      {\n        \"code\": \"AU36NPXZ7TX33C00\",\n        \"name\": \"BOLERO NEO N10 BS6.2 - R - REFRESH\"\n      },\n      {\n        \"code\": \"AU36MPXZ7TX33C00\",\n        \"name\": \"BOLERO NEO N10 OPT BS6.2 - REFRESH\"\n      }\n    ],\n    \"groups\": {\n      \"Comfort & Convenience\": [\n        {\n          \"label\": \"Arm Rest in 2nd Row\",\n          \"values\": {\n            \"AU36NPXZ7TX33C00\": \"Yes\",\n            \"AU36MPXZ7TX33C00\": \"No\"\n          },\n          \"differs\": true\n        }\n      ]\n    }\n  }\n}"
+    }
+   ]
+  },
+  {
+   "name": "Compare models of one segment",
+   "request": {
+    "method": "GET",
+    "header": [
+     {
+      "key": "Accept",
+      "value": "application/json"
+     },
+     {
+      "key": "Authorization",
+      "value": "Bearer {{token}}"
+     }
+    ],
+    "url": {
+     "raw": "{{base_url}}/api/v1/vehicles/compare/models?models[]=BOLERO&models[]=BOLERO-NEO&only_differences=1",
+     "host": [
+      "{{base_url}}"
+     ],
+     "path": [
+      "api",
+      "v1",
+      "vehicles",
+      "compare",
+      "models"
+     ],
+     "query": [
+      {
+       "key": "models[]",
+       "value": "BOLERO"
+      },
+      {
+       "key": "models[]",
+       "value": "BOLERO-NEO"
+      },
+      {
+       "key": "only_differences",
+       "value": "1"
+      }
+     ]
+    },
+    "description": "Specifications of 2–6 models of one segment."
+   },
+   "response": [
+    {
+     "name": "422 — different segments",
+     "originalRequest": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "Accept",
+        "value": "application/json"
+       },
+       {
+        "key": "Authorization",
+        "value": "Bearer {{token}}"
+       }
+      ],
+      "url": {
+       "raw": "{{base_url}}/api/v1/vehicles/compare/models?models[]=BOLERO&models[]=BOLERO-NEO&only_differences=1",
+       "host": [
+        "{{base_url}}"
+       ],
+       "path": [
+        "api",
+        "v1",
+        "vehicles",
+        "compare",
+        "models"
+       ],
+       "query": [
+        {
+         "key": "models[]",
+         "value": "BOLERO"
+        },
+        {
+         "key": "models[]",
+         "value": "BOLERO-NEO"
+        },
+        {
+         "key": "only_differences",
+         "value": "1"
+        }
+       ]
+      },
+      "description": "Specifications of 2–6 models of one segment."
+     },
+     "status": "Unprocessable Entity",
+     "code": 422,
+     "_postman_previewlanguage": "json",
+     "header": [
+      {
+       "key": "Content-Type",
+       "value": "application/json"
+      }
+     ],
+     "body": "{\n  \"http_status\": 422,\n  \"success\": false,\n  \"code\": \"VEHICLE_COMPARE_SEGMENT\",\n  \"message\": \"Only models of the same segment can be compared.\",\n  \"data\": {\n    \"segments\": [\n      \"PV\",\n      \"CV\"\n    ]\n  }\n}"
+    }
+   ]
+  }
+ ]
+}

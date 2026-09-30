@@ -174,3 +174,10 @@ transaction; assert `missingFields()` for completeness rules.
   detected and matched by normalised name (a trim by the unique name that starts with the sample's); unknown items are
   added, blanks keep, `-` / `-NA-` / `_` = N/A (features: No). Routes `vehicle.content.export` (`specs|features`,
   VEH_CONT_VIEW), `vehicle.content.import` (VEH_CONT_EDIT; one transaction; report shown on the index page).
+- **Compare (Phase 4):** `CompareService` — `variants(string $modelCode, array $variantCodes, bool $onlyDifferences = false): Result`
+  (trims of one model by features) and `models(array $modelCodes, bool $onlyDifferences = false): Result` (models of one
+  segment by specifications); data `{kind, model|segment, columns: [{code, name}], groups: {group: [{label, values, differs}]}}`;
+  2–6 vehicles (`VEHICLE_COMPARE_SELECTION`), one segment (`VEHICLE_COMPARE_SEGMENT`, 422, `data.segments`). Rows without any
+  value are left out. Screen: Vehicles → Compare Vehicles (`vehicle.compare`, `VehicleCompareController`, sticky first
+  column, differing rows highlighted, print). API: `GET api/v1/vehicles/compare/{variants,models}`
+  ([tech-guides/api/vehicles-compare.md](../api/vehicles-compare.md)). Permission `VEH_CMPR_VIEW` on both.
