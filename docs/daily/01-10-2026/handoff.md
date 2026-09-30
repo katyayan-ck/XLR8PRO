@@ -28,6 +28,7 @@ are local only — pushing again needs the owner's approval in that turn. Not me
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 01-10: W15 — users / RBAC workbook export off the DB facade (baseline 377 / 49).
 - 01-10: W15 — Org / data-scope services off the DB facade (baseline 399 / 50).
 - 01-10: W15 — platform services off the DB facade (settings overrides, comms, chat, tickets, templates) (baseline 414 / 54).
 - 01-10: W15 — pricing rule testers, accessory import and pricing reset off the DB facade (baseline 441 / 64).
@@ -44,8 +45,8 @@ are local only — pushing again needs the owner's approval in that turn. Not me
   `docs/daily/30-09-2026/`.
 
 ## In progress / next
-- **W15 (DEC-093) — convert `DB::` queries to Eloquent** (399 uses / 50 files left). Done: rule + guard; pricing, vehicle content, platform services, Org / data scope.
-  Next step: W15a continued — `app/Services/IAM/UserRbacExportService.php` (22), `Dashboard/DashboardService` (9), `Sales/Booking/Booking{Exchange,Kyc,Otf}Service`, then `app/Jobs/ImportEnquiriesJob.php` (26), console (`DataScopeBackfill`, `RefreshAiContext`, `RefreshTestingDatabase`), imports, models (`CRM/Enquiry`, `Booking` — dead helpers await the owner).
+- **W15 (DEC-093) — convert `DB::` queries to Eloquent** (377 uses / 49 files left). Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export.
+  Next step: W15a continued — `Dashboard/DashboardService` (9), `Sales/Booking/Booking{Exchange,Kyc,Otf}Service`, then `app/Jobs/ImportEnquiriesJob.php` (26), console (`DataScopeBackfill`, `RefreshAiContext`, `RefreshTestingDatabase`), imports, models.
   Method: model per table (new models for tables without one), behaviour identical, run the file's tests, then lower
   the baseline: `UPDATE_DB_FACADE_BASELINE=1 php artisan test --compact tests/Unit/Architecture/NoDbFacadeQueriesTest.php`.
 - Before W15: Every to-do row W1–W14 is ✅; the remaining 🟡 rows (S4/S5/S7/S9/S12/S14, SL6, O8, DA4, Q*, U2,

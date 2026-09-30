@@ -86,3 +86,10 @@ customer lookup by enquiry / booking / VOTF) read through the models; the scope 
 Deleted masters no longer resolve.
 **Verified:** IAM, Org, Sales and service tests (210) passed; PHPStan clean.
 **Baseline now:** 399 `DB::` uses in 50 files.
+
+### W15 — users / RBAC workbook export off the DB facade
+
+**Delivered:** the users / RBAC workbook export reads through models only (3 new read models for the Spatie pivots);
+the workbook content is unchanged.
+**Verified:** Org tests (33, incl. the RBAC workbook) passed; PHPStan clean.
+**Baseline now:** 377 `DB::` uses in 49 files.

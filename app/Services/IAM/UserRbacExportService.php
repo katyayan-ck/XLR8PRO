@@ -4,10 +4,32 @@ declare(strict_types=1);
 
 namespace App\Services\IAM;
 
+use App\Models\Admin\Branch;
+use App\Models\Admin\Department;
+use App\Models\Admin\Designation;
+use App\Models\Admin\Division;
+use App\Models\Admin\Employee;
+use App\Models\Admin\Location;
+use App\Models\Admin\Person;
+use App\Models\Admin\PersonAddress;
+use App\Models\Admin\PersonBankingDetail;
+use App\Models\Admin\PersonContact;
+use App\Models\Admin\UserScope;
+use App\Models\Admin\Vertical;
+use App\Models\IAM\ModelHasPermission;
+use App\Models\IAM\ModelHasRole;
+use App\Models\IAM\Module;
+use App\Models\IAM\Permission;
+use App\Models\IAM\Process;
+use App\Models\IAM\RoleHasPermission;
+use App\Models\IAM\UserPermissionDenial;
 use App\Models\User;
+use App\Models\Vehicle\Segment;
+use App\Models\Vehicle\SubSegment;
+use App\Models\Vehicle\Variant;
+use App\Models\Vehicle\VehicleModel;
 use App\Services\OrgScopeService;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Data for the user & RBAC workbook (DEC-040): permissions by module/process, designations
@@ -88,16 +110,18 @@ final class UserRbacExportService
     /** @return list<array<int, string|int>> */
     public function permissionRows(): array
     {
-        $roleCounts = DB::table('xlr8_iam_role_has_permissions')
-            ->select('permission_id', DB::raw('COUNT(*) as n'))
+        $roleCounts = RoleHasPermission::query()
+            ->selectRaw('permission_id, COUNT(*) as n')
             ->groupBy('permission_id')
             ->pluck('n', 'permission_id');
 
-        return DB::table('xlr8_iam_permissions as p')
-            ->leftJoin('xlr8_iam_process as pr', 'pr.code', '=', 'p.process_code')
-            ->leftJoin('xlr8_iam_module as m', 'm.code', '=', DB::raw('COALESCE(p.module_code, pr.module_code)'))
+        // aliased joins: the models' scopes are off and every deleted_at filter is written out
+        return Permission::query()->withoutGlobalScopes()->from((new Permission)->getTable().' as p')
+            ->leftJoin((new Process)->getTable().' as pr', 'pr.code', '=', 'p.process_code')
+            ->leftJoin((new Module)->getTable().' as m', fn ($j) => $j->whereRaw('m.code = COALESCE(p.module_code, pr.module_code)'))
             ->whereNull('p.deleted_at')
             ->orderByRaw('m.name IS NULL, m.name, pr.name, p.name')
+            ->toBase()
             ->get(['p.id', 'p.name', 'p.guard_name', 'm.code as module_code', 'm.name as module_name', 'pr.code as process_code', 'pr.name as process_name'])
             ->map(fn ($p) => [
                 $p->module_code ?? '(unassigned)',
@@ -115,15 +139,14 @@ final class UserRbacExportService
     public function roleRows(): array
     {
         $permissions = $this->rolePermissionNames();
-        $users = DB::table('xlr8_iam_model_has_roles')
-            ->select('role_id', DB::raw('COUNT(*) as n'))
+        $users = ModelHasRole::query()
+            ->selectRaw('role_id, COUNT(*) as n')
             ->groupBy('role_id')
             ->pluck('n', 'role_id');
 
-        return DB::table('xlr8_admin_designation')
-            ->whereNull('deleted_at')
+        return Designation::query()
             ->orderBy('hierarchy_level')->orderBy('name')
-            ->get()
+            ->toBase()->get()
             ->map(fn ($d) => [
                 $d->code,
                 $d->name,
@@ -145,11 +168,12 @@ final class UserRbacExportService
      */
     public function userRows(): array
     {
-        $users = DB::table('users as u')
-            ->leftJoin('xlr8_admin_employee as e', 'e.code', '=', 'u.employee_code')
-            ->leftJoin('xlr8_admin_person as p', 'p.person_code', '=', DB::raw('COALESCE(e.person_code, u.person_code)'))
+        $users = User::query()->withoutGlobalScopes()->from((new User)->getTable().' as u')
+            ->leftJoin((new Employee)->getTable().' as e', 'e.code', '=', 'u.employee_code')
+            ->leftJoin((new Person)->getTable().' as p', fn ($j) => $j->whereRaw('p.person_code = COALESCE(e.person_code, u.person_code)'))
             ->whereNull('u.deleted_at')
             ->orderByRaw('u.employee_code IS NULL, u.employee_code')
+            ->toBase()
             ->get([
                 'u.id', 'u.username', 'u.user_type', 'u.is_active', 'u.last_login_at', 'u.employee_code',
                 'p.person_code', 'p.display_name', 'p.first_name', 'p.last_name', 'p.gender', 'p.dob', 'p.pan_no', 'p.aadhaar_no',
@@ -159,18 +183,16 @@ final class UserRbacExportService
             ]);
 
         $personCodes = $users->pluck('person_code')->filter()->unique()->values();
-        $contacts = DB::table('xlr8_admin_person_contacts')->whereIn('person_code', $personCodes)->whereNull('deleted_at')
-            ->get()->groupBy('person_code');
-        $addresses = DB::table('xlr8_admin_person_addresses')->whereIn('person_code', $personCodes)->whereNull('deleted_at')
-            ->where('address_type', 'Primary')->get()->keyBy('person_code');
-        $banks = DB::table('xlr8_admin_person_banking_details')->whereIn('person_code', $personCodes)->whereNull('deleted_at')
-            ->where('account_type', 'Primary')->get()->keyBy('person_code');
+        $contacts = PersonContact::query()->whereIn('person_code', $personCodes)
+            ->toBase()->get()->groupBy('person_code');
+        $addresses = PersonAddress::query()->whereIn('person_code', $personCodes)
+            ->where('address_type', 'Primary')->toBase()->get()->keyBy('person_code');
+        $banks = PersonBankingDetail::query()->whereIn('person_code', $personCodes)
+            ->where('account_type', 'Primary')->toBase()->get()->keyBy('person_code');
 
         $roles = $this->userRoles();
         $effective = $this->effectivePermissions($roles);
-        $denied = DB::table('xlr8_iam_user_permission_denials as d')
-            ->join('xlr8_iam_permissions as p', 'p.id', '=', 'd.permission_id')
-            ->get(['d.user_id', 'p.name'])->groupBy('user_id')
+        $denied = $this->deniedNames()
             ->map(fn (Collection $rows) => $rows->pluck('name')->sort()->implode(', '));
         $scopes = $this->activeScopes();
         $employeeNames = $this->employeeLabels();
@@ -246,7 +268,7 @@ final class UserRbacExportService
      */
     public function scopeRows(): array
     {
-        $empCodes = DB::table('users')->whereNull('deleted_at')->whereNotNull('employee_code')->pluck('employee_code', 'id');
+        $empCodes = User::query()->withoutGlobalScopes()->whereNull('deleted_at')->whereNotNull('employee_code')->pluck('employee_code', 'id');
         $rows = [];
 
         foreach ($this->activeScopes() as $userId => $byType) {
@@ -332,9 +354,9 @@ final class UserRbacExportService
     private function activeScopes(): array
     {
         $scopes = [];
-        DB::table('xlr8_admin_user_scopes')->where('is_active', 1)->whereNull('deleted_at')
+        UserScope::query()->where('is_active', 1)
             ->orderBy('scope_code')
-            ->get(['user_id', 'scope_type', 'scope_code'])
+            ->toBase()->get(['user_id', 'scope_type', 'scope_code'])
             ->each(function ($s) use (&$scopes) {
                 $scopes[$s->user_id][strtolower($s->scope_type)][] = strtoupper($s->scope_code);
             });
@@ -345,9 +367,10 @@ final class UserRbacExportService
     /** @return array<int, list<array{id: int, code: string, name: string}>> user id → roles */
     private function userRoles(): array
     {
-        return DB::table('xlr8_iam_model_has_roles as mr')
-            ->join('xlr8_admin_designation as d', 'd.id', '=', 'mr.role_id')
+        return ModelHasRole::query()->from((new ModelHasRole)->getTable().' as mr')
+            ->join((new Designation)->getTable().' as d', 'd.id', '=', 'mr.role_id')
             ->where('mr.model_type', User::class)
+            ->toBase()
             ->get(['mr.model_id', 'd.id', 'd.code', 'd.name'])
             ->groupBy('model_id')
             ->map(fn (Collection $rows) => $rows->map(fn ($r) => ['id' => (int) $r->id, 'code' => $r->code, 'name' => $r->name])->all())
@@ -357,10 +380,11 @@ final class UserRbacExportService
     /** @return array<int, list<string>> role id → sorted permission names */
     private function rolePermissionNames(): array
     {
-        return DB::table('xlr8_iam_role_has_permissions as rp')
-            ->join('xlr8_iam_permissions as p', 'p.id', '=', 'rp.permission_id')
+        return RoleHasPermission::query()->from((new RoleHasPermission)->getTable().' as rp')
+            ->join((new Permission)->getTable().' as p', 'p.id', '=', 'rp.permission_id')
             ->whereNull('p.deleted_at')
             ->orderBy('p.name')
+            ->toBase()
             ->get(['rp.role_id', 'p.name'])
             ->groupBy('role_id')
             ->map(fn (Collection $rows) => $rows->pluck('name')->all())
@@ -376,13 +400,12 @@ final class UserRbacExportService
     private function effectivePermissions(array $roles): array
     {
         $byRole = $this->rolePermissionNames();
-        $direct = DB::table('xlr8_iam_model_has_permissions as mp')
-            ->join('xlr8_iam_permissions as p', 'p.id', '=', 'mp.permission_id')
+        $direct = ModelHasPermission::query()->from((new ModelHasPermission)->getTable().' as mp')
+            ->join((new Permission)->getTable().' as p', 'p.id', '=', 'mp.permission_id')
             ->where('mp.model_type', User::class)
+            ->toBase()
             ->get(['mp.model_id', 'p.name'])->groupBy('model_id');
-        $denied = DB::table('xlr8_iam_user_permission_denials as d')
-            ->join('xlr8_iam_permissions as p', 'p.id', '=', 'd.permission_id')
-            ->get(['d.user_id', 'p.name'])->groupBy('user_id');
+        $denied = $this->deniedNames();
 
         $result = [];
         $userIds = array_unique(array_merge(array_keys($roles), $direct->keys()->all()));
@@ -403,14 +426,24 @@ final class UserRbacExportService
     /** @return array<string, string> EMP CODE → "Name (EMP CODE)" for active employees */
     private function employeeLabels(): array
     {
-        return DB::table('xlr8_admin_employee as e')
-            ->leftJoin('xlr8_admin_person as p', 'p.person_code', '=', 'e.person_code')
+        return Employee::query()->withoutGlobalScopes()->from((new Employee)->getTable().' as e')
+            ->leftJoin((new Person)->getTable().' as p', 'p.person_code', '=', 'e.person_code')
             ->whereNull('e.deleted_at')
             ->where('e.employment_status', 'active')
             ->orderBy('p.display_name')
+            ->toBase()
             ->get(['e.code', 'p.display_name', 'p.first_name', 'p.last_name'])
             ->mapWithKeys(fn ($e) => [strtoupper($e->code) => trim(($e->display_name ?: trim(($e->first_name ?? '').' '.($e->last_name ?? ''))) ?: $e->code).' ('.$e->code.')'])
             ->all();
+    }
+
+    /** @return Collection<int|string, Collection<int, \stdClass>> user id → denied permission rows (name) */
+    private function deniedNames(): Collection
+    {
+        return UserPermissionDenial::query()->from((new UserPermissionDenial)->getTable().' as d')
+            ->join((new Permission)->getTable().' as p', 'p.id', '=', 'd.permission_id')
+            ->toBase()
+            ->get(['d.user_id', 'p.name'])->groupBy('user_id');
     }
 
     /** @return array<string, array<string, string>> type → CODE → label (active rows only) */
@@ -420,25 +453,25 @@ final class UserRbacExportService
             return $this->labels;
         }
 
-        $tables = [
-            'branch' => ['xlr8_admin_branch', 'name', 'name'],
-            'location' => ['xlr8_admin_location', 'name', 'name'],
-            'department' => ['xlr8_admin_department', 'name', 'name'],
-            'division' => ['xlr8_admin_division', 'name', 'name'],
-            'vertical' => ['xlr8_admin_vertical', 'name', 'name'],
-            'segment' => ['xlr8_vehicle_segment', 'name', 'name'],
-            'sub_segment' => ['xlr8_vehicle_subsegment', 'name', 'name'],
-            'model' => ['xlr8_vehicle_model', 'name', 'name'],
-            'variant' => ['xlr8_vehicle_variant', "COALESCE(NULLIF(display_name, ''), oem_name)", 'model_code'],
-            'designation' => ['xlr8_admin_designation', 'name', 'name'],
+        $masters = [
+            'branch' => [Branch::class, 'name', 'name'],
+            'location' => [Location::class, 'name', 'name'],
+            'department' => [Department::class, 'name', 'name'],
+            'division' => [Division::class, 'name', 'name'],
+            'vertical' => [Vertical::class, 'name', 'name'],
+            'segment' => [Segment::class, 'name', 'name'],
+            'sub_segment' => [SubSegment::class, 'name', 'name'],
+            'model' => [VehicleModel::class, 'name', 'name'],
+            'variant' => [Variant::class, "COALESCE(NULLIF(display_name, ''), oem_name)", 'model_code'],
+            'designation' => [Designation::class, 'name', 'name'],
         ];
 
-        foreach ($tables as $type => [$table, $nameExpr, $order]) {
-            $this->labels[$type] = DB::table($table)
-                ->whereNull('deleted_at')
+        foreach ($masters as $type => [$model, $nameExpr, $order]) {
+            $this->labels[$type] = $model::query()
                 ->where('is_active', 1)
                 ->orderBy($order)->orderBy('code')
-                ->get(['code', DB::raw("{$nameExpr} as label_name")])
+                ->selectRaw("code, {$nameExpr} as label_name")
+                ->toBase()->get()
                 ->unique(fn ($r) => strtoupper($r->code))
                 ->mapWithKeys(fn ($r) => [strtoupper($r->code) => trim((string) $r->label_name).' ('.$r->code.')'])
                 ->all();

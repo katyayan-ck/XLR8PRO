@@ -54,11 +54,14 @@ that is the only write path (DEC-050); blank = written by its owning service / c
 | `Core\ImportLog` | `import_logs` |  | [utils-legacy](legacy-utils.md) |
 | `IAM\AccountLock` | `xlr8_iam_account_lock` |  | [iam-auth](../modules/iam-auth.md) |
 | `IAM\DeviceSession` | `xlr8_iam_device_session` |  | [iam-auth](../modules/iam-auth.md) |
+| `IAM\ModelHasPermission` | `xlr8_iam_model_has_permissions` | read-only (Spatie writes) | [iam-auth](../modules/iam-auth.md) |
+| `IAM\ModelHasRole` | `xlr8_iam_model_has_roles` | read-only (Spatie writes) | [iam-auth](../modules/iam-auth.md) |
 | `IAM\Module` | `xlr8_iam_module` |  | [iam-auth](../modules/iam-auth.md) |
 | `IAM\OtpAttemptLog` | `xlr8_iam_otp_attempt_log` |  | [iam-auth](../modules/iam-auth.md) |
 | `IAM\OtpToken` | `xlr8_iam_otp_token` |  | [iam-auth](../modules/iam-auth.md) |
 | `IAM\Permission` | `permissions` |  | [iam-auth](../modules/iam-auth.md) |
 | `IAM\Process` | `xlr8_iam_process` |  | [iam-auth](../modules/iam-auth.md) |
+| `IAM\RoleHasPermission` | `xlr8_iam_role_has_permissions` | read-only (Spatie writes) | [iam-auth](../modules/iam-auth.md) |
 | `IAM\Role` | `roles` |  | [iam-auth](../modules/iam-auth.md) |
 | `IAM\UserDeviceToken` | `xlr8_iam_user_device_token` |  | [iam-auth](../modules/iam-auth.md) |
 | `IAM\UserPermissionDenial` | `xlr8_iam_user_permission_denials` |  | [iam-auth](../modules/iam-auth.md) |

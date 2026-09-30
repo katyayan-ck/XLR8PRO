@@ -134,3 +134,12 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 - **Tests:** IAM + Org + Sales feature and service unit tests 210 passed.
 - **Guides:** `tech-guides/architecture/core.md` (HasDataScope).
 - **Baseline:** 399 uses in 50 files left.
+
+## W15 — users / RBAC workbook export off the DB facade
+- **New read models:** `IAM\RoleHasPermission`, `IAM\ModelHasRole`, `IAM\ModelHasPermission` (Spatie pivots; table
+  names from `config/permission.php`; never written here).
+- **Converted:** `UserRbacExportService` — 22 raw queries → model queries (aliased joins via
+  `withoutGlobalScopes()->from('… as x')` with the explicit `deleted_at` filters, `toBase()` rows; `COALESCE` joins as raw
+  join conditions; `DB::raw` selects → `selectRaw`); the permission-denial lookup shared as `deniedNames()`.
+- **Tests:** Org feature suite (incl. `UserRbacWorkbookTest`) 33 passed; PHPStan clean.
+- **Baseline:** 377 uses in 49 files left.

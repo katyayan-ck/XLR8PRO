@@ -19,7 +19,6 @@
     "app/Models/CRM/Enquiry.php": 1,
     "app/Models/Module/Booking/Booking.php": 27,
     "app/Services/Dashboard/DashboardService.php": 9,
-    "app/Services/IAM/UserRbacExportService.php": 22,
     "app/Services/Sales/Booking/BookingExchangeService.php": 1,
     "app/Services/Sales/Booking/BookingKycService.php": 1,
     "app/Services/Sales/Booking/BookingOtfService.php": 4,
