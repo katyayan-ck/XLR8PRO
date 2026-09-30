@@ -67,11 +67,11 @@ are local only — pushing again needs the owner's approval in that turn. Not me
 - **Package approvals:** 2FA, backups, error tracking, browser tests. **API:** `E002` rename (app team); BUG-209.
 
 ## How to verify
-- `php artisan test --compact` (~4 min, 536 passed on 30-09; `PricingRecalcTest` can error only inside the full run in
-  this sandbox and passes alone). Tests run on `xlrm_testing`; migrate the copy with
+- `php artisan test --compact` (~4 min): **561 passed, 1 known skip, 0 failures on 01-10** (`PricingRecalcTest` has
+  errored inside the full run in this sandbox before and passes alone). Tests run on `xlrm_testing`; migrate the copy with
   `DB_DATABASE=xlrm_testing php artisan migrate` (never `testing:refresh-db`). Do **not** set `BASSET_CACHE_MAP=false`
   for the normal suite (10× slower); use it only for `php artisan test --group=smoke` here (storage/basset not writable).
-- Vehicle content: `php artisan test --compact tests/Feature/Vehicle` (26 passed).
+- Vehicle content: `php artisan test --compact tests/Feature/Vehicle` (27 passed).
 - Local MySQL (Laragon) must be running.
 - After editing `.ai/`: `php artisan ai:refresh-context`, `php artisan boost:update`, then copy `AGENTS.md` to
   `CLAUDE.md` (Boost only rewrites `AGENTS.md`).
