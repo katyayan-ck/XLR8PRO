@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Account;
 
 use App\Http\Controllers\Controller;
 use App\Services\IAM\MyAccountService;
+use App\Services\Person\PersonRecordService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,6 +29,9 @@ class MyAccountController extends Controller
 
         return view('admin.account.show', $profile + [
             'access' => $this->account->access($user, $profile['primaries'], $profile['addons']),
+            'editable' => $this->account->editablePersonalFields($user),
+            'genders' => PersonRecordService::GENDERS,
+            'maritalStatuses' => PersonRecordService::MARITAL_STATUSES,
             'title' => 'My Account',
             'scopeLevels' => MyAccountService::SCOPE_LEVELS,
             'imageTypes' => 'image/jpeg,image/png,image/webp',
@@ -46,6 +50,36 @@ class MyAccountController extends Controller
 
         $this->account->updateDisplayName($user, $validated['display_name']);
         \Alert::success(__('iam.flash.display_name_updated'))->flash();
+
+        return redirect()->route('backpack.account.info');
+    }
+
+    /** Personal details the Settings allow users to change themselves (DEC-091, Settings → User behaviour). */
+    public function updatePersonal(Request $request): RedirectResponse
+    {
+        $user = backpack_user();
+        abort_unless($user, 403);
+        $allowed = $this->account->editablePersonalFields($user);
+        if ($allowed === []) {
+            abort(403, 'Your personal details are managed by your administrator.');
+        }
+
+        $rules = array_intersect_key([
+            'email' => ['nullable', 'email', 'max:150'], 'mobile' => ['nullable', 'string', 'max:15'],
+            'aadhaar_no' => ['nullable', 'string', 'max:14'], 'pan_no' => ['nullable', 'string', 'max:10'],
+            'dob' => ['nullable', 'date', 'before_or_equal:today'], 'joining_date' => ['nullable', 'date'],
+            'marital_status' => ['nullable', 'string', 'max:30'], 'gender' => ['nullable', 'string', 'max:30'],
+        ], array_flip($allowed));
+        $validated = $request->validateWithBag('personal', $rules, [], array_combine(array_keys($rules), array_map(fn ($f) => __('org.fields.'.$f), array_keys($rules))));
+
+        try {
+            $changed = $this->account->updatePersonal($user, $validated);
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors(), 'personal')->withInput();
+        }
+        $changed === []
+            ? \Alert::info(__('utils.flash.settings_nothing_changed'))->flash()
+            : \Alert::success(__('iam.flash.personal_details_updated'))->flash();
 
         return redirect()->route('backpack.account.info');
     }

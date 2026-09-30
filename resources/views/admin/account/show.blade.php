@@ -184,6 +184,53 @@
                                         @endif
                                     </div>
                                 </div>
+
+                                {{-- Personal details users may change themselves (Settings → User behaviour, DEC-091) --}}
+                                @if ($person && $editable !== [])
+                                    @php
+                                        $primaryOf = fn (string $list) => collect($contacts[$list])->firstWhere('type', 'Primary')['value'] ?? '';
+                                        $pv = fn (string $field, $current) => old($field, $current);
+                                    @endphp
+                                    <h3 class="card-title mt-4">Personal details</h3>
+                                    <form method="post" action="{{ route('backpack.account.personal') }}" class="row g-3">
+                                        @csrf
+                                        <input type="hidden" name="_tab" value="profile">
+                                        @foreach ($editable as $field)
+                                            @php($error = $errors->personal->first($field))
+                                            <div class="col-12 col-md-6">
+                                                <label for="pd-{{ $field }}" class="form-label">{{ __('org.fields.'.$field) }}</label>
+                                                @switch($field)
+                                                    @case('gender')
+                                                    @case('marital_status')
+                                                        <select id="pd-{{ $field }}" name="{{ $field }}" class="form-select @if ($error) is-invalid @endif">
+                                                            <option value="">—</option>
+                                                            @foreach ($field === 'gender' ? $genders : $maritalStatuses as $option)
+                                                                <option value="{{ $option }}" @selected($pv($field, $person->{$field}) === $option)>{{ $option }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        @break
+                                                    @case('dob')
+                                                        <x-ui.date name="dob" id="pd-dob" :value="$pv('dob', $person->dob ? \Illuminate\Support\Carbon::parse($person->dob)->toDateString() : null)" />
+                                                        @break
+                                                    @case('joining_date')
+                                                        <x-ui.date name="joining_date" id="pd-joining_date" :value="$pv('joining_date', $employee?->joining_date?->toDateString())" />
+                                                        @break
+                                                    @case('aadhaar_no')
+                                                        <input type="text" id="pd-aadhaar_no" name="aadhaar_no" inputmode="numeric" maxlength="14" autocomplete="off"
+                                                               class="form-control @if ($error) is-invalid @endif"
+                                                               placeholder="{{ $person->aadhaar_no ? 'XXXX XXXX '.substr((string) $person->aadhaar_no, -4).' — type the full number to change' : '12 digits' }}">
+                                                        @break
+                                                    @default
+                                                        <input type="{{ $field === 'email' ? 'email' : 'text' }}" id="pd-{{ $field }}" name="{{ $field }}"
+                                                               value="{{ $pv($field, match ($field) { 'email' => $primaryOf('emails'), 'mobile' => $primaryOf('mobiles'), default => $person->{$field} }) }}"
+                                                               class="form-control @if ($error) is-invalid @endif">
+                                                @endswitch
+                                                @if ($error) <div class="invalid-feedback d-block">{{ $error }}</div> @endif
+                                            </div>
+                                        @endforeach
+                                        <div class="col-12"><button type="submit" class="btn btn-primary">Save personal details</button></div>
+                                    </form>
+                                @endif
                             </div>
 
                             {{-- Permissions & scope (owner request 30-09) --}}

@@ -393,11 +393,11 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W5 | Q7 UI clean-up outside Sales (hex / inline styles → shared layer, same method as the Sales pass) | 🔴 |
 | W6 | U7 web side: admin flash messages through the error codes / language file (same wording) | ✅ 30-09 (225 calls → `{module}.flash.*`) |
 | W7 | U4 N+1 review of the big lists (enquiries, bookings, quotations) | 🔴 |
-| W13 | **One categorised Settings interface** (your request 30-09) — the only place settings are shown; changes apply at once on web and app / API. Today they are spread over Utilities → Settings (56 keys), the legacy System Setting screen, and the pricing TCS / Hold screens. Parts W13a–W13f; plan to be saved in `tech-guides/frs-and-workflows/plans/` | 🟡 in progress — Phases 1–4 ✅ + W13g ✅; Phase 5 (profile-field flags, appearance switch) next; DEC-091 |
+| W13 | **One categorised Settings interface** (your request 30-09) — the only place settings are shown; changes apply at once on web and app / API. Today they are spread over Utilities → Settings (56 keys), the legacy System Setting screen, and the pricing TCS / Hold screens. Parts W13a–W13f; plan to be saved in `tech-guides/frs-and-workflows/plans/` | 🟡 in progress — Phases 1–5 ✅ + W13g ✅; Phase 6 (single place + app-settings API) next; DEC-091 |
 | W13a | **Site / dealership:** name (default "Bikaner Motors"), website URL (default https://www.BikanerMotors.com), logo, address, favicon, e-mail, phone, GSTIN …; applied across the interface (header, login, PDFs, mails) | ✅ 30-09 (Phase 2; mail from-name comes with Phase 3) |
 | W13b | **Communication:** global on / off per channel (mail, SMS, WhatsApp, push), SMTP settings used by the mail service, mail signature appended to every mail, plus the existing comms settings | ✅ 30-09 (Phase 3) |
 | W13c | **Pricing:** global / per-list price-list hold, TCS threshold and rate, and the existing pricing settings; also open to the pricing-manage permission | ✅ 30-09 (Phase 4) |
-| W13d | **User behaviour:** Appearance panel on / off; which profile fields a user may change (name, e-mail, profile photo, mobile, Aadhaar, PAN, password, DOB, DOJ, marital status, gender) — enforced on web and API | 🔴 |
+| W13d | **User behaviour:** Appearance panel on / off; which profile fields a user may change (name, e-mail, profile photo, mobile, Aadhaar, PAN, password, DOB, DOJ, marital status, gender) — enforced on web and API | ✅ 30-09 (Phase 5; the API has no profile-edit endpoint — the flags go to the app via `app-settings` in Phase 6) |
 | W13e | **Other module / utility settings** (security, data scope, documents, tickets / SLA, chat, notifications, approvals, display / date format, density …) grouped in the same interface | ✅ 30-09 (Phase 1: Security, Modules & utilities, Other tabs) |
 | W13f | **Access and single place:** only the settings-manage permission (pricing group also pricing-manage); remove the other settings screens / menu entries; API reads the same values (cache flush on save) | 🔴 |
 | W13g | **Site tab feedback** (your notes 30-09): browser title = dealership + app name; footer "Made for <dealership>" linked to its website, tagline on hover; no site name / slogan (dealership tagline instead); current logo / favicon shown with drop-zone and Remove; menu logo = logo or text | ✅ 30-09 |
@@ -1019,3 +1019,13 @@ off the menu.
 
 **Verified:** 3 new feature tests (holds on / off, TCS save + validation, old pages redirect); pricing + platform + sales
 suites 151 passed. **Left:** delete the two unused views once you agree.
+
+### 21. User behaviour settings take effect — W13 Phase 5 (DEC-091)
+
+**Delivered:** when a Settings switch is on, users can change that personal detail themselves on My Account (e-mail,
+mobile, Aadhaar, PAN, date of birth, date of joining, marital status, gender — plus the existing name / photo /
+password switches); anything switched off is ignored by the server, and the person / employee field rules still apply.
+Turning the Appearance switch off removes the Appearance button, menu entry and panel for everyone.
+
+**Verified:** 3 feature tests; platform + admin + IAM suites 158 passed. **Note:** tabs TCS threshold / rate were
+already moved to Settings → Pricing in Phase 4 (owner note 30-09).

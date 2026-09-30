@@ -12,8 +12,10 @@ use App\Services\HR\EmployeeJourneyService;
 use App\Services\HR\UserReportingService;
 use App\Services\IAM\DataScope\ScopeResolver;
 use App\Services\IAM\DataScope\ScopeSet;
+use App\Services\Org\EmployeeService;
 use App\Services\OrgService;
 use App\Services\Person\PersonRecordService;
+use App\Services\PersonService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -94,6 +96,80 @@ class MyAccountService
             : ['remove_profile_photo' => true]);
 
         return $saved->refresh();
+    }
+
+    /**
+     * Personal details a user may change themselves (Settings → User behaviour, DEC-091) — form field => setting key.
+     */
+    public const PERSONAL_FIELDS = [
+        'email' => 'account.can_change_email', 'mobile' => 'account.can_change_mobile', 'aadhaar_no' => 'account.can_change_aadhaar',
+        'pan_no' => 'account.can_change_pan', 'dob' => 'account.can_change_dob', 'joining_date' => 'account.can_change_doj',
+        'marital_status' => 'account.can_change_marital_status', 'gender' => 'account.can_change_gender',
+    ];
+
+    /** @return list<string> the personal fields switched on for self-service (date of joining only for employees) */
+    public function editablePersonalFields(User $user): array
+    {
+        $fields = [];
+        foreach (self::PERSONAL_FIELDS as $field => $setting) {
+            if ((bool) setting($setting, false) && ($field !== 'joining_date' || $user->employee !== null)) {
+                $fields[] = $field;
+            }
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Save the user's own personal details. Only the switched-on fields are written (anything else in $input is
+     * ignored); person fields go through the person entity services, the joining date through EmployeeService, so
+     * their field rules apply. A blank value keeps the stored one.
+     *
+     * @param  array<string, mixed>  $input
+     * @return list<string> the fields that changed
+     *
+     * @throws ValidationException
+     */
+    public function updatePersonal(User $user, array $input): array
+    {
+        $person = $this->requirePerson($user, 'personal');
+        $allowed = $this->editablePersonalFields($user);
+        $data = [];
+        foreach ($allowed as $field) {
+            $value = trim((string) ($input[$field] ?? ''));
+            if ($value !== '') {
+                $data[$field] = $value;
+            }
+        }
+
+        $changed = [];
+        $personData = array_intersect_key($data, array_flip(['aadhaar_no', 'pan_no', 'dob', 'marital_status', 'gender']));
+        foreach ($personData as $field => $value) {
+            if ((string) $person->getAttribute($field) === $value) {
+                unset($personData[$field]);
+            }
+        }
+        if ($personData !== []) {
+            $this->persons->update($person, $personData);
+            $changed = array_keys($personData);
+        }
+
+        $contacts = $this->contacts($person);
+        foreach (['email' => ['Email', 'emails'], 'mobile' => ['Mobile', 'mobiles']] as $field => [$dataType, $list]) {
+            $primary = collect($contacts[$list])->firstWhere('type', 'Primary')['value'] ?? null;
+            if (isset($data[$field]) && $data[$field] !== $primary) {
+                PersonService::upsertContact((string) $person->getAttribute('person_code'), ['data_type' => $dataType, 'contact_type' => 'Primary', 'contact_detail' => $data[$field]]);
+                $changed[] = $field;
+            }
+        }
+
+        $employee = $user->employee;
+        if (isset($data['joining_date']) && $employee !== null && (string) $employee->getAttribute('joining_date')?->format('Y-m-d') !== $data['joining_date']) {
+            app(EmployeeService::class)->update($employee, ['joining_date' => $data['joining_date']]);
+            $changed[] = 'joining_date';
+        }
+
+        return $changed;
     }
 
     /**

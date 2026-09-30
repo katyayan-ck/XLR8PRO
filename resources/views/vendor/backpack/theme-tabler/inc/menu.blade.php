@@ -23,7 +23,10 @@
         @includeWhen(backpack_theme_config('options.showColorModeSwitcher'), backpack_view('layouts.partials.switch_theme'))
     </li>
 
-    @include(backpack_view('inc.appearance_button'))
+    {{-- DEC-091: Settings → User behaviour can hide the Appearance panel --}}
+    @if (setting('ui.appearance_enabled', true))
+        @include(backpack_view('inc.appearance_button'))
+    @endif
 
     @include(backpack_view('inc.topbar_right_content'))
 

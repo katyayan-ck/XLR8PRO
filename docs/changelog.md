@@ -9878,3 +9878,11 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   Pricing + platform + sales suites 151 passed; full PHPStan clean.
 - **Unused now (deletion needs your OK):** `resources/views/admin/pricing/hold/index.blade.php`,
   `resources/views/admin/pricing/tcs/index.blade.php`.
+
+## W13 Phase 5 — User behaviour settings applied (DEC-091)
+- `app/Services/IAM/MyAccountService.php` (`PERSONAL_FIELDS`, `editablePersonalFields()`, `updatePersonal()`),
+  `MyAccountController::updatePersonal()` + route `backpack.account.personal`, My Account Profile tab "Personal
+  details" form (only switched-on fields; Aadhaar masked, blank keeps), `resources/lang/en/iam.php` (1 flash line);
+  Appearance button / user-menu entry / panel behind `ui.appearance_enabled` (`theme-tabler/inc/menu`,
+  `menu_user_dropdown`, `layouts/{horizontal,vertical}`). Test `UserBehaviourSettingsTest` (3); guide `iam-auth.md`.
+  Platform + admin + IAM suites 158 passed; PHPStan clean.

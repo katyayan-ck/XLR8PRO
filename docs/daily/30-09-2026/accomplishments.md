@@ -211,3 +211,13 @@ off the menu.
 
 **Verified:** 3 new feature tests (holds on / off, TCS save + validation, old pages redirect); pricing + platform + sales
 suites 151 passed. **Left:** delete the two unused views once you agree.
+
+### 21. User behaviour settings take effect — W13 Phase 5 (DEC-091)
+
+**Delivered:** when a Settings switch is on, users can change that personal detail themselves on My Account (e-mail,
+mobile, Aadhaar, PAN, date of birth, date of joining, marital status, gender — plus the existing name / photo /
+password switches); anything switched off is ignored by the server, and the person / employee field rules still apply.
+Turning the Appearance switch off removes the Appearance button, menu entry and panel for everyone.
+
+**Verified:** 3 feature tests; platform + admin + IAM suites 158 passed. **Note:** tabs TCS threshold / rate were
+already moved to Settings → Pricing in Phase 4 (owner note 30-09).

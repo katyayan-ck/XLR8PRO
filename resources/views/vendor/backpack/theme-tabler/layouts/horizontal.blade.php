@@ -40,7 +40,9 @@
         </div>
     </div>
 
-    @include(backpack_view('inc.theme_settings'))
+    @if (setting('ui.appearance_enabled', true))
+        @include(backpack_view('inc.theme_settings'))
+    @endif
 
     @yield('before_scripts')
     @stack('before_scripts')

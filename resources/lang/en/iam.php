@@ -20,6 +20,7 @@ return [
 
     // Flash messages shown on admin screens (to-do W6): wording lives here, controllers call __('iam.flash.key').
     'flash' => [
+        'personal_details_updated' => 'Your personal details were updated.',
         'profile_photo_removed' => 'Your profile photo was removed.',
         'profile_photo_updated' => 'Your profile photo was updated.',
         'display_name_updated' => 'Your display name was updated.',

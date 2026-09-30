@@ -47,9 +47,11 @@
                 <i class="la la-tasks dropdown-item-icon"></i> My tasks
             </a>
         @endif
-        <a href="#xl-theme-settings" class="dropdown-item" data-bs-toggle="offcanvas" role="button" aria-controls="xl-theme-settings">
-            <i class="la la-palette dropdown-item-icon"></i> Appearance
-        </a>
+        @if (setting('ui.appearance_enabled', true))   {{-- DEC-091 --}}
+            <a href="#xl-theme-settings" class="dropdown-item" data-bs-toggle="offcanvas" role="button" aria-controls="xl-theme-settings">
+                <i class="la la-palette dropdown-item-icon"></i> Appearance
+            </a>
+        @endif
         @if (config('platform.dev_ui_kit'))
             <a href="{{ route('dev.ui.show') }}" class="dropdown-item">
                 <i class="la la-swatchbook dropdown-item-icon"></i> UI kit <span class="badge bg-azure-lt ms-auto">dev</span>

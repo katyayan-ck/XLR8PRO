@@ -18,6 +18,7 @@ Route::group([
     Route::get('edit-account-info', [MyAccountController::class, 'show'])->name('backpack.account.info');
     Route::post('edit-account-info', [MyAccountController::class, 'updateProfile'])->name('backpack.account.info.store');
     Route::post('edit-account-info/photo', [MyAccountController::class, 'updatePhoto'])->name('backpack.account.photo');
+    Route::post('edit-account-info/personal', [MyAccountController::class, 'updatePersonal'])->name('backpack.account.personal');   // DEC-091
     Route::post('change-password', [MyAccountController::class, 'changePassword'])->name('backpack.account.password');
 
     // Screen lock + idle heartbeat (go-live to-do S1 / S2); EnforceIdleSession lets these through while locked

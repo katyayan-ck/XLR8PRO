@@ -213,6 +213,14 @@ Called by `Api\V1\AuthController`; responses are wrapped in the API envelope by 
   changed / failed rows are sent, in chunks of 200; failed rows stay marked with their messages), styles `.xl-picker*`,
   `.xl-bulk-grid` in `public/css/xl-ui.css`.
 
+## My Account — self-service personal details (DEC-091 Phase 5)
+`MyAccountService::PERSONAL_FIELDS` (field → `account.can_change_*` setting), `editablePersonalFields(User): list<string>`
+(switched-on fields; date of joining only for employees), `updatePersonal(User, array $input): list<string>` (changed
+fields; only switched-on fields are written — person fields via `PersonRecordService`, primary e-mail / mobile via
+`PersonService::upsertContact`, joining date via `EmployeeService`; blank keeps; throws `ValidationException`).
+Route `backpack.account.personal` (POST `edit-account-info/personal`, error bag `personal`); the Profile tab shows the
+form only when a field is on. `ui.appearance_enabled` hides the Appearance button, user-menu entry and panel.
+
 ## UserRbacExportService (DEC-040 workbook)
 `permissionRows()`, `roleRows()`, `userRows()` (editable importer columns + read-only info), `scopeRows()` (one row per
 user × type × code, compacted to `ALL`), `lists()` (dropdowns, scope lists start with `ALL`), `userHeaders()`,
