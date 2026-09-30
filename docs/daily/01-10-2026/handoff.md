@@ -53,13 +53,12 @@ W15 / DEC-094 records commit; later commits are local only until the owner appro
 ## In progress / next
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (349 uses / 45 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;
-  booking code **BT-001, BT-002** (numbered, one commit each, logged in `docs/booking-team-changes.md`: where, what, why,
+  booking code **BT-001, BT-002, BT-003** (numbered, one commit each, logged in `docs/booking-team-changes.md`: where, what, why,
   before → after, checked, revert).
-  **Next step: BT-003** — `BookingCrudController` grid helpers `liveOrderCounts()` / `preloadGridLookups()` /
-  `mapBookingForGrid()` + `getBaseQuery()` (they feed ~30 list tabs; spec = the list-tab lines of
-  `tests/RouteSnapshots/booking-all.txt`). Then the reports (`fetchCbrData`, consolidated, branch, `fetchPendBkData`,
-  stock, live-order, pending-actions — most already 500, BUG-122), `QuotationCrudController`, `EnquiryCrudController`,
-  `ImportEnquiriesJob`, `SalesImportController`, the other controllers, console, imports, models, tests.
+  **Next step: BT-004** — `QuotationCrudController` (22 uses), then `EnquiryCrudController` (21), `ImportEnquiriesJob`
+  (26), `SalesImportController` (11). `BookingCrudController` is done except the reports (`branchBookingReport`,
+  `consolidatedBookingReport`, `liveOrderReport`, `pendingActionsReport`, `stockReport` — they already 500, wait for
+  owner decision D23) and the uncalled `fetchCbrData()` / `fetchPendBkData()` (deletion list, decision 6).
   **Per change:** `DB_DATABASE=xlrm_testing php artisan dev:route-snapshot 1,40 <spec> before.json` on the unchanged
   code → edit → pint the file (only sorts imports) → `php -l` → phpstan (no new errors) → the same command with
   `--compare=before.json` (must report 0 differences) → Sales tests → lower the baseline

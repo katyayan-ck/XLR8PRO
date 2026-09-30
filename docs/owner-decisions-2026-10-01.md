@@ -16,7 +16,7 @@ phase they unblock; **Rec.** is the agent's recommendation.
 ## Phase 2 — dead-code removal
 | # | Decision | Rec. | Your answer |
 |---|---|---|---|
-| 6 | Delete: D5–D12 list (Brand screen BUG-009, ExportController BUG-180, RBACService BUG-190, Core graph models, `getChassisNumbers` BUG-153, dead Org views BUG-154, seeder test users, Booking scopes BUG-191); the Booking model's dead `vehicle()` + 9 dashboard helpers; the unused `getAccessoriesList()`; `XlSpareMaster` relations + `ProductionRBACSeeder` (BUG-221); unused `resources/views/admin/pricing/{hold,tcs}/index.blade.php`; branch `backup/dev-admin-before-rewrite-30-09` | yes to all | |
+| 6 | Delete: D5–D12 list (Brand screen BUG-009, ExportController BUG-180, RBACService BUG-190, Core graph models, `getChassisNumbers` BUG-153, dead Org views BUG-154, seeder test users, Booking scopes BUG-191); the Booking model's dead `vehicle()` + 9 dashboard helpers; the unused `getAccessoriesList()`, `fetchCbrData()`, `fetchPendBkData()` (booking controller, no callers); `XlSpareMaster` relations + `ProductionRBACSeeder` (BUG-221); unused `resources/views/admin/pricing/{hold,tcs}/index.blade.php`; branch `backup/dev-admin-before-rewrite-30-09` | yes to all | |
 
 ## Phase 3 — booking code to project level
 | # | Decision | Rec. | Your answer |
