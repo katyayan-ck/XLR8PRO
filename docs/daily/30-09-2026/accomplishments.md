@@ -175,3 +175,12 @@ Appearance and profile-field flags are in place (their effects arrive in Phases 
 **Verified:** 5 new feature tests (access matrix, save, validation, secrets encrypted and kept); platform + admin suites
 117 passed; HTTP smoke of every tab. **Left:** Phases 2–6 (apply site settings, comms, pricing holds / TCS, profile
 flags, single place + API).
+
+### 17. Dealership settings applied across the interface — W13 Phase 2 (DEC-091)
+
+**Delivered:** the dealership name from Settings → Site is the name in the header, page titles and login page on the
+next request; an uploaded favicon replaces the built-in icons; the legal name printed on receipts, OTF forms,
+quotations and PDFs comes from a new "Legal (company) name" setting instead of typed text.
+
+**Verified:** 3 feature tests; platform + admin + sales suites 135 passed; dashboard smoke for superadmin and user 40.
+**Left:** mail from-name / signature (Phase 3); check Settings → Site on UAT for leftover demo values.

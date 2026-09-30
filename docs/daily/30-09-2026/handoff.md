@@ -25,6 +25,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: W13 Phase 2 — dealership name / favicon / legal name applied (`ApplySiteSettings`, `dealership()`, `site_favicon_url()`).
 - 30-09: W13 Phase 1 — categorised Settings interface (7 tabs, managers only; pricing tab for pricing managers).
 - 30-09: W13 settings interface added to the to-do; owner answered (DEC-091: UTL_SETTINGS_MANAGE / PRC_WKFL_MANAGE, hold in Settings + process, encrypted secrets); plan saved. Next after W5 / W7 or on request: W13 Phase 1 (catalogue `config/settings_ui.php` + tabbed screen).
 - 30-09: W6 — admin flash messages from `resources/lang/en/{module}.php` 'flash' groups (+ new `utils.php`), same wording.
@@ -54,7 +55,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-- **Now: W13 Phase 2** (DEC-091) — apply the Site / dealership settings everywhere: a per-request applier (middleware or provider) setting Backpack `project_name` / logo / favicon from `site.name` / `dealership.name` / `branding.logo` / `dealership.favicon`; login page, PDFs, mail from-name; tests. Phase 1 ✅ (`config/settings_ui.php`, `SettingsCatalogue`, tabbed screen).
+- **Now: W13 Phase 3** (DEC-091) — Communication: enforce `comms.enabled.{mail,sms,whatsapp,push}` in the comms router / NotifyService (skipped sends recorded, not errors), SMTP from `mail.smtp.*` applied to the mailer at send time in the Email driver (blank host = .env), `mail.signature` appended by EmailService, from-name = `mail.smtp.from_name` or the dealership name; tests with `Mail::fake()`. Phases 1–2 done.
 0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). W3 ✅ (15 Sales HTTP tests; BUG-219 open, BUG-220 fixed). W4 ✅ (baseline, full analyse clean; BUG-221). W6 ✅ (225 flash calls → lang `flash` groups; FlashMessagesLangTest). Next step: W5 (UI clean-up outside Sales: hex / inline styles → shared layer, same method as the Sales pass), then W7 (N+1 review). Then W4 (PHPStan baseline), W5, W6, W7.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.
@@ -62,6 +63,7 @@
    booking forms.
 
 ## Waiting on the owner
+- Deploy note (W13 Phase 2): set Settings → Site → Dealership name on UAT — a leftover demo value (local: "ABC Motors") would show in the header.
 - W14 (vehicle specifications / features / compare): the sample specifications `docs/vehicle_specifications` are not in the repository — please copy them in.
 - BUG-219: should a `Dummy` booking still need the base fields (name, mobile, branch, vehicle, sale type)? Today they are skipped.
 - DEC-090 (agent, within DEC-089): workbook `ALL` = unrestricted (no scope rows, so it also covers codes added later); `NONE` on an org add-on = primary only; a new employee must list vertical codes (no `ALL`). Say if `ALL` should mean today's codes only.

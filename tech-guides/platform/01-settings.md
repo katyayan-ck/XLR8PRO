@@ -96,6 +96,14 @@ opens only Pricing; nobody else sees the screen or the menu item.
 - A new setting = its seed in `config/platform.php` + one line in `config/settings_ui.php` (input: text, url, email,
   number, switch, select, textarea, secret, image, json, readonly).
 
+## Site / dealership applied (DEC-091 Phase 2)
+- `App\Http\Middleware\ApplySiteSettings` (web group, login included): `dealership.name` → Backpack `project_name`
+  (header, titles, `application-name` meta) on every request; a failure keeps the configured name.
+- Helpers: `site_favicon_url(): ?string` (`dealership.favicon`, null = built-in icons; used by `header_metas`),
+  `dealership(string $field, string $default = ''): string` (e.g. `dealership('legal_name')` on receipts, OTF,
+  quotations and prints), `site_logo_url()` (`branding.logo`).
+- A new place that shows the dealership reads these helpers — never a typed name.
+
 ## Events & testing
 `SettingsChanged` (key, old, new, scope, actor; values hidden for encrypted keys). See [15-testing.md](15-testing.md); every code is in
 [16-reference.md](16-reference.md).

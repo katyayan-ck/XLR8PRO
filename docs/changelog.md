@@ -9839,3 +9839,13 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
   application / channel switches / SMTP / signature / appearance / profile-field flags / feature switches,
   `resources/lang/en/utils.php` (2 flash lines). Guides `tech-guides/platform/01-settings.md`, `16-reference.md`.
 - **Before → after:** one flat list by key prefix, visible with UTL_SETTINGS_VIEW → 7 tabs, managers only.
+
+## W13 Phase 2 — Site / dealership settings applied (DEC-091)
+- **New:** `app/Http/Middleware/ApplySiteSettings.php` (web group in `bootstrap/app.php`): `dealership.name` → project
+  name on every page, login included; helpers `site_favicon_url()`, `dealership()` in `app/Support/helpers.php`; seed +
+  catalogue entry `dealership.legal_name` ('Bikaner Motors Private Limited'); `tests/Feature/Platform/SiteSettingsApplyTest.php` (3).
+- **Views:** `vendor/backpack/ui/inc/header_metas.blade.php` (favicon from the setting, app-name metas from the project
+  name); legal name from the setting on `admin/pdf/{browser-print,otf-form-pdf,receipt}.blade.php`,
+  `admin/sales/booking/otf-form.blade.php`, `admin/sales/quotation/create.blade.php` (7 places; was typed text).
+- **Note for deploy:** a leftover `dealership.name` row (local: "ABC Motors") now shows in the header — set the real
+  name on Settings → Site.

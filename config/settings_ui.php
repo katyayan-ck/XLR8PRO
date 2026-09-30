@@ -25,6 +25,7 @@ return [
             'sections' => [
                 'dealership' => ['label' => 'Dealership', 'keys' => [
                     'dealership.name' => ['input' => 'text', 'help' => 'Shown in the header, login page, PDFs and mails.'],
+                    'dealership.legal_name' => ['input' => 'text', 'help' => 'Printed on receipts, OTF forms, quotations and PDFs.'],
                     'dealership.url' => ['input' => 'url'],
                     'branding.logo' => ['input' => 'image', 'help' => 'Header, login page and PDFs / prints.'],
                     'dealership.favicon' => ['input' => 'image', 'help' => 'Browser tab icon (square PNG or ICO-sized image).'],

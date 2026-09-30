@@ -477,7 +477,7 @@ use App\Services\OrgService;
                         <img src="{{ site_logo_url('images/bikaner_logo.png') }}" alt="{{ config('app.name') }}" style="height:75px;">
                     </div>
                     <div class="col-8 text-center">
-                        <h3 class="fw-bold mb-1">BIKANER MOTORS PRIVATE LIMITED</h3>
+                        <h3 class="fw-bold mb-1">{{ strtoupper(dealership('legal_name', 'Bikaner Motors Private Limited')) }}</h3>
                         <div style="font-size:13px;">
                             Regd. Office : Sunehri Chhabil Mansion, NH-11, Jaipur Road,
                             Bikaner-334022

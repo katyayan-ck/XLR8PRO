@@ -609,7 +609,7 @@
             <tr>
                 <td class="header-left">
                     <div class="company-name">
-                        BIKANER MOTORS PRIVATE LIMITED
+                        {{ strtoupper(dealership('legal_name', 'Bikaner Motors Private Limited')) }}
                         <span class="receipt-badge">RECEIPT</span>
                     </div>
 
@@ -855,7 +855,7 @@
                 <td class="signature-area">
 
                     <div>
-                        For : BIKANER MOTORS PRIVATE LIMITED
+                        For : {{ strtoupper(dealership('legal_name', 'Bikaner Motors Private Limited')) }}
                     </div>
 
                     <div class="auth-text">

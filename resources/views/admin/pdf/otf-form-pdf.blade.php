@@ -358,7 +358,7 @@
 
             <div class="dealer-title-main"
                  style="font-size:13px; font-weight:800; color:#0f172a; text-transform:uppercase; margin:0;">
-                Bikaner Motors Private Limited
+                {{ dealership('legal_name', 'Bikaner Motors Private Limited') }}
             </div>
 
             <div class="dealer-address-lines"

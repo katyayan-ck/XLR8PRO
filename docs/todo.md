@@ -393,8 +393,8 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W5 | Q7 UI clean-up outside Sales (hex / inline styles → shared layer, same method as the Sales pass) | 🔴 |
 | W6 | U7 web side: admin flash messages through the error codes / language file (same wording) | ✅ 30-09 (225 calls → `{module}.flash.*`) |
 | W7 | U4 N+1 review of the big lists (enquiries, bookings, quotations) | 🔴 |
-| W13 | **One categorised Settings interface** (your request 30-09) — the only place settings are shown; changes apply at once on web and app / API. Today they are spread over Utilities → Settings (56 keys), the legacy System Setting screen, and the pricing TCS / Hold screens. Parts W13a–W13f; plan to be saved in `tech-guides/frs-and-workflows/plans/` | 🟡 in progress — Phase 1 ✅ (catalogue + tabbed screen); Phase 2 (site / dealership applied) next; DEC-091 |
-| W13a | **Site / dealership:** name (default "Bikaner Motors"), website URL (default https://www.BikanerMotors.com), logo, address, favicon, e-mail, phone, GSTIN …; applied across the interface (header, login, PDFs, mails) | 🔴 |
+| W13 | **One categorised Settings interface** (your request 30-09) — the only place settings are shown; changes apply at once on web and app / API. Today they are spread over Utilities → Settings (56 keys), the legacy System Setting screen, and the pricing TCS / Hold screens. Parts W13a–W13f; plan to be saved in `tech-guides/frs-and-workflows/plans/` | 🟡 in progress — Phase 1 ✅ (screen), Phase 2 ✅ (site applied); Phase 3 (communication) next; DEC-091 |
+| W13a | **Site / dealership:** name (default "Bikaner Motors"), website URL (default https://www.BikanerMotors.com), logo, address, favicon, e-mail, phone, GSTIN …; applied across the interface (header, login, PDFs, mails) | ✅ 30-09 (Phase 2; mail from-name comes with Phase 3) |
 | W13b | **Communication:** global on / off per channel (mail, SMS, WhatsApp, push), SMTP settings used by the mail service, mail signature appended to every mail, plus the existing comms settings | 🔴 |
 | W13c | **Pricing:** global / per-list price-list hold, TCS threshold and rate, and the existing pricing settings; also open to the pricing-manage permission | 🔴 |
 | W13d | **User behaviour:** Appearance panel on / off; which profile fields a user may change (name, e-mail, profile photo, mobile, Aadhaar, PAN, password, DOB, DOJ, marital status, gender) — enforced on web and API | 🔴 |
@@ -982,3 +982,12 @@ Appearance and profile-field flags are in place (their effects arrive in Phases 
 **Verified:** 5 new feature tests (access matrix, save, validation, secrets encrypted and kept); platform + admin suites
 117 passed; HTTP smoke of every tab. **Left:** Phases 2–6 (apply site settings, comms, pricing holds / TCS, profile
 flags, single place + API).
+
+### 17. Dealership settings applied across the interface — W13 Phase 2 (DEC-091)
+
+**Delivered:** the dealership name from Settings → Site is the name in the header, page titles and login page on the
+next request; an uploaded favicon replaces the built-in icons; the legal name printed on receipts, OTF forms,
+quotations and PDFs comes from a new "Legal (company) name" setting instead of typed text.
+
+**Verified:** 3 feature tests; platform + admin + sales suites 135 passed; dashboard smoke for superadmin and user 40.
+**Left:** mail from-name / signature (Phase 3); check Settings → Site on UAT for leftover demo values.

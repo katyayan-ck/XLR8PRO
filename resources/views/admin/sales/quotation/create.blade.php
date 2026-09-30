@@ -1391,7 +1391,7 @@
 
                         <!-- Center Text -->
                         <div class="col-8 text-center">
-                            <h3 class="fw-bold mb-1">BIKANER MOTORS PRIVATE LIMITED</h3>
+                            <h3 class="fw-bold mb-1">{{ strtoupper(dealership('legal_name', 'Bikaner Motors Private Limited')) }}</h3>
                             <div style="font-size:13px;">Regd. Office : Sunehri Chhabil Mansion, NH-11, Jaipur Road,
                                 Bikaner-334022</div>
                             <div style="font-size:13px;">Branch Office : 6th KM Stone, Ratangarh Road, Churu-331001</div>

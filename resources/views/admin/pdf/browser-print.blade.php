@@ -519,7 +519,7 @@
 
                         <div class="company-name text-[17px] leading-[19px] font-black tracking-[.15px] whitespace-nowrap">
 
-                            BIKANER MOTORS PRIVATE LIMITED
+                            {{ strtoupper(dealership('legal_name', 'Bikaner Motors Private Limited')) }}
 
                             <span class="receipt-badge inline-block bg-[#333] text-white text-[11px] font-bold px-[5px] py-[1px] ml-[36mm] tracking-[.5px] align-[2px]">
                                 RECEIPT
@@ -1004,7 +1004,7 @@
                         <div>
 
                             For :
-                            BIKANER MOTORS PRIVATE LIMITED
+                            {{ strtoupper(dealership('legal_name', 'Bikaner Motors Private Limited')) }}
 
                         </div>
 

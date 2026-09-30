@@ -39,6 +39,24 @@ if (! function_exists('site_logo_url')) {
     }
 }
 
+if (! function_exists('site_favicon_url')) {
+    /** The favicon uploaded on Settings → Site (`dealership.favicon`, DEC-091), else null (the built-in icons are used). */
+    function site_favicon_url(): ?string
+    {
+        $url = (string) setting('dealership.favicon', '');
+
+        return $url !== '' ? $url : null;
+    }
+}
+
+if (! function_exists('dealership')) {
+    /** A Site / dealership setting (DEC-091): dealership('name'), dealership('legal_name'), dealership('address') … */
+    function dealership(string $field, string $default = ''): string
+    {
+        return (string) (setting('dealership.'.$field, $default) ?? $default);
+    }
+}
+
 if (! function_exists('setting')) {
     /** Effective setting value (FRS SET-10) — alias of Settings::get(). */
     function setting(string $key, mixed $default = null): mixed

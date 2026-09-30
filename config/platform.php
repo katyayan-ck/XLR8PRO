@@ -127,6 +127,7 @@ return [
         'pricing.last_updated_at' => ['value' => '', 'type' => 'string', 'label' => 'Pricing last updated — set automatically on any published-price, vehicle master or accessory change; the app re-syncs its offline data when it moves (DEC-083)'],
         // Settings interface (DEC-091, to-do W13): dealership, application, communication, user behaviour
         'dealership.name' => ['value' => 'Bikaner Motors', 'type' => 'string', 'label' => 'Dealership name'],
+        'dealership.legal_name' => ['value' => 'Bikaner Motors Private Limited', 'type' => 'string', 'label' => 'Legal (company) name — receipts, OTF, quotations and prints'],
         'dealership.url' => ['value' => 'https://www.BikanerMotors.com', 'type' => 'string', 'label' => 'Dealership website'],
         'dealership.favicon' => ['value' => '', 'type' => 'image', 'label' => 'Favicon'],
         'dealership.address' => ['value' => '', 'type' => 'string', 'label' => 'Dealership address'],
