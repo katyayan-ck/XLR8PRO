@@ -254,3 +254,12 @@ Booking list: 567 → 95 queries, about 42 s → 3 s of database time on the tes
 
 **Verified:** equivalence test on the booking grid; full suite 536 passed, 1 skipped; PricingRecalcTest errors only in the full run in this sandbox (storage/basset not writable) and passes alone; tests/TestCase now clears the static memos per test; full PHPStan clean. **Suggested:** a Redis or
 file cache on UAT (today every cache read is a database query).
+
+### 25. Vehicle content data layer — W14 Phase 1 (DEC-092)
+
+**Delivered:** the storage for vehicle content: master lists of specification and feature items, each model's
+specification values, each trim's feature values, a trim record per variant code for the trim-level gallery, and media
+collections for model images, the brochure and trim / colour galleries — all behind entity services, with the new
+permissions for content editing and compare.
+
+**Verified:** 5 feature tests; migrations up / down / up on the test copy. **Next:** Phase 2 screens.

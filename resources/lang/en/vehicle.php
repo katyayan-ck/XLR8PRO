@@ -8,6 +8,17 @@
 return [
 
     'fields' => [
+        // DEC-092 vehicle content
+        'spec_category' => 'Specification category',
+        'spec_item' => 'Specification',
+        'unit' => 'Unit',
+        'sort' => 'Order',
+        'feature_group' => 'Feature group',
+        'feature' => 'Feature',
+        'value' => 'Value',
+        'model' => 'Model',
+        'variant' => 'Variant',
+        'notes' => 'Notes',
         // Shared across most Vehicle sub-modules
         'code' => 'Code',
         'name' => 'Name',

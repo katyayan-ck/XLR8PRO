@@ -12,9 +12,17 @@ Indexes: (created_by), (deleted_by), (segment_code,model_code,variant_code,permi
 id bigint unsigned PK, segment_code varchar(5)?, sub_segment_code varchar(20)?, model_code varchar(30), variant_code varchar(20), code varchar(5), name varchar(255)?, hex_code varchar(255)?, image varchar(255)?, is_active tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (created_by), (deleted_by), (is_active), (model_code), UNIQUE (model_code,variant_code,code), (segment_code), (sub_segment_code), (updated_by)
 
+## `xlr8_vehicle_feature_item` · ~0 rows · model: App\Models\Vehicle\FeatureItem
+id bigint unsigned PK, code varchar(60), feature_group varchar(100), name varchar(255), sort int unsigned, is_active tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
+Indexes: UNIQUE (code), (feature_group)
+
 ## `xlr8_vehicle_model` · ~0 rows · model: App\Models\Vehicle\VehicleModel
 id bigint unsigned PK, segment_code varchar(10), sub_segment_code varchar(20)?, code varchar(40), name varchar(255), oem_name varchar(255)?, is_active tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (code), (segment_code), UNIQUE (code), (created_by), (deleted_by), (is_active), (oem_name), (segment_code), (sub_segment_code), (updated_by)
+
+## `xlr8_vehicle_model_spec` · ~0 rows · model: App\Models\Vehicle\ModelSpec
+id bigint unsigned PK, model_code varchar(50), spec_item_code varchar(60), value varchar(500)?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
+Indexes: UNIQUE (model_code,spec_item_code), (model_code), (spec_item_code)
 
 ## `xlr8_vehicle_pricing` · ~3 rows · model: App\Models\Vehicle\Pricing\Pricing
 id bigint unsigned PK, import_session_id bigint unsigned?, model_code varchar(40), channel varchar(20), price_list varchar(20)?, wef_date date, expired_on date?, is_active tinyint(1), ex_showroom_price decimal(14,2), assessable_value_with_freight decimal(14,2), gst_percent decimal(5,2), gst_amount decimal(14,2), mm_invoice_amount decimal(14,2), dealer_margin decimal(14,2), curr_oem_scheme decimal(14,2), curr_dealer_cont decimal(14,2), curr_cash_discount decimal(14,2), curr_acc_discount decimal(14,2), curr_shield_discount decimal(14,2), old_oem_scheme decimal(14,2), old_dealer_cont decimal(14,2), old_cash_discount decimal(14,2), old_acc_discount decimal(14,2), old_shield_discount decimal(14,2), old_shield_elg decimal(6,4), old_acc_elg decimal(6,4), curr_shield_elg decimal(6,4), curr_acc_elg decimal(6,4), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
@@ -24,9 +32,21 @@ Indexes: (import_session_id), (model_code,is_active), (price_list), UNIQUE (mode
 id bigint unsigned PK, code varchar(10), name varchar(255), is_active tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: UNIQUE (code), (created_by), (deleted_by), (is_active), (updated_by)
 
+## `xlr8_vehicle_spec_item` · ~0 rows · model: App\Models\Vehicle\SpecItem
+id bigint unsigned PK, code varchar(60), category varchar(100), name varchar(150), unit varchar(30)?, sort int unsigned, is_active tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
+Indexes: (category), UNIQUE (code)
+
 ## `xlr8_vehicle_subsegment` · ~0 rows · model: App\Models\Vehicle\SubSegment
 id bigint unsigned PK, segment_code varchar(10), code varchar(20), name varchar(255), is_active tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (created_by), (deleted_by), (is_active), UNIQUE (segment_code,code), (segment_code), (updated_by)
+
+## `xlr8_vehicle_trim` · ~0 rows · model: App\Models\Vehicle\VehicleTrim
+id bigint unsigned PK, variant_code varchar(50), model_code varchar(50), notes text?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
+Indexes: (model_code), UNIQUE (variant_code)
+
+## `xlr8_vehicle_trim_feature` · ~0 rows · model: App\Models\Vehicle\TrimFeature
+id bigint unsigned PK, variant_code varchar(50), feature_item_code varchar(60), value varchar(255)?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
+Indexes: UNIQUE (variant_code,feature_item_code), (feature_item_code), (variant_code)
 
 ## `xlr8_vehicle_variant` · ~0 rows · model: App\Models\Vehicle\Variant
 id bigint unsigned PK, segment_code varchar(5), sub_segment_code varchar(20)?, model_code varchar(30), code varchar(40), oem_name varchar(255), custom_name varchar(255)?, display_name varchar(255)?, color varchar(255)?, color_code varchar(10)?, permit_id bigint unsigned?, taxi_price varchar(10)?, fuel_type_id bigint unsigned?, seating_capacity int unsigned?, wheels tinyint unsigned?, gvw int unsigned?, gst_percent decimal(5,2)?, cc_capacity varchar(255)?, motor varchar(50)?, transmission varchar(255)?, drivetrain varchar(255)?, body_type_id bigint unsigned?, body_make_id bigint unsigned?, is_csd tinyint(1), csd_index varchar(255)?, shield_pack varchar(25)?, status_id bigint unsigned?, is_active tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?

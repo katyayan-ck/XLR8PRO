@@ -22,6 +22,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: W14 Phase 1 — vehicle content tables, entity services, media collections, VEH_CONT / VEH_CMPR permissions.
 - 30-09: W7 — N+1 review: per-request memos (settings, legacy settings, OrgService lookups), booking grid batched, bell once per request.
 - 30-09: W5 — 131 admin views outside Sales on the shared UI layer; smoke sweep clean. Note: in this sandbox run the smoke group with `BASSET_CACHE_MAP=false` (storage/basset is not writable here).
 - 30-09: W13 Phase 6 — legacy settings screen → Settings, `GET api/v1/app-settings`, secrets never returned by the settings API (BUG-207 partly).
@@ -59,7 +60,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-- **W5 ✅** (UI clean-up outside Sales). **W7 ✅** (lists: bookings 567 → 95 queries). **Now: W14 Phase 1** (DEC-092, plan `tech-guides/frs-and-workflows/plans/2026-09-30-vehicle-content-compare-DEC-092.md`) — migrations for `xlr8_vehicle_{spec_item,model_spec,feature_item,trim,trim_feature}`, models + entity services, media collections (model images / brochure, trim gallery, colour gallery), permissions VEH_CMPR_VIEW / VEH_CONT_EDIT; tests.
+- **W5 ✅** (UI clean-up outside Sales). **W7 ✅** (lists: bookings 567 → 95 queries). **Now: W14 Phase 2** (DEC-092) — screens: model page tabs Images & brochure / Specifications (grouped, editable), variant page tabs Features / Gallery (level choice trim | colour; current images with Remove; drop-zone), masters for spec / feature items; permissions VEH_CONT_VIEW / EDIT. Phase 1 ✅ (tables, services, media, permissions).
 0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). W3 ✅ (15 Sales HTTP tests; BUG-219 open, BUG-220 fixed). W4 ✅ (baseline, full analyse clean; BUG-221). W6 ✅ (225 flash calls → lang `flash` groups; FlashMessagesLangTest). Next step: W5 (UI clean-up outside Sales: hex / inline styles → shared layer, same method as the Sales pass), then W7 (N+1 review). Then W4 (PHPStan baseline), W5, W6, W7.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.

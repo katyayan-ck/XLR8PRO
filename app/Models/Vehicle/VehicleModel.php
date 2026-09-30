@@ -115,4 +115,25 @@ class VehicleModel extends BaseModel
 
         return substr($clean, 0, 10);
     }
+
+    /**
+     * DEC-092: model images (many) and the PDF brochure (one). 250 px preview + 100 px thumb for images.
+     */
+    public function registerMediaCollections(): void
+    {
+        parent::registerMediaCollections();
+        $this->addMediaCollection('images')->useDisk('public')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp'])
+            ->registerMediaConversions(function () {
+                $this->addMediaConversion('preview')->width(250)->height(250)->quality(75);
+                $this->addMediaConversion('thumb')->width(100)->height(100)->quality(70);
+            });
+        $this->addMediaCollection('brochure')->useDisk('public')->singleFile()->acceptsMimeTypes(['application/pdf']);
+    }
+
+    /** DEC-092: this model's specification values (item code => row). */
+    public function specs()
+    {
+        return $this->hasMany(ModelSpec::class, 'model_code', 'code');
+    }
 }

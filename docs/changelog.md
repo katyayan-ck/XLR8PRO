@@ -9934,3 +9934,13 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
 ## W14 planned — vehicle content & compare (DEC-092)
 - **Decision:** DEC-092 (features per trim; gallery bound to trim or colour; imports add unknown items; compare screen +
   API). **Plan:** `tech-guides/frs-and-workflows/plans/2026-09-30-vehicle-content-compare-DEC-092.md` (+ index).
+
+## W14 Phase 1 — vehicle content data layer (DEC-092)
+- **Migration** `2026_09_30_221447_create_vehicle_content_tables_dec092` (local + test copy; rollback / re-run checked):
+  `xlr8_vehicle_{spec_item,model_spec,feature_item,trim,trim_feature}`; VEH processes `CONT`, `CMPR` and permissions
+  `VEH_CONT_VIEW`, `VEH_CONT_EDIT`, `VEH_CMPR_VIEW`.
+- **Models** `app/Models/Vehicle/{SpecItem,ModelSpec,FeatureItem,VehicleTrim,TrimFeature}.php`; media collections on
+  `VehicleModel` (`images`, `brochure`) and `Variant` (`gallery`), `VehicleModel::specs()`.
+- **Entity services** `app/Services/Vehicle/Content/*` (+ trait `DerivesItemCode`); lang `vehicle.fields.*` (10 keys).
+- **Rules / guides:** `.ai/rules/admin-backpack.md` (VEH processes), `.ai/rules/services.md`, `tech-guides/modules/vehicle.md`.
+- **Tests:** `tests/Feature/Vehicle/VehicleContentEntitiesTest.php` (5).

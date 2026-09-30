@@ -40,6 +40,7 @@ Full health notes: `tech-guides/frs-and-workflows/frs/shared-services-audit-24-0
 | Pricing pipeline & engine | `App\Services\Vehicle\Pricing\*` (`Engine\PricingQueryService::getPricing($oemCode, $options)`; quotation: `Sales\Quotation\QuotationPricingService`) | see `.ai/rules/modules/vehicle-pricing.md` |
 | Pricing masters (Admin → Pricing) | `App\Support\PricingMaster\{MasterDefinition, MasterRegistry}` + `Admin\Pricing\MasterController` | a new master = one definition class; writes via its entity service; changes auto-recalculate (`PricingParamObserver`) and bump `pricing.last_updated_at` |
 | Accessories | `App\Services\Vehicle\AccessoryService` | |
+| Vehicle content (DEC-092) | `App\Services\Vehicle\Content\{SpecItem,ModelSpec,FeatureItem,VehicleTrim,TrimFeature}Service` | specifications per model, features per trim (variant code), `VehicleTrimService::forVariant()`; media: model `images` / `brochure`, trim + colour `gallery` |
 | Booking sub-domains | `App\Services\Sales\Booking\Booking{Core,Kyc,Dms,Insurance,Rto,Delivery,Finance,Exchange,Refund,Otf}Service` | each tested |
 | Settings | `App\Services\Platform\Settings\SettingsService` (`Settings` facade, `setting()`, `feature()`, `@setting`, `@feature`) | only write path; dotted keys, typed, scoped (`getFor`), audited; seeds in `config/platform.php` (read by exact key). `SystemSettingService` backs the legacy CRUD screen |
 | Date display | `DateFormatService`, `site_date()`, `@sitedate` | |

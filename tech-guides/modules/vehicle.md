@@ -143,3 +143,18 @@ $bundle = app(AccessoryService::class)->listForVehicle($variant->segment_code, $
 ## Testing
 Run against `xlrm_testing` (vehicle rows exist there). Create test variants through `VariantService` inside the
 transaction; assert `missingFields()` for completeness rules.
+
+## Vehicle content — specifications, features, galleries (DEC-092)
+- **Masters:** `SpecItem` (`xlr8_vehicle_spec_item`: code, category, name, unit, sort, is_active) and `FeatureItem`
+  (`xlr8_vehicle_feature_item`: code, feature_group, name, sort, is_active) via `SpecItemService` / `FeatureItemService`
+  — a missing code is derived from group + name (`ENGINE_DISPLACEMENT`, `…_2` when taken; trait `DerivesItemCode`).
+- **Values:** `ModelSpec` (`xlr8_vehicle_model_spec`, one per model + item; `ModelSpecService::normaliseValue()`: `-`,
+  `-NA-`, `NA` → `N/A`, blank → null) and `TrimFeature` (`xlr8_vehicle_trim_feature`, one per variant code + item;
+  `TrimFeatureService::normaliseValue()`: Yes / Y / ✓ → `Yes`, No / N / `---` → `No`, other text kept). `upsert()` matches
+  on the pair.
+- **Trim:** `VehicleTrim` (`xlr8_vehicle_trim`, one per variant code — our variant rows are one per colour) via
+  `VehicleTrimService::forVariant(string $variantCode): ?VehicleTrim` (created from the first colour row on first use).
+- **Media** (public disk, `preview` 250 px + `thumb` 100 px): `VehicleModel` `images` (many) + `brochure` (single PDF);
+  `VehicleTrim` `gallery` (all colours); `Variant` `gallery` (that colour only). A colour shows its own + the trim's images.
+- **Relations:** `VehicleModel::specs()`, `ModelSpec::item()`, `TrimFeature::item()`, `VehicleTrim::features()`.
+- **Permissions:** `VEH_CONT_VIEW`, `VEH_CONT_EDIT`, `VEH_CMPR_VIEW` (migration `2026_09_30_221447_create_vehicle_content_tables_dec092`).

@@ -401,7 +401,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W13e | **Other module / utility settings** (security, data scope, documents, tickets / SLA, chat, notifications, approvals, display / date format, density …) grouped in the same interface | ✅ 30-09 (Phase 1: Security, Modules & utilities, Other tabs) |
 | W13f | **Access and single place:** only the settings-manage permission (pricing group also pricing-manage); remove the other settings screens / menu entries; API reads the same values (cache flush on save) | ✅ 30-09 (Phase 6) |
 | W13g | **Site tab feedback** (your notes 30-09): browser title = dealership + app name; footer "Made for <dealership>" linked to its website, tagline on hover; no site name / slogan (dealership tagline instead); current logo / favicon shown with drop-zone and Remove; menu logo = logo or text | ✅ 30-09 |
-| W14 | **Vehicle content & compare** (your request 30-09) — parts W14a–W14d; plan to be written. Samples (root, not committed): `Vehicle_Specifications.xlsx` — one sheet per segment group (COMMERCIAL, LMM, LMM EV, PERSONAL, PERSONAL EV), rows Head → SubHead (Axle, Brakes, Engine, Battery, Dimensions, Warranty …), one column per model; `Vehicle-Features.xlsx` — one sheet per model, rows Feature group → Feature, one column per variant (by name), values Yes / --- | 🟡 planned — DEC-092, plan `2026-09-30-vehicle-content-compare-DEC-092.md` |
+| W14 | **Vehicle content & compare** (your request 30-09) — parts W14a–W14d; plan to be written. Samples (root, not committed): `Vehicle_Specifications.xlsx` — one sheet per segment group (COMMERCIAL, LMM, LMM EV, PERSONAL, PERSONAL EV), rows Head → SubHead (Axle, Brakes, Engine, Battery, Dimensions, Warranty …), one column per model; `Vehicle-Features.xlsx` — one sheet per model, rows Feature group → Feature, one column per variant (by name), values Yes / --- | 🟡 in progress — Phase 1 ✅ (data, services, media, permissions); Phase 2 (screens) next; DEC-092 |
 | W14a | **Model level:** attach images, a PDF brochure and category-wise specifications (e.g. Engine, Dimensions, Safety …) to each vehicle model | 🔴 |
 | W14b | **Variant level:** feature mapping and management per variant, and an image gallery per variant | 🔴 |
 | W14c | **Excel import / export** of specifications (per model) and features (per variant), with master-fed dropdowns like the Vehicle Info workbook | 🔴 |
@@ -1062,3 +1062,12 @@ Booking list: 567 → 95 queries, about 42 s → 3 s of database time on the tes
 
 **Verified:** equivalence test on the booking grid; full suite 536 passed, 1 skipped; PricingRecalcTest errors only in the full run in this sandbox (storage/basset not writable) and passes alone; tests/TestCase now clears the static memos per test; full PHPStan clean. **Suggested:** a Redis or
 file cache on UAT (today every cache read is a database query).
+
+### 25. Vehicle content data layer — W14 Phase 1 (DEC-092)
+
+**Delivered:** the storage for vehicle content: master lists of specification and feature items, each model's
+specification values, each trim's feature values, a trim record per variant code for the trim-level gallery, and media
+collections for model images, the brochure and trim / colour galleries — all behind entity services, with the new
+permissions for content editing and compare.
+
+**Verified:** 5 feature tests; migrations up / down / up on the test copy. **Next:** Phase 2 screens.

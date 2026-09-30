@@ -18,7 +18,7 @@ Every admin entity belongs to one Module and one Process; every user-facing acti
 | Accounts | ACC | JournalVoucher, Receipt `RCPT` |
 | Finance / Insurance / Rto | FIN / INS / RTO | (imports only today) |
 | Spares | SPR | SpareRequest |
-| Vehicle | VEH | Brand, Color, Model, Segment, SubSegment, Variant |
+| Vehicle | VEH | Brand, Color, Model, Segment, SubSegment, Variant, Content `CONT` (specifications, features, galleries — DEC-092), Compare `CMPR` |
 | Org | ORG | Branch `BRCH`, Department `DEPT`, Designation `DESG`, Division `DIVN` (+Vertical), Employee `EMPL`, Location `LOCN`, Person `PRSN` (+Address/Banking/Contact), User |
 | Iam | IAM | Modules, Permission, Process (Role screen retired → Designation, DEC-018) |
 | Pricing | PRC | Hold, Insurance `INSR`, PricingReset, PricingWorkflow `WKFL`, RtoRule `RTOR`, TcsConfig; masters (DEC-083): Dealer Charges `DLRC`, Discounting Breakup `DBRK`, `RSA`, Shield `SHLD`, Corporate `CORP`, Exchange `EXCH`, Loyalty `LYLT`, Accessories `ACCS`, Insurance Companies `INCO`, Insurance Preferences `INPF`, Insurance Add-ons `INAD`, Recalculation log `RCLC` |

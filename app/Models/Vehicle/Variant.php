@@ -227,4 +227,18 @@ class Variant extends BaseModel
             -2
         );
     }
+
+    /**
+     * DEC-092: colour-level gallery (this colour row only). Trim-level images (all colours) live on VehicleTrim.
+     */
+    public function registerMediaCollections(): void
+    {
+        parent::registerMediaCollections();
+        $this->addMediaCollection('gallery')->useDisk('public')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp'])
+            ->registerMediaConversions(function () {
+                $this->addMediaConversion('preview')->width(250)->height(250)->quality(75);
+                $this->addMediaConversion('thumb')->width(100)->height(100)->quality(70);
+            });
+    }
 }
