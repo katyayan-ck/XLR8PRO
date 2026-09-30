@@ -9896,3 +9896,16 @@ Plan: `docs/plans/2026-09-28-pricing-redesign-DEC-073.md` (12 phases; user decis
 - **BUG-207 (partly):** `SystemSetting::scopeVisible()` excludes encrypted rows (and `getAllAsArray()` uses it),
   `SystemSettingService::getSetting()` reads only visible rows, `SettingsService` stores new secrets hidden.
 - **Verified:** full suite 536 passed, 1 skipped (UiDensityTest fixture now grants UTL_SETTINGS_MANAGE); full PHPStan clean; smoke superadmin 200 / user 40 403 on Settings.
+
+## W5 — UI clean-up outside Sales (markup / CSS only)
+- **131 admin views** (accounts, org, iam, import, pricing, vehicle, utils, spare-request, test drive, cashier, legacy
+  assignment screens; `sales/` done earlier, `pdf/` excluded — print CSS needs literal colours) run through the Sales-pass
+  script: pinned CDN scripts via `@basset`, grids `xl-grid`, shared loader / header popover / search box / export icons,
+  `bg-white` / `bg-light` / `text-dark|black` / `table-light` → tokens, style rules covered by `xl-ui.css` removed.
+- **Shared:** permission tree + person picker styles moved to `public/css/xl-ui.css` (tokens) from Org user create / edit
+  and designation form / edit; last hex rules in `org/person/edit`, `org/user/edit`, `vehicle/variant/create` → tokens;
+  `style="background:#f8fafc"` card bodies (13 lists) → `bg-surface-secondary`.
+- **Result:** files with `<style>` blocks outside Sales ~100 → 22, no hex colour left in any style block (hex left only in
+  JS strings and the colour master's own placeholders). No JS / AJAX changed.
+- **Verified:** every view compiles (`view:cache`); full admin smoke sweep (`--group=smoke`, ~350 screens) — no screen
+  errors (run with `BASSET_CACHE_MAP=false`: this sandbox can't write `storage/basset`).

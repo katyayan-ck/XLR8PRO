@@ -4,14 +4,10 @@
 
 @push('after_styles')
 <style>
-    .card {
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    }
 
 
     .row-card {
-        border: 1px solid #e9ecef;
+        border: 1px solid var(--tblr-border-color);
         border-radius: 8px;
         padding: .75rem 1rem;
         margin-bottom: .6rem;
@@ -23,8 +19,8 @@
     }
 
     .row-card.is-primary {
-        border-color: #0d6efd;
-        background: #f5f9ff;
+        border-color: var(--tblr-primary);
+        background: rgba(var(--tblr-primary-rgb), .06);
     }
 
     .row-card-actions {
@@ -37,7 +33,7 @@
         width: 100%;
         margin-top: .75rem;
         padding-top: .75rem;
-        border-top: 1px dashed #dee2e6;
+        border-top: 1px dashed var(--tblr-border-color);
     }
 </style>
 @endpush
@@ -56,7 +52,7 @@
 
     {{-- ═══════════════════════ CORE INFO + MEDIA ═══════════════════════ --}}
     <div class="card">
-        <div class="card-header text-black d-flex justify-content-between align-items-center">
+        <div class="card-header text-body d-flex justify-content-between align-items-center">
             <h2 class="mb-0">{{ $person->display_name ?: $person->full_name }}</h2>
             <span class="badge text-bg-secondary fs-6">{{ $person->person_code }}</span>
         </div>
@@ -204,7 +200,7 @@
 
     {{-- ═══════════════════════ CONTACTS ═══════════════════════ --}}
     <div class="card" id="contacts">
-        <div class="card-header text-black">
+        <div class="card-header text-body">
             <h2 class="mb-0">Contacts</h2>
         </div>
         <div class="card-body">
@@ -212,7 +208,7 @@
                 <div class="row-card {{ $contact->contact_type === 'Primary' ? 'is-primary' : '' }}">
                     <div class="d-flex align-items-center gap-3">
                         <span class="badge text-bg-{{ $contact->data_type === 'Mobile' ? 'success' : 'info' }}">{{ $contact->data_type }}</span>
-                        <span class="badge text-bg-light border">{{ $contact->contact_type }}</span>
+                        <span class="badge text-bg-surface-secondary border">{{ $contact->contact_type }}</span>
                         <strong>{{ $contact->contact_detail }}</strong>
                     </div>
                     <div class="row-card-actions">
@@ -297,7 +293,7 @@
 
     {{-- ═══════════════════════ ADDRESSES ═══════════════════════ --}}
     <div class="card" id="addresses">
-        <div class="card-header text-black">
+        <div class="card-header text-body">
             <h2 class="mb-0">Addresses</h2>
         </div>
         <div class="card-body">
@@ -353,7 +349,7 @@
 
     {{-- ═══════════════════════ BANKING ═══════════════════════ --}}
     <div class="card" id="banking">
-        <div class="card-header text-black">
+        <div class="card-header text-body">
             <h2 class="mb-0">Banking</h2>
         </div>
         <div class="card-body">

@@ -2,16 +2,6 @@
 
 @section('title', 'Add New Keyword')
 
-@push('after_styles')
-<style>
-    .card {
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    }
-
-</style>
-@endpush
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -19,7 +9,7 @@
 
             <div class="card">
 
-                <div class="card-header text-black">
+                <div class="card-header text-body">
                     <h2 class="mb-0">Add New Keyword</h2>
                 </div>
 

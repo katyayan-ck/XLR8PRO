@@ -7,7 +7,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header bg-gradient-primary d-flex justify-content-between align-items-center">
-                <h2 class="card-title mb-0 fw-bold text-black">{{ $title }}</h2>
+                <h2 class="card-title mb-0 fw-bold text-body">{{ $title }}</h2>
                 <a href="{{ route('pricing.workflow.index') }}" class="btn btn-sm btn-light">Back to Workflow</a>
             </div>
             <div class="card-body">

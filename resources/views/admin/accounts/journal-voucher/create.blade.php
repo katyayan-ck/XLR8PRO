@@ -4,8 +4,6 @@
 
 @push('after_styles')
     <style>
-        .card { border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); }
-        .form-control:focus, .form-select:focus { border-color: var(--tblr-primary); box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25); }
         .section-title { font-size: 16px; font-weight: 500; color: var(--tblr-primary); margin-bottom: 15px; border-bottom: 1px solid var(--tblr-border-color); padding-bottom: 5px;}
         .conditional-section { display: none; }
     </style>

@@ -7,25 +7,12 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 <style>
-    .card {
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    }
-
-    .required-mark {
-        color: red;
-    }
 
     .dropdown-menu {
         max-height: 300px;
         overflow-y: auto;
         width: 100%;
         z-index: 9999;
-    }
-
-    .is-invalid {
-        border-color: #dc3545 !important;
-        box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
     }
 </style>
 @endpush
@@ -35,7 +22,7 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header text-black">
+                <div class="card-header text-body">
                     <h2 class="mb-0">Add New Spare Order Request</h2>
                 </div>
                 <div class="card-body">
@@ -156,9 +143,9 @@
 @endsection
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@basset('https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js')
+@basset('https://cdn.jsdelivr.net/npm/flatpickr')
+@basset('https://cdn.jsdelivr.net/npm/sweetalert2@11')
 
 <script>
     $(document).ready(function() {
@@ -169,7 +156,7 @@
     // ==================== ADD PART ROW ====================
     $('#add-part-row').on('click', function() {
         let rowHtml = `
-        <div class="row part-row mt-3 border p-3 rounded bg-light">
+        <div class="row part-row mt-3 border p-3 rounded bg-surface-secondary">
             <div class="col-sm-3">
                 <label>Part Number <span class="required-mark">*</span></label>
                 <input type="text" name="part_no[]" class="form-control part-no-input" autocomplete="off" required>

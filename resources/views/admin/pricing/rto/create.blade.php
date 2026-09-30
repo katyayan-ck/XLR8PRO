@@ -7,7 +7,7 @@
     <div class="col-md-10 col-lg-8">
         <div class="card">
             <div class="card-header bg-gradient-primary">
-                <h2 class="card-title mb-0 fw-bold text-black">{{ $title ?? 'Add RTO Rule' }}</h2>
+                <h2 class="card-title mb-0 fw-bold text-body">{{ $title ?? 'Add RTO Rule' }}</h2>
             </div>
             <div class="card-body">
                 <form action="{{ route('pricing.rto.store') }}" method="POST">

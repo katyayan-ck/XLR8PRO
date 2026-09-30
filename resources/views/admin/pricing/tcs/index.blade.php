@@ -7,7 +7,7 @@
     <div class="col-md-8 col-lg-6">
         <div class="card">
             <div class="card-header bg-gradient-primary">
-                <h2 class="card-title mb-0 fw-bold text-black">{{ $title ?? 'TCS Configuration' }}</h2>
+                <h2 class="card-title mb-0 fw-bold text-body">{{ $title ?? 'TCS Configuration' }}</h2>
             </div>
             <div class="card-body">
                 <form action="{{ route('pricing.tcs.update') }}" method="POST">

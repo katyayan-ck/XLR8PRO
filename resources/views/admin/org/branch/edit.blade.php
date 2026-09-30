@@ -6,23 +6,7 @@
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
-<style>
-    .readonly-value {
-        background-color: var(--tblr-bg-surface-secondary);
-        border: 1px solid #ced4da;
-        border-radius: 6px;
-        padding: 10px 15px;
-        min-height: 42px;
-        display: flex;
-        align-items: center;
-    }
 
-    .card {
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, .08);
-    }
-
-</style>
 
 @endpush
 
@@ -36,7 +20,7 @@
 
             <div class="card">
 
-                <div class="card-header text-black">
+                <div class="card-header text-body">
                     <h2 class="mb-0">Edit Branch Information</h2>
                 </div>
 
@@ -278,7 +262,7 @@
 @endsection
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@basset('https://cdn.jsdelivr.net/npm/sweetalert2@11')
 
 <script>
     $('input[name="phone"]').on('input', function () {

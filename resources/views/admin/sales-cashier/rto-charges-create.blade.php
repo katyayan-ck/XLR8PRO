@@ -94,14 +94,11 @@
 @push('after_styles')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
-<style>
-.card { border-radius:12px; overflow:hidden; }
-.form-control:focus { border-color:#86b7fe; box-shadow:0 0 0 .2rem rgba(13,110,253,.15); }
-</style>
+
 @endpush
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+@basset('https://cdn.jsdelivr.net/npm/flatpickr')
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

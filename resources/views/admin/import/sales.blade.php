@@ -2,22 +2,6 @@
 
 @section('title', 'Sales Imports')
 
-@push('after_styles')
-    <style>
-        .card {
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            border: none;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            border-color: var(--tblr-primary);
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
-        }
-    </style>
-@endpush
-
 @section('content')
     <div class="container-fluid">
         <div class="row">
@@ -188,9 +172,9 @@
 
 @push('after_scripts')
     <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    @basset('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')
+    @basset('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+    @basset('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js')
 
     <!-- Import Polling Script -->
     <script>

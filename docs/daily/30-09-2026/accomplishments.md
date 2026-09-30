@@ -233,3 +233,13 @@ that API is your call).
 **W13 as a whole:** one Settings interface with Site / dealership, Communication, Pricing, User behaviour, Security and
 Modules tabs; managers only (pricing managers: Pricing tab); every change applies at once on the web, in mails and in
 the app. **Verified:** full suite 536 passed, 1 skipped (UiDensityTest fixture now grants UTL_SETTINGS_MANAGE); full PHPStan clean.
+
+### 23. UI clean-up outside Sales — W5
+
+**Delivered:** the same dark-mode-safe, shared-style treatment the Sales screens got, applied to 131 other admin
+screens (Org, IAM, Accounts, Pricing, Vehicle, Utilities, Spares, imports …): token colours instead of white / light /
+black classes, the shared grid / toolbar / export look, duplicated CSS removed, the permission tree and person picker
+moved into the shared stylesheet (they were light-only in dark mode). No behaviour or script changes.
+
+**Verified:** all views compile; full admin smoke sweep — no screen errors. **Left:** 22 files keep small screen-specific
+style blocks (layout only, no colours); PDFs keep print colours by design.

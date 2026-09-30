@@ -4,14 +4,10 @@
 
 @push('after_styles')
 <style>
-    .card {
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0,0,0,.08);
-    }
 
 
     .section-title {
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--tblr-border-color);
         padding-bottom: 10px;
         margin-bottom: 20px;
     }

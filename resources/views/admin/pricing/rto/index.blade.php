@@ -3,7 +3,7 @@
 @section('content')
 <div class="card">
     <div class="card-header bg-gradient-primary d-flex justify-content-between">
-        <h2 class="card-title mb-0 fw-bold text-black">{{ $title }}</h2>
+        <h2 class="card-title mb-0 fw-bold text-body">{{ $title }}</h2>
         <a href="{{ route('pricing.rto.create') }}" class="btn btn-sm btn-light">Add Rule</a>
     </div>
     <div class="card-body">

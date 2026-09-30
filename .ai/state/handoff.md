@@ -22,6 +22,7 @@
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first)
+- 30-09: W5 — 131 admin views outside Sales on the shared UI layer; smoke sweep clean. Note: in this sandbox run the smoke group with `BASSET_CACHE_MAP=false` (storage/basset is not writable here).
 - 30-09: W13 Phase 6 — legacy settings screen → Settings, `GET api/v1/app-settings`, secrets never returned by the settings API (BUG-207 partly).
 - 30-09: W13 Phase 5 — self-service personal details by switch, Appearance switch.
 - 30-09: W13 Phase 4 — holds and TCS on Settings → Pricing; old pages redirect.
@@ -57,7 +58,7 @@
 - U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
 
 ## In progress / next
-- **W13 ✅ done** (DEC-091, Phases 1–6 + W13g). Next: W5 (UI clean-up outside Sales), W7 (N+1 review), then W14 (vehicle specifications / features / compare — plan first; samples at the project root, git-ignored).
+- **W5 ✅** (UI clean-up outside Sales). **Now: W7** — N+1 review of the big lists (enquiries, bookings, quotations): count queries per list data request, eager-load / batch where a row triggers queries; no behaviour change. Then W14 (plan first).
 0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). W3 ✅ (15 Sales HTTP tests; BUG-219 open, BUG-220 fixed). W4 ✅ (baseline, full analyse clean; BUG-221). W6 ✅ (225 flash calls → lang `flash` groups; FlashMessagesLangTest). Next step: W5 (UI clean-up outside Sales: hex / inline styles → shared layer, same method as the Sales pass), then W7 (N+1 review). Then W4 (PHPStan baseline), W5, W6, W7.
 1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
 2. **U7 web side:** admin flashes through the same codes / language file.

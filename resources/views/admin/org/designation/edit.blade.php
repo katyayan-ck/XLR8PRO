@@ -2,57 +2,12 @@
 
 @section('title', 'Edit Designation - ' . $designation->name)
 
-@push('after_styles')
-<style>
-    .card {
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    }
-
-
-    .readonly-value {
-        background-color: var(--tblr-bg-surface-secondary);
-        border: 1px solid #ced4da;
-        border-radius: 6px;
-        padding: 10px 15px;
-        min-height: 42px;
-        display: flex;
-        align-items: center;
-    }
-
-    /* Permission tree (Module -> Process -> Permission), same pattern as demo/roles */
-    .rbac-tree { background: var(--tblr-card-bg); border: 1px solid #dee2e6; border-radius: .5rem; overflow: hidden; }
-    .rbac-module { border-bottom: 1px solid #eee; }
-    .rbac-module:last-child { border-bottom: none; }
-    .rbac-row { display: flex; align-items: center; gap: .5rem; padding: .5rem .9rem; }
-    .rbac-row-module { background: #f8f9fb; font-size: .95rem; }
-    .rbac-row-process { background: #fcfcfd; padding-left: 2.2rem; font-size: .875rem; border-top: 1px solid #f1f1f1; }
-    .rbac-row-perm { padding-left: 4.4rem; font-size: .825rem; border-top: 1px dashed #f3f3f3; }
-    .rbac-row-perm:hover { background: #fafbff; }
-    .rbac-caret { border: none; background: none; padding: 0 .25rem; color: var(--tblr-muted); cursor: pointer; width: 1.2rem; }
-    .rbac-caret i { transition: transform .15s ease; display: inline-block; }
-    .rbac-module.collapsed > .rbac-module-body { display: none; }
-    .rbac-module.collapsed > .rbac-row-module .rbac-caret i { transform: rotate(-90deg); }
-    .rbac-process.collapsed > .rbac-process-body { display: none; }
-    .rbac-process.collapsed > .rbac-row-process .rbac-caret i { transform: rotate(-90deg); }
-    .rbac-label { flex: 1; margin: 0; cursor: pointer; }
-    .rbac-label-module { font-weight: 600; }
-    .rbac-label-process { font-weight: 500; color: var(--tblr-muted); }
-    .rbac-perm-code { margin-left: .5rem; font-size: .7rem; color: var(--tblr-muted); }
-    .rbac-count { font-weight: 500; }
-    .rbac-row-actions { display: flex; gap: .25rem; }
-    .rbac-row-actions .btn-link { text-decoration: none; padding: 0 .35rem; font-size: .75rem; }
-    .rbac-check { width: 1.05rem; height: 1.05rem; cursor: pointer; flex-shrink: 0; }
-    .rbac-state-badge { font-size: .68rem; font-weight: 600; padding: .05rem .4rem; border-radius: .75rem; display: none; }
-</style>
-@endpush
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header text-black">
+                <div class="card-header text-body">
                     <h2 class="mb-0">Edit Designation Information</h2>
                 </div>
                 <div class="card-body">
@@ -185,7 +140,7 @@
             </div>
 
             <div class="card mt-4">
-                <div class="card-header text-black d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="card-header text-body d-flex flex-wrap align-items-center justify-content-between gap-2">
                     <h2 class="mb-0">Permissions — {{ $designation->name }}</h2>
                     <div class="d-flex align-items-center gap-2">
                         <span class="badge text-bg-primary fs-6" id="totalCountBadge">0 / 0 permissions</span>

@@ -10,7 +10,7 @@
             <!-- HEADER -->
             <div
                 class="card-header bg-gradient-primary d-flex justify-content-between align-items-center flex-nowrap flex-md-nowrap flex-wrap gap-3">
-                <h2 class="card-title mb-0 fw-bold text-black text-nowrap">
+                <h2 class="card-title mb-0 fw-bold text-body text-nowrap">
                     {{ $title ?? 'All Users' }}
                 </h2>
 
@@ -33,10 +33,9 @@
 
             <div class="card-body p-0" style="background: var(--tblr-bg-surface-secondary)">
                 <div
-                    class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-white">
+                    class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 border-bottom bg-surface">
                     <div class="d-flex align-items-center gap-2 flex-nowrap">
-                        <input type="text" id="quickFilter" class="form-control w-100 w-md-auto"
-                            style="width:360px; min-width:260px;" placeholder="Smart Search...">
+                        <input type="text" id="quickFilter" class="form-control w-100 w-md-auto xl-toolbar-search" placeholder="Smart Search...">
                         <button id="resetAll" class="btn btn-outline-danger btn-sm text-nowrap">Reset</button>
                     </div>
 
@@ -48,7 +47,7 @@
                 </div>
 
                 <!-- AG Grid -->
-                <div id="myGrid" class="ag-theme-quartz" style="height: calc(93vh - 260px); width:100%;"></div>
+                <div id="myGrid" class="ag-theme-quartz xl-grid" style="height: calc(93vh - 260px); width:100%;"></div>
             </div>
         </div>
     </div>
@@ -71,12 +70,6 @@
     </div>
 </div>
 @endsection
-
-@push('after_styles')
-<style>
-    .ag-theme-quartz .center-header .ag-header-cell-label { justify-content: center !important; }
-</style>
-@endpush
 
 @push('after_scripts')
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@36.2.0/dist/ag-grid-community.min.js"></script>

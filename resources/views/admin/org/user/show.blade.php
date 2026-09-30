@@ -59,7 +59,7 @@
                     <div class="col-md-6">
                         <div class="text-muted small mb-1">Mobile</div>
                         @forelse ($mobiles as $mobile)
-                            <span class="badge {{ $mobile->contact_type === 'Primary' ? 'text-bg-primary' : 'text-bg-light border' }} me-1 mb-1">
+                            <span class="badge {{ $mobile->contact_type === 'Primary' ? 'text-bg-primary' : 'text-bg-surface-secondary border' }} me-1 mb-1">
                                 {{ $mobile->contact_detail }} <span class="opacity-75">({{ $mobile->contact_type }})</span>
                             </span>
                         @empty
@@ -69,7 +69,7 @@
                     <div class="col-md-6">
                         <div class="text-muted small mb-1">Email</div>
                         @forelse ($emails as $email)
-                            <span class="badge {{ $email->contact_type === 'Primary' ? 'text-bg-primary' : 'text-bg-light border' }} me-1 mb-1">
+                            <span class="badge {{ $email->contact_type === 'Primary' ? 'text-bg-primary' : 'text-bg-surface-secondary border' }} me-1 mb-1">
                                 {{ $email->contact_detail }} <span class="opacity-75">({{ $email->contact_type }})</span>
                             </span>
                         @empty
@@ -120,7 +120,7 @@
                                     @if (! empty($orgInfo[$key]['additional']))
                                         <div class="mt-1">
                                             @foreach ($orgInfo[$key]['additional'] as $extra)
-                                                <span class="badge text-bg-light border me-1 mb-1">{{ $extra }}</span>
+                                                <span class="badge text-bg-surface-secondary border me-1 mb-1">{{ $extra }}</span>
                                             @endforeach
                                         </div>
                                     @endif
@@ -169,7 +169,7 @@
                 <div class="text-muted small mb-1">Effective permissions ({{ $rolePermissions->count() }} from role{{ $overrides['added'] ? ' + '.count($overrides['added']).' added' : '' }}{{ $overrides['removed'] ? ' − '.count($overrides['removed']).' removed' : '' }}):</div>
                 <div style="max-height: 220px; overflow-y: auto;">
                     @forelse ($rolePermissions as $permission)
-                        <span class="badge {{ in_array($permission, $overrides['removed']) ? 'text-bg-light border text-decoration-line-through text-muted' : 'text-bg-secondary' }} me-1 mb-1">
+                        <span class="badge {{ in_array($permission, $overrides['removed']) ? 'text-bg-surface-secondary border text-decoration-line-through text-muted' : 'text-bg-secondary' }} me-1 mb-1">
                             {{ $permission }}
                         </span>
                     @empty
@@ -204,7 +204,7 @@
                             <tbody>
                                 @foreach ($banking as $bank)
                                     <tr>
-                                        <td><span class="badge text-bg-light border">{{ $bank->account_type }}</span></td>
+                                        <td><span class="badge text-bg-surface-secondary border">{{ $bank->account_type }}</span></td>
                                         <td>{{ $bank->bank_name }}</td>
                                         <td>{{ $bank->account_holder_name }}</td>
                                         <td><code>{{ 'XXXX'.substr($bank->account_number, -4) }}</code></td>

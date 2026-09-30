@@ -2,21 +2,12 @@
 
 @section('title', 'Edit Vehicle Model - ' . $vehiclemodel->name)
 
-@push('after_styles')
-    <style>
-        .card {
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        }
-    </style>
-@endpush
-
 @section('content')
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header text-black">
+                    <div class="card-header text-body">
                         <h2 class="mb-0">Edit Vehicle Model</h2>
                     </div>
                     <div class="card-body">
@@ -139,7 +130,7 @@ $(document).ready(function () {
 @endpush
 @push('after_scripts')
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@basset('https://cdn.jsdelivr.net/npm/sweetalert2@11')
 
 <script>
 

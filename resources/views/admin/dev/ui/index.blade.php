@@ -50,7 +50,7 @@
         <div class="card">
             <div class="card-header"><h3 class="card-title">Rules of thumb</h3></div>
             <div class="list-group list-group-flush">
-                <div class="list-group-item"><i class="la la-palette text-primary me-2"></i>Colours: <code>bg-*-lt</code>, <code>text-secondary</code>, <code>var(--tblr-*)</code> — never <code>#hex</code> or <code>bg-white</code>.</div>
+                <div class="list-group-item"><i class="la la-palette text-primary me-2"></i>Colours: <code>bg-*-lt</code>, <code>text-secondary</code>, <code>var(--tblr-*)</code> — never <code>#hex</code> or <code>bg-surface</code>.</div>
                 <div class="list-group-item"><i class="la la-calendar text-primary me-2"></i>Dates: <code>&lt;x-ui.date&gt;</code>, <code>@@sitedate</code>, <code>XL.formatDate()</code>.</div>
                 <div class="list-group-item"><i class="la la-list text-primary me-2"></i>Multi-selects: <code>&lt;x-ui.select multiple&gt;</code> (Select2). Uploads: <code>&lt;x-ui.upload&gt;</code>.</div>
                 <div class="list-group-item"><i class="la la-table text-primary me-2"></i>AG-Grid: don't pass <code>theme</code>; the global hook applies the Tabler-bound theme.</div>

@@ -154,3 +154,9 @@ XL.theme.onChange(state => rebuildMyChart());
   page = `@extends('errors.xl')` + the `code` / `title` / `message` sections (optional: `reference`, `actions`).
 - **Admin panel:** `resources/views/vendor/backpack/theme-tabler/errors/layout.blade.php` (in-shell; dashboard + back).
 - **500s** show `App\Support\ErrorRef::get()`; the same id is in the log context of every exception.
+
+## Permission tree + person picker (W5)
+Shared in `public/css/xl-ui.css` (tokens, dark-mode safe): `.rbac-tree`, `.rbac-module`, `.rbac-row(-module|-process|-perm)`,
+`.rbac-caret`, `.rbac-label(-module|-process)`, `.rbac-check`, `.rbac-state-badge` with `.ov-added / .ov-removed /
+.ov-inherited`, and the person search `#personResultsList`, `.person-result`, `.person-avatar`. Used by Org → User
+create / edit and Designation form / edit — never copy them into a view again.

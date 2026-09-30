@@ -2,21 +2,12 @@
 
 @section('title', 'Add New Post Permission')
 
-@push('after_styles')
-<style>
-    .card {
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    }
-</style>
-@endpush
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header text-black">
+                <div class="card-header text-body">
                     <h2 class="mb-0">Add New Post Permission</h2>
                 </div>
                 <div class="card-body">

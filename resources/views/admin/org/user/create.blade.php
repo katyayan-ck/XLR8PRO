@@ -4,55 +4,7 @@
 
 @push('after_styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-<style>
-    :root { --rbac-inherited: #0d6efd; --rbac-added: #198754; --rbac-removed: #dc3545; }
-    .card { border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,.08); }
-    .hidden-card { display: none; }
-    #personResults { position: relative; }
-    #personResultsList {
-        position: absolute; z-index: 20; top: 100%; left: 0; right: 0;
-        background: var(--tblr-card-bg); border: 1px solid #dee2e6; border-radius: 8px;
-        box-shadow: 0 8px 20px rgba(0,0,0,.15); max-height: 320px; overflow-y: auto; display: none;
-    }
-    .person-result { display: flex; align-items: center; gap: .6rem; padding: .5rem .75rem; cursor: pointer; }
-    .person-result:hover { background: var(--tblr-bg-surface-secondary); }
-    .person-avatar {
-        width: 32px; height: 32px; border-radius: 50%; background: #6c757d; color: #fff;
-        display: flex; align-items: center; justify-content: center; font-size: .7rem; flex-shrink: 0; overflow: hidden;
-    }
-    .person-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    #selectedPersonCard { display: none; }
 
-    .rbac-tree { background: var(--tblr-card-bg); border: 1px solid #dee2e6; border-radius: .5rem; overflow: hidden; }
-    .rbac-module { border-bottom: 1px solid #eee; }
-    .rbac-module:last-child { border-bottom: none; }
-    .rbac-row { display: flex; align-items: center; gap: .5rem; padding: .5rem .9rem; }
-    .rbac-row-module { background: #f8f9fb; font-size: .95rem; }
-    .rbac-row-process { background: #fcfcfd; padding-left: 2.2rem; font-size: .875rem; border-top: 1px solid #f1f1f1; }
-    .rbac-row-perm { padding-left: 4.4rem; font-size: .825rem; border-top: 1px dashed #f3f3f3; }
-    .rbac-row-perm:hover { background: #fafbff; }
-    .rbac-caret { border: none; background: none; padding: 0 .25rem; color: var(--tblr-muted); cursor: pointer; width: 1.2rem; }
-    .rbac-caret i { transition: transform .15s ease; display: inline-block; }
-    .rbac-module.collapsed > .rbac-module-body { display: none; }
-    .rbac-module.collapsed > .rbac-row-module .rbac-caret i { transform: rotate(-90deg); }
-    .rbac-process.collapsed > .rbac-process-body { display: none; }
-    .rbac-process.collapsed > .rbac-row-process .rbac-caret i { transform: rotate(-90deg); }
-    .rbac-label { flex: 1; margin: 0; cursor: pointer; }
-    .rbac-label-module { font-weight: 600; }
-    .rbac-label-process { font-weight: 500; color: var(--tblr-muted); }
-    .rbac-perm-code { margin-left: .5rem; font-size: .7rem; color: var(--tblr-muted); }
-    .rbac-count { font-weight: 500; }
-    .rbac-row-actions { display: flex; gap: .25rem; }
-    .rbac-row-actions .btn-link { text-decoration: none; padding: 0 .35rem; font-size: .75rem; }
-    .rbac-check { width: 1.05rem; height: 1.05rem; cursor: pointer; flex-shrink: 0; }
-    .rbac-check:disabled { cursor: not-allowed; opacity: .35; }
-    .rbac-state-badge { font-size: .68rem; font-weight: 600; padding: .05rem .4rem; border-radius: .75rem; display: none; }
-    .ov-added .rbac-label-perm { color: var(--rbac-added); }
-    .ov-added .rbac-state-badge { display: inline-block; background: #d1e7dd; color: var(--rbac-added); }
-    .ov-removed .rbac-label-perm { color: var(--rbac-removed); text-decoration: line-through; }
-    .ov-removed .rbac-state-badge { display: inline-block; background: #f8d7da; color: var(--rbac-removed); }
-    .ov-inherited .rbac-state-badge { display: inline-block; background: #cfe2ff; color: var(--rbac-inherited); }
-</style>
 @endpush
 
 @section('content')
@@ -60,7 +12,7 @@
     <div class="row">
         <div class="col-lg-10 mx-auto">
             <div class="card">
-                <div class="card-header text-black d-flex justify-content-between align-items-center">
+                <div class="card-header text-body d-flex justify-content-between align-items-center">
                     <h2 class="mb-0">New User</h2>
                     <a href="{{ backpack_url('org/user') }}" class="btn btn-outline-secondary btn-sm">
                         <i class="la la-arrow-left"></i> Back to list

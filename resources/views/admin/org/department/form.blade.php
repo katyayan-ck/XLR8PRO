@@ -2,30 +2,12 @@
 
 @section('title', $title ?? 'Department Form')
 
-@push('after_styles')
-<style>
-    .card {
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    }
-    .readonly-value {
-        background-color: var(--tblr-bg-surface-secondary);
-        border: 1px solid #ced4da;
-        border-radius: 6px;
-        padding: 10px 15px;
-        min-height: 42px;
-        display: flex;
-        align-items: center;
-    }
-</style>
-@endpush
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header text-black">
+                <div class="card-header text-body">
                     <h2 class="mb-0">
                         {{ isset($department) ? 'Edit Department Information' : 'Add New Department' }}
                     </h2>
@@ -109,7 +91,7 @@
 @endsection
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@basset('https://cdn.jsdelivr.net/npm/sweetalert2@11')
 <script>
     $('input[name="code"]').on('input', function () {
         this.value = this.value

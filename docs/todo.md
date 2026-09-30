@@ -390,7 +390,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W12 | **Org rules as validation** (your request 30-09): no user without a primary branch / location / department / division (`All` / `None` not allowed there); every parent branch / department / segment has a same-name, same-code child location / division / sub-segment; verticals mandatory (multi-select, no `None`); segment / sub-segment / model / variant blank = all; every user has an employee code, FSCs may have a Mile ID | ✅ 30-09 (Phase A: rules in the entity services; legacy gaps → BUG-218) |
 | W3 | Q1 Sales / booking feature tests (enquiry, quotation, booking flows) | ✅ 30-09 (15 HTTP tests; BUG-219 logged, BUG-220 fixed) |
 | W4 | Q5 PHPStan baseline for the legacy controllers | ✅ 30-09 (`phpstan-baseline.neon`, 2 511 legacy errors; full run clean; BUG-221) |
-| W5 | Q7 UI clean-up outside Sales (hex / inline styles → shared layer, same method as the Sales pass) | 🔴 |
+| W5 | Q7 UI clean-up outside Sales (hex / inline styles → shared layer, same method as the Sales pass) | ✅ 30-09 (131 views; style blocks ~100 → 22 files; no hex in style blocks; PDFs excluded) |
 | W6 | U7 web side: admin flash messages through the error codes / language file (same wording) | ✅ 30-09 (225 calls → `{module}.flash.*`) |
 | W7 | U4 N+1 review of the big lists (enquiries, bookings, quotations) | 🔴 |
 | W13 | **One categorised Settings interface** (your request 30-09) — the only place settings are shown; changes apply at once on web and app / API. Today they are spread over Utilities → Settings (56 keys), the legacy System Setting screen, and the pricing TCS / Hold screens. Parts W13a–W13f; plan to be saved in `tech-guides/frs-and-workflows/plans/` | ✅ 30-09 — DEC-091 Phases 1–6 + W13g (one categorised Settings screen, applied everywhere, `GET app-settings`) |
@@ -1041,3 +1041,13 @@ that API is your call).
 **W13 as a whole:** one Settings interface with Site / dealership, Communication, Pricing, User behaviour, Security and
 Modules tabs; managers only (pricing managers: Pricing tab); every change applies at once on the web, in mails and in
 the app. **Verified:** full suite 536 passed, 1 skipped (UiDensityTest fixture now grants UTL_SETTINGS_MANAGE); full PHPStan clean.
+
+### 23. UI clean-up outside Sales — W5
+
+**Delivered:** the same dark-mode-safe, shared-style treatment the Sales screens got, applied to 131 other admin
+screens (Org, IAM, Accounts, Pricing, Vehicle, Utilities, Spares, imports …): token colours instead of white / light /
+black classes, the shared grid / toolbar / export look, duplicated CSS removed, the permission tree and person picker
+moved into the shared stylesheet (they were light-only in dark mode). No behaviour or script changes.
+
+**Verified:** all views compile; full admin smoke sweep — no screen errors. **Left:** 22 files keep small screen-specific
+style blocks (layout only, no colours); PDFs keep print colours by design.

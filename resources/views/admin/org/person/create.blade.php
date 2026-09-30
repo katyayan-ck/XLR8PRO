@@ -2,22 +2,12 @@
 
 @section('title', 'Add New Person')
 
-@push('after_styles')
-<style>
-    .card {
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    }
-
-</style>
-@endpush
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
         <div class="col-lg-8 offset-lg-2">
             <div class="card">
-                <div class="card-header text-black">
+                <div class="card-header text-body">
                     <h2 class="mb-0">Add New Person</h2>
                     <p class="mb-0 text-muted">Only a name and one primary mobile number are required to get
                         started — everything else (identity numbers, addresses, banking, additional contacts)
@@ -126,7 +116,7 @@
 @endsection
 
 @push('after_scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@basset('https://cdn.jsdelivr.net/npm/sweetalert2@11')
 <script>
     $('input[name="mobile"]').on('input', function () {
         this.value = this.value.replace(/\D/g, '').slice(0, 10);

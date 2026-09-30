@@ -4,7 +4,6 @@
 
 @push('after_styles')
     <style>
-        .card { border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); }
         .section-title { font-size: 16px; font-weight: 500; color: var(--tblr-primary); margin-bottom: 15px; border-bottom: 2px solid var(--tblr-border-color); padding-bottom: 5px; }
         .form-control:disabled, .form-control[readonly] { background-color: var(--tblr-bg-surface-secondary); opacity: 1; border: 1px dashed var(--tblr-border-color); font-weight: 500;}
     </style>
