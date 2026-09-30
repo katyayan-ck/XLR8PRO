@@ -3,97 +3,74 @@
 
 # Handoff — the one live state file (rewrite with every commit; `.ai/guidelines/10-workflow.md`)
 
-**Updated:** 30-09-2026 · **Branch:** `dev/admin` · **Pushed:** no. The next stage merge waits on the owner
-(origin/stage has 4 reverts by the booking team).
+**Updated:** 01-10-2026 · **Branch:** `dev/admin` · **Pushed:** up to `7140141` (01-10, owner request); later commits
+are local only — pushing again needs the owner's approval in that turn. Not merged to `stage` (N2, owner).
 
 ## Where things are (DEC-086 layout)
 - Guides: `tech-guides/README.md` (load map) · project card `tech-guides/00-project.md`.
-- Records: `docs/todo.md` (to-do + accomplishments) · `docs/changelog.md` · `docs/bugs/open.md` / `closed.md` ·
-  date-wise `docs/daily/DD-MM-YYYY/` ·
-  `docs/decisions/decision-log.md` · plans `tech-guides/frs-and-workflows/plans/`.
+- Records: `docs/todo.md` (Part 1 to-do, Part 2 accomplishments) · `docs/changelog.md` · `docs/bugs/open.md` /
+  `closed.md` (index `.ai/state/bugs-index.md`) · date-wise `docs/daily/DD-MM-YYYY/` · `docs/decisions/decision-log.md`
+  (last: DEC-092) · plans `tech-guides/frs-and-workflows/plans/` (all current plans closed ✅).
 - Superseded files: `_backup/` (git-ignored; never read by agents).
 
 ## Project state (summary; details in `docs/todo.md` Part 2)
-- **Done and on `stage`:** entity services (DEC-050…059), platform utilities (DEC-060…065), UI layer / Appearance /
-  AG-Grid theming (DEC-066…069), data scoping (DEC-071).
-- **Done on `dev/admin`, not pushed:** bug-fix wave (DEC-070), My Account + dashboard (DEC-072), pricing redesign +
-  masters (DEC-073…083), security baseline (DEC-084), API error envelope (DEC-085), error pages, form cards + density,
-  API docs (pricing, settings, auth, devices), BUG-198 / 208 / 210 fixes, this clean-up (DEC-086).
+- **On `stage`:** entity services (DEC-050…059), platform utilities (DEC-060…065), UI layer (DEC-066…069), data scoping
+  (DEC-071).
+- **On `origin/dev/admin` (pushed 01-10):** bug-fix wave (DEC-070), My Account + dashboard (DEC-072), pricing redesign +
+  masters (DEC-073…083), security baseline (DEC-084), API error envelope (DEC-085), repo clean-up (DEC-086), stage merge
+  + booking-team schema (DEC-087/088), users workbook + bulk edit + org rules (DEC-089/090, W10–W12), W1–W9, Sales tests
+  (W3), PHPStan baseline (W4), UI clean-up (W5), flash messages in lang files (W6), N+1 review (W7), one categorised
+  Settings screen (DEC-091, W13), vehicle content Phases 1–3 (DEC-092).
+- **Local only:** `8cfd223` W14 Phase 4–5 (compare screen + API) and the records commits after it.
 - **Local data:** vehicle masters in `xlrm` purged (DEC-051) awaiting a fresh import; no published price snapshots
-  locally (run the Pricing Process to fill them). Mobile OTP login is broken until D1 (BUG-187).
+  locally. Mobile OTP login is broken until D1 (BUG-187).
 - **Track B:** paused after B0 (resume from xceler8 `d9009db`). Deferred until after UAT: Laravel 13, Excel 4,
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
-## Just done (latest first)
-- 01-10: W14 Phase 4–5 — compare screen + API (`CompareService`), docs; W14 complete.
-- 01-10: pushed `dev/admin` to `origin/dev/admin` (89 commits, fast-forward; owner request). Not merged to `stage`.
-- 01-10: W14 Phase 3 — specifications / features workbooks (ours by code, OEM sample by name with a match report).
-- 01-10: W14 Phase 2 — Vehicle Content screens (model specs / images / brochure; trim features / gallery by level).
-- 30-09: W14 Phase 1 — vehicle content tables, entity services, media collections, VEH_CONT / VEH_CMPR permissions.
-- 30-09: W7 — N+1 review: per-request memos (settings, legacy settings, OrgService lookups), booking grid batched, bell once per request.
-- 30-09: W5 — 131 admin views outside Sales on the shared UI layer; smoke sweep clean. Note: in this sandbox run the smoke group with `BASSET_CACHE_MAP=false` (storage/basset is not writable here).
-- 30-09: W13 Phase 6 — legacy settings screen → Settings, `GET api/v1/app-settings`, secrets never returned by the settings API (BUG-207 partly).
-- 30-09: W13 Phase 5 — self-service personal details by switch, Appearance switch.
-- 30-09: W13 Phase 4 — holds and TCS on Settings → Pricing; old pages redirect.
-- 30-09: W13g — title / footer / menu brand / tagline / image fields as the owner asked.
-- 30-09: W13 Phase 3 — channel switches (OTP exempt), SMTP from settings, signature, default sender.
-- 30-09: W13 Phase 2 — dealership name / favicon / legal name applied (`ApplySiteSettings`, `dealership()`, `site_favicon_url()`).
-- 30-09: W13 Phase 1 — categorised Settings interface (7 tabs, managers only; pricing tab for pricing managers).
-- 30-09: W13 settings interface added to the to-do; owner answered (DEC-091: UTL_SETTINGS_MANAGE / PRC_WKFL_MANAGE, hold in Settings + process, encrypted secrets); plan saved. Next after W5 / W7 or on request: W13 Phase 1 (catalogue `config/settings_ui.php` + tabbed screen).
-- 30-09: W6 — admin flash messages from `resources/lang/en/{module}.php` 'flash' groups (+ new `utils.php`), same wording.
-- 30-09: W4 — `phpstan-baseline.neon` (2 511 legacy errors), full analyse clean, 2 missing imports fixed, BUG-221 logged.
-- 30-09: W3 — Sales HTTP feature tests (`tests/Feature/Sales/`), BUG-220 fixed, BUG-219 logged.
-- 30-09: W11 / DEC-089 Phase C — Org → Users → Bulk edit (`UserBulkEditController`, `xl-user-bulk.js`, picker editor); DEC-089 plan closed.
-- 30-09: W10 / DEC-089 Phase B — users workbook (`app/Services/Org/UsersWorkbook/`, export / template / import; RBAC workbook at `export/rbac`); DEC-090 cell semantics. Round trip 200/200 no-op.
-- 30-09: W12 / DEC-089 Phase A — same-code children (services + migration), employee primaries + vertical enforced (`EmployeeService::checkPrimaries()`), BUG-218 logged.
-- 30-09: W9 — Vehicle Info export with master dropdowns (hidden Lists sheet, dependent sub-segment) and a strict import; `AWD` added to DRIVETRAIN.
-- 30-09: Continuity rule added for all agents (`.ai/guidelines/10-workflow.md`).
-- 30-09: W8 — My Account in the UI-demo layout with Permissions & scope (`MyAccountService::access()`). Next: W9 Vehicle Info export dropdowns.
-- 30-09: W1 (merge wrap-up: 476 passed, temp branch deleted) and W2 (last API docs + Postman; BUG-217 fixed). Next: W3 Sales / booking feature tests.
-- 30-09: BUG-216 fixed — colour mode flashed between open tabs (cross-tab sync loop in `xl-theme.js`).
-- 30-09: booking team schema (`booking.sql`) compared; fail-safe migration `2026_09_30_013707_align_crm_enquiries_with_booking_team_schema` run on `xlrm` + `xlrm_testing` (DEC-088).
-- 30-09: Sales UI/UX pass — 77 views on the shared layer (xl-grid, toolbar / popover / loader classes, tokens, @basset, XL.notify); logic untouched.
-- 30-09: `origin/stage` merged into `dev/admin` keeping DEC-068…071 and the team's 27-file work (DEC-087); BUG-214 / 215 fixed on the way.
-- 30-09: `dev/admin` history rewritten to drop the pricing workbooks (backup branch `backup/dev-admin-before-rewrite-30-09`).
-- 30-09: `/docs` behind the admin login (BUG-211); deleted the unused `Booking\XlInsurer` (BUG-212) and `Exceptions\Handler`; BUG-213 closed as a false positive (the file is `Pricing.php`, the live model).
-- Date-wise records: `docs/daily/29-09-2026/{handoff,changelog,accomplishments}.md`, kept in step with the cumulative files (rule in `10-workflow.md`).
-- **DEC-086 clean-up (to-do 10c C1–C7):** `tech-guides/` (architecture, modules with cards, platform, api,
-  frs-and-workflows with FRS, plans and workflow cards); `docs/` reduced to records; bugs verified and split (31 open /
-  182 closed, BUG-029 closed, BUG-211…213 new); one changelog; to-do + accomplishments merged; `_backup/`; `CLAUDE.md` /
-  `AGENTS.md` 21.1 → 12.4 KB (generic Boost sections excluded via `config/boost.php`), unused skills removed, stale
-  pricing skill rewritten, `.claude/settings.json` read-denies; Laradocs reads `tech-guides/`.
-- U11: auth + devices API docs; BUG-210 fixed (device push-token registration).
-- U7 (API side, DEC-085): one error envelope for every `api/*` exception; messages in `resources/lang/en/errors.php`.
-- U1 / U3 / U4: collapsible + draggable form cards with required badges, density settings, lazy images.
+## Just done (latest first; older days in `docs/daily/`)
+- 01-10: records tidy-up — this handoff rewritten (stale "next" items removed), to-do / bug index verified.
+- 01-10: W14 complete (DEC-092) — Phase 4–5 compare (`CompareService`, Vehicles → Compare Vehicles,
+  `GET api/v1/vehicles/compare/{variants,models}` + docs / Postman); Phase 3 workbooks (ours by code, OEM samples by name
+  with a match report); Phase 2 Vehicle Content screens.
+- 01-10: pushed `dev/admin` → `origin/dev/admin` (89 commits, fast-forward).
+- 30-09: W14 Phase 1, W13 (Phases 1–6 + W13g), W7, W5, W6, W4, W3, W10–W12, W8, W9, W1, W2, BUG-216, DEC-087/088 — see
+  `docs/daily/30-09-2026/`.
 
 ## In progress / next
-- **W5 ✅** (UI clean-up outside Sales). **W7 ✅** (lists: bookings 567 → 95 queries). **W14 ✅ done** (DEC-092: content data, screens, workbooks, compare screen + API). Next: the to-do list has no unblocked item left — waiting on the owner (see *Waiting on the owner*); smaller follow-ups: BUG-221 dead-class paths, the W6 remainder (exception texts in error flashes).
-0. **W10–W12 (DEC-089) ✅ done** — plan closed; users workbook + bulk edit screen + org rules; legacy gaps BUG-218 (data, owner / HR). W3 ✅ (15 Sales HTTP tests; BUG-219 open, BUG-220 fixed). W4 ✅ (baseline, full analyse clean; BUG-221). W6 ✅ (225 flash calls → lang `flash` groups; FlashMessagesLangTest). Next step: W5 (UI clean-up outside Sales: hex / inline styles → shared layer, same method as the Sales pass), then W7 (N+1 review). Then W4 (PHPStan baseline), W5, W6, W7.
-1. **U11 API docs:** notifications / alerts / messages, documents, history, webhooks (`tech-guides/api/`).
-2. **U7 web side:** admin flashes through the same codes / language file.
-3. **U1 per screen:** header-less Backpack form cards get headers when converted; a real-browser check of quotation /
-   booking forms.
+- **Nothing in progress.** Every to-do row W1–W14 is ✅; the remaining 🟡 rows (S4/S5/S7/S9/S12/S14, SL6, O8, DA4, Q*, U2,
+  F3, N2) each wait on an owner decision, a package approval or are "converge when touched".
+- **Unblocked follow-ups, in order:**
+  1. BUG-221 — point the dead-class references at the current models where the path is still used
+     (`AccessoryExportService`, `Booking` helper); dead files (`XlSpareMaster` relations, `ProductionRBACSeeder`) only
+     with the owner's deletion list (D5–D12).
+  2. W6 remainder — exception texts appended to admin error flashes (`… : $e->getMessage()`) → log the exception, show
+     the lang message only.
 
 ## Waiting on the owner
-- W14: grant `VEH_CONT_VIEW` / `VEH_CONT_EDIT` / `VEH_CMPR_VIEW` to the designations that need them (only superadmin has them now).
-- W14: load your sample workbooks on UAT through Vehicle Content → Workbooks (import), then fix the unmatched names the report lists (local test copy: 11 model / 115 trim columns).
-- Environment: `CACHE_STORE=database` turns every cache read into a query (~20–30 per page after W7); Redis or file cache on UAT recommended.
-- BUG-207 remainder: narrow or retire `GET system-settings` / `topic` / `category` / `{key}` now that `app-settings` exists; move PUT / import onto SettingsService.
-- Deletion OK? `resources/views/admin/pricing/hold/index.blade.php` and `resources/views/admin/pricing/tcs/index.blade.php` are unused since W13 Phase 4.
-- Deploy note (W13 Phase 2): set Settings → Site → Dealership name on UAT — a leftover demo value (local: "ABC Motors") would show in the header.
-- BUG-219: should a `Dummy` booking still need the base fields (name, mobile, branch, vehicle, sale type)? Today they are skipped.
-- DEC-090 (agent, within DEC-089): workbook `ALL` = unrestricted (no scope rows, so it also covers codes added later); `NONE` on an org add-on = primary only; a new employee must list vertical codes (no `ALL`). Say if `ALL` should mean today's codes only.
-- **Rewrite backup:** delete `backup/dev-admin-before-rewrite-30-09` + `git gc` when confirmed.
-- **Deletions:** D5–D12.
-- **Data dictionary:** 5 questions; **P0 decisions:** D1–D3, D13, D23, D29, N2 (stage merge).
-- **Security policy (N4):** idle minutes, lock, password expiry / history, email / mobile self-service, token expiry.
-- **Package approvals:** 2FA, backups, error tracking, browser tests. **API:** `E002` rename (app team);
-  BUG-207 / BUG-209.
+- **Push / merge:** push the local commits after `7140141`; merge `dev/admin` into `stage` (N2); delete
+  `backup/dev-admin-before-rewrite-30-09` + `git gc`.
+- **W14:** grant `VEH_CONT_VIEW` / `VEH_CONT_EDIT` / `VEH_CMPR_VIEW` to the designations that need them (only superadmin
+  has them now); load the sample workbooks on UAT (Vehicle Content → Workbooks) and fix the unmatched names the report
+  lists (test copy: 11 model / 115 trim columns).
+- **W13 deploy:** set Settings → Site → Dealership name on UAT (a demo value such as "ABC Motors" would show in the
+  header). Delete the unused `resources/views/admin/pricing/{hold,tcs}/index.blade.php`?
+- **Environment:** `CACHE_STORE=database` makes every cache read a query (~20–30 per page after W7); Redis or file cache
+  on UAT recommended.
+- **Bugs:** BUG-219 (should a `Dummy` booking still need the base fields?); BUG-207 remainder (narrow or retire
+  `GET system-settings` / `topic` / `category` / `{key}`; move PUT / import onto SettingsService); BUG-218 (HR fills the
+  missing employee primaries).
+- **DEC-090 check:** workbook `ALL` = unrestricted (also covers codes added later); `NONE` on an org add-on = primary
+  only. Say if `ALL` should mean today's codes only.
+- **Decisions:** D1–D3, D13, D23, D29 (P0); deletions D5–D12; data dictionary (5 questions); security policy N4 (idle
+  minutes, lock, password expiry / history, email / mobile self-service, token expiry).
+- **Package approvals:** 2FA, backups, error tracking, browser tests. **API:** `E002` rename (app team); BUG-209.
 
 ## How to verify
-- `php artisan test --compact`: 472 pass, 1 known skip (29-09). Tests run on `xlrm_testing`; migrate the copy with
-  `DB_DATABASE=xlrm_testing php artisan migrate` (don't run `testing:refresh-db`).
-- Smoke: `render2.php` in the session scratchpad (users 1 and 40), or `php artisan test --group=smoke` before merges.
+- `php artisan test --compact` (~4 min, 536 passed on 30-09; `PricingRecalcTest` can error only inside the full run in
+  this sandbox and passes alone). Tests run on `xlrm_testing`; migrate the copy with
+  `DB_DATABASE=xlrm_testing php artisan migrate` (never `testing:refresh-db`). Do **not** set `BASSET_CACHE_MAP=false`
+  for the normal suite (10× slower); use it only for `php artisan test --group=smoke` here (storage/basset not writable).
+- Vehicle content: `php artisan test --compact tests/Feature/Vehicle` (26 passed).
 - Local MySQL (Laragon) must be running.
 - After editing `.ai/`: `php artisan ai:refresh-context`, `php artisan boost:update`, then copy `AGENTS.md` to
   `CLAUDE.md` (Boost only rewrites `AGENTS.md`).
