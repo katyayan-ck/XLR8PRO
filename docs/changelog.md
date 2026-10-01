@@ -10181,3 +10181,16 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 - **Checked:** comms outbox list, sandbox tab and message page as superadmin + user 40 with a rolled-back fixture
   (`tests/RouteSnapshots/accounts-comms.txt`) identical; `CommsWebhookControllerTest` and the platform store tests passed.
 - **Baseline:** 261 `DB::` uses in 37 files left.
+
+## W15 — user importers, role backfill seeder, testing-DB refresh command off the DB facade
+- **Converted:** `Imports\Sheets\StandaloneUsersImport` (employee / designation lookups via `Employee` / `Designation`
+  `::withTrashed()` — the raw reads saw deleted rows too), `Imports\Sheets\UserScopesSheetImport` (employee / user lookups),
+  `database/seeders/UserRoleBackfillSeeder` (users ⋈ employees via `User::withoutGlobalScopes()->…->toBase()`),
+  `Console\Commands\RefreshTestingDatabase` (`Schema::dropDatabaseIfExists()` / `createDatabase()` — the same statements,
+  charset / collation from the connection; table count via `Schema::getTables()`, which leaves views out).
+- **Checked:** `StandaloneUsersImportTest`, `UserRbacWorkbookTest`, `UserBulkImportPageTest` 12 passed before and after;
+  the schema grammar's drop / create statements compared; PHPStan clean.
+- **Not converted, on the owner's sheet:** `EnumToKeyValueSeeder` reads `bmpl_enum_*` tables that no longer exist
+  (deletion, #6); `RefreshAiContext` reads `information_schema` for the agents' schema cards (proposed exemption for schema
+  tooling, #21).
+- **Baseline:** 250 `DB::` uses in 33 files left.

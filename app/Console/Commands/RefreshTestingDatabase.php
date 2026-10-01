@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Copies the local development database (schema + data) into a separate
@@ -62,8 +62,9 @@ class RefreshTestingDatabase extends Command
         $port = (string) $connection['port'];
         $user = (string) $connection['username'];
 
-        DB::statement("DROP DATABASE IF EXISTS `{$target}`");
-        DB::statement("CREATE DATABASE `{$target}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        // DEC-093: the schema builder issues the same statements (charset / collation from the connection: utf8mb4 / utf8mb4_unicode_ci)
+        Schema::dropDatabaseIfExists($target);
+        Schema::createDatabase($target);
 
         $auth = sprintf('--host=%s --port=%s --user=%s', escapeshellarg($host), escapeshellarg($port), escapeshellarg($user));
         $command = sprintf(
@@ -91,7 +92,7 @@ class RefreshTestingDatabase extends Command
             return self::FAILURE;
         }
 
-        $tables = DB::selectOne('SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = ?', [$target])->n;
+        $tables = count(Schema::getTables($target));
         $this->info("Done: {$tables} tables in {$target}.");
 
         return self::SUCCESS;

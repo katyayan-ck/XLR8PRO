@@ -16,7 +16,7 @@ phase they unblock; **Rec.** is the agent's recommendation.
 ## Phase 2 — dead-code removal
 | # | Decision | Rec. | Your answer |
 |---|---|---|---|
-| 6 | Delete: D5–D12 list (Brand screen BUG-009, ExportController BUG-180, RBACService BUG-190, Core graph models, `getChassisNumbers` BUG-153, dead Org views BUG-154, seeder test users, Booking scopes BUG-191); the Booking model's dead `vehicle()` + 9 dashboard helpers; the unused `getAccessoriesList()`, `fetchCbrData()`, `fetchPendBkData()` (booking controller, no callers); `XlSpareMaster` relations + `ProductionRBACSeeder` (BUG-221); unused `resources/views/admin/pricing/{hold,tcs}/index.blade.php`; branch `backup/dev-admin-before-rewrite-30-09` | yes to all | |
+| 6 | Delete: D5–D12 list (Brand screen BUG-009, ExportController BUG-180, RBACService BUG-190, Core graph models, `getChassisNumbers` BUG-153, dead Org views BUG-154, seeder test users, Booking scopes BUG-191); the Booking model's dead `vehicle()` + 9 dashboard helpers; the unused `getAccessoriesList()`, `fetchCbrData()`, `fetchPendBkData()` (booking controller, no callers); `XlSpareMaster` relations + `ProductionRBACSeeder` (BUG-221); `EnumToKeyValueSeeder` (reads the removed `bmpl_enum_*` tables); unused `resources/views/admin/pricing/{hold,tcs}/index.blade.php`; branch `backup/dev-admin-before-rewrite-30-09` | yes to all | |
 
 ## Phase 3 — booking code to project level
 | # | Decision | Rec. | Your answer |
@@ -43,7 +43,7 @@ phase they unblock; **Rec.** is the agent's recommendation.
 | 18 | **HR data** — map 36 employees on unknown designation codes (D24 / BUG-183); fill missing branch / location / department (BUG-218, 24–39 employees); who of the 34 disabled users gets access back (DA4) | HR to provide | |
 | 19 | **D26** — mask Aadhaar / PAN in old KYC rows | yes | |
 | 20 | **DEC-090** — users workbook `ALL` = unrestricted (also covers codes added later). Keep, or "today's codes only"? | keep | |
-| 21 | **DEC-093** defaults — `DB::transaction` stays allowed; migrations exempt from the Eloquent-only rule | confirm | |
+| 21 | **DEC-093** defaults — `DB::transaction` stays allowed; migrations exempt from the Eloquent-only rule; **also exempt schema tooling** that reads `information_schema` (`ai:refresh-context` schema cards — no model exists for it) | confirm | |
 
 ## Phase 6 — pricing sign-off
 | # | Decision | Rec. | Your answer |

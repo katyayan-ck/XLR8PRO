@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Imports\Sheets;
 
+use App\Models\Admin\Employee;
+use App\Models\User;
 use App\Services\IAM\UserScopeService;
 use App\Services\OrgScopeService;
 use Illuminate\Support\Collection;
@@ -99,9 +101,9 @@ final class UserScopesSheetImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            $employee = DB::table('xlr8_admin_employee')->where('code', $empCode)->first();
-            $userId = DB::table('users')->where('employee_code', $empCode)->value('id')
-                ?? DB::table('users')->where('username', strtolower($empCode))->value('id');
+            $employee = Employee::withTrashed()->where('code', $empCode)->toBase()->first();
+            $userId = User::withTrashed()->where('employee_code', $empCode)->value('id')
+                ?? User::withTrashed()->where('username', strtolower($empCode))->value('id');
 
             if (! $userId) {
                 $this->summary['skipped_users']++;

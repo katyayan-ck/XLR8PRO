@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\IAM\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Spatie\Permission\PermissionRegistrar;
 
 /**
@@ -25,12 +24,13 @@ class UserRoleBackfillSeeder extends Seeder
 {
     public function run(): void
     {
-        $rows = DB::table('users')
+        // DEC-093: from the model; every user row as before (scopes off), plain rows
+        $rows = User::withoutGlobalScopes()
             ->join('xlr8_admin_employee', 'xlr8_admin_employee.code', '=', 'users.employee_code')
             ->whereNotNull('users.employee_code')
             ->where('users.is_active', 1)
             ->select('users.id as user_id', 'users.username', 'xlr8_admin_employee.designation_code')
-            ->get();
+            ->toBase()->get();
 
         $roleCache = Role::where('guard_name', 'web')->get()->keyBy('code');
 

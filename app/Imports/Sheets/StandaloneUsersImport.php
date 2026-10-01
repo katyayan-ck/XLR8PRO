@@ -2,6 +2,7 @@
 
 namespace App\Imports\Sheets;
 
+use App\Models\Admin\Designation;
 use App\Models\Admin\Employee;
 use App\Models\IAM\Role;
 use App\Models\User;
@@ -101,7 +102,7 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
         try {
             // person_code is immutable: an existing employee keeps its person; a new employee's
             // code is derived by PersonRecordService (Aadhaar → PAN → PERS-###### sequence).
-            $existingPersonCode = DB::table('xlr8_admin_employee')->where('code', $empCode)->value('person_code');
+            $existingPersonCode = Employee::withTrashed()->where('code', $empCode)->value('person_code');
             $isNew = $existingPersonCode === null;
 
             // One row is all-or-nothing: a value rejected at any step leaves nothing half-written.
@@ -525,19 +526,19 @@ class StandaloneUsersImport implements ToCollection, WithHeadingRow
 
         // Export label "Name (CODE)"
         if (preg_match('/\(([^()]+)\)\s*$/', $val, $m)
-            && DB::table('xlr8_admin_designation')->where('code', trim($m[1]))->exists()) {
+            && Designation::withTrashed()->where('code', trim($m[1]))->exists()) {
             return trim($m[1]);
         }
 
         // Exact code
-        $exists = DB::table('xlr8_admin_designation')->where('code', $val)->exists();
+        $exists = Designation::withTrashed()->where('code', $val)->exists();
         if ($exists) {
             return $val;
         }
 
         // Exact name only: the designation is the user's role, so a partial-name guess could
         // grant another role's permissions (a stale "MAN" matched "Accounts Manager").
-        $code = DB::table('xlr8_admin_designation')
+        $code = Designation::withTrashed()
             ->whereRaw('UPPER(name) = ?', [$val])
             ->value('code');
 
