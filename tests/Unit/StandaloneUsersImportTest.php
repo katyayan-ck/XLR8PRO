@@ -4,8 +4,15 @@ namespace Tests\Unit;
 
 use App\Imports\Sheets\StandaloneUsersImport;
 use App\Imports\UsersImportWorkbook;
+use App\Models\Admin\Branch;
+use App\Models\Admin\Department;
+use App\Models\Admin\Designation;
+use App\Models\Admin\Employee;
+use App\Models\Admin\Location;
+use App\Models\Admin\Person;
+use App\Models\Admin\Vertical;
+use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -28,12 +35,12 @@ class StandaloneUsersImportTest extends TestCase
     {
         parent::setUp();
 
-        $branch = DB::table('xlr8_admin_branch')->where('is_active', 1)->value('code');
-        $location = DB::table('xlr8_admin_location')->where('branch_code', $branch)->value('code');
-        $department = DB::table('xlr8_admin_department')->value('code');
-        $vertical = DB::table('xlr8_admin_vertical')->whereNull('deleted_at')->value('code'); // DEC-089: required
-        $designation = DB::table('xlr8_admin_designation')->where('name', '!=', 'superadmin')->value('name');
-        $existing = DB::table('xlr8_admin_employee')->whereNotNull('person_code')->first();
+        $branch = Branch::withoutGlobalScopes()->toBase()->where('is_active', 1)->value('code');
+        $location = Location::withoutGlobalScopes()->toBase()->where('branch_code', $branch)->value('code');
+        $department = Department::withoutGlobalScopes()->toBase()->value('code');
+        $vertical = Vertical::withoutGlobalScopes()->toBase()->whereNull('deleted_at')->value('code'); // DEC-089: required
+        $designation = Designation::withoutGlobalScopes()->toBase()->where('name', '!=', 'superadmin')->value('name');
+        $existing = Employee::withoutGlobalScopes()->toBase()->whereNotNull('person_code')->first();
 
         if (! $branch || ! $location || ! $department || ! $vertical || ! $designation || ! $existing) {
             $this->markTestSkipped('Test database lacks org/employee reference data.');
@@ -88,14 +95,14 @@ class StandaloneUsersImportTest extends TestCase
 
     public function test_existing_employee_keeps_its_person_and_reporting_sheet_is_ignored(): void
     {
-        $personsBefore = DB::table('xlr8_admin_person')->count();
+        $personsBefore = Person::withoutGlobalScopes()->toBase()->count();
 
         $this->import();
 
-        $this->assertSame($this->existing->person_code, DB::table('xlr8_admin_employee')->where('code', $this->existing->code)->value('person_code'));
+        $this->assertSame($this->existing->person_code, Employee::withoutGlobalScopes()->toBase()->where('code', $this->existing->code)->value('person_code'));
         // exactly one new person (BMPL-9901); the Reporting row created none
-        $this->assertSame($personsBefore + 1, DB::table('xlr8_admin_person')->count());
-        $this->assertSame(0, DB::table('xlr8_admin_employee as e')
+        $this->assertSame($personsBefore + 1, Person::withoutGlobalScopes()->toBase()->count());
+        $this->assertSame(0, Employee::withoutGlobalScopes()->from('xlr8_admin_employee as e')->toBase()
             ->join('xlr8_admin_person as p', 'p.person_code', '=', 'e.person_code')
             ->where(fn ($q) => $q->whereNull('p.display_name')->orWhere('p.display_name', ''))
             ->count());
@@ -104,7 +111,7 @@ class StandaloneUsersImportTest extends TestCase
     public function test_a_second_run_is_idempotent(): void
     {
         $this->import();
-        $counts = fn () => [DB::table('xlr8_admin_person')->count(), DB::table('xlr8_admin_employee')->count(), DB::table('users')->count()];
+        $counts = fn () => [Person::withoutGlobalScopes()->toBase()->count(), Employee::withoutGlobalScopes()->toBase()->count(), User::withoutGlobalScopes()->toBase()->count()];
         $afterFirst = $counts();
 
         $summary = $this->import();

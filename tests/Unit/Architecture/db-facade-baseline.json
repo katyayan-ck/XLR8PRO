@@ -6,9 +6,5 @@
     "app/Http/Controllers/Admin/Vehicle/Brand/BrandCrudController.php": 16,
     "app/Jobs/ImportEnquiriesJob.php": 26,
     "app/Models/Module/Booking/Booking.php": 27,
-    "database/seeders/EnumToKeyValueSeeder.php": 2,
-    "tests/Feature/Admin/Vehicle/VehicleMasterWriteTest.php": 13,
-    "tests/Feature/Org/UserRbacWorkbookTest.php": 14,
-    "tests/Feature/Org/UsersWorkbookTest.php": 10,
-    "tests/Unit/StandaloneUsersImportTest.php": 13
+    "database/seeders/EnumToKeyValueSeeder.php": 2
 }

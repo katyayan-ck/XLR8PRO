@@ -10209,3 +10209,8 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 - `EnquiryFlowTest`, `DataScopeFilterTest`, `InsuranceServiceTest`, `VehicleEntityServicesTest`, `ScopeResolverTest` (its `codes()` helper takes a model class), `UserBulkEditTest`, `UserBulkImportPageTest`, `OrgServiceCachingTest` (queries counted from `QueryExecuted` events instead of the connection's query log), `EmployeeUserEntityServicesTest`.
 - **Checked:** 59 passed (141 assertions) before and after.
 - **Baseline:** 176 `DB::` uses in 12 files left.
+
+## W15 — last 4 test files off the DB facade
+- `UserRbacWorkbookTest`, `VehicleMasterWriteTest`, `StandaloneUsersImportTest`, `UsersWorkbookTest`: every `DB::table('t' [as x])` → `Model::withoutGlobalScopes()[->from('t as x')]->toBase()` (the same raw query: no scopes, explicit filters, plain rows).
+- **Checked:** 23 passed (116 assertions) before and after. All test files are now off the DB facade.
+- **Baseline:** 126 `DB::` uses in 8 files left (all blocked: owner decisions or plan phase 5).

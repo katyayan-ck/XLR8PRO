@@ -2,6 +2,12 @@
 
 namespace Tests\Feature\Org;
 
+use App\Models\Admin\Department;
+use App\Models\Admin\Designation;
+use App\Models\Admin\Employee;
+use App\Models\Admin\EmployeeHistory;
+use App\Models\Admin\Person;
+use App\Models\Admin\Vertical;
 use App\Models\User;
 use App\Services\Org\BranchService;
 use App\Services\Org\LocationService;
@@ -9,7 +15,6 @@ use App\Services\Org\UsersWorkbook\UserRowService;
 use App\Services\Org\UsersWorkbook\UsersWorkbookColumns;
 use App\Services\Org\UsersWorkbook\UsersWorkbookService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
@@ -36,9 +41,9 @@ class UsersWorkbookTest extends TestCase
 
         $this->org = [
             'branch' => "WM{$tag}", 'addon' => "WA{$tag}", 'third' => "WT{$tag}", 'addon_site' => "WX{$tag}",
-            'department' => (string) DB::table('xlr8_admin_department')->where('is_active', 1)->whereNull('deleted_at')->value('code'),
-            'vertical' => (string) DB::table('xlr8_admin_vertical')->where('is_active', 1)->whereNull('deleted_at')->value('code'),
-            'designation' => (string) DB::table('xlr8_admin_designation')->where('is_active', 1)->where('name', '!=', 'superadmin')->value('code'),
+            'department' => (string) Department::withoutGlobalScopes()->toBase()->where('is_active', 1)->whereNull('deleted_at')->value('code'),
+            'vertical' => (string) Vertical::withoutGlobalScopes()->toBase()->where('is_active', 1)->whereNull('deleted_at')->value('code'),
+            'designation' => (string) Designation::withoutGlobalScopes()->toBase()->where('is_active', 1)->where('name', '!=', 'superadmin')->value('code'),
         ];
     }
 
@@ -47,7 +52,7 @@ class UsersWorkbookTest extends TestCase
     {
         do {
             $code = 'BMPL-9'.random_int(100, 999);
-        } while (DB::table('xlr8_admin_employee')->where('code', $code)->exists());
+        } while (Employee::withoutGlobalScopes()->toBase()->where('code', $code)->exists());
 
         return array_merge([
             'emp_code' => $code, 'name' => 'Workbook Tester', 'personal_mobile' => '98'.random_int(10000000, 99999999),
@@ -70,7 +75,7 @@ class UsersWorkbookTest extends TestCase
 
     private function history(string $empCode): int
     {
-        return DB::table('xlr8_admin_employee_history')->where('emp_code', $empCode)->count();
+        return EmployeeHistory::withoutGlobalScopes()->toBase()->where('emp_code', $empCode)->count();
     }
 
     public function test_a_new_row_creates_the_user_with_primary_plus_add_on_scopes_and_history(): void
@@ -80,7 +85,7 @@ class UsersWorkbookTest extends TestCase
         $result = app(UserRowService::class)->save($row);
 
         $this->assertSame('created', $result['status'], implode('; ', $result['messages']));
-        $employee = DB::table('xlr8_admin_employee')->where('code', $row['emp_code'])->first();
+        $employee = Employee::withoutGlobalScopes()->toBase()->where('code', $row['emp_code'])->first();
         $this->assertSame([$this->org['branch'], $this->org['branch'], $this->org['vertical']], [$employee->primary_branch_code, $employee->primary_loc_code, $employee->vertical_code]);
         $scopes = $this->scopes($row['emp_code']);
         $expected = [$this->org['addon'], $this->org['branch']];
@@ -88,7 +93,7 @@ class UsersWorkbookTest extends TestCase
         $this->assertSame($expected, $scopes['branch']);
         $this->assertContains($this->org['addon_site'], $scopes['location']);
         $this->assertArrayNotHasKey('segment', $scopes, 'a blank vehicle scope on create is unrestricted');
-        $this->assertTrue(User::where('employee_code', $row['emp_code'])->first()->hasRole(DB::table('xlr8_admin_designation')->where('code', $this->org['designation'])->value('name')));
+        $this->assertTrue(User::where('employee_code', $row['emp_code'])->first()->hasRole(Designation::withoutGlobalScopes()->toBase()->where('code', $this->org['designation'])->value('name')));
         $this->assertSame(1, $this->history($row['emp_code']));
     }
 
@@ -116,7 +121,7 @@ class UsersWorkbookTest extends TestCase
 
         $this->assertSame('failed', $result['status']);
         $this->assertStringContainsString('AddOn Location: '.$this->org['addon_site'], implode(' ', $result['messages']));
-        $this->assertFalse(DB::table('xlr8_admin_employee')->where('code', $bad['emp_code'])->exists());
+        $this->assertFalse(Employee::withoutGlobalScopes()->toBase()->where('code', $bad['emp_code'])->exists());
 
         $result = app(UserRowService::class)->save($this->row(['primary_branch' => 'ALL', 'vertical' => 'NONE']));
         $this->assertSame('failed', $result['status']);
@@ -127,7 +132,7 @@ class UsersWorkbookTest extends TestCase
     {
         $row = $this->row(['aadhaar' => '2345 6789 0123']);
         app(UserRowService::class)->save($row);
-        $person = fn () => DB::table('xlr8_admin_person')->where('person_code', DB::table('xlr8_admin_employee')->where('code', $row['emp_code'])->value('person_code'))->value('aadhaar_no');
+        $person = fn () => Person::withoutGlobalScopes()->toBase()->where('person_code', Employee::withoutGlobalScopes()->toBase()->where('code', $row['emp_code'])->value('person_code'))->value('aadhaar_no');
         $this->assertSame('234567890123', $person());
 
         app(UserRowService::class)->save(['emp_code' => $row['emp_code'], 'aadhaar' => 'XXXXXXXX0123']);

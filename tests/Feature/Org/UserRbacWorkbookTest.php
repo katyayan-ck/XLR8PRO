@@ -5,10 +5,16 @@ namespace Tests\Feature\Org;
 use App\Exports\UserRbac\UserRbacWorkbookExport;
 use App\Imports\Sheets\UserScopesSheetImport;
 use App\Imports\UsersImportWorkbook;
+use App\Models\Admin\Employee;
+use App\Models\Admin\Location;
+use App\Models\Admin\PersonContact;
+use App\Models\Admin\UserScope;
+use App\Models\Admin\Vertical;
+use App\Models\IAM\ModelHasRole;
+use App\Models\IAM\Permission;
 use App\Models\User;
 use App\Services\IAM\UserRbacExportService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Excel as ExcelFormat;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
@@ -61,12 +67,12 @@ class UserRbacWorkbookTest extends TestCase
     private function snapshot(): array
     {
         return [
-            'employees' => DB::table('xlr8_admin_employee')->orderBy('code')
+            'employees' => Employee::withoutGlobalScopes()->toBase()->orderBy('code')
                 ->get(['code', 'person_code', 'designation_code', 'primary_branch_code', 'primary_loc_code', 'primary_dept_code', 'primary_div_code', 'vertical_code', 'segment_code', 'sub_segment_code', 'mile_id', 'joining_date', 'employment_status', 'employment_type', 'reporting_manager_code'])
                 ->map(fn ($e) => (array) $e)->all(),
-            'users' => DB::table('users')->whereNull('deleted_at')->orderBy('id')->get(['id', 'username', 'user_type', 'is_active', 'employee_code', 'person_code'])->map(fn ($u) => (array) $u)->all(),
-            'roles' => DB::table('xlr8_iam_model_has_roles')->orderBy('model_id')->orderBy('role_id')->get()->map(fn ($r) => "{$r->model_id}|{$r->role_id}")->all(),
-            'contacts' => DB::table('xlr8_admin_person_contacts')->whereNull('deleted_at')->count(),
+            'users' => User::withoutGlobalScopes()->toBase()->whereNull('deleted_at')->orderBy('id')->get(['id', 'username', 'user_type', 'is_active', 'employee_code', 'person_code'])->map(fn ($u) => (array) $u)->all(),
+            'roles' => ModelHasRole::withoutGlobalScopes()->toBase()->orderBy('model_id')->orderBy('role_id')->get()->map(fn ($r) => "{$r->model_id}|{$r->role_id}")->all(),
+            'contacts' => PersonContact::withoutGlobalScopes()->toBase()->whereNull('deleted_at')->count(),
             'scopes' => $this->activeScopes(),
         ];
     }
@@ -74,7 +80,7 @@ class UserRbacWorkbookTest extends TestCase
     /** @return list<string> "user|type|CODE" */
     private function activeScopes(?int $userId = null): array
     {
-        return DB::table('xlr8_admin_user_scopes')->where('is_active', 1)->whereNull('deleted_at')
+        return UserScope::withoutGlobalScopes()->toBase()->where('is_active', 1)->whereNull('deleted_at')
             ->when($userId, fn ($q) => $q->where('user_id', $userId))
             ->get()->map(fn ($s) => "{$s->user_id}|{$s->scope_type}|".strtoupper($s->scope_code))->sort()->values()->all();
     }
@@ -100,7 +106,7 @@ class UserRbacWorkbookTest extends TestCase
         }
         $this->assertSame('ALL', $book->getSheetByName('Lists')->getCell('B2')->getValue(), 'scope lists start with ALL');
 
-        $permissions = DB::table('xlr8_iam_permissions')->whereNull('deleted_at')->count();
+        $permissions = Permission::withoutGlobalScopes()->toBase()->whereNull('deleted_at')->count();
         $this->assertSame($permissions + 1, $book->getSheetByName('Permissions')->getHighestDataRow('A'));
     }
 
@@ -123,7 +129,7 @@ class UserRbacWorkbookTest extends TestCase
         $this->assertSame([], array_values(array_diff($before['scopes'], $after['scopes'])), 'no scope removed');
 
         // Additions are only employees' primary codes that were missing from their scopes.
-        $primaries = DB::table('users as u')->join('xlr8_admin_employee as e', 'e.code', '=', 'u.employee_code')
+        $primaries = User::withoutGlobalScopes()->from('users as u')->toBase()->join('xlr8_admin_employee as e', 'e.code', '=', 'u.employee_code')
             ->get(['u.id', 'e.primary_branch_code', 'e.primary_loc_code', 'e.primary_dept_code', 'e.primary_div_code', 'e.vertical_code', 'e.segment_code', 'e.sub_segment_code'])
             ->flatMap(fn ($r) => array_filter([
                 $r->primary_branch_code ? "{$r->id}|branch|".strtoupper($r->primary_branch_code) : null,
@@ -139,10 +145,10 @@ class UserRbacWorkbookTest extends TestCase
 
     public function test_user_scopes_rows_replace_a_listed_users_scopes_only(): void
     {
-        $user = DB::table('users as u')->join('xlr8_admin_employee as e', 'e.code', '=', 'u.employee_code')
+        $user = User::withoutGlobalScopes()->from('users as u')->toBase()->join('xlr8_admin_employee as e', 'e.code', '=', 'u.employee_code')
             ->whereNotNull('e.primary_loc_code')
             ->first(['u.id', 'u.employee_code', 'e.primary_loc_code']);
-        $locations = DB::table('xlr8_admin_location')->where('is_active', 1)->whereNull('deleted_at')
+        $locations = Location::withoutGlobalScopes()->toBase()->where('is_active', 1)->whereNull('deleted_at')
             ->where('code', '!=', $user?->primary_loc_code)->orderByDesc('code')->limit(2)->get(['code', 'name']);
         if (! $user || $locations->count() < 2) {
             $this->markTestSkipped('Needs an employee with a primary location and two other active locations.');
@@ -150,7 +156,7 @@ class UserRbacWorkbookTest extends TestCase
         [$newLocation, $staleLocation] = [$locations[0], $locations[1]];
 
         // Precondition: the user holds a non-primary location that the sheet will not list.
-        DB::table('xlr8_admin_user_scopes')->updateOrInsert(
+        UserScope::withoutGlobalScopes()->toBase()->updateOrInsert(
             ['user_id' => $user->id, 'scope_type' => 'location', 'scope_code' => $staleLocation->code],
             ['is_active' => 1, 'to_date' => null, 'deleted_at' => null, 'from_date' => now()->toDateString(), 'updated_at' => now()]
         );
@@ -164,9 +170,9 @@ class UserRbacWorkbookTest extends TestCase
         ]));
         ob_end_clean();
 
-        $primaryBranch = DB::table('xlr8_admin_employee')->where('code', $user->employee_code)->value('primary_branch_code');
+        $primaryBranch = Employee::withoutGlobalScopes()->toBase()->where('code', $user->employee_code)->value('primary_branch_code');
         $expected = collect(["{$user->id}|location|".strtoupper($newLocation->code), "{$user->id}|location|".strtoupper($user->primary_loc_code)])
-            ->merge(DB::table('xlr8_admin_vertical')->where('is_active', 1)->pluck('code')->map(fn ($c) => "{$user->id}|vertical|".strtoupper($c)))
+            ->merge(Vertical::withoutGlobalScopes()->toBase()->where('is_active', 1)->pluck('code')->map(fn ($c) => "{$user->id}|vertical|".strtoupper($c)))
             ->merge($primaryBranch ? ["{$user->id}|branch|".strtoupper($primaryBranch)] : []);
 
         $actual = collect($this->activeScopes($user->id));
@@ -174,7 +180,7 @@ class UserRbacWorkbookTest extends TestCase
             $this->assertContains($scope, $actual->all());
         }
         $this->assertSame([], $actual->filter(fn ($s) => str_contains($s, '|location|'))->diff($expected)->values()->all(), 'unlisted locations removed');
-        $this->assertTrue(DB::table('xlr8_admin_user_scopes')->where('user_id', $user->id)->where('scope_type', 'location')
+        $this->assertTrue(UserScope::withoutGlobalScopes()->toBase()->where('user_id', $user->id)->where('scope_type', 'location')
             ->where('scope_code', $staleLocation->code)->where('is_active', 0)->whereNotNull('to_date')->exists(), 'unlisted location deactivated');
         $this->assertSame($otherUsersBefore, array_values(array_filter($this->activeScopes(), fn ($s) => ! str_starts_with($s, "{$user->id}|"))), 'other users untouched');
         $this->assertSame(1, $import->summary()['users']);
@@ -182,7 +188,7 @@ class UserRbacWorkbookTest extends TestCase
 
     public function test_a_user_with_an_invalid_scope_row_is_left_unchanged(): void
     {
-        $user = DB::table('users')->whereNotNull('employee_code')
+        $user = User::withoutGlobalScopes()->toBase()->whereNotNull('employee_code')
             ->whereExists(fn ($q) => $q->from('xlr8_admin_user_scopes as s')->whereColumn('s.user_id', 'users.id')->where('s.is_active', 1))
             ->first(['id', 'employee_code']);
         $before = $this->activeScopes($user->id);
