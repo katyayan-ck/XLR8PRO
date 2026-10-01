@@ -421,7 +421,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W18d | D16 — the hard-coded user-id lists in booking → a permission (BUG-095) — ✅ 02-10 (BT-014); grant `SLS_BKNG_ORDER_APPROVE` to designations (owner); BUG-229 found | ✅ |
 | W18e | D13 — the 52 dead menu links open a "coming soon" page (BUG-056 / 062) — ✅ 02-10 (59 items, BT-015) | ✅ |
 | W18f | D23 — the 5 booking reports rewritten on the current tables, inside a `Booking*Service` (BUG-122, #13) — ⏸ 02-10: needs report definitions R1–R8 (owner-decisions sheet, W18f section) | ⏸ |
-| W18g | DEC-093 #21 — schema tooling exemption in the guard (`ai:refresh-context`) | 🔴 |
+| W18g | DEC-093 #21 — schema tooling exemption in the guard (`ai:refresh-context`) — ✅ 02-10 | ✅ |
 | W18h | D26 — mask Aadhaar / PAN in old KYC rows (reversible: encrypted backup) | 🔴 |
 | W18i | D25 / BUG-173 — booking reads / writes variant codes with the colour suffix; vehicle master purge + re-import (V7 / DA2, with the pricing run) | 🔴 |
 | W18j | #18 — local-only user reset command (keep a given list of accounts; dry run, backup) — run on the owner's list | 🔴 |
@@ -1332,3 +1332,11 @@ schemes, cashier, fee collection, accounts and others. Labels and icons are unch
 - New `MenuLinksTest`: no rendered menu link lacks a route, and the page escapes its input.
 - Dashboard + page as superadmin and user 40 → 200; lang tests pass.
 **Left:** each item gets its real route when its screen is built (rule in `tech-guides/platform/ui-kit.md`).
+
+### W18g — schema tooling exempt from the Eloquent-only guard (DEC-095 #21)
+
+**Delivered:** the DEC-093 guard has an explicit, reasoned exemption list. Its only entry is `RefreshAiContext`, which
+reads `information_schema`. The file left the W15 baseline (now 7 files), and the rule text in every guideline copy
+says so.
+**Verified:** architecture test passes.
+**Left:** W15's remaining 7 files are all waiting on owner answers (deletions #6, D5, D23 reports, D28, importers phase 5).

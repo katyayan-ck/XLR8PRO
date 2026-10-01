@@ -147,3 +147,13 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - **Why:** the five reports compute live orders, branch columns, VIN-year blocks and booked / hot-enquiry counts from
   tables and placeholder logic that no longer exist. Rebuilding them needs the owner's definitions; the project rule is
   never to guess a business rule. The mappings that are clear are listed in the sheet.
+
+### W18g — `DB::` guard: schema tooling exempt (DEC-095 #21)
+- **Files:**
+  - `tests/Unit/Architecture/NoDbFacadeQueriesTest.php`: new `EXEMPT` list with reasons.
+  - `db-facade-baseline.json`: `RefreshAiContext` removed.
+  - Rule text in `.ai/rules/{app,database}.md`, `.ai/guidelines/20-architecture.md`, `CLAUDE.md`, `AGENTS.md`.
+- **Before → after:** `app/Console/Commands/RefreshAiContext.php` (reads `information_schema` for the schema cards; no
+  model possible) sat in the W15 baseline as 4 uses to convert. It is now exempt by name, with the owner-confirmed
+  reason. Baseline: 122 uses in 7 files.
+- **Checked:** `tests/Unit/Architecture` passes.

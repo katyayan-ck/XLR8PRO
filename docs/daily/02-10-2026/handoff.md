@@ -74,17 +74,20 @@ nothing local is unpushed. Next push only when the owner asks.
   `docs/owner-decisions-2026-10-01.md`, W18f section; code at `BookingCrudController` ~l.8932 stockReport, ~9153
   liveOrderReport, ~9219 fetchCbrData, ~9612 consolidatedBookingReport, ~9888 branchBookingReport, ~10134
   pendingActionsReport; stock = `Stock` model `xlr8_booking_stock_master`, `location_id` = `xlr8_admin_location.id`).
-  **Next step: W18g** — DEC-093 #21: exempt schema tooling (`RefreshAiContext`, reads `information_schema`) in
-  `tests/Unit/Architecture/NoDbFacadeQueriesTest` and lower the baseline; then W18h (D26 mask old KYC rows).
+  W18g ✅ (guard `EXEMPT` list: `RefreshAiContext`; baseline 7 files).
+  **Next step: W18h** — D26: mask Aadhaar / PAN in old KYC rows, reversibly (encrypted backup first). Find every column
+  holding full Aadhaar / PAN (bookings `pan_no` / `adhar_no`, KYC tables, history / event JSON), count rows per column on
+  local `xlrm`, design an artisan command (dry run default, `--apply`, backup table with `Crypt::encryptString` of the
+  originals, `--restore`), local only; the booking part is a numbered BT change.
 
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;
   booking code **BT-001 … BT-007** (numbered, one commit each, logged in `docs/booking-team-changes.md`: where, what, why,
   before → after, checked, revert).
   **Unblocked part done (02-10):** booking BT-001…007, platform, console, importers, all tests; full suite 573 passed.
-  **Left (126 uses / 8 files, all blocked):** `Booking` model dead helpers + `EnumToKeyValueSeeder` + uncalled booking
+  **Left (122 uses / 7 files, all blocked):** `Booking` model dead helpers + `EnumToKeyValueSeeder` + uncalled booking
   helpers (deletion #6), `BrandCrudController` (D5), booking reports (D23), `SpareRequestCrudController` (D28),
-  `ImportEnquiriesJob` + `SalesImportController` (phase 5), `RefreshAiContext` (#21). Resume each when its answer comes.
+  `ImportEnquiriesJob` + `SalesImportController` (phase 5). (`RefreshAiContext` exempt, W18g.) Resume each when its answer comes.
   **Per change:** `APP_DEBUG=false DB_DATABASE=xlrm_testing php artisan dev:route-snapshot 1,40 <spec> before.json [--setup=fixture.php]` on the unchanged
   code → edit → pint the file (only sorts imports) → `php -l` → phpstan (no new errors) → the same command with
   `--compare=before.json` (must report 0 differences) → Sales tests → lower the baseline

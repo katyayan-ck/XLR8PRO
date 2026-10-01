@@ -104,3 +104,11 @@ schemes, cashier, fee collection, accounts and others. Labels and icons are unch
 - New `MenuLinksTest`: no rendered menu link lacks a route, and the page escapes its input.
 - Dashboard + page as superadmin and user 40 → 200; lang tests pass.
 **Left:** each item gets its real route when its screen is built (rule in `tech-guides/platform/ui-kit.md`).
+
+### W18g — schema tooling exempt from the Eloquent-only guard (DEC-095 #21)
+
+**Delivered:** the DEC-093 guard has an explicit, reasoned exemption list. Its only entry is `RefreshAiContext`, which
+reads `information_schema`. The file left the W15 baseline (now 7 files), and the rule text in every guideline copy
+says so.
+**Verified:** architecture test passes.
+**Left:** W15's remaining 7 files are all waiting on owner answers (deletions #6, D5, D23 reports, D28, importers phase 5).

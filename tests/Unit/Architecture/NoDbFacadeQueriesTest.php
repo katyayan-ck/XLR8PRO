@@ -16,11 +16,19 @@ use PHPUnit\Framework\TestCase;
  *   UPDATE_DB_FACADE_BASELINE=1 php artisan test --compact tests/Unit/Architecture/NoDbFacadeQueriesTest.php
  *
  * (the refresh refuses to raise any count).
+ *
+ * Exempt (DEC-095 #21, owner-confirmed): schema tooling that reads `information_schema` — there is no model for it —
+ * listed in EXEMPT with the reason.
  */
 class NoDbFacadeQueriesTest extends TestCase
 {
     /** Scanned roots, relative to the project root. */
     private const ROOTS = ['app', 'routes', 'config', 'database/seeders', 'database/factories', 'tests'];
+
+    /** Files allowed to use the facade, with the reason (DEC-095 #21: schema tooling only). */
+    private const EXEMPT = [
+        'app/Console/Commands/RefreshAiContext.php' => 'reads information_schema for the AI schema cards',
+    ];
 
     /** `DB::` calls that run or build SQL; transaction control is allowed. */
     private const PATTERN = '/(?<![\w$>])\\\\?(?:Illuminate\\\\Support\\\\Facades\\\\)?DB::(?!transaction\b|beginTransaction\b|commit\b|rollBack\b)[A-Za-z_]+/';
@@ -72,7 +80,7 @@ class NoDbFacadeQueriesTest extends TestCase
             $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root.'/'.$dir, \FilesystemIterator::SKIP_DOTS));
             foreach ($files as $file) {
                 $path = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
-                if (! str_ends_with($path, '.php') || $path === 'tests/Unit/Architecture/NoDbFacadeQueriesTest.php') {
+                if (! str_ends_with($path, '.php') || $path === 'tests/Unit/Architecture/NoDbFacadeQueriesTest.php' || isset(self::EXEMPT[$path])) {
                     continue;
                 }
                 $code = $this->withoutComments((string) file_get_contents($file->getPathname()));
