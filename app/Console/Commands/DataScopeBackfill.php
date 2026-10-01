@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Models\Admin\Location;
+use App\Models\CRM\Enquiry;
+use App\Models\CRM\EnquiryFollowup;
 use App\Models\Module\Booking\Booking;
 use App\Services\IAM\DataScope\ScopeCodeFiller;
 use App\Services\OrgScopeService;
 use App\Services\Utils\SynonymService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Fills empty scope codes on existing rows so user data scoping can filter them (DEC-071). Only empty codes are
@@ -61,35 +64,37 @@ class DataScopeBackfill extends Command
             }
         });
 
-        $this->report('Bookings', $total, $filled, 'xlr8_booking_master', ['branch_code', 'location_code', 'segment_code', 'sub_segment_code', 'model_code', 'variant_code']);
+        $this->report('Bookings', $total, $filled, Booking::class, ['branch_code', 'location_code', 'segment_code', 'sub_segment_code', 'model_code', 'variant_code']);
     }
 
     private function enquiries(bool $apply, SynonymService $synonyms): void
     {
-        $table = 'xlr8_crm_enquiries';
+        $table = (new Enquiry)->getTable();
+        // DEC-093: plain query builders from the models (scopes off, explicit deleted_at filters, no updated_at on update)
+        $enquiries = fn (string $alias = '') => Enquiry::withoutGlobalScopes()->from($alias === '' ? $table : "{$table} as {$alias}")->toBase();
         $filled = [];
-        $total = DB::table($table)->whereNull('deleted_at')->count();
+        $total = $enquiries()->whereNull('deleted_at')->count();
 
         // 1. consultant's employee → primary branch / location
-        $byCode = DB::table("{$table} as e")
-            ->join('xlr8_admin_employee as emp', DB::raw('emp.code COLLATE utf8mb4_unicode_ci'), '=', DB::raw('e.x8_sc_code COLLATE utf8mb4_unicode_ci'));
-        $byMile = DB::table("{$table} as e")
+        $byCode = $enquiries('e')
+            ->join('xlr8_admin_employee as emp', fn ($j) => $j->whereRaw('emp.code COLLATE utf8mb4_unicode_ci = e.x8_sc_code COLLATE utf8mb4_unicode_ci'));
+        $byMile = $enquiries('e')
             ->join('xlr8_admin_employee as emp', function ($j) {
-                $j->on(DB::raw('emp.mile_id COLLATE utf8mb4_unicode_ci'), '=', DB::raw('e.sc_mile_id COLLATE utf8mb4_unicode_ci'))
-                    ->orOn(DB::raw('emp.mile_id COLLATE utf8mb4_unicode_ci'), '=', DB::raw('e.x8_sc_mile_id COLLATE utf8mb4_unicode_ci'));
+                $j->whereRaw('emp.mile_id COLLATE utf8mb4_unicode_ci = e.sc_mile_id COLLATE utf8mb4_unicode_ci')
+                    ->orWhereRaw('emp.mile_id COLLATE utf8mb4_unicode_ci = e.x8_sc_mile_id COLLATE utf8mb4_unicode_ci');
             });
         foreach (['consultant code' => $byCode, 'consultant mile id' => $byMile] as $label => $join) {
             foreach (['dealer_branch' => 'primary_branch_code', 'dealer_location' => 'primary_loc_code'] as $col => $empCol) {
                 $q = (clone $join)->whereNull('e.deleted_at')
                     ->where(fn ($w) => $w->whereNull("e.{$col}")->orWhere("e.{$col}", ''))
                     ->whereNotNull("emp.{$empCol}")->where("emp.{$empCol}", '!=', '');
-                $n = $apply ? $q->update(["e.{$col}" => DB::raw("emp.{$empCol}")]) : $q->count();
+                $n = $apply ? $q->update(["e.{$col}" => $q->raw("emp.{$empCol}")]) : $q->count();
                 $filled["{$col} ({$label})"] = $n;
             }
         }
 
         // 2. follow-up dealer_location names → location code (and its branch)
-        $names = DB::table('xlr8_crm_enquiries_fup')->whereNotNull('dealer_location')->where('dealer_location', '!=', '')
+        $names = EnquiryFollowup::withoutGlobalScopes()->toBase()->whereNotNull('dealer_location')->where('dealer_location', '!=', '')
             ->distinct()->pluck('dealer_location');
         $map = [];
         $unmatched = [];
@@ -106,13 +111,13 @@ class DataScopeBackfill extends Command
         if ($unmatched !== []) {
             $this->warn('Follow-up location names with no match — add them as "Location" synonyms and re-run: '.implode(' | ', $unmatched));
         }
-        $branchOf = DB::table('xlr8_admin_location')->whereNull('deleted_at')->pluck('branch_code', 'code')
+        $branchOf = Location::withoutGlobalScopes()->toBase()->whereNull('deleted_at')->pluck('branch_code', 'code')
             ->mapWithKeys(fn ($b, $c) => [strtoupper((string) $c) => strtoupper((string) $b)])->all();
         $fromFollowUp = 0;
         foreach ($map as $name => $code) {
-            $q = DB::table("{$table} as e")->whereNull('e.deleted_at')
+            $q = $enquiries('e')->whereNull('e.deleted_at')
                 ->where(fn ($w) => $w->whereNull('e.dealer_location')->orWhere('e.dealer_location', ''))
-                ->whereIn('e.enquiry_no', DB::table('xlr8_crm_enquiries_fup')->where('dealer_location', $name)->select('enquiry_no'));
+                ->whereIn('e.enquiry_no', EnquiryFollowup::withoutGlobalScopes()->toBase()->where('dealer_location', $name)->select('enquiry_no'));
             $fromFollowUp += $apply ? $q->update(['e.dealer_location' => $code]) : $q->count();
         }
         $filled['dealer_location (follow-up names: '.count($map).' of '.$names->count().' names matched)'] = $fromFollowUp;
@@ -120,27 +125,28 @@ class DataScopeBackfill extends Command
         // 3. location → branch
         $n = 0;
         foreach ($branchOf as $loc => $branch) {
-            $q = DB::table($table)->whereNull('deleted_at')->where('dealer_location', $loc)
+            $q = $enquiries()->whereNull('deleted_at')->where('dealer_location', $loc)
                 ->where(fn ($w) => $w->whereNull('dealer_branch')->orWhere('dealer_branch', ''));
             $n += $apply ? $q->update(['dealer_branch' => $branch]) : $q->count();
         }
         $filled['dealer_branch (from location)'] = $n;
 
-        $this->report('Enquiries', $total, $filled, $table, ['dealer_branch', 'dealer_location', 'segment_code', 'model_code', 'variant_code']);
+        $this->report('Enquiries', $total, $filled, Enquiry::class, ['dealer_branch', 'dealer_location', 'segment_code', 'model_code', 'variant_code']);
     }
 
     /**
      * @param  array<string, int>  $filled
+     * @param  class-string<Model>  $model
      * @param  list<string>  $columns
      */
-    private function report(string $label, int $total, array $filled, string $table, array $columns): void
+    private function report(string $label, int $total, array $filled, string $model, array $columns): void
     {
         $this->newLine();
         $this->info("{$label}: {$total} rows");
         $this->table(['Filled (this run)', 'Rows'], collect($filled)->map(fn ($n, $k) => [$k, $n])->values()->all());
         $coverage = [];
         foreach ($columns as $column) {
-            $n = DB::table($table)->whereNull('deleted_at')->whereNotNull($column)->where($column, '!=', '')->count();
+            $n = $model::withoutGlobalScopes()->toBase()->whereNull('deleted_at')->whereNotNull($column)->where($column, '!=', '')->count();
             $coverage[] = [$column, $n, $total > 0 ? round($n * 100 / $total, 1).'%' : '—'];
         }
         $this->table(['Column', 'Rows with a code now', 'Coverage'], $coverage);

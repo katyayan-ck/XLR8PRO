@@ -10194,3 +10194,8 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
   (deletion, #6); `RefreshAiContext` reads `information_schema` for the agents' schema cards (proposed exemption for schema
   tooling, #21).
 - **Baseline:** 250 `DB::` uses in 33 files left.
+
+## W15 — `data-scope:backfill` without the DB facade
+- `app/Console/Commands/DataScopeBackfill.php`: enquiry / follow-up / location queries start from `Enquiry` / `EnquiryFollowup` / `Location` with scopes off and `toBase()` (so bulk updates do not add `updated_at`); raw join conditions via `whereRaw` / `orWhereRaw`; `SET e.col = emp.col` via the query builder's `raw()`; the report takes the model class.
+- **Checked:** the command run on `xlrm_testing` in report and `--apply` mode inside a rolled-back transaction, before and after: console output identical and all 44 SQL statements identical in each mode (only the synonym cache's expiry time differs); PHPStan clean.
+- **Baseline:** 234 `DB::` uses in 32 files left.
