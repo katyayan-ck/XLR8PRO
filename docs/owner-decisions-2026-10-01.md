@@ -75,3 +75,23 @@ phase they unblock; **Rec.** is the agent's recommendation.
 | 35 | Go-live runbook, hypercare roster, QA team start date | | will define later |
 | 36 | UAT settings: Settings → Site → Dealership name; load the vehicle sample workbooks (Vehicle Content → Workbooks) | | no |
 | 37 | **D28** spares module rebuild; **D4** lead lookups — when? | after go-live | after go live |
+
+## W18f — booking report definitions needed before the rewrite (added 02-10, D23 / BUG-122)
+The five booking reports (Stock, Live Order, Consolidated Booking, Branch Booking, Pending Actions) were written
+against tables that do not exist here (`xlr8_vehicle_master`, `xlr8_us_location`, `xlr8_stock_master`,
+`bmpl_enum_master`). Several columns cannot be rebuilt without your definition. What already maps cleanly:
+- Vehicle = variant / model / segment masters.
+- Branch / location = `xlr8_admin_location` (stock `location_id` 1 / 2 / 5 = BKN / CHR / SUJ in both databases).
+- Booking statuses (1 live, 4 refund, 6 hold, 8 …), `order` (1 to verify, 2 SO pending), `pending`, `fin_mode`,
+  `buyer_type`, receipts, unverified exchange / finance rows.
+
+| # | Question | Where it is used | Your answer |
+|---|---|---|---|
+| R1 | **Live orders**: the old vehicle master had a `lorder` count per vehicle. Where does "live orders" come from now — bookings with `order` = 2 and no DMS SO (as on the dashboard), a DMS / OEM order file, or something else? | Live Order report (whole report), Stock "LIVE ORDERS", Consolidated / Branch "Live orders" | |
+| R2 | **Branch columns**: reports show fixed BKN / CHR columns. Should they show every branch (BKN, CHR, SUJ …), or only stock locations (BKN, CHR)? | Stock, Consolidated, Branch, Pending Actions | |
+| R3 | **"BKN bookings" / "CHR bookings"** are counted today as customer type `Individual` / `Dealer` (placeholder logic). Should they be bookings per branch (`branch_code`)? | Consolidated / Branch Booking | |
+| R4 | **Old / current VIN split**: chassis starting with `S` = current year (that is the 2025 VIN code; 2026 is `T`). Use the VIN year letter vs. today's year, the OEM invoice year, or the GRN year? | Stock report (OVIN / CVIN blocks) | |
+| R5 | **"BOOKED" / "HOT ENQ"** per vehicle: booked = live bookings of that variant + colour? hot enquiries = open enquiries with stage HOT for that model? | Stock report | |
+| R6 | **Stock that counts**: v_status Received + In Transit (+ Dealer Stock / Alloted, which no row has), not invoiced, `status` = 1 — confirm; and is "DLR TST" (dealer transit) everything not "In Transit"? | Stock report | |
+| R7 | **Grouping**: by segment → model → variant → colour (variant row per colour) — confirm. | all five | |
+| R8 | Any report to **drop** instead of rewriting? | | |

@@ -140,3 +140,10 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
     links.
   - Dashboard + page as superadmin and user 40 → 200.
   - Lang tests pass.
+
+### W18f — booking reports: definitions requested before the rewrite (D23, BUG-122)
+- **Files:** `docs/owner-decisions-2026-10-01.md` (new W18f section, questions R1–R8), `docs/todo.md` (W18f ⏸),
+  handoff. No code change.
+- **Why:** the five reports compute live orders, branch columns, VIN-year blocks and booked / hot-enquiry counts from
+  tables and placeholder logic that no longer exist. Rebuilding them needs the owner's definitions; the project rule is
+  never to guess a business rule. The mappings that are clear are listed in the sheet.

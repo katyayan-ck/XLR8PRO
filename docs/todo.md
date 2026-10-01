@@ -420,7 +420,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W18c | Booking bugs BUG-223 / 224 / 225 / 226, BUG-219 (Dummy bookings validated), D21 BEV / Personal SO rule made to work (BUG-101) — ✅ 02-10 (BT-008 … BT-013) | ✅ |
 | W18d | D16 — the hard-coded user-id lists in booking → a permission (BUG-095) — ✅ 02-10 (BT-014); grant `SLS_BKNG_ORDER_APPROVE` to designations (owner); BUG-229 found | ✅ |
 | W18e | D13 — the 52 dead menu links open a "coming soon" page (BUG-056 / 062) — ✅ 02-10 (59 items, BT-015) | ✅ |
-| W18f | D23 — the 5 booking reports rewritten on the current tables, inside a `Booking*Service` (BUG-122, #13) | 🔴 |
+| W18f | D23 — the 5 booking reports rewritten on the current tables, inside a `Booking*Service` (BUG-122, #13) — ⏸ 02-10: needs report definitions R1–R8 (owner-decisions sheet, W18f section) | ⏸ |
 | W18g | DEC-093 #21 — schema tooling exemption in the guard (`ai:refresh-context`) | 🔴 |
 | W18h | D26 — mask Aadhaar / PAN in old KYC rows (reversible: encrypted backup) | 🔴 |
 | W18i | D25 / BUG-173 — booking reads / writes variant codes with the colour suffix; vehicle master purge + re-import (V7 / DA2, with the pricing run) | 🔴 |

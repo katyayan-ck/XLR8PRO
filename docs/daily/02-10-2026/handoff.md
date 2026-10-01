@@ -70,10 +70,12 @@ nothing local is unpushed. Next push only when the owner asks.
   (`docs/booking-team-changes.md`), each checked with `dev:route-snapshot` / tests before and after, each revertable.
   Done: W18a, W18b, W18c (BT-008 … BT-013), W18d (BT-014: `SLS_BKNG_ORDER_APPROVE`, granted to no designation yet;
   BUG-229 logged — owner: what should Reject do), W18e (coming-soon page, 59 menu items, BT-015).
-  **Next step: W18f** — D23: rewrite the 5 booking reports (`reports/branch-booking`, `consolidated-booking`,
-  `live-order`, `pending-actions`, `stock`; BUG-122 — they read missing tables `xlr8_vehicle_master` / `xlr8_us_location`)
-  on current tables inside a `Booking*Service` (Eloquent, DEC-093), as numbered BT changes; first read the report
-  methods in `BookingCrudController` and their views, list the columns each shows, map them to current tables.
+  **W18f ⏸** — the 5 booking reports need the owner's definitions (questions R1–R8 in
+  `docs/owner-decisions-2026-10-01.md`, W18f section; code at `BookingCrudController` ~l.8932 stockReport, ~9153
+  liveOrderReport, ~9219 fetchCbrData, ~9612 consolidatedBookingReport, ~9888 branchBookingReport, ~10134
+  pendingActionsReport; stock = `Stock` model `xlr8_booking_stock_master`, `location_id` = `xlr8_admin_location.id`).
+  **Next step: W18g** — DEC-093 #21: exempt schema tooling (`RefreshAiContext`, reads `information_schema`) in
+  `tests/Unit/Architecture/NoDbFacadeQueriesTest` and lower the baseline; then W18h (D26 mask old KYC rows).
 
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;
