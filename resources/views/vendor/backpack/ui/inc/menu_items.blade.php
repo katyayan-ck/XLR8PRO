@@ -267,6 +267,213 @@
                     'unassigned_long' => \App\Models\CRM\Enquiry::unassignedLong()->count(),
                     'assigned_long' => \App\Models\CRM\Enquiry::assignedLong()->count(),
                     'duplicate' => \App\Models\CRM\Enquiry::whereNotNull('duplicate')->where('is_active', 1)->count(),
+
+                    // 1. CRM Sales > Verification > Lost Enquiries
+                    'lost' => \App\Models\CRM\Enquiry::where('is_active', 3)->count(),
+
+                    // 2. Exchange Enquiries (Fixed Bracket Logic)
+                    'exch_interest' => \App\Models\CRM\Enquiry::where('is_active', 1)
+                        ->where(function ($q) {
+                            $q->whereIn('purchase_type_crm', ['Exchange Buy', 'EXCHANGE_BUY'])->orWhere(function ($s) {
+                                $s->where(function ($s2) {
+                                    $s2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
+                                })->whereIn('purchase_type', ['Exchange Buy', 'EXCHANGE_BUY']);
+                            });
+                        })
+                        ->count(),
+
+                    'exch_scrappage' => \App\Models\CRM\Enquiry::where('is_active', 1)
+                        ->where(function ($q) {
+                            $q->whereIn('purchase_type_crm', ['Scrappage', 'SCRAPPAGE'])->orWhere(function ($s) {
+                                $s->where(function ($s2) {
+                                    $s2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
+                                })->whereIn('purchase_type', ['Scrappage', 'SCRAPPAGE']);
+                            });
+                        })
+                        ->count(),
+
+                    'exch_not_interested' => \App\Models\CRM\Enquiry::where('is_active', 1)
+                        ->where(function ($q) {
+                            $q->whereIn('purchase_type_crm', [
+                                'First Time Buy',
+                                'FIRST_TIME_BUY',
+                                'Additional Buy',
+                                'ADDITIONAL_BUY',
+                                'No Consideration',
+                                'NO_CONSIDERATION',
+                            ])->orWhere(function ($s) {
+                                $s->where(function ($s2) {
+                                    $s2->whereNull('purchase_type_crm')->orWhere('purchase_type_crm', '');
+                                })->whereIn('purchase_type', [
+                                    'First Time Buy',
+                                    'FIRST_TIME_BUY',
+                                    'Additional Buy',
+                                    'ADDITIONAL_BUY',
+                                    'No Consideration',
+                                    'NO_CONSIDERATION',
+                                ]);
+                            });
+                        })
+                        ->count(),
+
+                    // 3. Finance Enquiries
+                    'fin_interest' => \App\Models\CRM\Enquiry::where('is_active', 1)
+                        ->whereIn('fin_mode', ['IN_HOUSE', 'In-house'])
+                        ->count(),
+                    'fin_not_interested' => \App\Models\CRM\Enquiry::where('is_active', 1)
+                        ->where(function ($q) {
+                            $q->whereNull('fin_mode')
+                                ->orWhere('fin_mode', '')
+                                ->orWhereNotIn('fin_mode', ['IN_HOUSE', 'In-house']);
+                        })
+                        ->count(),
+
+                    // 4. Quotations (Excluding 'booked' status per QuotationCrudController)
+                    'quotation_all' => \App\Models\CRM\Quotation::whereNotIn('status', ['booked'])->count(),
+                    'quotation_approved' => \App\Models\CRM\Quotation::where('status', 'Approved')->count(),
+
+                    // 5. Bookings (Using exact status filters from BookingCrudController)
+                    'booking_xceler8' => \App\Models\Module\Booking\Booking::whereIn('status', [1, 8])->count(),
+
+                    'booking_pending_pay' => \App\Models\Module\Booking\Booking::whereIn('status', [1, 8])
+                        ->where('b_type', 'Active')
+                        ->whereIn('col_type', [2, 3])
+                        ->where(function ($q) {
+                            $bookingAmountTable = 'xlr8_booking_amount';
+                            $q->whereRaw(
+                                "booking_amount > COALESCE((SELECT SUM(amount) FROM {$bookingAmountTable} WHERE {$bookingAmountTable}.bid = xlr8_booking_master.id AND {$bookingAmountTable}.deleted_at IS NULL), 0)",
+                            )
+                                ->orWhereNull('receipt_no')
+                                ->orWhere('receipt_no', '');
+                        })
+                        ->count(),
+
+                    'booking_otf' => \DB::table('xlr8_crm_booking')->where('is_active', 1)->count(),
+
+                    // 6. Transactions
+                    'transaction_otf' => \DB::table('xlr8_crm_booking')->where('is_active', 1)->count(),
+                    // EXACT MODIFIED CODE
+
+                    // 7. Booking Stage -> Exchange
+                    'bkng_exch_interest' => \DB::table('xlr8_booking_master as bookings')
+                        ->whereNull('bookings.deleted_at')
+                        ->join('xlr8_crm_enquiries as enq', function ($join) {
+                            $join
+                                ->on('enq.id', '=', 'bookings.enq_no')
+                                ->orOn(
+                                    \DB::raw("BINARY CONCAT('XENQ-', enq.id)"),
+                                    '=',
+                                    \DB::raw('BINARY bookings.enq_no'),
+                                )
+                                ->orOn(\DB::raw('BINARY enq.enquiry_no'), '=', \DB::raw('BINARY bookings.enq_no'))
+                                ->orOn(
+                                    \DB::raw('BINARY enq.quick_enquiry_no'),
+                                    '=',
+                                    \DB::raw('BINARY bookings.enq_no'),
+                                );
+                        })
+                        ->where('enq.purchase_type', 'Exchange Buy')
+                        ->count(),
+
+                    'bkng_exch_scrappage' => \DB::table('xlr8_booking_master as bookings')
+                        ->whereNull('bookings.deleted_at')
+                        ->join('xlr8_crm_enquiries as enq', function ($join) {
+                            $join
+                                ->on('enq.id', '=', 'bookings.enq_no')
+                                ->orOn(
+                                    \DB::raw("BINARY CONCAT('XENQ-', enq.id)"),
+                                    '=',
+                                    \DB::raw('BINARY bookings.enq_no'),
+                                )
+                                ->orOn(\DB::raw('BINARY enq.enquiry_no'), '=', \DB::raw('BINARY bookings.enq_no'))
+                                ->orOn(
+                                    \DB::raw('BINARY enq.quick_enquiry_no'),
+                                    '=',
+                                    \DB::raw('BINARY bookings.enq_no'),
+                                );
+                        })
+                        ->where('enq.purchase_type', 'Scrappage')
+                        ->count(),
+
+                    'bkng_exch_not_interested' => \DB::table('xlr8_booking_master as bookings')
+                        ->whereNull('bookings.deleted_at')
+                        ->join('xlr8_crm_enquiries as enq', function ($join) {
+                            $join
+                                ->on('enq.id', '=', 'bookings.enq_no')
+                                ->orOn(
+                                    \DB::raw("BINARY CONCAT('XENQ-', enq.id)"),
+                                    '=',
+                                    \DB::raw('BINARY bookings.enq_no'),
+                                )
+                                ->orOn(\DB::raw('BINARY enq.enquiry_no'), '=', \DB::raw('BINARY bookings.enq_no'))
+                                ->orOn(
+                                    \DB::raw('BINARY enq.quick_enquiry_no'),
+                                    '=',
+                                    \DB::raw('BINARY bookings.enq_no'),
+                                );
+                        })
+                        ->whereIn('enq.purchase_type', ['First Time Buy', 'Additional Buy'])
+                        ->count(),
+
+                    // 8. Booking Stage -> Finance
+                    'bkng_fin_interest' => \DB::table('xlr8_booking_master as bookings')
+                        ->whereNull('bookings.deleted_at')
+                        ->leftJoin('xlr8_booking_finance as xf', 'bookings.id', '=', 'xf.bid')
+                        ->where('bookings.status', '!=', 2)
+                        ->where(function ($q) {
+                            $q->whereNull('xf.fin_mode')->orWhere('xf.fin_mode', 'In-house');
+                        })
+                        ->count(),
+
+                    'bkng_fin_not_interested' => \DB::table('xlr8_booking_master as bookings')
+                        ->whereNull('bookings.deleted_at')
+                        ->leftJoin('xlr8_booking_finance as f', 'bookings.id', '=', 'f.bid')
+                        ->leftJoin('xlr8_crm_enquiries as enq', function ($join) {
+                            $join
+                                ->on('enq.id', '=', 'bookings.enq_no')
+                                ->orOn(
+                                    \DB::raw("BINARY CONCAT('XENQ-', enq.id)"),
+                                    '=',
+                                    \DB::raw('BINARY bookings.enq_no'),
+                                )
+                                ->orOn(\DB::raw('BINARY enq.enquiry_no'), '=', \DB::raw('BINARY bookings.enq_no'))
+                                ->orOn(
+                                    \DB::raw('BINARY enq.quick_enquiry_no'),
+                                    '=',
+                                    \DB::raw('BINARY bookings.enq_no'),
+                                );
+                        })
+                        ->where(function ($q) {
+                            $q->whereIn('f.fin_mode', ['Customer Self', 'Cash', 'Yet To Decide'])->orWhere(function (
+                                $q2,
+                            ) {
+                                $q2->whereNull('f.fin_mode')->whereIn('enq.fin_mode', [
+                                    'Customer Self',
+                                    'Cash',
+                                    'Yet To Decide',
+                                ]);
+                            });
+                        })
+                        ->count(),
+
+                    'bkng_fin_retail' => \DB::table('xlr8_booking_master as bookings')
+                        ->whereNull('bookings.deleted_at')
+                        ->where('bookings.status', 2)
+                        ->where('bookings.retail', 0)
+                        ->count(),
+
+                    'bkng_fin_payout' => \DB::table('xlr8_booking_master as bookings')
+                        ->whereNull('bookings.deleted_at')
+                        ->leftJoin('xlr8_booking_finance as f', 'bookings.id', '=', 'f.bid')
+                        ->where('bookings.payout', 1)
+                        ->where('bookings.retail', 1)
+                        ->where('bookings.status', 2)
+                        ->where('f.fin_mode', 'In-house')
+                        ->where('f.case_status', 2)
+                        ->count(),
+
+                    // 9. Campaigns
+                    'campaign' => \App\Models\CRM\Campaign::count(),
                 ];
             });
         @endphp
@@ -364,7 +571,7 @@
                         <span class="badge rounded-pill text-dark"
                             style="background-color: #e9ecef;">{{ $enqCounts['assigned_long'] ?? 0 }}</span>
                     </a>
-                    <a class="dropdown-item d-flex align-items-center justify-content-between" 
+                    <a class="dropdown-item d-flex align-items-center justify-content-between"
                         href="{{ backpack_url('sales/enquiry/duplicate') }}">
                         <span><i class="nav-icon la la-copy me-2"></i>Duplicate Enquiries</span>
                         <span class="badge rounded-pill text-dark"
@@ -374,8 +581,8 @@
                 @if (backpack_user() && backpack_user()->can('SLS_CMPN_VIEW'))
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
                         href="{{ backpack_url('sales/campaign') }}">
-                        <span><i class="la la-list"></i>Campaign</span>
-
+                        <span><i class="la la-list me-2"></i>Campaign</span>
+                        <span class="badge rounded-pill text-dark" style="background-color: #e9ecef;">{{ $enqCounts['campaign'] ?? 0 }}</span>
                     </a>
                 @endif
                 {{-- Erroneous Entries hidden: no sales/enquiry/erroneous route (DEC-023). --}}
@@ -390,14 +597,14 @@
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
                         href="{{ backpack_url('sales/quotation') }}">
                         <span><i class="la la-file-signature me-2"></i>Quotation List</span>
+                        <span class="badge rounded-pill text-dark"
+                            style="background-color: #e9ecef;">{{ $enqCounts['quotation_all'] ?? 0 }}</span>
                     </a>
-                    {{-- Pending Quotations hidden: no sales/quotation/pending route (DEC-023). --}}
-                    {{-- "Approved Quotations" links to a route that has never existed
-                (backpack_url('quotation-form/approved') before this rename) — see
-                known-bugs-report.md BUG-056. Left as a dead link, not fixed here. --}}
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
                         href="{{ backpack_url('sales/quotation/approved') }}">
                         <span><i class="la la-check-circle me-2"></i>Approved Quotations</span>
+                        <span class="badge rounded-pill text-dark"
+                            style="background-color: #e9ecef;">{{ $enqCounts['quotation_approved'] ?? 0 }}</span>
                     </a>
                 </x-backpack::menu-dropdown>
             @endif
@@ -408,16 +615,18 @@
             {{-- Booking --}}
             @if (backpack_user() && backpack_user()->can('SLS_BKNG_VIEW'))
                 <x-backpack::menu-dropdown title="Booking" icon="la la-book-open" nested="true">
-                    <!-- <x-backpack::menu-dropdown-item title="Add New Booking" icon="la la-plus-circle"
-            :link="backpack_url('sales/booking/create')" /> -->
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
                         href="{{ backpack_url('sales/booking') }}">
                         <span><i class="la la-list me-2"></i>Xceler8 Booking List</span>
+                        <span class="badge rounded-pill text-dark"
+                            style="background-color: #e9ecef;">{{ $enqCounts['booking_xceler8'] ?? 0 }}</span>
                     </a>
 
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
                         href="{{ backpack_url('sales/booking/pending-payment') }}">
                         <span><i class="la la-rupee-sign me-2"></i>Pending Payment Bookings</span>
+                        <span class="badge rounded-pill text-dark"
+                            style="background-color: #e9ecef;">{{ $enqCounts['booking_pending_pay'] ?? 0 }}</span>
                     </a>
 
                     <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
@@ -432,6 +641,8 @@
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
                         href="{{ route('sales.enquiry.otf-bookings') }}">
                         <span><i class="la la-database me-2"></i>DMS OTF Dump</span>
+                        <span class="badge rounded-pill text-dark"
+                            style="background-color: #e9ecef;">{{ $enqCounts['booking_otf'] ?? 0 }}</span>
                     </a>
                     <x-backpack::menu-dropdown title="Pending" icon="la la-clock" nested="true">
                         <a class="dropdown-item d-flex align-items-center justify-content-between"
@@ -457,10 +668,11 @@
             {{-- Transactions (nested inside Booking) --}}
             @if (backpack_user() && backpack_user()->can('SLS_BKNG_VIEW'))
                 <x-backpack::menu-dropdown title="Transactions" icon="la la-handshake" nested="true">
-                    {{-- Transaction List: add Edit + Invoiced-view buttons on the list page itself (not menu-level) --}}
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
                         href="{{ backpack_url('sales/booking/otf-form') }}">
                         <span><i class="la la-list me-2"></i>Transaction List</span>
+                        <span class="badge rounded-pill text-dark"
+                            style="background-color: #e9ecef;">{{ $enqCounts['transaction_otf'] ?? 0 }}</span>
                     </a>
 
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
@@ -592,6 +804,8 @@
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
                         href="{{ backpack_url('crm-sales/verifications/lost-enquiries') }}">
                         <span><i class="la la-user-slash me-2"></i>Lost Enquiries</span>
+                        <span class="badge rounded-pill text-dark"
+                            style="background-color: #e9ecef;">{{ $enqCounts['lost'] ?? 0 }}</span>
                     </a>
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
                         href="{{ backpack_url('crm-sales/verifications/receipt-confirmation') }}">
@@ -696,14 +910,20 @@
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
                         href="{{ backpack_url('sales/enquiry/exchange/int-in-exchange') }}">
                         <span><i class="la la-check me-2"></i>Int in Exchange</span>
+                        <span class="badge rounded-pill text-dark"
+                            style="background-color: #e9ecef;">{{ $enqCounts['exch_interest'] ?? 0 }}</span>
                     </a>
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
                         href="{{ backpack_url('sales/enquiry/exchange/int-in-scrappage') }}">
                         <span><i class="la la-recycle me-2"></i>Int in Scrappage</span>
+                        <span class="badge rounded-pill text-dark"
+                            style="background-color: #e9ecef;">{{ $enqCounts['exch_scrappage'] ?? 0 }}</span>
                     </a>
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
                         href="{{ backpack_url('sales/enquiry/exchange/not-interested') }}">
                         <span><i class="la la-thumbs-down me-2"></i>Not Interested</span>
+                        <span class="badge rounded-pill text-dark"
+                            style="background-color: #e9ecef;">{{ $enqCounts['exch_not_interested'] ?? 0 }}</span>
                     </a>
                 </x-backpack::menu-dropdown>
                 @if (backpack_user() && backpack_user()->can('SLS_BKNG_EXCHANGE'))
@@ -711,14 +931,20 @@
                         <a class="dropdown-item d-flex align-items-center justify-content-between"
                             href="{{ backpack_url('sales/booking/exchange') }}">
                             <span>Int in Exchange</span>
+                            <span class="badge rounded-pill text-dark"
+                                style="background-color: #e9ecef;">{{ $enqCounts['bkng_exch_interest'] ?? 0 }}</span>
                         </a>
                         <a class="dropdown-item d-flex align-items-center justify-content-between"
                             href="{{ backpack_url('sales/booking/scrappage') }}">
                             <span>Int in Scrappage</span>
+                            <span class="badge rounded-pill text-dark"
+                                style="background-color: #e9ecef;">{{ $enqCounts['bkng_exch_scrappage'] ?? 0 }}</span>
                         </a>
                         <a class="dropdown-item d-flex align-items-center justify-content-between"
                             href="{{ backpack_url('sales/booking/exchange/not-interested') }}">
                             <span>Not Interested</span>
+                            <span class="badge rounded-pill text-dark"
+                                style="background-color: #e9ecef;">{{ $enqCounts['bkng_exch_not_interested'] ?? 0 }}</span>
                         </a>
                     </x-backpack::menu-dropdown>
                 @endif
@@ -728,31 +954,43 @@
             <x-backpack::menu-dropdown title="Finance" icon="la la-money-bill" nested="true">
                 <x-backpack::menu-dropdown title="Enquiry Stage" icon="la la-question-circle" nested="true">
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                href="{{ backpack_url('sales/enquiry/finance/int-in-finance') }}">
-                <span><i class="la la-check me-2"></i>Int in Finance</span>
-            </a>
-            <a class="dropdown-item d-flex align-items-center justify-content-between"
-                href="{{ backpack_url('sales/enquiry/finance/not-interested') }}">
-                <span><i class="la la-thumbs-down me-2"></i>Not Interested</span>
-            </a>
+                        href="{{ backpack_url('sales/enquiry/finance/int-in-finance') }}">
+                        <span><i class="la la-check me-2"></i>Int in Finance</span>
+                        <span class="badge rounded-pill text-dark"
+                            style="background-color: #e9ecef;">{{ $enqCounts['fin_interest'] ?? 0 }}</span>
+                    </a>
+                    <a class="dropdown-item d-flex align-items-center justify-content-between"
+                        href="{{ backpack_url('sales/enquiry/finance/not-interested') }}">
+                        <span><i class="la la-thumbs-down me-2"></i>Not Interested</span>
+                        <span class="badge rounded-pill text-dark"
+                            style="background-color: #e9ecef;">{{ $enqCounts['fin_not_interested'] ?? 0 }}</span>
+                    </a>
                 </x-backpack::menu-dropdown>
                 @if (backpack_user() && backpack_user()->can('SLS_BKNG_FINANCE'))
                     <x-backpack::menu-dropdown title="Booking Stage" icon="la la-book-open" nested="true">
                         <a class="dropdown-item d-flex align-items-center justify-content-between"
                             href="{{ backpack_url('sales/booking/finance') }}">
                             <span>Int in Finance</span>
+                            <span class="badge rounded-pill text-dark"
+                                style="background-color: #e9ecef;">{{ $enqCounts['bkng_fin_interest'] ?? 0 }}</span>
                         </a>
                         <a class="dropdown-item d-flex align-items-center justify-content-between"
                             href="{{ backpack_url('sales/booking/finance/not-interested') }}">
                             <span>Not Interested</span>
+                            <span class="badge rounded-pill text-dark"
+                                style="background-color: #e9ecef;">{{ $enqCounts['bkng_fin_not_interested'] ?? 0 }}</span>
                         </a>
                         <a class="dropdown-item d-flex align-items-center justify-content-between"
                             href="{{ backpack_url('sales/booking/finance/retail') }}">
                             <span>Retail</span>
+                            <span class="badge rounded-pill text-dark"
+                                style="background-color: #e9ecef;">{{ $enqCounts['bkng_fin_retail'] ?? 0 }}</span>
                         </a>
                         <a class="dropdown-item d-flex align-items-center justify-content-between"
                             href="{{ backpack_url('sales/booking/finance/payout') }}">
                             <span>Payout</span>
+                            <span class="badge rounded-pill text-dark"
+                                style="background-color: #e9ecef;">{{ $enqCounts['bkng_fin_payout'] ?? 0 }}</span>
                         </a>
                     </x-backpack::menu-dropdown>
                 @endif

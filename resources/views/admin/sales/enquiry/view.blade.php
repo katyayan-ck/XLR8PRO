@@ -886,14 +886,14 @@
                             </div>
                             <div class="col-md-2 mb-2"><label class="form-label">Next Fup Date</label><input type="text" class="form-control" value="{{ $enquiry->cre_next_fup_date ?? '' }}"></div>
                             <div class="col-md-2 mb-2"><label class="form-label">CRE Followup Remarks</label><textarea class="form-control" rows="1">{{ $enquiry->cre_fup_remarks ?? '' }}</textarea></div>
-                            {{-- NEW: CONDITIONAL CRE LOST REASONS --}}
+                            {{-- NEW: CONDITIONAL CRE LOST REASONS (Pulling from $enquiry, NOT $lastCre) --}}
                             <div class="col-md-2 mb-2 cre-lost-fields" style="{{ strtoupper(trim($lastCre?->cre_customer_stage ?? '')) === 'LOST' ? '' : 'display: none;' }}">
                                 <label class="form-label">Lost Reason</label>
-                                <input type="text" class="form-control" value="{{ collect($lost_reasons ?? [])->firstWhere('code', $lastCre?->cre_lost_reason)['value'] ?? ($lastCre?->cre_lost_reason ?? '') }}">
+                                <input type="text" class="form-control" value="{{ collect($lost_reasons ?? [])->firstWhere('code', $enquiry->cre_lost_reason)['value'] ?? ($enquiry->cre_lost_reason ?? '') }}">
                             </div>
                             <div class="col-md-2 mb-2 cre-lost-fields" style="{{ strtoupper(trim($lastCre?->cre_customer_stage ?? '')) === 'LOST' ? '' : 'display: none;' }}">
                                 <label class="form-label">Lost Sub Reason</label>
-                                <input type="text" class="form-control" value="{{ collect($lost_sub_reasons ?? [])->firstWhere('code', $lastCre?->cre_lost_sub_reason)['value'] ?? ($lastCre?->cre_lost_sub_reason ?? '') }}">
+                                <input type="text" class="form-control" value="{{ collect($lost_sub_reasons ?? [])->firstWhere('code', $enquiry->cre_lost_sub_reason)['value'] ?? ($enquiry->cre_lost_sub_reason ?? '') }}">
                             </div>
                         </div>
                     </div>
