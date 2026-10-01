@@ -220,6 +220,7 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-209 | `BaseController::authorize()` never works: `canPerform()` calls `parent::authorize()`, which `Controller` does not have (always false), and the throw passed its arguments in the wrong order (a `TypeError` → 500). `PUT api/v1/system-settings/{key}` and `POST …/import/json` therefore always fail; there is no `SystemSetting` policy either | Medium | FIXED 02-10 — Gate check (DEC-095) | 29-09-2026 | 02-10-2026 |
 | BUG-227 | OTP tokens expired the moment their row was updated (`expires_at` had `ON UPDATE CURRENT_TIMESTAMP`) | Medium | FIXED 02-10 — migration removes ON UPDATE | 02-10-2026 | 02-10-2026 |
 | BUG-223 | Booking finance view and payout-edit pages 500 when the booking has no finance record (`financier` read on null) | Medium | FIXED 02-10 — BT-008 | 01-10-2026 | 02-10-2026 |
+| BUG-224 | Booking `{id}/invoiced-show` 500: view `admin.sales.booking.show-invoiced` does not exist | Medium | FIXED 02-10 — BT-009 | 01-10-2026 | 02-10-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2770,3 +2771,14 @@ guessed at.
 - **Proposed solution:** the pages should say "no finance details yet" (or the routes should only open for bookings with a
   finance record); null-safe reads in the views. Booking-team area — fix with them.
 - **Fixed 02-10-2026:** BT-008 — both pages return to the finance list with "This booking has no finance details yet." when the booking has no finance record. Test `BookingBugFixesTest`.
+
+### BUG-224 — Booking `invoiced-show` page 500: its view does not exist
+
+- **Final status:** FIXED · **Fixed:** 02-10-2026
+- **Severity:** Medium (the "invoiced" detail link fails).
+- **Found:** 01-10-2026, full booking-screen sweep (unchanged code).
+- **Where:** `BookingCrudController::showInvoiced()` returns view `admin.sales.booking.show-invoiced`, which is not in
+  `resources/views/admin/sales/booking/` (`InvalidArgumentException: View [...] not found`).
+- **Proposed solution:** point it at the existing detail view used by the other "show" pages, or restore the missing view
+  from the booking team's branch.
+- **Fixed 02-10-2026:** BT-009 — `showInvoiced()` renders the existing `show` view (same data). Test `BookingBugFixesTest`.

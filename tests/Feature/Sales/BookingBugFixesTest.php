@@ -38,4 +38,12 @@ class BookingBugFixesTest extends TestCase
                 ->assertSessionHas('error', __('booking.flash.finance_record_missing'));
         }
     }
+
+    /** BT-009 / BUG-224: the "View" link of the Invoiced list opens the booking (its view was missing). */
+    public function test_an_invoiced_booking_opens_from_the_invoiced_list(): void
+    {
+        $booking = Booking::query()->withoutGlobalScopes()->where('status', 2)->first() ?? $this->markTestSkipped('No invoiced booking in the test copy.');
+
+        $this->get("/admin/sales/booking/{$booking->id}/invoiced-show")->assertOk();
+    }
 }

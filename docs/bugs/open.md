@@ -46,7 +46,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-218 | Legacy employees without the primaries DEC-089 now requires: of 200 active employees 24 have no branch, 39 no location, 5 no department, 12 no division, 35 no vertical (local `xlrm`, 30-09) | Medium | OPEN — data (HR / owner): fill through the new users workbook (W10) or the bulk screen (W11) | 30-09-2026 | — |
 | BUG-219 | Booking create: for customer type `Dummy` every base validation failure is only logged, so a dummy booking can be saved without name, mobile, branch, vehicle or sale type | Medium | OPEN — owner: should a dummy booking still need the base fields (only finance mode is relaxed today)? | 30-09-2026 | — |
 | BUG-221 | Code referencing classes that do not exist (found by the PHPStan baseline, W4): Booking helper, accessory export, spare master, production RBAC seeder | Low | PARTLY FIXED 01-10 — accessory export repaired; dead Booking helpers / spare master / RBAC seeder await the owner's deletion OK | 30-09-2026 | — |
-| BUG-224 | Booking `{id}/invoiced-show` 500: view `admin.sales.booking.show-invoiced` does not exist | Medium | OPEN — found 01-10 by the booking sweep | 01-10-2026 | — |
 | BUG-225 | Booking `{id}/refund-view` 500: `show.blade.php` reads `$receiptLogs`, which `refundView()` does not pass | Medium | OPEN — found 01-10 by the booking sweep | 01-10-2026 | — |
 | BUG-226 | Enquiry view page 500 for any enquiry that has a CRE follow-up: the view reads `cre_lost_reason`, which `xlr8_cre_enquiry_fup` does not have | High | OPEN — found 02-10 (W15 BT-005 check) | 02-10-2026 | — |
 | BUG-228 | App OTP SMS is never sent: `OtpNotificationService::sendViaSms()` is a placeholder that only logs | High | OPEN — found 02-10 (W18a) | 02-10-2026 | — |
@@ -433,16 +432,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
   exist (`xcelr8_vehicle_master`, `bmpl_enum_master`, `branches`, `locations`); proposal: delete them (the agent's
   deletion was held back for approval). `XlSpareMaster` `EnumMaster` relations and `ProductionRBACSeeder`: delete with
   D5–D12. `config/media-library.php` PRO class: harmless unless temporary uploads are used.
-
-### BUG-224 — Booking `invoiced-show` page 500: its view does not exist
-
-- **Status:** OPEN.
-- **Severity:** Medium (the "invoiced" detail link fails).
-- **Found:** 01-10-2026, full booking-screen sweep (unchanged code).
-- **Where:** `BookingCrudController::showInvoiced()` returns view `admin.sales.booking.show-invoiced`, which is not in
-  `resources/views/admin/sales/booking/` (`InvalidArgumentException: View [...] not found`).
-- **Proposed solution:** point it at the existing detail view used by the other "show" pages, or restore the missing view
-  from the booking team's branch.
 
 ### BUG-225 — Booking `refund-view` page 500: undefined `$receiptLogs`
 

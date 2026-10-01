@@ -2211,7 +2211,7 @@ class BookingCrudController extends CrudController
             abort(404, 'Yeh booking invoiced nahi hai.');
         }
 
-        return $this->getFullBookingData($id, 'show-invoiced');
+        return $this->getFullBookingData($id, 'show');   // BT-009 / BUG-224: the `show-invoiced` view never existed; same data as show
     }
 
     protected function setupListOperation()
