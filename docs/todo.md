@@ -418,7 +418,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W18a | Security: D2 `random_int` OTP (BUG-188), D3 entity allowlist for `docs/upload` / `history` (BUG-182), D1 OTP login from the person record (BUG-187) | ✅ 02-10 (+ BUG-227 fixed; BUG-228 SMS placeholder logged) |
 | W18b | v1 `system-settings` read endpoints narrowed / retired (BUG-207), `BaseController::authorize()` fixed (BUG-209); note for the app team | ✅ 02-10 (managers only; writes via SettingsService) |
 | W18c | Booking bugs BUG-223 / 224 / 225 / 226, BUG-219 (Dummy bookings validated), D21 BEV / Personal SO rule made to work (BUG-101) — ✅ 02-10 (BT-008 … BT-013) | ✅ |
-| W18d | D16 — the hard-coded user-id lists in booking → a permission (BUG-095) | 🔴 |
+| W18d | D16 — the hard-coded user-id lists in booking → a permission (BUG-095) — paused 02-10, plan in the handoff | 🟡 |
 | W18e | D13 — the 52 dead menu links open a "coming soon" page (BUG-056 / 062) | 🔴 |
 | W18f | D23 — the 5 booking reports rewritten on the current tables, inside a `Booking*Service` (BUG-122, #13) | 🔴 |
 | W18g | DEC-093 #21 — schema tooling exemption in the guard (`ai:refresh-context`) | 🔴 |

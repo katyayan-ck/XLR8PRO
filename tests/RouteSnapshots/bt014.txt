@@ -1,0 +1,3 @@
+GET sales/booking/order-verification
+GET sales/booking/pending-order
+GET sales/booking/pending-dms
