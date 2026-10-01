@@ -1,9 +1,9 @@
 # crm tables (generated — do not edit)
 
-## `xlr8_cre_enquiry_fup` · ~0 rows · model: —
+## `xlr8_cre_enquiry_fup` · ~0 rows · model: App\Models\CRM\CreFollowup
 id bigint unsigned PK, enquiry_no varchar(50)?, quick_enquiry_no varchar(50)?, x8_enq_no varchar(50), cre_fup_count int?, cre_planned_fup_date datetime?, cre_actual_fup_date datetime?, cre_fup_call_duration time?, cre_fup_deviation_stage varchar(50)?, cre_enq_stage varchar(50)?, cre_customer_stage varchar(50)?, cre_fup_remarks varchar(50)?, cre_next_fup_date datetime?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 
-## `xlr8_crm_booking` · ~7067 rows · model: —
+## `xlr8_crm_booking` · ~7067 rows · model: App\Models\CRM\OtfBooking
 id bigint unsigned PK, x8_booking_no varchar(50)?, x8_quotation_no varchar(50)?, x8_enq_no varchar(50)?, booking_number varchar(50), booking_date date, sc_mile_id varchar(50)?, status varchar(50), cancellation_date date?, oem_code varchar(50), customer_code varchar(50), customer_name varchar(100), customer_address varchar(500), customer_city varchar(50)?, customer_tehsil varchar(50)?, customer_district varchar(50)?, customer_pan varchar(50)?, customer_tan varchar(50)?, customer_aadhar varchar(50)?, invoice_no varchar(50)?, evaluation_no varchar(50)?, so_no varchar(50)?, otf_no varchar(50)?, is_active int, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 
 ## `xlr8_crm_campaigns` · ~3 rows · model: App\Models\CRM\Campaign
@@ -40,5 +40,5 @@ Indexes: (action_by), (action), (created_at), (created_by), (deleted_by), (actio
 id bigint unsigned PK, test_drive_no varchar(50)?, enquiry_no varchar(50)?, sc_code varchar(200)?, sc_mile_id varchar(100)?, stage varchar(100)?, td_created_date date?, scheduled_td_start_time datetime?, scheduled_td_end_time datetime?, actual_td_start_time datetime?, actual_td_end_time datetime?, model varchar(150)?, model_code varchar(50)?, variant varchar(150)?, variant_code varchar(50)?, customer_name varchar(200)?, customer_phone varchar(15)?, is_active tinyint, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (td_created_date), (enquiry_no), (test_drive_no)
 
-## `xlr8_finexch_fup` · ~0 rows · model: —
+## `xlr8_finexch_fup` · ~0 rows · model: App\Models\CRM\FinanceExchangeFollowup
 id bigint unsigned PK, enq_no varchar(50), remark_type int, fup_count int?, remarks varchar(100)?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?

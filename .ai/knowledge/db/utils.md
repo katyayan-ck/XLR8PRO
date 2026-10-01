@@ -71,11 +71,11 @@ Indexes: UNIQUE (setting_key,scope_type,scope_code)
 id bigint unsigned PK, entity_type varchar(64), canonical varchar(128), synonym varchar(128), is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
 Indexes: (entity_type,is_active), (entity_type,canonical), UNIQUE (entity_type,synonym)
 
-## `xlr8_utils_system_setting` · ~11 rows · model: App\Models\Utilities\Settings\SystemSetting
+## `xlr8_utils_system_setting` · ~13 rows · model: App\Models\Utilities\Settings\SystemSetting
 id bigint unsigned PK, key varchar(255), label varchar(255)?, value text?, default_value text?, type varchar(255), input_type varchar(255), validation_rules text?, options longtext?, help_text text?, topic varchar(255)?, group varchar(255)?, sort_order int, description text?, iseditable tinyint(1), is_visible tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, is_deleted tinyint(1), deleted_at timestamp?
 Indexes: (created_by), (group), (is_visible), (iseditable), (key), UNIQUE (key), (topic,group), (topic), (updated_by)
 
-## `xlr8_utils_system_setting_audit` · ~0 rows · model: App\Models\Utilities\Settings\SystemSettingAudit
+## `xlr8_utils_system_setting_audit` · ~3 rows · model: App\Models\Utilities\Settings\SystemSettingAudit
 id bigint unsigned PK, setting_id bigint unsigned, user_id bigint unsigned?, action varchar(255), old_value longtext?, new_value longtext?, ip_address varchar(255)?, user_agent varchar(255)?, created_by bigint unsigned?, updated_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, is_deleted tinyint(1), deleted_at timestamp?
 Indexes: (action), (created_by), (setting_id,created_at), (updated_by), (user_id,created_at)
 

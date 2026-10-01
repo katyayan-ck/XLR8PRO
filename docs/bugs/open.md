@@ -54,6 +54,7 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-223 | Booking finance view and payout-edit pages 500 when the booking has no finance record (`financier` read on null) | Medium | OPEN — found 01-10 by the booking sweep | 01-10-2026 | — |
 | BUG-224 | Booking `{id}/invoiced-show` 500: view `admin.sales.booking.show-invoiced` does not exist | Medium | OPEN — found 01-10 by the booking sweep | 01-10-2026 | — |
 | BUG-225 | Booking `{id}/refund-view` 500: `show.blade.php` reads `$receiptLogs`, which `refundView()` does not pass | Medium | OPEN — found 01-10 by the booking sweep | 01-10-2026 | — |
+| BUG-226 | Enquiry view page 500 for any enquiry that has a CRE follow-up: the view reads `cre_lost_reason`, which `xlr8_cre_enquiry_fup` does not have | High | OPEN — found 02-10 (W15 BT-005 check) | 02-10-2026 | — |
 
 ## Entries
 
@@ -546,3 +547,16 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 - **Where:** `BookingCrudController::refundView()` renders `admin/sales/booking/show.blade.php`, which reads `$receiptLogs`
   (~line 644 compiled); the method does not pass it (the `show` action does).
 - **Proposed solution:** pass `$receiptLogs` (same query as `show()`), or default it in the view.
+
+### BUG-226 — Enquiry view page 500 for any enquiry that has a CRE follow-up
+
+- **Status:** OPEN.
+- **Severity:** High (the enquiry view — the main read screen of an enquiry — fails as soon as a CRE follow-up exists;
+  the test copy has none, so the sweeps never saw it).
+- **Found:** 02-10-2026, W15 BT-005 before / after check with a fixture that adds CRE follow-ups (unchanged code).
+- **Where:** `resources/views/admin/sales/enquiry/view.blade.php` (~line 889 compiled) reads `$fup->cre_lost_reason`
+  for each CRE follow-up row; `xlr8_cre_enquiry_fup` has no such column (`Undefined property: stdClass::$cre_lost_reason`).
+  Rows come from `EnquiryCrudController::showEnquiry()`.
+- **Proposed solution:** read it null-safe (`$fup->cre_lost_reason ?? '—'`), or add the column if the business still
+  records a lost reason per CRE follow-up (owner / booking team). Booking-team area — fix as a logged BT change once
+  approved (decision sheet #10 covers the similar BUG-223…225).

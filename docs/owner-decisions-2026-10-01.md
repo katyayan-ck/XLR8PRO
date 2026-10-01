@@ -24,7 +24,7 @@ phase they unblock; **Rec.** is the agent's recommendation.
 | 7 | **D23** — 5 booking reports 500 (tables do not exist, BUG-122): rewrite them on the current tables, or retire them? | rewrite, if the team uses them | |
 | 8 | **D13** — 52 dead menu links (BUG-056 / 062): remove, or keep as "coming soon"? | remove | |
 | 9 | **D16** — hard-coded user-id lists `[5, 23, 123]` in booking (BUG-095) → a permission | yes | |
-| 10 | **BUG-223 / 224 / 225** (finance view / payout-edit without finance, missing `invoiced-show` view, `refund-view` crash): may the agent fix them as logged BT changes? | yes | |
+| 10 | **BUG-223 / 224 / 225 / 226** (finance view / payout-edit without finance, missing `invoiced-show` view, `refund-view` crash, enquiry view crash with CRE follow-ups): may the agent fix them as logged BT changes? | yes | |
 | 11 | **BUG-219** — should a `Dummy` booking still need name, mobile, branch, vehicle, sale type? | | |
 | 12 | **D21** — "BEV / Personal → order 3 when DMS SO missing": still a business rule, or drop the dead branch? (BUG-101) | | |
 | 13 | Booking controller: convert each query **and** move it into its `Booking*Service` in one change (SL6 with W15), each step numbered and revertable | yes | |

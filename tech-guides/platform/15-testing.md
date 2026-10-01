@@ -166,3 +166,7 @@ before and after a refactor that must not change behaviour (the booking-team log
 the test copy (fixed ids keep the responses comparable). Example: quotations have no rows anywhere yet, so
 `tests/RouteSnapshots/quotation-fixture.php` seeds quotation 990001 with two history versions for
 `tests/RouteSnapshots/quotation.txt`.
+Run it with `APP_DEBUG=false` (error pages are then the branded ones, not the debug page with timings). The normaliser
+also drops inline CSRF tokens (`'X-CSRF-TOKEN': '…'`), DD-MM-YYYY dates and the error reference on 500 pages; requests
+in one spec are keyed by method + URL + JSON body. Run the "before" once more if the first run reports differences on
+unchanged code — it means something new varies per render and the normaliser needs it.

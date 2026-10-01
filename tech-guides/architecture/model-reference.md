@@ -145,3 +145,6 @@ that is the only write path (DEC-050); blank = written by its owning service / c
 | `User` | `users` | `IAM\UserService` | [core](core.md) |
 | `CRM\EnquiryFollowup` | `xlr8_crm_enquiries_fup` | enquiry import / screens (scope via its enquiry) | [crm-enquiry-quotation](../modules/crm-enquiry-quotation.md) |
 | `Module\Finance\FinancerStatement` | `xlr8_financer_statement` | Imports → Sales (financier statement) | [booking](../modules/sales-booking.md) |
+| `CRM\CreFollowup` | `xlr8_cre_enquiry_fup` | enquiry screen CRE follow-up form | [crm-enquiry-quotation](../modules/crm-enquiry-quotation.md) |
+| `CRM\FinanceExchangeFollowup` | `xlr8_finexch_fup` | enquiry finance / exchange remarks (`FINANCE` = 1, `EXCHANGE` = 2) | [crm-enquiry-quotation](../modules/crm-enquiry-quotation.md) |
+| `CRM\OtfBooking` | `xlr8_crm_booking` | OEM OTF bookings (enquiry OTF list / detail) | [crm-enquiry-quotation](../modules/crm-enquiry-quotation.md) |

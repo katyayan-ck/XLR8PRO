@@ -3,12 +3,17 @@
 namespace App\Http\Controllers\Admin\Sales\Enquiry;
 
 use App\Models\CRM\Campaign;
+use App\Models\CRM\CreFollowup;
 use App\Models\CRM\Enquiry;
+use App\Models\CRM\EnquiryFollowup;
+use App\Models\CRM\FinanceExchangeFollowup;
 use App\Models\CRM\Lead;
 use App\Models\CRM\LeadSource;
+use App\Models\CRM\OtfBooking;
 use App\Models\CRM\Quotation;
 use App\Models\Module\Booking\XlFinancier;
 use App\Models\Module\Finance\XFinance;
+use App\Models\Vehicle\Variant;
 use App\Services\EnquiryReferenceService;
 use App\Services\OrgService;
 use App\Support\Facades\DataScope;
@@ -22,7 +27,6 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Prologue\Alerts\Facades\Alert;
@@ -266,7 +270,8 @@ class EnquiryCrudController extends CrudController
     private function getBaseQuery(string $listType)
     {
         if ($listType === 'otf') {
-            return DB::table('xlr8_crm_booking as crm_booking')
+            // BT-005: from the model; scopes off and a plain query builder, as the raw query was
+            return OtfBooking::withoutGlobalScopes()->from('xlr8_crm_booking as crm_booking')
                 ->select([
                     'crm_booking.id',
                     'crm_booking.booking_date',
@@ -288,7 +293,8 @@ class EnquiryCrudController extends CrudController
                     'crm_booking.customer_aadhar as adhar_no',
                     'crm_booking.otf_no as otf_number',
                 ])
-                ->where('crm_booking.is_active', 1);
+                ->where('crm_booking.is_active', 1)
+                ->toBase();
         }
 
         // Start a fresh Query Builder instance
@@ -404,9 +410,9 @@ class EnquiryCrudController extends CrudController
         $colorCode = strtoupper(substr($oemCode, -2));
 
         // 2. Direct xlr8_vehicle_variant table se rows fetch karein
-        $rows = DB::table('xlr8_vehicle_variant')
+        $rows = Variant::withTrashed()   // BT-005: every row of the code, as before
             ->where('code', $variantCode)
-            ->get(['segment_code', 'model_code', 'custom_name', 'color', 'color_code']);
+            ->toBase()->get(['segment_code', 'model_code', 'custom_name', 'color', 'color_code']);
 
         if ($rows->isEmpty()) {
             return self::$vehicleFromOemCodeCache[$oemCode] = $empty;
@@ -445,12 +451,12 @@ class EnquiryCrudController extends CrudController
 
         $searchNos = array_merge($x8Nos, $legacyX8Nos);
 
-        $rows = DB::table('xlr8_cre_enquiry_fup')
+        $rows = CreFollowup::withTrashed()   // BT-005: soft-deleted rows included, as the raw query
             ->whereIn('x8_enq_no', $searchNos)
             // Use IFNULL to securely handle NULLs without complex nested closures
             ->whereRaw("IFNULL(cre_fup_deviation_stage, '') != 'OPEN_FOLLOW_UP'")
             ->orderByDesc('id')
-            ->get();
+            ->toBase()->get();
 
         $latest = [];
         foreach ($rows as $row) {
@@ -1813,27 +1819,27 @@ class EnquiryCrudController extends CrudController
 
         $fups = [];
         if (strtoupper($enquiry->current_origin ?? '') === 'LONG') {
-            $fups = DB::table('xlr8_crm_enquiries_fup')
+            $fups = EnquiryFollowup::withTrashed()   // BT-005
                 ->where('enquiry_no', $enquiry->enquiry_no)
                 ->orderBy('id', 'asc')
-                ->get();
+                ->toBase()->get();
         }
 
         $x8EnqNo = $this->enquiryRef->fromReference($enquiry->id);
         $legacyEnqNo = 'XENQ-'.$x8EnqNo;
 
-        $creFups = DB::table('xlr8_cre_enquiry_fup')
+        $creFups = CreFollowup::withTrashed()   // BT-005
             ->whereIn('x8_enq_no', [(string) $x8EnqNo, $legacyEnqNo])
             ->where('cre_fup_deviation_stage', '!=', 'OPEN_FOLLOW_UP')
             ->orderBy('id', 'asc')
-            ->get();
+            ->toBase()->get();
 
         // Fetch the new Finance & Exchange Follow-ups
         $enqNoFallback = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
-        $finExchFups = DB::table('xlr8_finexch_fup')
+        $finExchFups = FinanceExchangeFollowup::withTrashed()   // BT-005
             ->where('enq_no', $enqNoFallback)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->toBase()->get();
 
         $data['enquiry'] = $enquiry;
         $data['fups'] = $fups;
@@ -1856,27 +1862,27 @@ class EnquiryCrudController extends CrudController
 
         $fups = [];
         if (strtoupper($enquiry->current_origin ?? '') === 'LONG') {
-            $fups = DB::table('xlr8_crm_enquiries_fup')
+            $fups = EnquiryFollowup::withTrashed()   // BT-005
                 ->where('enquiry_no', $enquiry->enquiry_no)
                 ->orderBy('id', 'asc')
-                ->get();
+                ->toBase()->get();
         }
 
         $x8EnqNo = $this->enquiryRef->fromReference($enquiry->id);
         $legacyEnqNo = 'XENQ-'.$x8EnqNo;
 
-        $creFups = DB::table('xlr8_cre_enquiry_fup')
+        $creFups = CreFollowup::withTrashed()   // BT-005
             ->whereIn('x8_enq_no', [(string) $x8EnqNo, $legacyEnqNo])
             ->whereRaw("IFNULL(cre_fup_deviation_stage, '') != 'OPEN_FOLLOW_UP'")
             ->orderBy('id', 'asc')
-            ->get();
+            ->toBase()->get();
 
         // Fetch the new Finance & Exchange Follow-ups to prevent view crashes
         $enqNoFallback = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
-        $finExchFups = DB::table('xlr8_finexch_fup')
+        $finExchFups = FinanceExchangeFollowup::withTrashed()   // BT-005
             ->where('enq_no', $enqNoFallback)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->toBase()->get();
 
         $data['title'] = 'View Enquiry';
         $data['enquiry'] = $enquiry;
@@ -1895,16 +1901,17 @@ class EnquiryCrudController extends CrudController
             $legacyEnqNo = 'XENQ-'.$x8EnqNo;
 
             // CLEANUP: Delete any legacy 'OPEN_FOLLOW_UP' pending rows to prevent orphan data
-            DB::table('xlr8_cre_enquiry_fup')
+            // BT-005: a hard delete of every matching row (soft-deleted ones too), as the raw delete
+            CreFollowup::withTrashed()
                 ->whereIn('x8_enq_no', [(string) $x8EnqNo, $legacyEnqNo])
                 ->where('cre_fup_deviation_stage', 'OPEN_FOLLOW_UP')
-                ->delete();
+                ->forceDelete();
 
             // 1. Get the actual last completed FUP to determine planned date and count
-            $lastFup = DB::table('xlr8_cre_enquiry_fup')
+            $lastFup = CreFollowup::withTrashed()
                 ->whereIn('x8_enq_no', [(string) $x8EnqNo, $legacyEnqNo])
                 ->orderBy('id', 'desc')
-                ->first();
+                ->toBase()->first();
 
             $fupCount = $lastFup ? $lastFup->cre_fup_count + 1 : 1;
             $plannedDate = ($lastFup && $lastFup->cre_next_fup_date)
@@ -1931,7 +1938,7 @@ class EnquiryCrudController extends CrudController
 
             $nextFupDate = $request->cre_next_fup_date ? Carbon::parse($request->cre_next_fup_date, 'Asia/Kolkata')->format('Y-m-d H:i:s') : null;
 
-            DB::table('xlr8_cre_enquiry_fup')->insert([
+            CreFollowup::query()->insert([   // BT-005: the same row, written without model events (as before)
                 'enquiry_no' => $enquiry->oem_enquiry_no ?? $enquiry->enquiry_no,
                 'quick_enquiry_no' => $enquiry->quick_enquiry_no ?? $enquiry->oem_quick_enquiry_no,
                 'x8_enq_no' => $x8EnqNo,
@@ -2127,11 +2134,11 @@ class EnquiryCrudController extends CrudController
         $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
 
         // Fetch Exchange Follow-ups (Type 2)
-        $fups = DB::table('xlr8_finexch_fup')
+        $fups = FinanceExchangeFollowup::withTrashed()   // BT-005
             ->where('enq_no', $enqNo)
             ->where('remark_type', 2)
             ->orderByDesc('created_at')
-            ->get();
+            ->toBase()->get();
 
         return view('admin.sales.enquiry.exchange-edit', compact('enquiry', 'existing_car_oems', 'fups'));
     }
@@ -2182,13 +2189,13 @@ class EnquiryCrudController extends CrudController
 
         // Process New Exchange Follow-up Remark
         if ($request->filled('remarks')) {
-            $lastFup = DB::table('xlr8_finexch_fup')
+            $lastFup = FinanceExchangeFollowup::withTrashed()   // BT-005
                 ->where('enq_no', $enqNo)
                 ->where('remark_type', 2)
                 ->orderByDesc('id')
-                ->first();
+                ->toBase()->first();
 
-            DB::table('xlr8_finexch_fup')->insert([
+            FinanceExchangeFollowup::query()->insert([
                 'enq_no' => $enqNo,
                 'remark_type' => 2,
                 'fup_count' => $lastFup ? $lastFup->fup_count + 1 : 1,
@@ -2232,11 +2239,11 @@ class EnquiryCrudController extends CrudController
         $financiers = XlFinancier::select('id', 'name', 'short_name')->get()->toArray();
 
         // Fetch Finance Follow-ups (Type 1)
-        $fups = DB::table('xlr8_finexch_fup')
+        $fups = FinanceExchangeFollowup::withTrashed()   // BT-005
             ->where('enq_no', $enqNo)
             ->where('remark_type', 1)
             ->orderByDesc('created_at')
-            ->get();
+            ->toBase()->get();
 
         $finance_modes = OrgService::keywordValueByCode('FIN_MODE');
 
@@ -2302,11 +2309,11 @@ class EnquiryCrudController extends CrudController
         $existing_car_oems = OrgService::keywordValueByCode('EXISTING_CAR_OEM');
         $enqNo = $enquiry->enquiry_no ?? $enquiry->oem_enquiry_no ?? $this->enquiryRef->toReference($enquiry->id);
 
-        $fups = DB::table('xlr8_finexch_fup')
+        $fups = FinanceExchangeFollowup::withTrashed()   // BT-005
             ->where('enq_no', $enqNo)
             ->where('remark_type', 2)
             ->orderByDesc('created_at')
-            ->get();
+            ->toBase()->get();
 
         return view('admin.sales.enquiry.exchange-view', compact('enquiry', 'existing_car_oems', 'fups'));
     }
@@ -2323,11 +2330,11 @@ class EnquiryCrudController extends CrudController
         $finance = XFinance::where('enq_no', $enqNo)->first();
         $financiers = XlFinancier::select('id', 'name', 'short_name')->get()->toArray();
 
-        $fups = DB::table('xlr8_finexch_fup')
+        $fups = FinanceExchangeFollowup::withTrashed()   // BT-005
             ->where('enq_no', $enqNo)
             ->where('remark_type', 1)
             ->orderByDesc('created_at')
-            ->get();
+            ->toBase()->get();
 
         $finance_modes = OrgService::keywordValueByCode('FIN_MODE');
 
@@ -2390,13 +2397,13 @@ class EnquiryCrudController extends CrudController
 
         // Process New Finance Follow-up Remark
         if ($request->filled('remarks')) {
-            $lastFup = DB::table('xlr8_finexch_fup')
+            $lastFup = FinanceExchangeFollowup::withTrashed()   // BT-005
                 ->where('enq_no', $enqNo)
                 ->where('remark_type', 1)
                 ->orderByDesc('id')
-                ->first();
+                ->toBase()->first();
 
-            DB::table('xlr8_finexch_fup')->insert([
+            FinanceExchangeFollowup::query()->insert([
                 'enq_no' => $enqNo,
                 'remark_type' => 1,
                 'fup_count' => $lastFup ? $lastFup->fup_count + 1 : 1,
@@ -2850,7 +2857,7 @@ class EnquiryCrudController extends CrudController
         $this->crud->hasAccessOrFail('list');
 
         // Fetch the OTF booking from crm_booking table
-        $otf = DB::table('xlr8_crm_booking')->where('id', $id)->first();
+        $otf = OtfBooking::withTrashed()->where('id', $id)->toBase()->first();   // BT-005
         if (! $otf) {
             abort(404, 'OTF Booking not found.');
         }

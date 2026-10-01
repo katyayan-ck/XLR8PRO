@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -37,6 +38,8 @@ class RouteSnapshot extends Command
             return self::FAILURE;
         }
 
+        // local tool: requests are built in-process, so the session's CSRF token cannot round-trip — skip the check
+        ValidateCsrfToken::except(['*']);
         $setup = $this->option('setup') ? require (string) $this->option('setup') : null;
         $this->setup = $setup instanceof \Closure ? $setup : null;
         $lines = array_values(array_filter(array_map('trim', (array) file((string) $this->argument('spec'))), fn ($l) => $l !== '' && $l[0] !== '#'));
@@ -95,11 +98,11 @@ class RouteSnapshot extends Command
         $normal = $this->normalise($body);
         if ($dir = $this->option('save')) {
             @mkdir($dir, 0777, true);
-            file_put_contents($dir.'/'.preg_replace('/[^A-Za-z0-9]+/', '_', "{$userId} {$method} {$url}").'.txt', str_replace('> <', ">\n<", $normal));
+            file_put_contents($dir.'/'.preg_replace('/[^A-Za-z0-9]+/', '_', "{$userId} {$method} {$url}".($json ? " {$json}" : '')).'.txt', str_replace('> <', ">\n<", $normal));
         }
         $flag = $code === 'EXC' || $code >= 500 || preg_match('/Undefined (variable|array key|property)|ErrorException|QueryException|SQLSTATE/', $body) === 1;
 
-        return ["{$userId} {$method} {$url}", ['code' => $code, 'len' => strlen($body), 'hash' => md5($normal), 'flag' => $flag, 'head' => mb_substr(strip_tags($normal), 0, 200)]];
+        return ["{$userId} {$method} {$url}".($json ? " {$json}" : ''), ['code' => $code, 'len' => strlen($body), 'hash' => md5($normal), 'flag' => $flag, 'head' => mb_substr(strip_tags($normal), 0, 200)]];
     }
 
     /** Remove what changes on every render: CSRF tokens, times, hashes, random element ids. */
@@ -107,7 +110,7 @@ class RouteSnapshot extends Command
     {
         $patterns = [
             '/name="_token" value="[^"]+"/' => '', '/<meta name="csrf-token" content="[^"]+"/' => '', '/"csrf[_-]?token"\s*:\s*"[^"]+"/i' => '',
-            '/\b\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?\b/' => 'DT', '/\b\d{2}:\d{2}(:\d{2})?\b/' => 'TM',
+            '/\b\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?\b/' => 'DT', '/\b\d{2}:\d{2}(:\d{2})?\b/' => 'TM', '/\b\d{2}[-\/]\d{2}[-\/]\d{4}\b/' => 'DATE', '/([\'"])[A-Za-z0-9]{40}\1/' => 'TOKEN', '/<code>[A-Z0-9]{8}<\/code>/' => '<code>REF</code>',
             '/[?&](v|id)=[0-9a-f]{6,}/' => '', '/\b[0-9a-f]{32,40}\b/' => 'HASH', '/(xl|uid|id)-[A-Za-z0-9]{6,}/' => 'RID',
             '/dropdown-[A-Za-z0-9]{8}\b/' => 'dropdown-RID', '/\s+/' => ' ',
         ];

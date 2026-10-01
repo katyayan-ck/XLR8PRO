@@ -1214,3 +1214,5 @@ the other controllers, console, imports, tests.
 **Baseline now:** 314 `DB::` uses in 45 files (473 at the start of the day).
 **Left:** BT-004 onward — `QuotationCrudController`, `EnquiryCrudController`, `ImportEnquiriesJob`,
 `SalesImportController`, other controllers, console, imports, tests; owner answers to the decision sheet.
+
+## 02-10-2026

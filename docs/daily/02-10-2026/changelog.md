@@ -1,0 +1,9 @@
+# Changelog — 02-10-2026
+
+Today's changes only (the date-wise copy). The same entries are in the cumulative `docs/changelog.md` under
+`## 2026-10-02`; add every new entry to **both** (`.ai/guidelines/10-workflow.md`).
+
+## BT-005 (booking code, DEC-093) — Enquiry screens and follow-up writes through models (OTF bookings, CRE follow-ups, enquiry follow-ups, finance / exchange remarks, variant rows)
+- `app/Http/Controllers/Admin/Sales/Enquiry/EnquiryCrudController.php` · `getBaseQuery()` (OTF list), `resolveVehicleFromOemCode()`, `getLatestCreFups()`, `edit()`, `showEnquiry()`, `saveCreFup()`, `exchangeEnquiryEdit()` / `View()` / `Update()`, `financeEnquiryEdit()` / `View()` / `Update()`, `showOtf()`. DEC-093. New models `CRM\OtfBooking` (`xlr8_crm_booking`), `CRM\CreFollowup` (`xlr8_cre_enquiry_fup`), `CRM\FinanceExchangeFollowup` (`xlr8_finexch_fup`); existing `CRM\EnquiryFollowup`, `Vehicle\Variant`. Reads keep every row as the raw queries did (`withTrashed()` / `withoutGlobalScopes()`, `toBase()` plain rows); the OPEN_FOLLOW_UP clean-up stays a hard delete (`withTrashed()->forceDelete()`, not a soft delete); inserts use the model's `query()->insert()` with the same columns (no model events, as before).
+- Checked: enquiry list, OTF list + OTF detail, enquiry edit / view, exchange + finance edit / view, and the grid data of 9 list types (+ a search) as superadmin + user 40, with a rolled-back fixture adding CRE follow-ups and finance / exchange remarks (`tests/RouteSnapshots/enquiry.txt`, `enquiry-fixture.php`): 38 / 38 identical (the enquiry view 500s before and after — BUG-226); new `tests/Feature/Sales/EnquiryFollowupWritesTest` (CRE follow-up save with placeholder hard-delete, count and deviation; finance / exchange remark numbering) passes before and after; enquiry flow tests passed; PHPStan no new errors. Log: `docs/booking-team-changes.md`.
+- **Baseline:** 271 `DB::` uses in 43 files left.

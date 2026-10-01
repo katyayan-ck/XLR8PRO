@@ -1,0 +1,19 @@
+GET sales/enquiry
+GET sales/enquiry/otf-bookings
+GET sales/enquiry/otf-bookings/7067/show
+GET sales/enquiry/60922/edit
+GET sales/enquiry/exchange/60922/edit
+GET sales/enquiry/finance/60922/edit
+GET sales/enquiry/60922/view
+GET sales/enquiry/exchange/60922/view
+GET sales/enquiry/finance/60922/view
+AJAX POST sales/enquiry/grid-data {"list_type":"all","startRow":0,"endRow":50}
+AJAX POST sales/enquiry/grid-data {"list_type":"otf","startRow":0,"endRow":50}
+AJAX POST sales/enquiry/grid-data {"list_type":"assigned_long","startRow":0,"endRow":50}
+AJAX POST sales/enquiry/grid-data {"list_type":"unassigned_long","startRow":0,"endRow":50}
+AJAX POST sales/enquiry/grid-data {"list_type":"assigned_quick","startRow":0,"endRow":50}
+AJAX POST sales/enquiry/grid-data {"list_type":"unassigned_quick","startRow":0,"endRow":50}
+AJAX POST sales/enquiry/grid-data {"list_type":"finance","startRow":0,"endRow":50}
+AJAX POST sales/enquiry/grid-data {"list_type":"exchange","startRow":0,"endRow":50}
+AJAX POST sales/enquiry/grid-data {"list_type":"duplicate","startRow":0,"endRow":50}
+AJAX POST sales/enquiry/grid-data {"list_type":"all","startRow":0,"endRow":50,"searchText":"EN-0035718789"}
