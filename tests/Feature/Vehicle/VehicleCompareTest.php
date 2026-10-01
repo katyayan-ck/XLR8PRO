@@ -12,7 +12,6 @@ use App\Services\Vehicle\Content\ModelSpecService;
 use App\Services\Vehicle\Content\SpecItemService;
 use App\Services\Vehicle\Content\TrimFeatureService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
@@ -27,7 +26,7 @@ class VehicleCompareTest extends TestCase
     /** @return array{0: string, 1: string, 2: string} model code + two trim codes */
     private function twoTrims(): array
     {
-        $model = DB::table('xlr8_vehicle_variant')->whereNull('deleted_at')->whereNotNull('model_code')
+        $model = Variant::query()->whereNotNull('model_code')
             ->select('model_code')->groupBy('model_code')->havingRaw('COUNT(DISTINCT code) >= 2')->value('model_code')
             ?? $this->markTestSkipped('No model with two trims in the test copy.');
         $codes = Variant::query()->where('model_code', $model)->distinct()->limit(2)->pluck('code')->all();

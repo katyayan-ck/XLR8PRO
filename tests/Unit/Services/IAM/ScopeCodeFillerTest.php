@@ -2,10 +2,11 @@
 
 namespace Tests\Unit\Services\IAM;
 
+use App\Models\Admin\Location;
 use App\Models\CRM\Quotation;
 use App\Models\Module\Booking\Booking;
+use App\Models\Vehicle\Variant;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -18,7 +19,7 @@ class ScopeCodeFillerTest extends TestCase
 
     public function test_a_booking_takes_vehicle_codes_from_its_quotation_variant(): void
     {
-        $variant = DB::table('xlr8_vehicle_variant')->whereNull('deleted_at')->whereNotNull('model_code')->first(['code', 'model_code', 'segment_code', 'sub_segment_code']);
+        $variant = Variant::query()->whereNotNull('model_code')->toBase()->first(['code', 'model_code', 'segment_code', 'sub_segment_code']);
         if (! $variant) {
             $this->markTestSkipped('Needs a vehicle variant in xlrm_testing.');
         }
@@ -33,7 +34,7 @@ class ScopeCodeFillerTest extends TestCase
 
     public function test_a_location_gives_the_branch_and_set_codes_are_kept(): void
     {
-        $location = DB::table('xlr8_admin_location')->whereNull('deleted_at')->whereNotNull('branch_code')->first(['code', 'branch_code']);
+        $location = Location::query()->whereNotNull('branch_code')->toBase()->first(['code', 'branch_code']);
         if (! $location) {
             $this->markTestSkipped('Needs a location in xlrm_testing.');
         }

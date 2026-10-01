@@ -3,12 +3,12 @@
 namespace Tests\Feature\Org;
 
 use App\Models\Admin\Employee;
+use App\Models\Admin\Vertical;
 use App\Services\Org\BranchService;
 use App\Services\Org\DepartmentService;
 use App\Services\Org\EmployeeService;
 use App\Services\Person\PersonRecordService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -31,7 +31,7 @@ class EmployeePrimariesRuleTest extends TestCase
         app(BranchService::class)->create(['code' => "RB{$tag}", 'name' => 'Rule Branch', 'is_active' => true]);
         app(BranchService::class)->create(['code' => "RO{$tag}", 'name' => 'Other Branch', 'is_active' => true]);
         app(DepartmentService::class)->create(['code' => "RD{$tag}", 'name' => 'Rule Dept', 'is_active' => true]);
-        $vertical = DB::table('xlr8_admin_vertical')->whereNull('deleted_at')->value('code') ?? $this->markTestSkipped('no vertical');
+        $vertical = Vertical::query()->value('code') ?? $this->markTestSkipped('no vertical');
         $this->org = ['branch' => "RB{$tag}", 'other' => "RO{$tag}", 'department' => "RD{$tag}", 'vertical' => $vertical];
     }
 
@@ -69,7 +69,7 @@ class EmployeePrimariesRuleTest extends TestCase
     {
         $employee = app(EmployeeService::class)->create(['person_code' => $this->person(), 'primary_branch_code' => $this->org['branch'],
             'primary_dept_code' => $this->org['department'], 'vertical_code' => $this->org['vertical']]);
-        DB::table('xlr8_admin_employee')->where('id', $employee->id)->update(['vertical_code' => null]); // a legacy row
+        Employee::query()->toBase()->where('id', $employee->id)->update(['vertical_code' => null]); // a legacy row, past the entity rules
 
         $updated = app(EmployeeService::class)->update(Employee::find($employee->id), ['vertical_code' => null, 'mile_id' => 'M-1']);
         $this->assertSame('M-1', $updated->mile_id, 'an unchanged missing vertical does not block other edits');

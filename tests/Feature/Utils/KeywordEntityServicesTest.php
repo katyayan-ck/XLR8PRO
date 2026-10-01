@@ -7,7 +7,6 @@ use App\Models\Utilities\KeyValue\Keyvalue;
 use App\Services\Utils\KeyvalueService;
 use App\Services\Utils\KeywordMasterService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
@@ -54,7 +53,8 @@ class KeywordEntityServicesTest extends TestCase
     public function test_editing_a_legacy_value_never_rewrites_its_code(): void
     {
         $keyword = $this->keyword();
-        $id = DB::table('xlr8_utils_keyvalue')->insertGetId(['keyword_code' => $keyword, 'code' => 'OLD BIN A1', 'value' => 'Old', 'status' => 1, 'is_active' => 1]);
+        // a legacy row, written past the entity rules
+        $id = Keyvalue::query()->toBase()->insertGetId(['keyword_code' => $keyword, 'code' => 'OLD BIN A1', 'value' => 'Old', 'status' => 1, 'is_active' => 1]);
 
         app(KeyvalueService::class)->update(Keyvalue::find($id), ['value' => 'Renamed Bin']);
         $row = Keyvalue::find($id);

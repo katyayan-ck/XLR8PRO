@@ -3,10 +3,10 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\User;
+use App\Models\Utilities\Settings\SystemSetting;
 use App\Services\Platform\Settings\SettingsService;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -35,7 +35,7 @@ class SystemSettingScreensTest extends TestCase
     /** DEC-091: settings are shown only on Utilities → Settings; the legacy pages lead there. */
     public function test_legacy_pages_lead_to_the_settings_screen(): void
     {
-        $id = DB::table('xlr8_utils_system_setting')->whereNull('deleted_at')->value('id') ?? 1;
+        $id = SystemSetting::query()->value('id') ?? 1;
 
         foreach (['/admin/utils/system-setting', '/admin/utils/system-setting/create', "/admin/utils/system-setting/{$id}/edit", "/admin/utils/system-setting/{$id}/show"] as $url) {
             $this->get($url)->assertRedirect(route('utils.settings.index'));

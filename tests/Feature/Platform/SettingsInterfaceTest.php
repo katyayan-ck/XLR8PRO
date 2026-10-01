@@ -3,12 +3,12 @@
 namespace Tests\Feature\Platform;
 
 use App\Models\User;
+use App\Models\Utilities\Settings\SystemSetting;
 use App\Models\Vehicle\Pricing\Hold;
 use App\Models\Vehicle\Pricing\TcsConfig;
 use App\Services\Platform\Settings\SettingsService;
 use App\Services\Vehicle\Pricing\PricingHoldService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
@@ -117,7 +117,7 @@ class SettingsInterfaceTest extends TestCase
 
         $this->assertSame('s3cret-pass', app(SettingsService::class)->get('mail.smtp.password'));
         $this->assertSame(465, app(SettingsService::class)->get('mail.smtp.port'));
-        $this->assertStringNotContainsString('s3cret-pass', (string) DB::table('xlr8_utils_system_setting')->where('key', 'mail.smtp.password')->value('value'));
+        $this->assertStringNotContainsString('s3cret-pass', (string) SystemSetting::withoutGlobalScopes()->toBase()->where('key', 'mail.smtp.password')->value('value'));
         $this->get('/admin/utils/settings?tab=communication')->assertDontSee('s3cret-pass');
     }
 }

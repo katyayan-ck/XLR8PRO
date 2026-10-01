@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Platform;
 
+use App\Models\Approval\ApprovalEvent;
 use App\Models\Approval\ApprovalRequest;
 use App\Models\Comms\CommCall;
 use App\Models\Comms\CommOutbox;
+use App\Models\Comms\CommSuppression;
 use App\Models\Comms\CommTemplateVersion;
 use App\Models\Comms\WaThread;
 use App\Models\Module\Booking\Booking;
@@ -32,7 +34,6 @@ use App\Support\Facades\WhatsApp;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Tests\Feature\Platform\Concerns\PlatformFixtures;
@@ -185,7 +186,7 @@ class PlatformAcceptanceTest extends TestCase
         $fy = ApprovalRequest::query()->latest('id')->value('fy');
 
         $report = app(ApprovalReportService::class)->summary(['fy' => $fy, 'topic' => 'DISCOUNT.EXTRA']);
-        $events = DB::table('xlr8_approval_event as e')->join('xlr8_approval_request as r', 'r.id', '=', 'e.request_id')
+        $events = ApprovalEvent::query()->from('xlr8_approval_event as e')->toBase()->join('xlr8_approval_request as r', 'r.id', '=', 'e.request_id')
             ->where('e.type', 'ACCEPTED')->where('r.fy', $fy)->where('r.topic_code', 'DISCOUNT.EXTRA');
 
         $this->assertSame($events->count(), $report['totals']['accepted']);
@@ -274,7 +275,7 @@ class PlatformAcceptanceTest extends TestCase
     {
         $customer = $this->peopleWithMobiles(1)->first();
         $mobile = '+91'.substr(preg_replace('/\D/', '', $customer->mobile), -10);
-        DB::table('xlr8_comm_suppression')->where('address', $mobile)->delete();
+        CommSuppression::query()->where('address', $mobile)->delete();
 
         $this->webhook('sms', ['event_id' => 'acc-15a', 'type' => 'inbound', 'from' => $mobile, 'text' => 'STOP'])->assertOk();
         $this->webhook('whatsapp', ['event_id' => 'acc-15b', 'type' => 'message', 'message' => ['id' => 'wamid.acc15', 'from' => $mobile, 'text' => 'STOP']])->assertOk();

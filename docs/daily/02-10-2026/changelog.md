@@ -44,3 +44,8 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - `app/Console/Commands/DataScopeBackfill.php`: enquiry / follow-up / location queries start from `Enquiry` / `EnquiryFollowup` / `Location` with scopes off and `toBase()` (so bulk updates do not add `updated_at`); raw join conditions via `whereRaw` / `orWhereRaw`; `SET e.col = emp.col` via the query builder's `raw()`; the report takes the model class.
 - **Checked:** the command run on `xlrm_testing` in report and `--apply` mode inside a rolled-back transaction, before and after: console output identical and all 44 SQL statements identical in each mode (only the synonym cache's expiry time differs); PHPStan clean.
 - **Baseline:** 234 `DB::` uses in 32 files left.
+
+## W15 — 11 test files off the DB facade
+- `SystemSettingScreensTest`, `SettingsInterfaceTest`, `PricingProcessStartTest`, `KeywordEntityServicesTest`, `VehicleCompareTest`, `RtoServiceTest`, `EmployeePrimariesRuleTest`, `PlatformFixtures`, `PlatformAcceptanceTest`, `UserBehaviourSettingsTest`, `ScopeCodeFillerTest`: reads through the models; deliberately legacy-shaped rows written through `Model::query()->toBase()` (no events, no entity rules — same as before).
+- **Checked:** the 11 files (+ `ApprovalServiceTest`, which uses the fixtures) 68 passed / 1 skipped before and after.
+- **Baseline:** 218 `DB::` uses in 21 files left.

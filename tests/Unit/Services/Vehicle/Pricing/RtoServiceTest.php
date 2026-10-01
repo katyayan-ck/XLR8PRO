@@ -2,9 +2,9 @@
 
 namespace Tests\Unit\Services\Vehicle\Pricing;
 
+use App\Models\Vehicle\Pricing\RtoRule;
 use App\Services\Vehicle\Pricing\RtoService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
@@ -22,7 +22,7 @@ class RtoServiceTest extends TestCase
 
     private function makeRule(array $overrides = []): int
     {
-        return DB::table('xlr8_vehicle_pricing_rto_rules')->insertGetId(array_merge([
+        return RtoRule::query()->toBase()->insertGetId(array_merge([   // raw rule row, past the entity rules
             'permit' => 'Goods',
             'wheels' => 4,
             'fuel_type' => 'DIESEL',

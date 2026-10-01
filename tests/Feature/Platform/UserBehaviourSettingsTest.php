@@ -2,11 +2,12 @@
 
 namespace Tests\Feature\Platform;
 
+use App\Models\Admin\Person;
+use App\Models\Admin\PersonContact;
 use App\Models\User;
 use App\Services\Person\PersonRecordService;
 use App\Services\Platform\Settings\SettingsService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -46,9 +47,9 @@ class UserBehaviourSettingsTest extends TestCase
         $this->post(route('backpack.account.personal'), ['gender' => 'Female', 'email' => 'me@example.com', 'pan_no' => 'ZZZPZ9999Z'])
             ->assertRedirect(route('backpack.account.info'))->assertSessionHasNoErrors();
 
-        $person = DB::table('xlr8_admin_person')->where('person_code', $user->person_code)->first();
+        $person = Person::withTrashed()->where('person_code', $user->person_code)->toBase()->first();
         $this->assertSame(['Female', 'ABCPE1234F'], [$person->gender, $person->pan_no], 'PAN is not switched on, so it is ignored');
-        $this->assertTrue(DB::table('xlr8_admin_person_contacts')->where('person_code', $user->person_code)
+        $this->assertTrue(PersonContact::query()->where('person_code', $user->person_code)
             ->where('data_type', 'Email')->where('contact_type', 'Primary')->where('contact_detail', 'me@example.com')->whereNull('deleted_at')->exists());
 
         $this->post(route('backpack.account.personal'), ['gender' => 'Robot'])->assertSessionHasErrorsIn('personal', 'gender');
