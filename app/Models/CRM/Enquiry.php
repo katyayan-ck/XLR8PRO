@@ -15,7 +15,6 @@ use App\Services\IAM\DataScope\ScopeCodeFiller;
 use App\Support\Facades\DataScope;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 class Enquiry extends BaseModel
 {
@@ -406,7 +405,7 @@ class Enquiry extends BaseModel
 
             // 5. CRE FUP checks
             $q->whereExists(function ($subquery) {
-                $subquery->select(DB::raw(1))
+                $subquery->selectRaw('1')   // BT-007 (DEC-093)
                     ->from('xlr8_cre_enquiry_fup')
                     ->whereRaw("(xlr8_cre_enquiry_fup.x8_enq_no = CAST(xlr8_crm_enquiries.id AS CHAR) OR xlr8_cre_enquiry_fup.x8_enq_no = CONCAT('XENQ-', xlr8_crm_enquiries.id))")
                     ->whereNotNull('cre_enq_stage')->where('cre_enq_stage', '!=', '')
@@ -421,7 +420,7 @@ class Enquiry extends BaseModel
                     $oem->whereNotNull('enquiry_no')->where('enquiry_no', '!=', '')
                         ->orWhereNotNull('quick_enquiry_no')->where('quick_enquiry_no', '!=', '');
                 })->orWhere('current_origin', 'Xceler8')
-                  ->orWhere('current_origin', 'XCELER8');
+                    ->orWhere('current_origin', 'XCELER8');
             });
         });
     }
