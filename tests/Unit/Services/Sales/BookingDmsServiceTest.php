@@ -2,8 +2,10 @@
 
 namespace Tests\Unit\Services\Sales;
 
+use App\Models\CRM\Enquiry;
 use App\Models\Module\Booking\Booking;
 use App\Models\User;
+use App\Models\Vehicle\VehicleModel;
 use App\Services\Sales\Booking\BookingDmsService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
@@ -120,22 +122,43 @@ class BookingDmsServiceTest extends TestCase
 
     public function test_apply_order_stays_2_when_booking_is_not_bev_or_personal_segment(): void
     {
-        // xlr8_booking_master has no segment_code column of its own - it's
-        // always null on a freshly-loaded Booking, so the "BEV/Personal ->
-        // order 3" branch is unreachable in this flow (matches the
-        // original inline behavior exactly, see BUG-101 in
-        // docs/bugs (open.md / closed.md) for why this was already dead code before
-        // this extraction).
-        $booking = $this->makeBooking(['order' => 1]);
+        $booking = $this->makeBooking(['order' => 1, 'segment_code' => 'CV']);
 
-        $updated = $this->service->apply($booking, [
-            'dms_no' => 'B-12345678',
-            'dms_otf' => 'OTF00A123456',
-            'otf_date' => '2026-01-01',
-            'dms_so' => '',
-        ], false);
+        $updated = $this->service->apply($booking, $this->dmsInput(''), false);
 
         $this->assertSame(2, $updated->order);
+    }
+
+    /** BT-013 / BUG-101 (DEC-095 #12): a BEV / Personal booking submitted without an SO goes to order 3. */
+    public function test_apply_sends_a_bev_or_personal_booking_without_an_so_to_order_3(): void
+    {
+        foreach (['BEV', 'PV'] as $segment) {
+            $updated = $this->service->apply($this->makeBooking(['order' => 1, 'segment_code' => $segment]), $this->dmsInput(''), false);
+            $this->assertSame(3, $updated->order, $segment);
+        }
+
+        $withSo = $this->service->apply($this->makeBooking(['order' => 2, 'segment_code' => 'BEV']), $this->dmsInput('1234567890'), true);
+        $this->assertSame(2, $withSo->order);
+    }
+
+    /** BT-013 / BUG-101: the booking row rarely holds a segment — it is taken from the linked enquiry, else the model. */
+    public function test_apply_resolves_the_segment_from_the_enquiry_or_the_model(): void
+    {
+        $enquiry = Enquiry::query()->withoutGlobalScopes()->whereNotNull('enquiry_no')->where('enquiry_no', '!=', '')->first()
+            ?? $this->markTestSkipped('No enquiry with a number in the test copy.');
+        $enquiry->forceFill(['segment_code' => 'BEV'])->saveQuietly();
+        $fromEnquiry = $this->service->apply($this->makeBooking(['order' => 1, 'enq_no' => $enquiry->enquiry_no]), $this->dmsInput(''), false);
+        $this->assertSame(3, $fromEnquiry->order);
+
+        $pvModel = VehicleModel::query()->where('segment_code', 'PV')->value('code') ?? $this->markTestSkipped('No PV model in the test copy.');
+        $fromModel = $this->service->apply($this->makeBooking(['order' => 1, 'model_code' => $pvModel]), $this->dmsInput(''), false);
+        $this->assertSame(3, $fromModel->order);
+    }
+
+    /** @return array{dms_no: string, dms_otf: string, otf_date: string, dms_so: string} */
+    private function dmsInput(string $so): array
+    {
+        return ['dms_no' => 'B-12345678', 'dms_otf' => 'OTF00A123456', 'otf_date' => '2026-01-01', 'dms_so' => $so];
     }
 
     public function test_resolve_edit_data_returns_expected_shape(): void

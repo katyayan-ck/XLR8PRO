@@ -224,6 +224,7 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-225 | Booking `{id}/refund-view` 500: `show.blade.php` reads `$receiptLogs`, which `refundView()` does not pass | Medium | FIXED 02-10 — BT-010 | 01-10-2026 | 02-10-2026 |
 | BUG-226 | Enquiry view page 500 for any enquiry that has a CRE follow-up: the view reads `cre_lost_reason`, which `xlr8_cre_enquiry_fup` does not have | High | FIXED 02-10 — BT-011 | 02-10-2026 | 02-10-2026 |
 | BUG-219 | Booking create: for customer type `Dummy` every base validation failure is only logged, so a dummy booking can be saved without name, mobile, branch, vehicle or sale type | Medium | FIXED 02-10 — BT-012 | 30-09-2026 | 02-10-2026 |
+| BUG-101 | `dmsupdate()`'s "BEV/Personal segment → order 3 when DMS SO missing" branch is dead code — `xlr8_booking_master` has no `segment_code` column, so a freshly-loaded `Booking` always has `segment_code = null` there, and `dmsupdate()` (unlike `dmsedit()`) never resolves it from the linked Enquiry before the check runs | Low | FIXED 02-10 — BT-013 | 23-09-2026 | 02-10-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2824,3 +2825,17 @@ guessed at.
 - **Proposed solution:** return on base-validation failure for every customer type (and relax only the fields a dummy
   booking really doesn't have), after the owner / booking team confirms.
 - **Fixed 02-10-2026:** BT-012 — Dummy bookings are validated for customer, branch / location, vehicle and sale type before saving. Test `BookingBugFixesTest::test_a_dummy_booking_without_its_base_fields_is_refused_and_nothing_is_saved`.
+
+### BUG-101 — `dmsupdate()`'s BEV/Personal "missing SO → order 3" branch is unreachable
+
+- **Current status (index):** OPEN (business rule — D21)
+- **Verified 29-09-2026:** `BookingDmsService::isBevOrPersonal()` still compares against the old numeric ids; the branch is dead (owner: is the rule still wanted?).
+
+- **Final status:** FIXED · **Fixed:** 02-10-2026
+- **Severity:** Low — doesn't crash or corrupt data, but the code's own log message ("Order set to 3 - Personal/BEV from pending DMS, SO missing in this submit") describes a business rule that has likely never actually fired.
+- **Found:** 23-09-2026, same investigation as BUG-100 — a test asserting this branch's effect failed until traced to its root cause.
+- **Where:** `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php::dmsupdate()` (now `BookingDmsService::apply()`/`isBevOrPersonal()`).
+- **Description:** `xlr8_booking_master` has no `segment_code` column at all (confirmed via `Schema::getColumnListing`). `dmsedit()` (the GET form) explicitly resolves `segment_code` from the linked Enquiry and sets it on the in-memory `$booking` instance purely so *that request's* view can read it — this mutation is never persisted and doesn't survive to the next (separate) `dmsupdate()` request. `dmsupdate()` loads a fresh `Booking::findOrFail($id)` and never re-resolves `segment_code` from the Enquiry before checking `in_array($booking->segment_code ?? 0, [753, 21589])`, so that check is always comparing against `null` → always false → the `order = 3` branch never executes.
+- **Proposed solution:** needs a decision: either (a) `dmsupdate()` should resolve `segment_code` from the linked Enquiry the same way `dmsedit()` does before this check (if the BEV/Personal SO-required business rule is still wanted), or (b) the branch and its associated `so_required` UI logic are genuinely obsolete and can be removed. Not guessed at here — could be intentionally simplified already, or could be a real gap in the DMS/SO workflow for BEV/Personal segment bookings.
+- **Resolution (28-09-2026):** Triage 28-09: `BookingDmsService::isBevOrPersonal()` casts the string `segment_code` to int and compares with the old numeric ids, and `segment_code` is null on every booking — the branch is dead. Owner: is "SO required for BEV / Personal" still a rule?
+- **Fixed 02-10-2026:** BT-013 — segment codes BEV / PV and the segment resolved from booking → enquiry → model; the order-3 rule fires (owner DEC-095 #12: keep the rule). Tests in `BookingDmsServiceTest`.

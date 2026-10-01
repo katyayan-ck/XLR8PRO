@@ -28,6 +28,7 @@ nothing local is unpushed. Next push only when the owner asks.
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 01-10: BT-013 (booking code) — The "BEV / Personal booking submitted without a DMS SO → order 3" rule now fires: segment codes `BEV` / `PV` (were the old numeric ids 753 / 21589), and the segment is resolved from the booking, else the linked enquiry, else the segment of the model.
 - 01-10: BT-012 (booking code) — A Dummy booking is refused (with the first validation message, nothing saved) when the customer, branch / location, vehicle or sale type is missing.
 - 01-10: BT-011 (booking code) — Enquiry view reads the CRE lost reason / sub-reason from the enquiry (where they are stored), not from the follow-up row.
 - 01-10: BT-010 (booking code) — Refund view passes `$receiptLogs` to the booking detail view (it crashed for bookings with a refund record).
@@ -65,7 +66,8 @@ nothing local is unpushed. Next push only when the owner asks.
 ## In progress / next
 - **W18 (DEC-095) — building the owner's 02-10 answers, in order W18a → W18m.** Booking items are numbered BT changes
   (`docs/booking-team-changes.md`), each checked with `dev:route-snapshot` / tests before and after, each revertable.
-  Done: W18a, W18b. **Next step: W18c** (booking bugs 223–226, BUG-219, D21) — numbered BT changes.
+  Done: W18a, W18b, W18c (BT-008 … BT-013). **Next step: W18d** — D16: the user-id whitelists `[5, 23, 123]` become a
+  permission (BUG-095); then W18e (D13 "coming soon" page for dead menu links).
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;
   booking code **BT-001 … BT-007** (numbered, one commit each, logged in `docs/booking-team-changes.md`: where, what, why,

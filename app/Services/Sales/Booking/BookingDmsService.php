@@ -7,6 +7,7 @@ use App\Models\Admin\Location;
 use App\Models\CRM\Enquiry;
 use App\Models\Module\Booking\Booking;
 use App\Models\User;
+use App\Models\Vehicle\VehicleModel;
 
 /**
  * Business logic for the Booking DMS sub-domain (Pending DMS list ->
@@ -16,8 +17,11 @@ use App\Models\User;
  */
 class BookingDmsService
 {
-    /** Segment codes treated as "BEV or Personal" throughout this sub-domain. */
-    private const BEV_OR_PERSONAL_SEGMENTS = [753, 21589];
+    /**
+     * Segment codes treated as "BEV or Personal" throughout this sub-domain (BT-013 / BUG-101: the segment master's
+     * codes; the old numeric ids 753 / 21589 matched nothing).
+     */
+    private const BEV_OR_PERSONAL_SEGMENTS = ['BEV', 'PV'];
 
     private const DMS_PENDING_ITEMS = [
         'DMS Booking no needs to be updated',
@@ -45,7 +49,7 @@ class BookingDmsService
 
         $branchCode = $booking->branch_code ?? $enquiry?->dealer_branch;
         $locationCode = $booking->location_code ?? $enquiry?->dealer_location;
-        $segmentCode = $booking->segment_code ?? $enquiry?->segment_code;
+        $segmentCode = $this->segmentCodeOf($booking, $enquiry);
         $modelCode = $booking->model_code ?? $enquiry?->model_code;
         $variantCode = $booking->variant_code ?? $enquiry?->variant_code;
         $colorCode = $booking->color_code ?? $enquiry?->color_code;
@@ -161,7 +165,10 @@ class BookingDmsService
 
         $booking->pending = count($finalPending);
 
-        $isBevOrPersonal = $this->isBevOrPersonal($booking->segment_code);
+        // BT-013 / BUG-101 (DEC-095 #12): the segment is resolved the way the edit form resolves it (the booking row
+        // itself rarely holds one), so a BEV / Personal booking submitted without an SO goes to order 3
+        $enquiry = empty($booking->enq_no) ? null : Enquiry::resolveByAnyReference($booking->enq_no);
+        $isBevOrPersonal = $this->isBevOrPersonal($this->segmentCodeOf($booking, $enquiry));
         $booking->order = 2;
 
         if ($isBevOrPersonal && empty($validated['dms_so'])) {
@@ -191,8 +198,24 @@ class BookingDmsService
         return $booking;
     }
 
-    private function isBevOrPersonal(mixed $segmentCode): bool
+    private function isBevOrPersonal(?string $segmentCode): bool
     {
-        return in_array((int) ($segmentCode ?? 0), self::BEV_OR_PERSONAL_SEGMENTS);
+        return in_array(strtoupper((string) $segmentCode), self::BEV_OR_PERSONAL_SEGMENTS, true);
+    }
+
+    /**
+     * The booking's segment code: its own column, else the linked enquiry's, else the segment of its model
+     * (BT-013 / BUG-101 — bookings store the vehicle on the enquiry, so the booking column is usually empty).
+     */
+    private function segmentCodeOf(Booking $booking, ?Enquiry $enquiry): ?string
+    {
+        $segmentCode = $booking->segment_code ?: $enquiry?->segment_code;
+
+        if (! $segmentCode) {
+            $modelCode = $booking->getAttribute('model_code') ?: $enquiry?->getAttribute('model_code');
+            $segmentCode = $modelCode ? VehicleModel::query()->where('code', $modelCode)->value('segment_code') : null;
+        }
+
+        return $segmentCode ?: null;
     }
 }

@@ -157,7 +157,7 @@ convention and matches our route names (`module.process.activity`), so it is a g
 | D18 | Pricing | ✅ | Closed (BUG-178 fixed) |
 | D19 | Accessory importer | ✅ | Closed (DEC-083) |
 | D20 | RTO sheet id (BUG-029) | P1 | RTO import |
-| D21 | BEV SO rule (BUG-101) — **✅ decided 02-10 (DEC-095): keep the rule, make it work → W18c** | P2 | Booking |
+| D21 | BEV SO rule (BUG-101) — **✅ decided 02-10 (DEC-095): keep the rule, make it work → done 02-10 (BT-013)** | P2 | Booking |
 | D23 | 5 booking reports 500 (BUG-122) — **✅ decided 02-10 (DEC-095): rewrite → W18f** | **P0** | Booking team |
 | D24 | 36 employees on unknown designation codes (BUG-183) — **✅ decided 02-10 (DEC-095): no mapping — the user data is refreshed (W18j)** | P1 | Approvals routing |
 | D25 | Variant code split (BUG-173) — **✅ decided 02-10 (DEC-095): codes with the colour suffix → W18i** | P1 | Booking ↔ pricing |
@@ -417,7 +417,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W18 | **Owner decisions 02-10 (DEC-095)** — build every item with a definitive answer; booking items as numbered, revertable BT changes | 🟡 in progress |
 | W18a | Security: D2 `random_int` OTP (BUG-188), D3 entity allowlist for `docs/upload` / `history` (BUG-182), D1 OTP login from the person record (BUG-187) | ✅ 02-10 (+ BUG-227 fixed; BUG-228 SMS placeholder logged) |
 | W18b | v1 `system-settings` read endpoints narrowed / retired (BUG-207), `BaseController::authorize()` fixed (BUG-209); note for the app team | ✅ 02-10 (managers only; writes via SettingsService) |
-| W18c | Booking bugs BUG-223 / 224 / 225 / 226, BUG-219 (Dummy bookings validated), D21 BEV / Personal SO rule made to work (BUG-101) | 🔴 |
+| W18c | Booking bugs BUG-223 / 224 / 225 / 226, BUG-219 (Dummy bookings validated), D21 BEV / Personal SO rule made to work (BUG-101) — ✅ 02-10 (BT-008 … BT-013) | ✅ |
 | W18d | D16 — the hard-coded user-id lists in booking → a permission (BUG-095) | 🔴 |
 | W18e | D13 — the 52 dead menu links open a "coming soon" page (BUG-056 / 062) | 🔴 |
 | W18f | D23 — the 5 booking reports rewritten on the current tables, inside a `Booking*Service` (BUG-122, #13) | 🔴 |
@@ -1284,3 +1284,27 @@ the full settings API is for settings managers only — the app keeps `/app-sett
 **Verified:** new API tests for the login, record access and settings (23 API tests passed); PHPStan clean.
 **Found:** BUG-228 — the OTP SMS is still a placeholder (e-mail only); needs the SMS vendor / DLT details.
 **Tell the app team:** use `/app-settings`; history / documents take entity codes (`BOOKING`, …) or the short names.
+
+### W18c — booking screen bugs fixed (DEC-095 #10–12; BT-008 … BT-013)
+
+**Delivered (six numbered, separately revertable booking-team changes, `docs/booking-team-changes.md`):**
+- BT-008 (BUG-223): the finance view / payout edit of a booking with no finance record return to the finance list with a
+  message (was a 500).
+- BT-009 (BUG-224): "View" on the Invoiced list opens the booking.
+- BT-010 (BUG-225): the refund view opens (missing receipt-log data).
+- BT-011 (BUG-226): the enquiry view reads the CRE lost reason from the enquiry.
+- BT-012 (BUG-219): a Dummy booking is refused, with nothing saved, when the customer, branch / location, vehicle or sale
+  type is missing (was a database error).
+- BT-013 (BUG-101, D21): the "BEV / Personal without a DMS SO → order 3" rule fires. It uses the segment codes BEV / PV
+  and the segment of the enquiry or the model; the DMS form shows the SO field for those bookings.
+
+**Verified:**
+- `BookingBugFixesTest`, `EnquiryFollowupWritesTest`, `BookingDmsServiceTest` and `BookingFlowTest` pass.
+- Route snapshots before and after each change as superadmin and user 40: only the fixed screens changed.
+- PHPStan clean on the touched files.
+
+**UAT-visible:**
+- The Dummy validation message.
+- For BEV / PV bookings, the SO field on the DMS form and order 3 when it is left empty (owner-approved rules).
+
+**Left:** nothing in W18c. Next is W18d (D16 whitelists → permission).

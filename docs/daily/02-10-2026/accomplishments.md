@@ -56,3 +56,27 @@ the full settings API is for settings managers only — the app keeps `/app-sett
 **Verified:** new API tests for the login, record access and settings (23 API tests passed); PHPStan clean.
 **Found:** BUG-228 — the OTP SMS is still a placeholder (e-mail only); needs the SMS vendor / DLT details.
 **Tell the app team:** use `/app-settings`; history / documents take entity codes (`BOOKING`, …) or the short names.
+
+### W18c — booking screen bugs fixed (DEC-095 #10–12; BT-008 … BT-013)
+
+**Delivered (six numbered, separately revertable booking-team changes, `docs/booking-team-changes.md`):**
+- BT-008 (BUG-223): the finance view / payout edit of a booking with no finance record return to the finance list with a
+  message (was a 500).
+- BT-009 (BUG-224): "View" on the Invoiced list opens the booking.
+- BT-010 (BUG-225): the refund view opens (missing receipt-log data).
+- BT-011 (BUG-226): the enquiry view reads the CRE lost reason from the enquiry.
+- BT-012 (BUG-219): a Dummy booking is refused, with nothing saved, when the customer, branch / location, vehicle or sale
+  type is missing (was a database error).
+- BT-013 (BUG-101, D21): the "BEV / Personal without a DMS SO → order 3" rule fires. It uses the segment codes BEV / PV
+  and the segment of the enquiry or the model; the DMS form shows the SO field for those bookings.
+
+**Verified:**
+- `BookingBugFixesTest`, `EnquiryFollowupWritesTest`, `BookingDmsServiceTest` and `BookingFlowTest` pass.
+- Route snapshots before and after each change as superadmin and user 40: only the fixed screens changed.
+- PHPStan clean on the touched files.
+
+**UAT-visible:**
+- The Dummy validation message.
+- For BEV / PV bookings, the SO field on the DMS form and order 3 when it is left empty (owner-approved rules).
+
+**Left:** nothing in W18c. Next is W18d (D16 whitelists → permission).

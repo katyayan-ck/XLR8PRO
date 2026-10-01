@@ -1,0 +1,6 @@
+GET sales/booking/pending-dms
+GET sales/booking/pending-order
+GET sales/booking/22/dms-edit
+GET sales/booking/22/dms-edit?from=pending
+GET sales/booking/5/dms-edit?from=pending
+GET sales/booking/1/dms-edit
