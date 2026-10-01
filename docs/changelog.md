@@ -10148,3 +10148,8 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 ## End of day 01-10 — push
 - BT-003 (booking grids), execution plan, owner decision sheet, records; pushed to `origin/dev/admin`.
 - Open bugs: 34 (BUG-223 / 224 / 225 new today; BUG-221 partly, BUG-222 fixed). Baseline 314 / 45.
+
+## BT-004 (booking code, DEC-093) — Quotation screens read segment / model / variant / colour names and the booking map through the models
+- `app/Http/Controllers/Admin/Sales/Quotation/QuotationCrudController.php` · `index()`, `create()`, `edit()`, `history()`, `historyPdf()`, `preview()`. DEC-093. 21 name lookups by code (`DB::table('xlr8_vehicle_segment|model|variant|color')->where(…)->first()`) and the quotation → booking map. The raw reads included soft-deleted rows and every booking, so: `Segment` / `VehicleModel` / `Variant` / `Color` `::withTrashed()`, `Booking::withoutGlobalScopes()`, and `toBase()` for the plain row objects the views read.
+- Checked: quotation list, edit, history, history PDF v1 + v2, preview, create (`?id=60923`, `?id=XENQ-60923`) as superadmin + user 40 with a rolled-back fixture quotation (no quotations exist in either database yet; `--setup=tests/RouteSnapshots/quotation-fixture.php`): 16 / 16 identical; Sales tests passed; PHPStan no new errors. Log: `docs/booking-team-changes.md`.
+- **Baseline:** 292 `DB::` uses in 44 files left.

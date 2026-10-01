@@ -1,0 +1,8 @@
+GET sales/quotation
+GET sales/quotation/990001/edit
+GET sales/quotation/990001/history
+GET sales/quotation/990001/history/1/pdf
+GET sales/quotation/990001/history/2/pdf
+GET sales/quotation/990001/preview
+GET sales/quotation/create?id=60923
+GET sales/quotation/create?id=XENQ-60923

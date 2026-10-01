@@ -162,3 +162,7 @@ inside a rolled-back transaction, stores status + a hash of the normalised body 
 random Backpack menu ids removed), flags 5xx / PHP errors, and with `--compare` lists every changed response. Use it
 before and after a refactor that must not change behaviour (the booking-team log records each run). Full booking spec:
 `tests/RouteSnapshots/booking-all.txt` (242 requests per user, ~10 min).
+`--setup=file.php` runs a closure from that file inside every rolled-back request first — for screens with no data in
+the test copy (fixed ids keep the responses comparable). Example: quotations have no rows anywhere yet, so
+`tests/RouteSnapshots/quotation-fixture.php` seeds quotation 990001 with two history versions for
+`tests/RouteSnapshots/quotation.txt`.

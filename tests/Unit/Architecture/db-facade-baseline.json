@@ -8,7 +8,6 @@
     "app/Http/Controllers/Admin/Import/SalesImportController.php": 11,
     "app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php": 35,
     "app/Http/Controllers/Admin/Sales/Enquiry/EnquiryCrudController.php": 21,
-    "app/Http/Controllers/Admin/Sales/Quotation/QuotationCrudController.php": 22,
     "app/Http/Controllers/Admin/Spares/SpareRequest/SpareRequestCrudController.php": 5,
     "app/Http/Controllers/Admin/Utils/Platform/CommsController.php": 2,
     "app/Http/Controllers/Admin/Vehicle/Brand/BrandCrudController.php": 16,

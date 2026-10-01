@@ -21,9 +21,13 @@ use Throwable;
 class RouteSnapshot extends Command
 {
     protected $signature = 'dev:route-snapshot {users : comma-separated user ids} {spec : spec file} {out : result JSON}
-                            {--compare= : an earlier result JSON to compare with} {--save= : folder for the normalised bodies}';
+                            {--compare= : an earlier result JSON to compare with} {--save= : folder for the normalised bodies}
+                            {--setup= : PHP file returning a closure that seeds fixture rows (fixed ids) inside each rolled-back request}';
 
     protected $description = 'Local only: snapshot admin responses (rolled back) and compare before / after a change';
+
+    /** Fixture seeder run inside each request's transaction (`--setup`). */
+    private ?\Closure $setup = null;
 
     public function handle(Kernel $kernel): int
     {
@@ -33,6 +37,8 @@ class RouteSnapshot extends Command
             return self::FAILURE;
         }
 
+        $setup = $this->option('setup') ? require (string) $this->option('setup') : null;
+        $this->setup = $setup instanceof \Closure ? $setup : null;
         $lines = array_values(array_filter(array_map('trim', (array) file((string) $this->argument('spec'))), fn ($l) => $l !== '' && $l[0] !== '#'));
         $out = [];
         $bad = 0;
@@ -60,6 +66,9 @@ class RouteSnapshot extends Command
         auth(backpack_guard_name())->loginUsingId($userId);
         DB::beginTransaction();
         try {
+            if ($this->setup !== null) {
+                ($this->setup)();
+            }
             $request = Request::create('/admin/'.ltrim((string) $url, '/'), $method, $json ? (json_decode($json, true) ?? []) : []);
             if ($ajax) {
                 $request->headers->set('X-Requested-With', 'XMLHttpRequest');

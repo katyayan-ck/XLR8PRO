@@ -28,6 +28,7 @@ nothing local is unpushed. Next push only when the owner asks.
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 01-10: BT-004 (booking code) — Quotation screens read segment / model / variant / colour names and the booking map through the models.
 - 01-10 end of day: BT-003 booking grids, execution plan (phases 0–10), owner decision sheet (37 items), records; pushed. Baseline 314 / 45.
 - 01-10: BT-003 (booking code) — Booking grid queries without the DB facade: enquiry-reference join as one helper, computed columns via selectRaw, counts / names through the models.
 - 01-10: BT-002 (booking code) — Single-table lookups (accessory name, consultant, delivered / RTO-done ids, person / employee fallback, variant colour rows) read through their models.

@@ -8,6 +8,10 @@ use App\Models\CRM\QuoteAction;
 use App\Models\Module\Booking\Booking;
 use App\Models\Module\Booking\XlFinancier;
 use App\Models\Vehicle\Accessory;
+use App\Models\Vehicle\Color;
+use App\Models\Vehicle\Segment;
+use App\Models\Vehicle\Variant;
+use App\Models\Vehicle\VehicleModel;
 use App\Services\OrgService;
 use App\Services\Sales\Quotation\QuotationPricingService;
 use App\Support\ErrorRef;
@@ -72,9 +76,9 @@ class QuotationCrudController extends CrudController
             ->latest('id')
             ->get();
 
-        $bookingMap = DB::table('xlr8_booking_master')
+        $bookingMap = Booking::withoutGlobalScopes()   // BT-004: every booking, as the raw query
             ->whereNotNull('quotation_id')
-            ->pluck('id', 'quotation_id');
+            ->toBase()->pluck('id', 'quotation_id');
 
         $gridData = $quotations->map(function ($quotation, $index) use (
             $insurance_type_map,
@@ -159,23 +163,23 @@ class QuotationCrudController extends CrudController
             $colorName = '-';
 
             if (! empty($segmentCode)) {
-                $segment = DB::table('xlr8_vehicle_segment')
+                $segment = Segment::withTrashed()
                     ->where('code', $segmentCode)
-                    ->first();
+                    ->toBase()->first();   // BT-004
                 $segmentName = $segment->name ?? $enquiry?->segment ?? $data['segment'] ?? $segmentCode;
             }
 
             if (! empty($modelCode)) {
-                $model = DB::table('xlr8_vehicle_model')
+                $model = VehicleModel::withTrashed()
                     ->where('code', $modelCode)
-                    ->first();
+                    ->toBase()->first();   // BT-004
                 $modelName = $model->name ?? $enquiry?->model ?? $data['model'] ?? $modelCode;
             }
 
             if (! empty($variantCode)) {
-                $variant = DB::table('xlr8_vehicle_variant')
+                $variant = Variant::withTrashed()
                     ->where('code', $variantCode)
-                    ->first();
+                    ->toBase()->first();   // BT-004
                 $variantName = $variant->display_name
                     ?? $variant->custom_name
                     ?? $variant->oem_name
@@ -185,9 +189,9 @@ class QuotationCrudController extends CrudController
             }
 
             if (! empty($colorCode)) {
-                $color = DB::table('xlr8_vehicle_color')
+                $color = Color::withTrashed()
                     ->where('code', $colorCode)
-                    ->first();
+                    ->toBase()->first();   // BT-004
                 $colorName = $color->name
                     ?? $enquiry?->color
                     ?? $data['color']
@@ -463,23 +467,23 @@ class QuotationCrudController extends CrudController
 
         $selectedEnquiry = Enquiry::findOrFail($enquiryId);
 
-        $segment = DB::table('xlr8_vehicle_segment')
+        $segment = Segment::withTrashed()
             ->where('code', $selectedEnquiry->segment_code)
-            ->first();
+            ->toBase()->first();   // BT-004
 
-        $model = DB::table('xlr8_vehicle_model')
+        $model = VehicleModel::withTrashed()
             ->where('code', $selectedEnquiry->model_code)
-            ->first();
+            ->toBase()->first();   // BT-004
 
-        $variant = DB::table('xlr8_vehicle_variant')
+        $variant = Variant::withTrashed()
             ->where('code', $selectedEnquiry->variant_code)
-            ->first();
+            ->toBase()->first();   // BT-004
 
-        $color = DB::table('xlr8_vehicle_color')
+        $color = Color::withTrashed()
             ->where('model_code', $selectedEnquiry->model_code)
             ->where('variant_code', $selectedEnquiry->variant_code)
             ->where('code', $selectedEnquiry->color_code)
-            ->first();
+            ->toBase()->first();   // BT-004
 
         $segmentName = $segment->name ?? $selectedEnquiry->segment_code ?? '';
 
@@ -914,23 +918,23 @@ class QuotationCrudController extends CrudController
         $colorName = '';
 
         if (! empty($segmentCode)) {
-            $segment = DB::table('xlr8_vehicle_segment')
+            $segment = Segment::withTrashed()
                 ->where('code', $segmentCode)
-                ->first();
+                ->toBase()->first();   // BT-004
             $segmentName = $segment->name ?? $selectedEnquiry?->segment ?? $quotationData['segment'] ?? $segmentCode;
         }
 
         if (! empty($modelCode)) {
-            $model = DB::table('xlr8_vehicle_model')
+            $model = VehicleModel::withTrashed()
                 ->where('code', $modelCode)
-                ->first();
+                ->toBase()->first();   // BT-004
             $modelName = $model->name ?? $selectedEnquiry?->model ?? $quotationData['model'] ?? $modelCode;
         }
 
         if (! empty($variantCode)) {
-            $variant = DB::table('xlr8_vehicle_variant')
+            $variant = Variant::withTrashed()
                 ->where('code', $variantCode)
-                ->first();
+                ->toBase()->first();   // BT-004
             $variantName = $variant->display_name
                 ?? $variant->custom_name
                 ?? $variant->oem_name
@@ -940,9 +944,9 @@ class QuotationCrudController extends CrudController
         }
 
         if (! empty($colorCode)) {
-            $color = DB::table('xlr8_vehicle_color')
+            $color = Color::withTrashed()
                 ->where('code', $colorCode)
-                ->first();
+                ->toBase()->first();   // BT-004
             $colorName = $color->name
                 ?? $selectedEnquiry?->color
                 ?? $quotationData['color']
@@ -1688,9 +1692,9 @@ class QuotationCrudController extends CrudController
             ?? $quotation->model_code
             ?? '';
 
-        $model = DB::table('xlr8_vehicle_model')
+        $model = VehicleModel::withTrashed()
             ->where('code', $modelCode)
-            ->first();
+            ->toBase()->first();   // BT-004
 
         $modelName = $model->name ?? $modelCode ?? '-';
 
@@ -2384,9 +2388,9 @@ class QuotationCrudController extends CrudController
         $segmentName = '';
 
         if (! empty($segmentCode)) {
-            $segment = DB::table('xlr8_vehicle_segment')
+            $segment = Segment::withTrashed()
                 ->where('code', $segmentCode)
-                ->first();
+                ->toBase()->first();   // BT-004
 
             $segmentName =
                 $segment->name
@@ -2398,9 +2402,9 @@ class QuotationCrudController extends CrudController
         $modelName = '';
 
         if (! empty($modelCode)) {
-            $model = DB::table('xlr8_vehicle_model')
+            $model = VehicleModel::withTrashed()
                 ->where('code', $modelCode)
-                ->first();
+                ->toBase()->first();   // BT-004
 
             $modelName =
                 $model->name
@@ -2412,9 +2416,9 @@ class QuotationCrudController extends CrudController
         $variantName = '';
 
         if (! empty($variantCode)) {
-            $variant = DB::table('xlr8_vehicle_variant')
+            $variant = Variant::withTrashed()
                 ->where('code', $variantCode)
-                ->first();
+                ->toBase()->first();   // BT-004
 
             $variantName =
                 $variant->display_name
@@ -2428,9 +2432,9 @@ class QuotationCrudController extends CrudController
         $colorName = '';
 
         if (! empty($colorCode)) {
-            $color = DB::table('xlr8_vehicle_color')
+            $color = Color::withTrashed()
                 ->where('code', $colorCode)
-                ->first();
+                ->toBase()->first();   // BT-004
 
             $colorName =
                 $color->name
@@ -2605,29 +2609,29 @@ class QuotationCrudController extends CrudController
         $color = null;
 
         if (! empty($segmentCode)) {
-            $segment = DB::table('xlr8_vehicle_segment')
+            $segment = Segment::withTrashed()
                 ->where('code', $segmentCode)
-                ->first();
+                ->toBase()->first();   // BT-004
         }
 
         if (! empty($modelCode)) {
-            $model = DB::table('xlr8_vehicle_model')
+            $model = VehicleModel::withTrashed()
                 ->where('code', $modelCode)
-                ->first();
+                ->toBase()->first();   // BT-004
         }
 
         if (! empty($variantCode)) {
-            $variant = DB::table('xlr8_vehicle_variant')
+            $variant = Variant::withTrashed()
                 ->where('code', $variantCode)
-                ->first();
+                ->toBase()->first();   // BT-004
         }
 
         if (! empty($colorCode)) {
-            $color = DB::table('xlr8_vehicle_color')
+            $color = Color::withTrashed()
                 ->where('model_code', $modelCode)
                 ->where('variant_code', $variantCode)
                 ->where('code', $colorCode)
-                ->first();
+                ->toBase()->first();   // BT-004
         }
 
         // Display names
