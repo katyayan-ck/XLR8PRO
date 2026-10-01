@@ -91,3 +91,8 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` · `showInvoiced()`. BUG-224, DEC-095 #10. The Invoiced list's "View" link (`{id}/invoiced-show`) always answered 500. `getFullBookingData()` builds the same data for the plain `show` page, so the invoiced page uses the `show` view.
 - Checked: invoiced-show / refund-view / show for one booking per status (7) as superadmin + user 40 (`tests/RouteSnapshots/bt009-010.txt`): only the invoiced booking changed (500 → 200); every other response identical; `BookingBugFixesTest::test_an_invoiced_booking_opens_from_the_invoiced_list`. Log: `docs/booking-team-changes.md`.
 - **Baseline:** 126 `DB::` uses in 8 files left.
+
+## BT-010 (booking code, DEC-093) — Refund view passes `$receiptLogs` to the booking detail view (it crashed for bookings with a refund record)
+- `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` · `refundView()`. BUG-225, DEC-095 #10. `show.blade.php` reads `$receiptLogs` as its own variable in the refund branch; `refundView()` built it only inside `$data`.
+- Checked: invoiced-show / refund-view / show for one booking per status (7) as superadmin + user 40: only the refund-view of the booking with a refund changed (500 → 200); every other response identical; `BookingBugFixesTest::test_the_refund_view_opens_for_a_booking_with_a_refund`. Log: `docs/booking-team-changes.md`.
+- **Baseline:** 126 `DB::` uses in 8 files left.

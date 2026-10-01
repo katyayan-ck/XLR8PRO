@@ -221,6 +221,7 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-227 | OTP tokens expired the moment their row was updated (`expires_at` had `ON UPDATE CURRENT_TIMESTAMP`) | Medium | FIXED 02-10 — migration removes ON UPDATE | 02-10-2026 | 02-10-2026 |
 | BUG-223 | Booking finance view and payout-edit pages 500 when the booking has no finance record (`financier` read on null) | Medium | FIXED 02-10 — BT-008 | 01-10-2026 | 02-10-2026 |
 | BUG-224 | Booking `{id}/invoiced-show` 500: view `admin.sales.booking.show-invoiced` does not exist | Medium | FIXED 02-10 — BT-009 | 01-10-2026 | 02-10-2026 |
+| BUG-225 | Booking `{id}/refund-view` 500: `show.blade.php` reads `$receiptLogs`, which `refundView()` does not pass | Medium | FIXED 02-10 — BT-010 | 01-10-2026 | 02-10-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2782,3 +2783,13 @@ guessed at.
 - **Proposed solution:** point it at the existing detail view used by the other "show" pages, or restore the missing view
   from the booking team's branch.
 - **Fixed 02-10-2026:** BT-009 — `showInvoiced()` renders the existing `show` view (same data). Test `BookingBugFixesTest`.
+
+### BUG-225 — Booking `refund-view` page 500: undefined `$receiptLogs`
+
+- **Final status:** FIXED · **Fixed:** 02-10-2026
+- **Severity:** Medium.
+- **Found:** 01-10-2026, full booking-screen sweep (unchanged code).
+- **Where:** `BookingCrudController::refundView()` renders `admin/sales/booking/show.blade.php`, which reads `$receiptLogs`
+  (~line 644 compiled); the method does not pass it (the `show` action does).
+- **Proposed solution:** pass `$receiptLogs` (same query as `show()`), or default it in the view.
+- **Fixed 02-10-2026:** BT-010 — `refundView()` passes `$receiptLogs` to the view. Test `BookingBugFixesTest`.

@@ -8190,7 +8190,9 @@ class BookingCrudController extends CrudController
             ])
             ->first()?->rootThreads ?? collect();
 
-        return view('admin.sales.booking.show', compact('booking', 'data', 'bookingHistory'));
+        $receiptLogs = $data['receiptLogs'];   // BT-010 / BUG-225: show.blade.php reads it as its own variable
+
+        return view('admin.sales.booking.show', compact('booking', 'data', 'bookingHistory', 'receiptLogs'));
     }
 
     public function rejected(Request $request)

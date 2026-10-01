@@ -3,6 +3,7 @@
 namespace Tests\Feature\Sales;
 
 use App\Models\Module\Booking\Booking;
+use App\Models\Module\Booking\Xl_Refunds;
 use App\Models\Module\Finance\XFinance;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -45,5 +46,14 @@ class BookingBugFixesTest extends TestCase
         $booking = Booking::query()->withoutGlobalScopes()->where('status', 2)->first() ?? $this->markTestSkipped('No invoiced booking in the test copy.');
 
         $this->get("/admin/sales/booking/{$booking->id}/invoiced-show")->assertOk();
+    }
+
+    /** BT-010 / BUG-225: the refund view of a booking with a refund record opens (it read an undefined `$receiptLogs`). */
+    public function test_the_refund_view_opens_for_a_booking_with_a_refund(): void
+    {
+        $refunded = Xl_Refunds::query()->withoutGlobalScopes()->where('entity_type', 'booking')->value('entity_id')
+            ?? $this->markTestSkipped('No refund record in the test copy.');
+
+        $this->get("/admin/sales/booking/{$refunded}/refund-view")->assertOk();
     }
 }
