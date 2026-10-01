@@ -45,9 +45,9 @@ class ReceiptCrudController extends Controller
         // Collect all unique enquiry IDs referenced by receipts to fetch customer names
         $enquiryIds = $receipts->pluck('enq_id')->filter()->unique();
 
-        $enquiries = DB::table('xlr8_crm_enquiries')
+        $enquiries = Enquiry::query()->withoutGlobalScopes()   // BT-006: every enquiry, as before
             ->whereIn('id', $enquiryIds)
-            ->get()
+            ->toBase()->get()
             ->keyBy('id');
 
         $data = $receipts->map(function (Bookingamount $receipt, $index) use ($enquiries) {
@@ -423,11 +423,12 @@ class ReceiptCrudController extends Controller
         $pattern = "{$prefix}{$locationCode}{$fyCode}%";
 
         // Lock table row safely to get the latest sequence for this exact pattern
-        $lastReceipt = DB::table('xlr8_booking_amount')
+        // BT-006: numbering sees every row of the series (deleted, other users' scope), as the raw query did
+        $lastReceipt = Bookingamount::query()->withoutGlobalScopes()
             ->where('type_number', 'like', $pattern)
             ->lockForUpdate()
             ->orderBy('id', 'desc')
-            ->first();
+            ->toBase()->first();
 
         if ($lastReceipt) {
             // Extract the sequence number from the end

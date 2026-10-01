@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Accounts\JournalVoucher;
 
 use App\Http\Controllers\Controller;
+use App\Models\CRM\Enquiry;
 use App\Models\Module\Booking\Bookingamount;
 use App\Services\EnquiryReferenceService;
 use App\Services\OrgService;
@@ -38,7 +39,7 @@ class JournalVoucherCrudController extends Controller
             ->get();
 
         $enquiryIds = $vouchers->pluck('enq_id')->filter()->unique();
-        $enquiries = DB::table('xlr8_crm_enquiries')->whereIn('id', $enquiryIds)->get()->keyBy('id');
+        $enquiries = Enquiry::query()->withoutGlobalScopes()->whereIn('id', $enquiryIds)->toBase()->get()->keyBy('id');   // BT-006: every enquiry, as before
 
         $data = $vouchers->map(function (Bookingamount $voucher, $index) use ($enquiries) {
             $enquiry = $enquiries->get($voucher->enq_id);
@@ -257,11 +258,12 @@ class JournalVoucherCrudController extends Controller
 
         $pattern = "JV{$locationCode}{$fyCode}%";
 
-        $lastVoucher = DB::table('xlr8_booking_amount')
+        // BT-006: numbering sees every row of the series (deleted, other users' scope), as the raw query did
+        $lastVoucher = Bookingamount::query()->withoutGlobalScopes()
             ->where('type_number', 'like', $pattern)
             ->lockForUpdate()
             ->orderBy('id', 'desc')
-            ->first();
+            ->toBase()->first();
 
         if ($lastVoucher) {
             $lastSequence = (int) str_replace("JV{$locationCode}{$fyCode}", '', $lastVoucher->type_number);

@@ -1,0 +1,12 @@
+GET accounts/journal-voucher
+GET accounts/journal-voucher/990602/edit
+GET accounts/journal-voucher/create
+GET accounts/receipt
+GET accounts/receipt/990601/browser-print
+GET accounts/receipt/990601/edit
+GET accounts/receipt/990601/print
+GET accounts/receipt/990601/show
+GET accounts/receipt/create
+GET utils/comms/outbox
+GET utils/comms/outbox/990401
+GET utils/comms/outbox?tab=sandbox
