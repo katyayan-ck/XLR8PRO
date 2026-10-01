@@ -83,6 +83,16 @@ class EnquiryFollowupWritesTest extends TestCase
         $this->assertSame('3_TO_10_DAYS', $latest->cre_fup_deviation_stage);
     }
 
+    /** BT-011 / BUG-226: an enquiry with a CRE follow-up opens (the view read a lost reason the follow-up row lacks). */
+    public function test_the_enquiry_view_opens_with_a_cre_follow_up(): void
+    {
+        $enquiry = $this->createEnquiry(['cre_enq_stage' => 'HOT', 'cre_customer_stage' => 'LOST', 'cre_fup_remarks' => 'not buying',
+            'cre_next_fup_date' => now('Asia/Kolkata')->addDays(3)->format('Y-m-d H:i')]);
+        $this->assertTrue(CreFollowup::query()->where('x8_enq_no', (string) $enquiry->id)->exists());
+
+        $this->get("/admin/sales/enquiry/{$enquiry->id}/view")->assertOk();
+    }
+
     public function test_finance_and_exchange_remarks_are_numbered_per_type(): void
     {
         $enquiry = $this->createEnquiry();

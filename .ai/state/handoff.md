@@ -25,6 +25,7 @@ nothing local is unpushed. Next push only when the owner asks.
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 01-10: BT-011 (booking code) — Enquiry view reads the CRE lost reason / sub-reason from the enquiry (where they are stored), not from the follow-up row.
 - 01-10: BT-010 (booking code) — Refund view passes `$receiptLogs` to the booking detail view (it crashed for bookings with a refund record).
 - 01-10: BT-009 (booking code) — Invoiced booking "View" opens the booking detail page (its view `show-invoiced` never existed).
 - 01-10: BT-008 (booking code) — Finance view / payout edit of a booking without a finance record go back to the finance list with a message (was a 500).

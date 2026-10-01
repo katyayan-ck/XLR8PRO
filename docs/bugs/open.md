@@ -46,7 +46,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-218 | Legacy employees without the primaries DEC-089 now requires: of 200 active employees 24 have no branch, 39 no location, 5 no department, 12 no division, 35 no vertical (local `xlrm`, 30-09) | Medium | OPEN — data (HR / owner): fill through the new users workbook (W10) or the bulk screen (W11) | 30-09-2026 | — |
 | BUG-219 | Booking create: for customer type `Dummy` every base validation failure is only logged, so a dummy booking can be saved without name, mobile, branch, vehicle or sale type | Medium | OPEN — owner: should a dummy booking still need the base fields (only finance mode is relaxed today)? | 30-09-2026 | — |
 | BUG-221 | Code referencing classes that do not exist (found by the PHPStan baseline, W4): Booking helper, accessory export, spare master, production RBAC seeder | Low | PARTLY FIXED 01-10 — accessory export repaired; dead Booking helpers / spare master / RBAC seeder await the owner's deletion OK | 30-09-2026 | — |
-| BUG-226 | Enquiry view page 500 for any enquiry that has a CRE follow-up: the view reads `cre_lost_reason`, which `xlr8_cre_enquiry_fup` does not have | High | OPEN — found 02-10 (W15 BT-005 check) | 02-10-2026 | — |
 | BUG-228 | App OTP SMS is never sent: `OtpNotificationService::sendViaSms()` is a placeholder that only logs | High | OPEN — found 02-10 (W18a) | 02-10-2026 | — |
 
 ## Entries
@@ -431,19 +430,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
   exist (`xcelr8_vehicle_master`, `bmpl_enum_master`, `branches`, `locations`); proposal: delete them (the agent's
   deletion was held back for approval). `XlSpareMaster` `EnumMaster` relations and `ProductionRBACSeeder`: delete with
   D5–D12. `config/media-library.php` PRO class: harmless unless temporary uploads are used.
-
-### BUG-226 — Enquiry view page 500 for any enquiry that has a CRE follow-up
-
-- **Status:** OPEN.
-- **Severity:** High (the enquiry view — the main read screen of an enquiry — fails as soon as a CRE follow-up exists;
-  the test copy has none, so the sweeps never saw it).
-- **Found:** 02-10-2026, W15 BT-005 before / after check with a fixture that adds CRE follow-ups (unchanged code).
-- **Where:** `resources/views/admin/sales/enquiry/view.blade.php` (~line 889 compiled) reads `$fup->cre_lost_reason`
-  for each CRE follow-up row; `xlr8_cre_enquiry_fup` has no such column (`Undefined property: stdClass::$cre_lost_reason`).
-  Rows come from `EnquiryCrudController::showEnquiry()`.
-- **Proposed solution:** read it null-safe (`$fup->cre_lost_reason ?? '—'`), or add the column if the business still
-  records a lost reason per CRE follow-up (owner / booking team). Booking-team area — fix as a logged BT change once
-  approved (decision sheet #10 covers the similar BUG-223…225).
 
 ### BUG-228 — App OTP SMS is never sent: `OtpNotificationService::sendViaSms()` is a placeholder that only logs
 

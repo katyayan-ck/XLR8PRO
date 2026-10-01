@@ -1,0 +1,4 @@
+GET sales/enquiry/60922/view
+GET sales/enquiry/60922/edit
+GET sales/enquiry/60923/view
+GET sales/enquiry/60920/view

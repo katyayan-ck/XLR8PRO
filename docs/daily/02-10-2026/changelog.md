@@ -96,3 +96,8 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` · `refundView()`. BUG-225, DEC-095 #10. `show.blade.php` reads `$receiptLogs` as its own variable in the refund branch; `refundView()` built it only inside `$data`.
 - Checked: invoiced-show / refund-view / show for one booking per status (7) as superadmin + user 40: only the refund-view of the booking with a refund changed (500 → 200); every other response identical; `BookingBugFixesTest::test_the_refund_view_opens_for_a_booking_with_a_refund`. Log: `docs/booking-team-changes.md`.
 - **Baseline:** 126 `DB::` uses in 8 files left.
+
+## BT-011 (booking code, DEC-093) — Enquiry view reads the CRE lost reason / sub-reason from the enquiry (where they are stored), not from the follow-up row
+- `resources/views/admin/sales/enquiry/view.blade.php` · the CRE "Lost Reason" / "Lost Sub Reason" fields. BUG-226, DEC-095 #10. `cre_lost_reason` / `cre_lost_sub_reason` are columns of `xlr8_crm_enquiries` (the enquiry grid reads them there); `xlr8_cre_enquiry_fup` has no such columns, so the view crashed for every enquiry with a CRE follow-up.
+- Checked: enquiry 60922 view / edit (with the CRE fixture), 60923 / 60920 view as superadmin + user 40: only the crashing view changed (500 → 200); new `EnquiryFollowupWritesTest::test_the_enquiry_view_opens_with_a_cre_follow_up`. Log: `docs/booking-team-changes.md`.
+- **Baseline:** 126 `DB::` uses in 8 files left.
