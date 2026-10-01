@@ -56,19 +56,14 @@ nothing local is unpushed. Next push only when the owner asks.
   `docs/daily/30-09-2026/`.
 
 ## In progress / next
-- **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (271 uses / 43 files left).
+- **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;
-  booking code **BT-001 … BT-005** (numbered, one commit each, logged in `docs/booking-team-changes.md`: where, what, why,
+  booking code **BT-001 … BT-007** (numbered, one commit each, logged in `docs/booking-team-changes.md`: where, what, why,
   before → after, checked, revert).
-  **Booking team's code: done up to BT-005** (booking grids / lookups, quotation, enquiry). Blocked by the plan, not
-  converted: `ImportEnquiriesJob` + `SalesImportController` (importers → phase 5, rewritten on entity services after the
-  formats sign-off, so converting now would be redone), the booking reports (D23), uncalled `fetchCbrData()` /
-  `fetchPendBkData()` (deletion list).
-  **Next step: BT-006 / W15 rest** — small controllers (`Accounts/JournalVoucher` 2, `Accounts/Receipt` 2,
-  `Import/AdminImportController` 1, `Utils/Platform/CommsController` 2, `Api/CommsWebhookController` 2), the `CRM\Enquiry`
-  model (1), console (`DataScopeBackfill` 16, `RefreshAiContext` 4, `RefreshTestingDatabase` 3), user importers
-  (`StandaloneUsersImport` 4, `UserScopesSheetImport` 3), seeders, tests. Skipped by decision: `BrandCrudController`
-  (deletion D5), `SpareRequestCrudController` (spares rebuild D28), `Booking` model dead helpers.
+  **Unblocked part done (02-10):** booking BT-001…007, platform, console, importers, all tests; full suite 573 passed.
+  **Left (126 uses / 8 files, all blocked):** `Booking` model dead helpers + `EnumToKeyValueSeeder` + uncalled booking
+  helpers (deletion #6), `BrandCrudController` (D5), booking reports (D23), `SpareRequestCrudController` (D28),
+  `ImportEnquiriesJob` + `SalesImportController` (phase 5), `RefreshAiContext` (#21). Resume each when its answer comes.
   **Per change:** `APP_DEBUG=false DB_DATABASE=xlrm_testing php artisan dev:route-snapshot 1,40 <spec> before.json [--setup=fixture.php]` on the unchanged
   code → edit → pint the file (only sorts imports) → `php -l` → phpstan (no new errors) → the same command with
   `--compare=before.json` (must report 0 differences) → Sales tests → lower the baseline
@@ -108,7 +103,7 @@ nothing local is unpushed. Next push only when the owner asks.
 - **Package approvals:** 2FA, backups, error tracking, browser tests. **API:** `E002` rename (app team); BUG-209.
 
 ## How to verify
-- `php artisan test --compact` (~4 min): **561 passed, 1 known skip, 0 failures on 01-10** (`PricingRecalcTest` has
+- `php artisan test --compact` (~5 min): **573 passed, 1 known skip, 0 failures on 02-10** (`PricingRecalcTest` has
   errored inside the full run in this sandbox before and passes alone). Tests run on `xlrm_testing`; migrate the copy with
   `DB_DATABASE=xlrm_testing php artisan migrate` (never `testing:refresh-db`). Do **not** set `BASSET_CACHE_MAP=false`
   for the normal suite (10× slower); use it only for `php artisan test --group=smoke` here (storage/basset not writable).

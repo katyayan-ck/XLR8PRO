@@ -406,7 +406,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W14b | **Variant level:** feature mapping and management per variant, and an image gallery per variant | ✅ 01-10 (features per trim; gallery bound to trim or colour) |
 | W14c | **Excel import / export** of specifications (per model) and features (per variant), with master-fed dropdowns like the Vehicle Info workbook | ✅ 01-10 (our workbook by codes + your sample format by name, with a match report) |
 | W14d | **Compare vehicles** within the same segment only: intra-model (variants of one model, by features) and inter-model (different models, by specifications) | ✅ 01-10 (admin screen + app API) |
-| W15 | **No `DB::` queries — convert to Eloquent** (your rule 01-10, DEC-093). Guard test + baseline (473 uses / 72 files). Order: W15a services / jobs / console / imports / models / support; W15b admin controllers outside Booking; W15c tests / seeders; W15d Booking controller + booking models (with the booking team) | 🟡 in progress — services / platform / Org / dashboard done; booking BT-001…003 done (controller left: reports → D23, uncalled helpers → deletion); next BT-004 quotation; 314 uses / 45 files left |
+| W15 | **No `DB::` queries — convert to Eloquent** (your rule 01-10, DEC-093). Guard test + baseline (473 uses / 72 files). Order: W15a services / jobs / console / imports / models / support; W15b admin controllers outside Booking; W15c tests / seeders; W15d Booking controller + booking models (with the booking team) | 🟡 unblocked part ✅ 02-10 (473 → 126 uses; all tests, services, platform, booking BT-001…007); left 126 in 8 files — blocked: deletions #6 / D5, reports D23, spares D28, importers (phase 5), schema tooling #21 |
 | W16 | **Help & support utility** (your request 01-10, DEC-094) — F1 help pane, page tours, "Still need help?" support request with a diagnostic zip, support admin → executive routing; FRS `tech-guides/frs-and-workflows/frs/help-and-support-frs.md`, plan `…/plans/2026-10-01-help-and-support-DEC-094.md` | 🟡 planned — W16a ✅; build after W15a |
 | W16a | FRS + plan + DEC-094 + to-do | ✅ 01-10 |
 | W16b | Help engine: Markdown articles in `resources/help/`, route → article, `::: can CODE` sections, cache, search, coverage; F1 / `?` right-side pane; Help centre screen | 🔴 |
@@ -1233,3 +1233,17 @@ the other controllers, console, imports, tests.
 to decision #10.
 **Baseline now:** 271 `DB::` uses in 43 files. **Booking team's code:** done except the importers (phase 5),
 the reports (D23) and uncalled helpers (deletion list).
+
+### W15 — the unblocked part of DEC-093 done (BT-006, BT-007, platform, console, importers, all tests)
+
+**Delivered:**
+- **BT-006** — journal-voucher / receipt lists and number sequences through the models; `AccountsNumberingTest` pins the
+  numbering (a series continues from rows the user cannot see). **BT-007** — `Enquiry::scopeMainListing()` `selectRaw`,
+  same SQL (hash compared).
+- Platform: comms screens and webhook (`CommWebhookEvent` model), admin vehicle-import lookups.
+- Console / importers: `data-scope:backfill` (report and `--apply` runs compared statement by statement: identical),
+  `RefreshTestingDatabase` (schema builder), the legacy user importers, the role backfill seeder.
+- All 24 test files off the DB facade (query counting through `QueryExecuted` events).
+**Verified:** each change compared before / after (screens, SQL or tests); full suite **573 passed, 1 skipped**.
+**Left (126 uses in 8 files, all blocked):** deletions (#6, D5), booking reports (D23), spares (D28), the
+enquiry / sales importers (phase 5, after the formats sign-off), `ai:refresh-context` schema cards (#21 exemption).
