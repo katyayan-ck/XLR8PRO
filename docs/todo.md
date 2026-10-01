@@ -151,7 +151,7 @@ convention and matches our route names (`module.process.activity`), so it is a g
 | D3 | v1 `docs/upload`, `history/{entityType}` accept any model class from input (BUG-182) — **✅ decided 02-10 (DEC-095): entity-type allowlist → W18a** | **P0** | Security |
 | D4 | Lead lookups — **⏸ decided 02-10: after go-live** | P1 | Sales |
 | D5–D12 | Deletions: Brand (BUG-009), ExportController (BUG-180), RBACService (BUG-190), Core graph models, getChassisNumbers (BUG-153), dead Org views (BUG-154), seeder test users, Booking scopes (BUG-191) | P1 | Clean-up |
-| D13 | 52 dead menu links (BUG-056 / 062) — **✅ decided 02-10 (DEC-095): keep, show "coming soon" → W18e** | **P0** | UAT-visible |
+| D13 | 52 dead menu links (BUG-056 / 062) — **✅ decided 02-10 (DEC-095): keep, show "coming soon" → done 02-10 (W18e)** | **P0** | UAT-visible |
 | D14 | Import permissions (BUG-177) — **⏸ 02-10: later** | P1 | Access |
 | D16 | Hard-coded user-id whitelists in booking (BUG-095) — **✅ decided 02-10 (DEC-095): permission → done 02-10 (BT-014)** | P1 | Access |
 | D18 | Pricing | ✅ | Closed (BUG-178 fixed) |
@@ -419,7 +419,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W18b | v1 `system-settings` read endpoints narrowed / retired (BUG-207), `BaseController::authorize()` fixed (BUG-209); note for the app team | ✅ 02-10 (managers only; writes via SettingsService) |
 | W18c | Booking bugs BUG-223 / 224 / 225 / 226, BUG-219 (Dummy bookings validated), D21 BEV / Personal SO rule made to work (BUG-101) — ✅ 02-10 (BT-008 … BT-013) | ✅ |
 | W18d | D16 — the hard-coded user-id lists in booking → a permission (BUG-095) — ✅ 02-10 (BT-014); grant `SLS_BKNG_ORDER_APPROVE` to designations (owner); BUG-229 found | ✅ |
-| W18e | D13 — the 52 dead menu links open a "coming soon" page (BUG-056 / 062) | 🔴 |
+| W18e | D13 — the 52 dead menu links open a "coming soon" page (BUG-056 / 062) — ✅ 02-10 (59 items, BT-015) | ✅ |
 | W18f | D23 — the 5 booking reports rewritten on the current tables, inside a `Booking*Service` (BUG-122, #13) | 🔴 |
 | W18g | DEC-093 #21 — schema tooling exemption in the guard (`ai:refresh-context`) | 🔴 |
 | W18h | D26 — mask Aadhaar / PAN in old KYC rows (reversible: encrypted backup) | 🔴 |
@@ -1322,3 +1322,13 @@ Approval". Guide `tech-guides/modules/sales-booking.md` updated (also the BT-012
 **Owner to do:** grant `SLS_BKNG_ORDER_APPROVE` to the approving designation(s).
 **Found:** BUG-229 — Accept / Reject do not match `orderUpdate()` (Accept refused; Reject recorded as "hold released").
 Needs the owner's rule for Reject.
+
+### W18e — menu items without a screen show "coming soon" (DEC-095 #8, D13; BUG-056 / 062)
+
+**Delivered:** one admin page, `/admin/coming-soon?feature=…`, names the feature and links back to the dashboard. All 59
+rendered menu items that led to a 404 or `#` now open it: the booking ones are BT-015; the rest are CRM, refunds,
+schemes, cashier, fee collection, accounts and others. Labels and icons are unchanged. Commented-out items are untouched.
+**Verified:**
+- New `MenuLinksTest`: no rendered menu link lacks a route, and the page escapes its input.
+- Dashboard + page as superadmin and user 40 → 200; lang tests pass.
+**Left:** each item gets its real route when its screen is built (rule in `tech-guides/platform/ui-kit.md`).

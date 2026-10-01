@@ -45,4 +45,12 @@ return [
         'updated' => ':key updated.',
     ],
 
+    // "Coming soon" page for menu items whose screen is not built yet (DEC-095 #8, D13).
+    'coming_soon' => [
+        'title' => 'Coming soon',
+        'this_screen' => 'This screen',
+        'text' => ':feature is not available yet. It is planned for a later release.',
+        'back' => 'Back to the dashboard',
+    ],
+
 ];

@@ -226,6 +226,8 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-219 | Booking create: for customer type `Dummy` every base validation failure is only logged, so a dummy booking can be saved without name, mobile, branch, vehicle or sale type | Medium | FIXED 02-10 — BT-012 | 30-09-2026 | 02-10-2026 |
 | BUG-101 | `dmsupdate()`'s "BEV/Personal segment → order 3 when DMS SO missing" branch is dead code — `xlr8_booking_master` has no `segment_code` column, so a freshly-loaded `Booking` always has `segment_code = null` there, and `dmsupdate()` (unlike `dmsedit()`) never resolves it from the linked Enquiry before the check runs | Low | FIXED 02-10 — BT-013 | 23-09-2026 | 02-10-2026 |
 | BUG-095 | 3 hardcoded user-ID whitelists (`[5, 23, 123]`, one also adds `$user->id`) gate Order Verification / Pending DMS action buttons in `BookingCrudController.php`, bypassing the app's normal `SLS_BKNG_*` Spatie-permission gating | Medium | FIXED 02-10 — BT-014 | 22-09-2026 | 02-10-2026 |
+| BUG-056 | Admin menu's "Approved Quotations" link points at a route/feature that has never existed (pre-existing, unrelated to URL rename) | Low | FIXED 02-10 — coming-soon page (W18e) | 20-09-2026 05:10 | 02-10-2026 |
+| BUG-062 | 5 Booking menu links (dummy, ready-to-invoice, pending-incomplete-votfs, rto-agent-tracker, brokerage) point at URLs with no route ever registered | Low | FIXED 02-10 — coming-soon page (W18e, BT-015) | 20-09-2026 07:20 | 02-10-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2854,3 +2856,31 @@ guessed at.
 - **Proposed solution:** needs a decision from whoever owns this workflow — either (a) these 3 IDs represent a specific ops/admin team and should be replaced with a proper permission or role check (e.g. a dedicated `SLS_BKNG_ORDER_APPROVE` permission) so it's maintainable without editing code to add/remove a person, or (b) it's leftover debug/test scaffolding and the whitelist should be removed entirely in favor of the existing permission check. Not guessed at here — could silently lock out or unlock the wrong people.
 - **Resolution (28-09-2026):** Triage 28-09: the ids are still hardcoded in `BookingCrudController` (order verification, pending DMS). Proposal D16: new permission `SLS_BKNG_ORDER_APPROVE` granted to exactly those users' designations.
 - **Fixed 02-10-2026:** BT-014 — the id lists are replaced by the permission `SLS_BKNG_ORDER_APPROVE` (granted to no designation yet; superadmin bypasses). Test `BookingBugFixesTest::test_order_verification_actions_need_the_approve_permission`.
+
+### BUG-056 — Admin menu's "Approved Quotations" link points at a route that has never existed
+
+- **Current status (index):** OPEN (UAT-visible — D13)
+- **Verified 29-09-2026:** the "Approved Quotations" menu item is still there (commented as dead) (D13).
+
+- **Final status:** FIXED · **Fixed:** 02-10-2026
+- **Severity:** Low (dead link, 404 on click — not a security issue, just a broken nav item)
+- **Found:** 20-09-2026 05:10, during batch 30, while updating the Quotation section of `menu_items.blade.php` for the URL rename — found `backpack_url('quotation-form/approved')` with no corresponding route anywhere in `QuotationCrudController`'s 9 (now 10) registered routes, and no `approved`-named method on the controller either.
+- **Where:** `resources/views/vendor/backpack/ui/inc/menu_items.blade.php`, "Quotation" dropdown, "Approved Quotations" item.
+- **Description:** Pre-existing — this link has 404'd since it was written, unrelated to this batch's URL rename (confirmed the equivalent old URL `quotation-form/approved` was equally nonexistent before). Renamed the URL segment for consistency (`sales/quotation/approved`) but left the underlying feature unimplemented, matching this rollout's standing "document broken routes, don't invent missing business logic" policy (same as BUG-046/048/050).
+- **Proposed solution:** implement an "approved quotations" list view (likely `Quotation::where('status', 'approved')` or similar, mirroring `pendingQuotations`) or remove the dead menu link. Not fixed.
+- **Resolution (28-09-2026):** Triage 28-09: part of 52 dead menu links (see D13). Proposal: comment it out citing the bug (approvals are Track B).
+- **Fixed 02-10-2026:** W18e (DEC-095 #8) — "Approved Quotations" opens the coming-soon page. Test `MenuLinksTest`.
+
+### BUG-062 — 5 Booking menu links point at URLs that have never had any route registered
+
+- **Current status (index):** OPEN (UAT-visible — D13)
+- **Verified 29-09-2026:** `menu_items.blade.php` still links `booking/ready-to-invoice`, `pending-incomplete-votfs`, `rto-agent-tracker`, `brokerage`; none is a registered route (D13).
+
+- **Final status:** FIXED · **Fixed:** 02-10-2026
+- **Severity:** Low (404 on click, not a page-load failure)
+- **Found:** 20-09-2026 07:20, during batch 32, while sweeping `menu_items.blade.php` for Booking URLs — `backpack_url('booking/dummy')` ("Dummy Bookings"), `backpack_url('booking/ready-to-invoice')` ("Ready To Invoice"), `backpack_url('booking/pending-incomplete-votfs')` ("Incomplete VOTFs (@sales)"), `backpack_url('booking/rto-agent-tracker')` ("RTO Agent Tracker"), `backpack_url('booking/brokerage')` ("Brokerage") — none of these 5 paths correspond to any of `BookingCrudController`'s 116 registered routes (confirmed against the complete route list built for this batch's migration), under either the old or new URL scheme.
+- **Where:** `resources/views/vendor/backpack/ui/inc/menu_items.blade.php`, Booking and Transactions dropdowns.
+- **Description:** Pre-existing — these read as UI placeholders for features that were designed (menu items exist, with icons and labels) but never actually implemented on the backend. Deliberately left as their original (already-broken) URL strings rather than renamed to a nonexistent `sales/booking/*` equivalent, since there's nothing real to point them at either way — renaming a dead link to a different dead link adds no value.
+- **Proposed solution:** either implement the 5 missing features or remove the dead menu links. Not fixed — outside a route/permission migration's scope.
+- **Resolution (28-09-2026):** Triage 28-09: the five links plus "Nil Payment Bookings" (`href="#"`) are still dead. Proposal D13: comment them out citing the bug.
+- **Fixed 02-10-2026:** W18e / BT-015 (DEC-095 #8) — the dead booking items (and "Nil Payment Bookings") open the coming-soon page. Test `MenuLinksTest`.

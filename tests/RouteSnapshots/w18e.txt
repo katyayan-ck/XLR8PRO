@@ -1,0 +1,3 @@
+GET dashboard
+GET coming-soon?feature=Dummy+Bookings
+GET coming-soon

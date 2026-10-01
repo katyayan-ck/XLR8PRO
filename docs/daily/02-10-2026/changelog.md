@@ -116,3 +116,27 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` · `orderVerification()`, `orderUpdate()`, `pendingorder()`, `pendingDms()`; migration `2026_10_02_011924_add_booking_order_approve_permission_dec095.php`; `app/Services/IAM/PermissionTreeService.php` (label). BUG-095, DEC-095 #9 (D16: permission). In this database ids 5 / 23 / 123 are an Accessories Executive, a Service Cashier and a Sales Consultant without access to the page, so nobody (not even superadmin) saw the buttons; the action itself was reachable by URL for any verifier. `pendingorder()` listed `$user->id` too (always true); `pendingDms()` never used its list.
 - Checked: route snapshots (order-verification, pending-order, pending-dms; users 1 + 40): only superadmin's order-verification action cell changed ("---" → Accept / Reject); user 40 and the other screens identical to the committed code; new `BookingBugFixesTest::test_order_verification_actions_need_the_approve_permission` (superadmin sees the buttons; VERIFY alone → 403; VERIFY + APPROVE → redirect); migration run on `xlrm` + `xlrm_testing`; IAM tests pass. Log: `docs/booking-team-changes.md`.
 - **Baseline:** 126 `DB::` uses in 8 files left.
+
+## BT-015 (booking code, DEC-093) — The booking menu items with no screen (Nil Payment Bookings, Dummy Bookings, Ready To Invoice, Incomplete VOTFs (@sales), RTO Agent Tracker, Brokerage) open the "coming soon" page instead of a 404 / `#`
+- `resources/views/vendor/backpack/ui/inc/menu_items.blade.php` · Booking / Transactions dropdowns (the booking-module part of W18e). BUG-062, DEC-095 #8 (D13: keep the items, show "coming soon"). Part of the menu-wide change (59 items; see the changelog).
+- Checked: `MenuLinksTest` (every rendered menu link has a route); dashboard + coming-soon page as superadmin and user 40 → 200. Log: `docs/booking-team-changes.md`.
+- **Baseline:** 126 `DB::` uses in 8 files left.
+
+### W18e — dead menu links open a "coming soon" page (DEC-095 #8, D13; BUG-056, BUG-062; BT-015)
+- **Files:**
+  - `routes/backpack/core.php`: `Route::view('coming-soon', 'admin.coming-soon')->name('coming-soon')`.
+  - New `resources/views/admin/coming-soon.blade.php`.
+  - `resources/lang/en/utils.php`: `coming_soon.*`.
+  - `resources/views/vendor/backpack/ui/inc/menu_items.blade.php`.
+  - New `tests/Feature/Admin/MenuLinksTest.php`; guide `tech-guides/platform/ui-kit.md`.
+- **Before → after:** 59 rendered menu items pointed at URLs with no route (404) or `href="#"`. Each now links
+  `route('coming-soon', ['feature' => '<menu label>'])`, which names the feature and links back to the dashboard. The
+  items are in User Type, Approved Quotations, Booking (6, BT-015), co-dealer, CRM feedback / verifications /
+  activations / alerts / concerns, Refunds, Schemes, Sales Cashier, Fee Collection and Accounts manager / cashier /
+  executive. Items inside HTML / Blade comments (not shown) are untouched.
+- **Why:** owner (DEC-095 #8) — keep the items, show "coming soon".
+- **Checked:**
+  - `MenuLinksTest`: the page escapes its input, and no rendered menu link lacks a route. It failed before with 59+
+    links.
+  - Dashboard + page as superadmin and user 40 → 200.
+  - Lang tests pass.

@@ -160,6 +160,15 @@ XL.theme.onChange(state => rebuildMyChart());
   `utils.flash.technical_error` with the reference. Example:
   `Alert::error(__('accounts.flash.error_creating_receipt', ['message' => ErrorRef::userMessage($e)]))->flash();`
 
+## "Coming soon" page for menu items not built yet (DEC-095 #8, D13)
+- Route `coming-soon` (`/admin/coming-soon?feature=<label>`, a `Route::view` in `routes/backpack/core.php`), view
+  `resources/views/admin/coming-soon.blade.php`, wording `utils.coming_soon.*`. Shows the escaped label (max 80
+  characters) and a link back to the dashboard; needs only admin access.
+- A menu item without a screen links `{{ route('coming-soon', ['feature' => 'Label']) }}` — never a URL with no route
+  or `href="#"`. When the screen ships, point the item at its real route.
+- `tests/Feature/Admin/MenuLinksTest` fails when a rendered menu link (superadmin) has no route or is `#` (commented-out
+  items are ignored).
+
 ## Permission tree + person picker (W5)
 Shared in `public/css/xl-ui.css` (tokens, dark-mode safe): `.rbac-tree`, `.rbac-module`, `.rbac-row(-module|-process|-perm)`,
 `.rbac-caret`, `.rbac-label(-module|-process)`, `.rbac-check`, `.rbac-state-badge` with `.ov-added / .ov-removed /

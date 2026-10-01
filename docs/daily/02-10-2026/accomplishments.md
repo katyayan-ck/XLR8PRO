@@ -94,3 +94,13 @@ Approval". Guide `tech-guides/modules/sales-booking.md` updated (also the BT-012
 **Owner to do:** grant `SLS_BKNG_ORDER_APPROVE` to the approving designation(s).
 **Found:** BUG-229 — Accept / Reject do not match `orderUpdate()` (Accept refused; Reject recorded as "hold released").
 Needs the owner's rule for Reject.
+
+### W18e — menu items without a screen show "coming soon" (DEC-095 #8, D13; BUG-056 / 062)
+
+**Delivered:** one admin page, `/admin/coming-soon?feature=…`, names the feature and links back to the dashboard. All 59
+rendered menu items that led to a 404 or `#` now open it: the booking ones are BT-015; the rest are CRM, refunds,
+schemes, cashier, fee collection, accounts and others. Labels and icons are unchanged. Commented-out items are untouched.
+**Verified:**
+- New `MenuLinksTest`: no rendered menu link lacks a route, and the page escapes its input.
+- Dashboard + page as superadmin and user 40 → 200; lang tests pass.
+**Left:** each item gets its real route when its screen is built (rule in `tech-guides/platform/ui-kit.md`).

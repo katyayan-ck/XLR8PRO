@@ -26,8 +26,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-021 | `PersonBankingDetailCrudController` — missing `CrudTrait` + wrong column names (stacked) | Critical | MITIGATED (DEC-037); leftovers cleaned (DEC-070) | 20-09-2026 16:00 | 27-09-2026 |
 | BUG-031 | `SpareRequestCrudController`'s own `index()` screen fatals unconditionally (`RouteNotFoundException`) because `list.blade.php` calls `route('spare-request.data')`, which was never registered — plus 3 more missing routes (`admin/fetch-parts`, `spare/partwise-requirement`, `spare/orderingreport`) referenced by its own views | Critical | OPEN (Spares rebuild — D28; hidden from menu) | 20-09-2026 19:15 | — |
 | BUG-032 | `SpareRequestCrudController::setup()` never calls `CRUD::setModel()` — `store()`/`update()`/`destroy()` (the unmodified trait defaults) fatal on a null model; confirmed live (`POST /admin/spare-request` → `500`, generic `Error`) | Critical | OPEN (Spares rebuild — D28) | 20-09-2026 19:20 | — |
-| BUG-056 | Admin menu's "Approved Quotations" link points at a route/feature that has never existed (pre-existing, unrelated to URL rename) | Low | OPEN (UAT-visible — D13) | 20-09-2026 05:10 | — |
-| BUG-062 | 5 Booking menu links (dummy, ready-to-invoice, pending-incomplete-votfs, rto-agent-tracker, brokerage) point at URLs with no route ever registered | Low | OPEN (UAT-visible — D13) | 20-09-2026 07:20 | — |
 | BUG-085 | `vendor/bin/phpstan analyse` (Larastan) OOMs on a full-project run in this dev environment (Windows paging file too small) | Low | OPEN (environment only — no code action) | 22-09-2026 | — |
 | BUG-116 | Spares module's create/edit forms call 3 AJAX endpoints that don't exist as routes at all: `admin/fetch-parts` (controller method `fetchParts()` exists but has zero route registered for it), `admin/check-ro-number` (no matching method anywhere), `admin/get-variants` (no matching method anywhere) — the parts-autocomplete, RO-number-duplicate-check, and model→variant cascading dropdown are all completely non-functional in `SpareRequestCrudController`'s create/edit screens | High | OPEN (Spares rebuild — D28) | 23-09-2026 | — |
 | BUG-122 | 5 Booking listing screens (`reports/branch-booking`, `reports/consolidated-booking`, `reports/live-order`, `reports/pending-actions`, `reports/stock`) 500 because `xlr8_vehicle_master` and `xlr8_us_location` don't exist as tables in this database — same class of issue as BUG-009 (`xlr8_vehicle_brand`), a genuinely missing schema, not a code bug | High | OPEN (booking team — D23) | 23-09-2026 | — |
@@ -139,32 +137,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 - **Description:** Unlike `index()`/`create()` (which have custom `setupListOperation()`/`setupCreateOperation()` overrides that only render a Blade view, so they don't strictly need `$this->crud->model` to be set — see BUG-030/031 for why they crash anyway, for unrelated reasons), `store()`, `update()`, and `destroy()` have **no overrides at all** in this controller — they run Backpack's own trait defaults (`CreateOperation::store()`, `UpdateOperation::update()`, `DeleteOperation::destroy()`), all of which call methods like `$this->crud->create(...)`/`$this->crud->update(...)`/`$this->crud->delete(...)` that require a model to have been set via `CRUD::setModel()` during `setup()`. Since that call is missing, any submission through this form is guaranteed to fail. Reproduced live: `POST /admin/spare-request` (with full `*` permission, valid CSRF token, empty body) returned a genuine `500` with a generic `Error` exception — consistent with a null-model failure inside the trait's `store()`.
 - **Proposed solution:** add `CRUD::setModel(\App\Models\Module\Spare\XlSpareRequest::class);` to `setup()`, matching the pattern every other (working) CrudController in this codebase follows. Not applied in this rollout — even with this fixed, `create()`/`index()` still crash from BUG-030/BUG-031 respectively, so fixing this alone would not make the module usable; all three need addressing together, and that's a real functional fix beyond this rollout's permission-gating scope.
 - **Resolution (28-09-2026):** Triage 28-09: `setup()` still lacks `setModel()`; a one-line fix alone doesn't make the module work. Part of D28.
-
-### BUG-056 — Admin menu's "Approved Quotations" link points at a route that has never existed
-
-- **Current status (index):** OPEN (UAT-visible — D13)
-- **Verified 29-09-2026:** the "Approved Quotations" menu item is still there (commented as dead) (D13).
-
-- **Status:** OPEN (UAT-visible — D13)
-- **Severity:** Low (dead link, 404 on click — not a security issue, just a broken nav item)
-- **Found:** 20-09-2026 05:10, during batch 30, while updating the Quotation section of `menu_items.blade.php` for the URL rename — found `backpack_url('quotation-form/approved')` with no corresponding route anywhere in `QuotationCrudController`'s 9 (now 10) registered routes, and no `approved`-named method on the controller either.
-- **Where:** `resources/views/vendor/backpack/ui/inc/menu_items.blade.php`, "Quotation" dropdown, "Approved Quotations" item.
-- **Description:** Pre-existing — this link has 404'd since it was written, unrelated to this batch's URL rename (confirmed the equivalent old URL `quotation-form/approved` was equally nonexistent before). Renamed the URL segment for consistency (`sales/quotation/approved`) but left the underlying feature unimplemented, matching this rollout's standing "document broken routes, don't invent missing business logic" policy (same as BUG-046/048/050).
-- **Proposed solution:** implement an "approved quotations" list view (likely `Quotation::where('status', 'approved')` or similar, mirroring `pendingQuotations`) or remove the dead menu link. Not fixed.
-- **Resolution (28-09-2026):** Triage 28-09: part of 52 dead menu links (see D13). Proposal: comment it out citing the bug (approvals are Track B).
-
-### BUG-062 — 5 Booking menu links point at URLs that have never had any route registered
-
-- **Current status (index):** OPEN (UAT-visible — D13)
-- **Verified 29-09-2026:** `menu_items.blade.php` still links `booking/ready-to-invoice`, `pending-incomplete-votfs`, `rto-agent-tracker`, `brokerage`; none is a registered route (D13).
-
-- **Status:** OPEN (UAT-visible — D13)
-- **Severity:** Low (404 on click, not a page-load failure)
-- **Found:** 20-09-2026 07:20, during batch 32, while sweeping `menu_items.blade.php` for Booking URLs — `backpack_url('booking/dummy')` ("Dummy Bookings"), `backpack_url('booking/ready-to-invoice')` ("Ready To Invoice"), `backpack_url('booking/pending-incomplete-votfs')` ("Incomplete VOTFs (@sales)"), `backpack_url('booking/rto-agent-tracker')` ("RTO Agent Tracker"), `backpack_url('booking/brokerage')` ("Brokerage") — none of these 5 paths correspond to any of `BookingCrudController`'s 116 registered routes (confirmed against the complete route list built for this batch's migration), under either the old or new URL scheme.
-- **Where:** `resources/views/vendor/backpack/ui/inc/menu_items.blade.php`, Booking and Transactions dropdowns.
-- **Description:** Pre-existing — these read as UI placeholders for features that were designed (menu items exist, with icons and labels) but never actually implemented on the backend. Deliberately left as their original (already-broken) URL strings rather than renamed to a nonexistent `sales/booking/*` equivalent, since there's nothing real to point them at either way — renaming a dead link to a different dead link adds no value.
-- **Proposed solution:** either implement the 5 missing features or remove the dead menu links. Not fixed — outside a route/permission migration's scope.
-- **Resolution (28-09-2026):** Triage 28-09: the five links plus "Nil Payment Bookings" (`href="#"`) are still dead. Proposal D13: comment them out citing the bug.
 
 ### BUG-085 — Larastan OOMs on a full-project run in this dev environment
 

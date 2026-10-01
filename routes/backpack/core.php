@@ -61,6 +61,7 @@ Route::group([
     Route::get('home', [DashboardController::class, 'index'])->name('backpack.dashboard.home');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('backpack.dashboard');
     Route::get('dashboard/widget/{key}', [DashboardController::class, 'widget'])->where('key', '[a-z_]+')->name('dashboard.widget');   // DEC-072
+    Route::view('coming-soon', 'admin.coming-soon')->name('coming-soon');   // DEC-095 #8 (D13): menu items not built yet
 
     // ==================== VEHICLE CONTENT (DEC-092): specifications, features, images, brochure, galleries ====================
     Route::get('vehicle/content', [VehicleContentController::class, 'index'])->name('vehicle.content.index');

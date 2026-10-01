@@ -25,6 +25,7 @@ nothing local is unpushed. Next push only when the owner asks.
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 01-10: BT-015 (booking code) — The booking menu items with no screen (Nil Payment Bookings, Dummy Bookings, Ready To Invoice, Incomplete VOTFs (@sales), RTO Agent Tracker, Brokerage) open the "coming soon" page instead of a 404 / `#`.
 - 01-10: BT-014 (booking code) — The hard-coded user-id lists `[5, 23, 123]` are replaced by the new permission `SLS_BKNG_ORDER_APPROVE`: Order Verification shows Accept / Reject only to its holders, and `order-update` requires it too; the two lists that did nothing are removed.
 - 01-10: BT-013 (booking code) — The "BEV / Personal booking submitted without a DMS SO → order 3" rule now fires: segment codes `BEV` / `PV` (were the old numeric ids 753 / 21589), and the segment is resolved from the booking, else the linked enquiry, else the segment of the model.
 - 01-10: BT-012 (booking code) — A Dummy booking is refused (with the first validation message, nothing saved) when the customer, branch / location, vehicle or sale type is missing.
@@ -65,9 +66,11 @@ nothing local is unpushed. Next push only when the owner asks.
 - **W18 (DEC-095) — building the owner's 02-10 answers, in order W18a → W18m.** Booking items are numbered BT changes
   (`docs/booking-team-changes.md`), each checked with `dev:route-snapshot` / tests before and after, each revertable.
   Done: W18a, W18b, W18c (BT-008 … BT-013), W18d (BT-014: `SLS_BKNG_ORDER_APPROVE`, granted to no designation yet;
-  BUG-229 logged — owner: what should Reject do). **Next step: W18e** — D13: the 52 dead menu links show a "coming
-  soon" page (BUG-056 / BUG-062): find the links (`resources/views/vendor/backpack/ui/inc/menu_items.blade.php`), add one
-  gated "coming soon" route / view, point the dead links at it; not a booking-module change unless a link is.
+  BUG-229 logged — owner: what should Reject do), W18e (coming-soon page, 59 menu items, BT-015).
+  **Next step: W18f** — D23: rewrite the 5 booking reports (`reports/branch-booking`, `consolidated-booking`,
+  `live-order`, `pending-actions`, `stock`; BUG-122 — they read missing tables `xlr8_vehicle_master` / `xlr8_us_location`)
+  on current tables inside a `Booking*Service` (Eloquent, DEC-093), as numbered BT changes; first read the report
+  methods in `BookingCrudController` and their views, list the columns each shows, map them to current tables.
 
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;

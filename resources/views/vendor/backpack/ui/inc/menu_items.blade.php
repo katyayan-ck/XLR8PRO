@@ -223,7 +223,7 @@
     {{-- Users Info Section --}}
     <x-backpack::menu-dropdown title="Users Info" icon="la la-users" nested="true">
         <a class="dropdown-item d-flex align-items-center justify-content-between"
-            href="{{ backpack_url('user-type') }}">
+            href="{{ route('coming-soon', ['feature' => 'User Type']) }}">
             <span><i class="la la-user-tag me-2"></i>User Type</span>
         </a>
         @if (backpack_user() && backpack_user()->can('ORG_PRSN_VIEW'))
@@ -494,11 +494,10 @@
                         <span><i class="la la-file-signature me-2"></i>Quotation List</span>
                     </a>
                     {{-- Pending Quotations hidden: no sales/quotation/pending route (DEC-023). --}}
-                    {{-- "Approved Quotations" links to a route that has never existed
-                (backpack_url('quotation-form/approved') before this rename) — see
-                docs/bugs (open.md / closed.md) BUG-056. Left as a dead link, not fixed here. --}}
+                    {{-- "Approved Quotations" has no screen yet (BUG-056): it opens the coming-soon page (DEC-095 #8, D13), like
+                         every other menu item below that links route('coming-soon'). --}}
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('sales/quotation/approved') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Approved Quotations']) }}">
                         <span><i class="la la-check-circle me-2"></i>Approved Quotations</span>
                     </a>
                 </x-backpack::menu-dropdown>
@@ -522,12 +521,12 @@
                         <span><i class="la la-rupee-sign me-2"></i>Pending Payment Bookings</span>
                     </a>
 
-                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Nil Payment Bookings']) }}">
                         <span><i class="la la-receipt me-2"></i>Nil Payment Bookings</span>
                     </a>
 
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('booking/dummy') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Dummy Bookings']) }}">
                         <span><i class="la la-flask me-2"></i>Dummy Bookings</span>
                     </a>
 
@@ -566,13 +565,13 @@
                     </a>
 
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('booking/ready-to-invoice') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Ready To Invoice']) }}">
                         <span><i class="la la-file-invoice-dollar me-2"></i>Ready To Invoice</span>
                     </a>
 
                     <x-backpack::menu-dropdown title="Pending" icon="la la-clock" nested="true">
                         <a class="dropdown-item d-flex align-items-center justify-content-between"
-                            href="{{ backpack_url('booking/pending-incomplete-votfs') }}">
+                            href="{{ route('coming-soon', ['feature' => 'Incomplete VOTFs (@sales)']) }}">
                             <span><i class="la la-exclamation-triangle me-2"></i>Incomplete VOTFs (@sales)</span>
                         </a>
                         <a class="dropdown-item d-flex align-items-center justify-content-between"
@@ -606,17 +605,17 @@
                     </x-backpack::menu-dropdown>
 
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('booking/rto-agent-tracker') }}">
+                        href="{{ route('coming-soon', ['feature' => 'RTO Agent Tracker']) }}">
                         <span><i class="la la-user-tie me-2"></i>RTO Agent Tracker</span>
                     </a>
 
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('booking/brokerage') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Brokerage']) }}">
                         <span><i class="la la-hand-holding-usd me-2"></i>Brokerage</span>
                     </a>
 
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('co-dealer/erroneous') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Erroneous Entries']) }}">
                         <span><i class="la la-exclamation-circle me-2"></i>Erroneous Entries</span>
                     </a>
                 </x-backpack::menu-dropdown>
@@ -628,23 +627,23 @@
                 {{-- Feedback --}}
                 <x-backpack::menu-dropdown title="Feedback" icon="la la-comment-alt" nested="true">
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('crm-sales/feedback/new-enquiry') }}">
+                        href="{{ route('coming-soon', ['feature' => 'New Enquiry']) }}">
                         <span><i class="la la-question-circle me-2"></i>New Enquiry</span>
                     </a>
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('crm-sales/feedback/new-test-drive') }}">
+                        href="{{ route('coming-soon', ['feature' => 'New Test Drive']) }}">
                         <span><i class="la la-car me-2"></i>New Test Drive</span>
                     </a>
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('crm-sales/feedback/new-booking') }}">
+                        href="{{ route('coming-soon', ['feature' => 'New Booking']) }}">
                         <span><i class="la la-book me-2"></i>New Booking</span>
                     </a>
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('crm-sales/feedback/cancelled-booking') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Cancelled Booking']) }}">
                         <span><i class="la la-times-circle me-2"></i>Cancelled Booking</span>
                     </a>
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('crm-sales/feedback/new-delivery') }}">
+                        href="{{ route('coming-soon', ['feature' => 'New Vehicle Delivery']) }}">
                         <span><i class="la la-key me-2"></i>New Vehicle Delivery</span>
                     </a>
                 </x-backpack::menu-dropdown>
@@ -696,37 +695,37 @@
                         <span><i class="la la-user-slash me-2"></i>Lost Enquiries</span>
                     </a>
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('crm-sales/verifications/receipt-confirmation') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Receipt Confirmation']) }}">
                         <span><i class="la la-receipt me-2"></i>Receipt Confirmation</span>
                     </a>
                 </x-backpack::menu-dropdown>
 
                 {{-- Activations --}}
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
-                    href="{{ backpack_url('crm-sales/activations/list') }}">
+                    href="{{ route('coming-soon', ['feature' => 'Activations']) }}">
                     <span><i class="la la-toggle-on me-2"></i>Activations</span>
                 </a>
 
                 {{-- Alerts --}}
                 <x-backpack::menu-dropdown title="Alerts" icon="la la-bell" nested="true">
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('crm-sales/alerts/fup-comments-mismatch') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Fup Comments Mismatch']) }}">
                         <span><i class="la la-exclamation-circle me-2"></i>Fup Comments Mismatch</span>
                     </a>
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('crm-sales/alerts/fup-date-mismatch') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Fup Date Mismatch']) }}">
                         <span><i class="la la-calendar-times me-2"></i>Fup Date Mismatch</span>
                     </a>
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('crm-sales/alerts/wrongfully-lost-enquiries') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Wrongfully Lost Enquiries']) }}">
                         <span><i class="la la-user-times me-2"></i>Wrongfully Lost Enquiries</span>
                     </a>
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('crm-sales/alerts/fake-test-drive') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Fake Test Drive']) }}">
                         <span><i class="la la-ban me-2"></i>Fake Test Drive</span>
                     </a>
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('crm-sales/alerts/purchase-type-mismatch') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Purchase Type Mismatch (Exchange)']) }}">
                         <span><i class="la la-exchange-alt me-2"></i>Purchase Type Mismatch (Exchange)</span>
                     </a>
                 </x-backpack::menu-dropdown>
@@ -736,19 +735,19 @@
 
                     {{-- Internal --}}
                     <x-backpack::menu-dropdown title="Internal" icon="la la-building" nested="true">
-                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Enquiry']) }}">
                             <span><i class="la la-question-circle me-2"></i>Enquiry</span>
                         </a>
-                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Test Drive']) }}">
                             <span><i class="la la-car me-2"></i>Test Drive</span>
                         </a>
-                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Live Bookings']) }}">
                             <span><i class="la la-bookmark me-2"></i>Live Bookings</span>
                         </a>
-                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Cancelled Bookings']) }}">
                             <span><i class="la la-ban me-2"></i>Cancelled Bookings</span>
                         </a>
-                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Delivered Vehicles']) }}">
                             <span><i class="la la-truck-loading me-2"></i>Delivered Vehicles</span>
                         </a>
                     </x-backpack::menu-dropdown>
@@ -756,25 +755,25 @@
                     {{-- Intello --}}
                     {{-- TODO: confirm the actual items/routes this sub menu should contain --}}
                     <x-backpack::menu-dropdown title="Intello" icon="la la-robot" nested="true">
-                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Enquiry']) }}">
                             <span><i class="la la-question-circle me-2"></i>Enquiry</span>
                         </a>
-                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Test Drive']) }}">
                             <span><i class="la la-car me-2"></i>Test Drive</span>
                         </a>
-                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Live Bookings']) }}">
                             <span><i class="la la-bookmark me-2"></i>Live Bookings</span>
                         </a>
-                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Cancelled Bookings']) }}">
                             <span><i class="la la-ban me-2"></i>Cancelled Bookings</span>
                         </a>
-                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                        <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Delivered Vehicles']) }}">
                             <span><i class="la la-truck-loading me-2"></i>Delivered Vehicles</span>
                         </a>
                     </x-backpack::menu-dropdown>
 
                     {{-- Escalated (direct list, previously "Registered Concerns") --}}
-                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Escalated']) }}">
                         <span><i class="la la-arrow-circle-up me-2"></i>Escalated</span>
                     </a>
 
@@ -782,10 +781,10 @@
 
                 {{-- Outstanding Management --}}
                 <x-backpack::menu-dropdown title="Outstanding Management" icon="la la-sliders-h" nested="true">
-                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Bookings']) }}">
                         <span><i class="la la-book-open me-2"></i>Bookings</span>
                     </a>
-                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Delivered Vehicles']) }}">
                         <span><i class="la la-truck-loading me-2"></i>Delivered Vehicles</span>
                     </a>
                 </x-backpack::menu-dropdown>
@@ -880,15 +879,15 @@
                 @endif
                 <x-backpack::menu-dropdown title="Customer Reconciliation" icon="la la-users-cog" nested="true">
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('refund/sales/requested') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Requested']) }}">
                         <span>Requested</span>
                     </a>
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('refund/sales/refunded') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Refunded']) }}">
                         <span>Refunded</span>
                     </a>
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('refund/sales/rejected') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Rejected']) }}">
                         <span>Rejected</span>
                     </a>
                 </x-backpack::menu-dropdown>
@@ -896,28 +895,28 @@
 
             {{-- Claims --}}
             <x-backpack::menu-dropdown title="Claims" icon="la la-file-medical" nested="true">
-                <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Exchange']) }}">
                     <span><i class="la la-exchange-alt me-2"></i>Exchange</span>
                 </a>
-                <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Welcome']) }}">
                     <span><i class="la la-hand-holding-heart me-2"></i>Welcome</span>
                 </a>
-                <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Loyalty']) }}">
                     <span><i class="la la-award me-2"></i>Loyalty</span>
                 </a>
-                <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'CSD']) }}">
                     <span><i class="la la-shield-alt me-2"></i>CSD</span>
                 </a>
-                <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Corporate']) }}">
                     <span><i class="la la-building me-2"></i>Corporate</span>
                 </a>
-                <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Oem Retail Support']) }}">
                     <span><i class="la la-handshake me-2"></i>Oem Retail Support</span>
                 </a>
-                <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Oem Liquidation Support']) }}">
                     <span><i class="la la-boxes me-2"></i>Oem Liquidation Support</span>
                 </a>
-                <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Erroneous Entries']) }}">
                     <span><i class="la la-exclamation-circle me-2"></i>Erroneous Entries</span>
                 </a>
 
@@ -926,7 +925,7 @@
             {{-- Sales Cashier --}}
             <x-backpack::menu-dropdown title="Sales Cashier" icon="la la-cash-register" nested="true">
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
-                    href="{{ backpack_url('receipt') }}">
+                    href="{{ route('coming-soon', ['feature' => 'Issue Receipt']) }}">
                     <span>
                         <i class="la la-receipt me-2"></i>Issue Receipt
                     </span>
@@ -946,7 +945,7 @@
                         <i class="la la-registered me-2"></i>RTO Charges
                     </span>
                 </a>
-                <a class="dropdown-item d-flex align-items-center justify-content-between" href="#">
+                <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('coming-soon', ['feature' => 'Erroneous Entries']) }}">
                     <span><i class="la la-exclamation-circle me-2"></i>Erroneous Entries</span>
                 </a>
             </x-backpack::menu-dropdown>
@@ -963,11 +962,11 @@
                     <x-backpack::menu-dropdown title="Fee Collection" icon="la la-dollar-sign" nested="true">
                         <x-backpack::menu-dropdown title="Registration" icon="la la-registered" nested="true">
                             <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                href="{{ backpack_url('fee-collection/add') }}">
+                                href="{{ route('coming-soon', ['feature' => 'Add Fee']) }}">
                                 <span><i class="la la-plus-circle me-2"></i>Add Fee</span>
                             </a>
                             <a class="dropdown-item d-flex align-items-center justify-content-between"
-                                href="{{ backpack_url('fee-collection') }}">
+                                href="{{ route('coming-soon', ['feature' => 'View List']) }}">
                                 <span><i class="la la-list-ul me-2"></i>View List</span>
                             </a>
                         </x-backpack::menu-dropdown>
@@ -999,27 +998,27 @@
                 @endif
 
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
-                    href="{{ backpack_url('accounts/manager/cash-collection-reconciliation') }}">
+                    href="{{ route('coming-soon', ['feature' => 'Cash Collection Reconciliation']) }}">
                     <span><i class="la la-hand-holding-usd me-2"></i>Cash Collection Reconciliation</span>
                 </a>
 
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
-                    href="{{ backpack_url('accounts/manager/cash-deposit-reconciliation') }}">
+                    href="{{ route('coming-soon', ['feature' => 'Cash Deposit Reconciliation']) }}">
                     <span><i class="la la-university me-2"></i>Cash Deposit Reconciliation</span>
                 </a>
 
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
-                    href="{{ backpack_url('accounts/manager/cash-deposit-approval') }}">
+                    href="{{ route('coming-soon', ['feature' => 'Cash Deposit Approval']) }}">
                     <span><i class="la la-check-circle me-2"></i>Cash Deposit Approval</span>
                 </a>
 
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
-                    href="{{ backpack_url('accounts/manager/sdr') }}">
+                    href="{{ route('coming-soon', ['feature' => 'SDR']) }}">
                     <span><i class="la la-file-alt me-2"></i>SDR</span>
                 </a>
 
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
-                    href="{{ backpack_url('accounts/manager/rcr') }}">
+                    href="{{ route('coming-soon', ['feature' => 'RCR']) }}">
                     <span><i class="la la-file-invoice-dollar me-2"></i>RCR</span>
                 </a>
 
@@ -1033,17 +1032,17 @@
                 <x-backpack::menu-dropdown title="Sales" icon="la la-shopping-cart" nested="true">
 
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('accounts/cashier/sales/issue-receipt') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Issue Receipt']) }}">
                         <span><i class="la la-receipt me-2"></i>Issue Receipt</span>
                     </a>
 
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('accounts/cashier/sales/sdr') }}">
+                        href="{{ route('coming-soon', ['feature' => 'SDR']) }}">
                         <span><i class="la la-file-alt me-2"></i>SDR</span>
                     </a>
 
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('accounts/cashier/sales/rcr') }}">
+                        href="{{ route('coming-soon', ['feature' => 'RCR']) }}">
                         <span><i class="la la-file-invoice-dollar me-2"></i>RCR</span>
                     </a>
 
@@ -1054,7 +1053,7 @@
                 <x-backpack::menu-dropdown title="Service" icon="la la-wrench" nested="true">
 
                     <a class="dropdown-item d-flex align-items-center justify-content-between"
-                        href="{{ backpack_url('accounts/cashier/service/issue-receipt') }}">
+                        href="{{ route('coming-soon', ['feature' => 'Issue Receipt']) }}">
                         <span><i class="la la-receipt me-2"></i>Issue Receipt</span>
                     </a>
 
@@ -1067,7 +1066,7 @@
             <x-backpack::menu-dropdown title="Executive" icon="la la-user" nested="true">
 
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
-                    href="{{ backpack_url('accounts/executive/cash-deposit-entry') }}">
+                    href="{{ route('coming-soon', ['feature' => 'Cash Deposit Entry']) }}">
                     <span><i class="la la-money-bill me-2"></i>Cash Deposit Entry</span>
                 </a>
 
