@@ -33,3 +33,15 @@ the reports (D23) and uncalled helpers (deletion list).
 **Verified:** each change compared before / after (screens, SQL or tests); full suite **573 passed, 1 skipped**.
 **Left (126 uses in 8 files, all blocked):** deletions (#6, D5), booking reports (D23), spares (D28), the
 enquiry / sales importers (phase 5, after the formats sign-off), `ai:refresh-context` schema cards (#21 exemption).
+
+### Owner decisions closed (02-10, DEC-095)
+
+**Closed questions (answered on the decision sheet):** D1 / D2 / D3 (app OTP + API security — build), BUG-207 / 209
+(build), D23 (rewrite the booking reports), D13 (keep the dead links as "coming soon"), D16 (permission), BUG-223–226
+(fix), BUG-219 (Dummy bookings validated), D21 (keep the BEV / Personal SO rule and make it work), booking carve-out with
+the conversion (yes), BUG-206 (generated person code), D25 (codes with the colour suffix + re-import), HR gaps (no
+mapping — the user data is refreshed; reset command built, run on your list), D26 (mask old KYC rows), DEC-093 defaults
+(confirmed, schema tooling exempt), N4 (values in Settings), Redis (yes), Playwright for E2E (yes); N2 merge only on your
+prompt; F2 / F3 left open; S6 2FA not now; D14 / S15 / runbook later; UAT settings no; D28 / D4 after go-live.
+**Still open:** D29 key rotation, deletion list (#6), DEC-090 `ALL`, permission grants (#32), the pricing section (#22–27).
+**Next:** to-do W18a–m, in order.

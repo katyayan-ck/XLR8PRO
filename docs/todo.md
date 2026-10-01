@@ -146,28 +146,28 @@ convention and matches our route names (`module.process.activity`), so it is a g
 
 | # | Decision | Priority | Blocks |
 |---|---|---|---|
-| D1 | Repair mobile OTP login: `users` has no `mobile`, so the app gets nulls (BUG-187). Same fix covers `sender.name` / `receiver.name` (null) in the notification / alert / message responses (found 30-09) | **P0** | Mobile app login |
-| D2 | `random_int` OTP instead of `rand()` (BUG-188) | **P0** | Security |
-| D3 | v1 `docs/upload`, `history/{entityType}` accept any model class from input (BUG-182) | **P0** | Security |
-| D4 | Lead lookups | P1 | Sales |
+| D1 | Repair mobile OTP login: `users` has no `mobile`, so the app gets nulls (BUG-187). Same fix covers `sender.name` / `receiver.name` (null) in the notification / alert / message responses (found 30-09) — **✅ decided 02-10 (DEC-095): read from the person record → W18a** | **P0** | Mobile app login |
+| D2 | `random_int` OTP instead of `rand()` (BUG-188) — **✅ decided 02-10 (DEC-095) → W18a** | **P0** | Security |
+| D3 | v1 `docs/upload`, `history/{entityType}` accept any model class from input (BUG-182) — **✅ decided 02-10 (DEC-095): entity-type allowlist → W18a** | **P0** | Security |
+| D4 | Lead lookups — **⏸ decided 02-10: after go-live** | P1 | Sales |
 | D5–D12 | Deletions: Brand (BUG-009), ExportController (BUG-180), RBACService (BUG-190), Core graph models, getChassisNumbers (BUG-153), dead Org views (BUG-154), seeder test users, Booking scopes (BUG-191) | P1 | Clean-up |
-| D13 | 52 dead menu links (BUG-056 / 062) | **P0** | UAT-visible |
-| D14 | Import permissions (BUG-177) | P1 | Access |
-| D16 | Hard-coded user-id whitelists in booking (BUG-095) | P1 | Access |
+| D13 | 52 dead menu links (BUG-056 / 062) — **✅ decided 02-10 (DEC-095): keep, show "coming soon" → W18e** | **P0** | UAT-visible |
+| D14 | Import permissions (BUG-177) — **⏸ 02-10: later** | P1 | Access |
+| D16 | Hard-coded user-id whitelists in booking (BUG-095) — **✅ decided 02-10 (DEC-095): permission → W18d** | P1 | Access |
 | D18 | Pricing | ✅ | Closed (BUG-178 fixed) |
 | D19 | Accessory importer | ✅ | Closed (DEC-083) |
 | D20 | RTO sheet id (BUG-029) | P1 | RTO import |
-| D21 | BEV SO rule (BUG-101) | P2 | Booking |
-| D23 | 5 booking reports 500 (BUG-122) | **P0** | Booking team |
-| D24 | 36 employees on unknown designation codes (BUG-183) | P1 | Approvals routing |
-| D25 | Variant code split (BUG-173) | P1 | Booking ↔ pricing |
-| D26 | Mask old KYC rows | P1 | Compliance |
-| D28 | Spares module rebuild (BUG-031 / 032 / 116) | ⏸ | Spares (hidden) |
+| D21 | BEV SO rule (BUG-101) — **✅ decided 02-10 (DEC-095): keep the rule, make it work → W18c** | P2 | Booking |
+| D23 | 5 booking reports 500 (BUG-122) — **✅ decided 02-10 (DEC-095): rewrite → W18f** | **P0** | Booking team |
+| D24 | 36 employees on unknown designation codes (BUG-183) — **✅ decided 02-10 (DEC-095): no mapping — the user data is refreshed (W18j)** | P1 | Approvals routing |
+| D25 | Variant code split (BUG-173) — **✅ decided 02-10 (DEC-095): codes with the colour suffix → W18i** | P1 | Booking ↔ pricing |
+| D26 | Mask old KYC rows — **✅ decided 02-10 (DEC-095): mask → W18h** | P1 | Compliance |
+| D28 | Spares module rebuild (BUG-031 / 032 / 116) — **⏸ decided 02-10: after go-live** | ⏸ | Spares (hidden) |
 | D29 | Rotate the Google API key | **P0** | Security |
 | N1 | **COD in on-road** (setting `pricing.dealer_charges.include_cod`, off today) | P1 | Pricing numbers |
-| N2 | Stage merge — **local part done 30-09 (DEC-087):** `origin/stage` merged into `dev/admin` keeping both sides' work, DB aligned (DEC-088). **Left:** full suite on the final tip + delete the temp branch `merge/stage-30-09` (no decision needed, in progress); delete `backup/dev-admin-before-rewrite-30-09` once you confirm the history rewrite; **push `dev/admin` and merge it into `stage` — your call** | **P0** | Deploy |
-| N3 | Formats / permission naming (§2 F2) | P1 | §2 |
-| N4 | Security policy values (§4: idle minutes, lock, password rules, self-service rules) | P1 | §4 |
+| N2 | Stage merge — **local part done 30-09 (DEC-087):** `origin/stage` merged into `dev/admin` keeping both sides' work, DB aligned (DEC-088). **Left:** full suite on the final tip + delete the temp branch `merge/stage-30-09` (no decision needed, in progress); delete `backup/dev-admin-before-rewrite-30-09` once you confirm the history rewrite; **push `dev/admin` and merge it into `stage` — your call** — **⏸ 02-10: only on the owner's prompt** | **P0** | Deploy |
+| N3 | Formats / permission naming (§2 F2) — **⏸ 02-10: F2 / F3 left open** | P1 | §2 |
+| N4 | Security policy values (§4: idle minutes, lock, password rules, self-service rules) — **✅ decided 02-10 (DEC-095): values in Settings → W18k** | P1 | §4 |
 
 ---
 
@@ -414,6 +414,20 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W16d | Diagnostics collector: actions / AJAX / JS errors ring buffer (no typed values), server request trail, html2canvas screenshot with sensitive-field blanking + preview | 🔴 |
 | W16e | Support request: permissions `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`, categories + settings, `SupportRequestService` (masked zip → ticket, least-loaded admin as owner, executive-only assignment), screens, bundle rights, retention purge | 🔴 |
 | W16f | Developer guide `tech-guides/platform/17-help-support.md` (+ reference) with the build; the **user-facing** help texts / "Getting help" articles move to §13 (last) | 🔴 |
+| W18 | **Owner decisions 02-10 (DEC-095)** — build every item with a definitive answer; booking items as numbered, revertable BT changes | 🟡 in progress |
+| W18a | Security: D2 `random_int` OTP (BUG-188), D3 entity allowlist for `docs/upload` / `history` (BUG-182), D1 OTP login from the person record (BUG-187) | 🔴 |
+| W18b | v1 `system-settings` read endpoints narrowed / retired (BUG-207), `BaseController::authorize()` fixed (BUG-209); note for the app team | 🔴 |
+| W18c | Booking bugs BUG-223 / 224 / 225 / 226, BUG-219 (Dummy bookings validated), D21 BEV / Personal SO rule made to work (BUG-101) | 🔴 |
+| W18d | D16 — the hard-coded user-id lists in booking → a permission (BUG-095) | 🔴 |
+| W18e | D13 — the 52 dead menu links open a "coming soon" page (BUG-056 / 062) | 🔴 |
+| W18f | D23 — the 5 booking reports rewritten on the current tables, inside a `Booking*Service` (BUG-122, #13) | 🔴 |
+| W18g | DEC-093 #21 — schema tooling exemption in the guard (`ai:refresh-context`) | 🔴 |
+| W18h | D26 — mask Aadhaar / PAN in old KYC rows (reversible: encrypted backup) | 🔴 |
+| W18i | D25 / BUG-173 — booking reads / writes variant codes with the colour suffix; vehicle master purge + re-import (V7 / DA2, with the pricing run) | 🔴 |
+| W18j | #18 — local-only user reset command (keep a given list of accounts; dry run, backup) — run on the owner's list | 🔴 |
+| W18k | N4 — session / password / lockout / self-service values as Settings (S3 / S4 / S5 / S7) | 🔴 |
+| W18l | BUG-206 — generated `person_code`; PAN / Aadhaar only masked (14 tables) | 🔴 |
+| W18m | #33 Redis for cache + queue (UAT / production config, with IT); #34 Playwright E2E (with Q3) | 🔴 |
 
 **Needs you (not started):** D1–D29, N1, N3 / F2 formats, N4 security values (S3, S4, S5, S7), S6 / O3 / O6 / Q3 package
 approvals, O1 / O2 / O5 CI and server changes, V8 app-sync endpoint shape, V10 / DA6 deletions, the push to `stage`.
@@ -1247,3 +1261,15 @@ the reports (D23) and uncalled helpers (deletion list).
 **Verified:** each change compared before / after (screens, SQL or tests); full suite **573 passed, 1 skipped**.
 **Left (126 uses in 8 files, all blocked):** deletions (#6, D5), booking reports (D23), spares (D28), the
 enquiry / sales importers (phase 5, after the formats sign-off), `ai:refresh-context` schema cards (#21 exemption).
+
+### Owner decisions closed (02-10, DEC-095)
+
+**Closed questions (answered on the decision sheet):** D1 / D2 / D3 (app OTP + API security — build), BUG-207 / 209
+(build), D23 (rewrite the booking reports), D13 (keep the dead links as "coming soon"), D16 (permission), BUG-223–226
+(fix), BUG-219 (Dummy bookings validated), D21 (keep the BEV / Personal SO rule and make it work), booking carve-out with
+the conversion (yes), BUG-206 (generated person code), D25 (codes with the colour suffix + re-import), HR gaps (no
+mapping — the user data is refreshed; reset command built, run on your list), D26 (mask old KYC rows), DEC-093 defaults
+(confirmed, schema tooling exempt), N4 (values in Settings), Redis (yes), Playwright for E2E (yes); N2 merge only on your
+prompt; F2 / F3 left open; S6 2FA not now; D14 / S15 / runbook later; UAT settings no; D28 / D4 after go-live.
+**Still open:** D29 key rotation, deletion list (#6), DEC-090 `ALL`, permission grants (#32), the pricing section (#22–27).
+**Next:** to-do W18a–m, in order.

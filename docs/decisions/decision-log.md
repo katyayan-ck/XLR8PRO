@@ -1520,3 +1520,28 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
 - **Approved-by:** owner (01-10) · **Risk:** LOW–MEDIUM (additive; privacy of the bundle is the main risk, covered by
   masking rules and tests) · **Reversal:** remove the help layout include and routes; migrations' `down()` drop the new
   permissions / settings.
+
+### DEC-095 | 02-10-2026 | A (all) | Owner answers to the decision sheet of 01-10 (`docs/owner-decisions-2026-10-01.md`)
+- **Decided (to be built, to-do W18):**
+  - #1 D2 — app OTP from `random_int` (BUG-188). #2 D3 — `docs/upload` / `history` accept only listed entity types
+    (BUG-182). #3 D1 — app OTP login reads name / mobile / email from the person record (BUG-187). #5 — narrow / retire
+    the v1 `system-settings` read endpoints, fix `BaseController::authorize()` (BUG-207 / BUG-209); the app team is told.
+  - #7 D23 — **rewrite** the 5 booking reports on the current tables (BUG-122). #8 D13 — **keep** the 52 dead menu
+    links, shown as "coming soon" (BUG-056 / 062). #9 D16 — the hard-coded user-id lists become a permission (BUG-095).
+    #10 — fix BUG-223 / 224 / 225 / 226. #11 BUG-219 — a `Dummy` booking still needs the base fields. #12 D21 — the
+    "BEV / Personal, SO missing → order 3" rule is **kept and made to work** (segment from the enquiry, BUG-101).
+    #13 — booking queries are converted **and** moved into the `Booking*Service`s in one change. All booking changes
+    are numbered BT changes in `docs/booking-team-changes.md`, each revertable.
+  - #15 BUG-206 — a generated `person_code`; PAN / Aadhaar only in masked fields. #16 D25 / BUG-173 — variant codes keep
+    the colour suffix (DEC-051); vehicle masters purged and re-imported. #19 D26 — mask Aadhaar / PAN in old KYC rows.
+  - #18 — the HR data gaps are not fixed: the database will be refreshed with 1 superadmin, 5 developer users and 1
+    app developer user, then the new user data imported. A local-only reset command is built now (dry run by default,
+    backup first) and run only when the owner sends the list of accounts to keep.
+  - #21 — DEC-093 defaults confirmed: `DB::transaction` allowed; migrations **and schema tooling** reading
+    `information_schema` exempt. #28 N4 — the session / password / lockout / self-service values become Settings.
+    #33 — Redis for cache + queue on UAT / production (with IT). #34 — Playwright also for the end-to-end tests (Q3).
+- **Waiting / later:** #14 N2 merge to `stage` — only on the owner's prompt; #17 F2 / F3 — left open; #22–27 pricing —
+  decided later; #29 S6 2FA — not now; #30 D14, #31 S15 — later; #35 runbook / QA dates — later; #36 UAT settings —
+  no; #37 D28 spares, D4 leads — after go-live; #4 D29, #6 deletions, #20 DEC-090, #32 grants — not answered yet.
+- **Approved-by:** owner (02-10) · **Risk:** per item (the data items #15, #16, #18, #19 are the risky ones: each gets a
+  dry run, a backup and a written reversal) · **Reversal:** per item, in its changelog / BT entry.

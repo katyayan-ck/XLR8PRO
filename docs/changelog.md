@@ -10214,3 +10214,7 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 - `UserRbacWorkbookTest`, `VehicleMasterWriteTest`, `StandaloneUsersImportTest`, `UsersWorkbookTest`: every `DB::table('t' [as x])` → `Model::withoutGlobalScopes()[->from('t as x')]->toBase()` (the same raw query: no scopes, explicit filters, plain rows).
 - **Checked:** 23 passed (116 assertions) before and after. All test files are now off the DB facade.
 - **Baseline:** 126 `DB::` uses in 8 files left (all blocked: owner decisions or plan phase 5).
+
+## DEC-095 — owner answers recorded (02-10)
+- `docs/decisions/decision-log.md` DEC-095; `docs/owner-decisions-2026-10-01.md` status note; `docs/todo.md`: decision rows
+  D1–D3, D4, D13, D14, D16, D21, D23–D26, D28, N2–N4 marked; new group **W18** (W18a–m) for the items to build.

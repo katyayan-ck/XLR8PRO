@@ -25,6 +25,7 @@ nothing local is unpushed. Next push only when the owner asks.
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 02-10: owner answers recorded (DEC-095); to-do W18 opened.
 - 01-10: BT-007 (booking code) — Main enquiry list scope: `select(DB::raw(1))` → `selectRaw('1')`.
 - 01-10: BT-006 (booking code) — Journal-voucher / receipt lists and their number sequences read through the models.
 - 01-10: BT-005 (booking code) — Enquiry screens and follow-up writes through models (OTF bookings, CRE follow-ups, enquiry follow-ups, finance / exchange remarks, variant rows).
@@ -53,6 +54,9 @@ nothing local is unpushed. Next push only when the owner asks.
   `docs/daily/30-09-2026/`.
 
 ## In progress / next
+- **W18 (DEC-095) — building the owner's 02-10 answers, in order W18a → W18m.** Booking items are numbered BT changes
+  (`docs/booking-team-changes.md`), each checked with `dev:route-snapshot` / tests before and after, each revertable.
+  Next step: W18a (security quick fixes).
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;
   booking code **BT-001 … BT-007** (numbered, one commit each, logged in `docs/booking-team-changes.md`: where, what, why,
