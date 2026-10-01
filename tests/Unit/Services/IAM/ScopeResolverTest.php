@@ -2,12 +2,15 @@
 
 namespace Tests\Unit\Services\IAM;
 
+use App\Models\Admin\Location;
 use App\Models\Admin\UserScope;
 use App\Models\User;
+use App\Models\Vehicle\Variant;
+use App\Models\Vehicle\VehicleModel;
 use App\Services\IAM\DataScope\ScopeResolver;
 use App\Services\IAM\UserScopeService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -43,10 +46,13 @@ class ScopeResolverTest extends TestCase
         $this->resolver->flush($user->id);
     }
 
-    /** @return list<string> */
-    private function codes(string $table, array $where = []): array
+    /**
+     * @param  class-string<Model>  $model
+     * @return list<string>
+     */
+    private function codes(string $model, array $where = []): array
     {
-        return DB::table($table)->whereNull('deleted_at')->where($where)->pluck('code')
+        return $model::query()->toBase()->where($where)->pluck('code')
             ->map(fn ($c) => strtoupper((string) $c))->unique()->sort()->values()->all();
     }
 
@@ -62,7 +68,7 @@ class ScopeResolverTest extends TestCase
 
     private function modelIn(string $segment): string
     {
-        $model = DB::table('xlr8_vehicle_model')->whereNull('deleted_at')->where('segment_code', $segment)
+        $model = VehicleModel::query()->toBase()->where('segment_code', $segment)
             ->whereExists(fn ($q) => $q->from('xlr8_vehicle_variant as v')->whereColumn('v.model_code', 'xlr8_vehicle_model.code')->whereNull('v.deleted_at'))
             ->value('code');
         if (! $model) {
@@ -89,8 +95,8 @@ class ScopeResolverTest extends TestCase
         $scope = $this->resolver->for($user);
 
         $this->assertSame(['PV'], $scope->allowed('segment'));
-        $this->assertSameCodes($this->codes('xlr8_vehicle_model', ['segment_code' => 'PV']), $scope->allowed('model'));
-        $this->assertSameCodes($this->codes('xlr8_vehicle_variant', ['segment_code' => 'PV']), $scope->allowed('variant'));
+        $this->assertSameCodes($this->codes(VehicleModel::class, ['segment_code' => 'PV']), $scope->allowed('model'));
+        $this->assertSameCodes($this->codes(Variant::class, ['segment_code' => 'PV']), $scope->allowed('variant'));
         $this->assertNull($scope->allowed('branch'), 'other trees stay unrestricted');
     }
 
@@ -104,7 +110,7 @@ class ScopeResolverTest extends TestCase
         $scope = $this->resolver->for($user);
 
         $this->assertSame([$model], $scope->allowed('model'));
-        $this->assertSameCodes($this->codes('xlr8_vehicle_variant', ['model_code' => $model]), $scope->allowed('variant'));
+        $this->assertSameCodes($this->codes(Variant::class, ['model_code' => $model]), $scope->allowed('variant'));
     }
 
     public function test_a_model_restriction_only_narrows_its_own_segment(): void
@@ -117,14 +123,14 @@ class ScopeResolverTest extends TestCase
 
         $allowedModels = $this->resolver->for($user)->allowed('model');
 
-        $this->assertSameCodes(array_merge([$model], $this->codes('xlr8_vehicle_model', ['segment_code' => 'CV'])), $allowedModels);
+        $this->assertSameCodes(array_merge([$model], $this->codes(VehicleModel::class, ['segment_code' => 'CV'])), $allowedModels);
     }
 
     public function test_a_branch_covers_its_locations_unless_one_is_assigned(): void
     {
         $user = $this->user();
         $this->grant($user, 'branch', 'BKN');
-        $bknLocations = $this->codes('xlr8_admin_location', ['branch_code' => 'BKN']);
+        $bknLocations = $this->codes(Location::class, ['branch_code' => 'BKN']);
         if (count($bknLocations) < 2) {
             $this->markTestSkipped('Needs a branch with two locations.');
         }
@@ -142,7 +148,7 @@ class ScopeResolverTest extends TestCase
         UserScope::where('user_id', $user->id)->update(['to_date' => now()->subDay()->toDateString()]);
         $this->grant($user, 'branch', 'BKN');
         UserScope::where('user_id', $user->id)->where('scope_type', 'branch')->update(['is_active' => false]);
-        DB::table('xlr8_admin_user_scopes')->insert(['user_id' => $user->id, 'scope_type' => 'vertical', 'scope_code' => 'ALL', 'is_active' => 1, 'created_at' => now()]);
+        UserScope::query()->toBase()->insert(['user_id' => $user->id, 'scope_type' => 'vertical', 'scope_code' => 'ALL', 'is_active' => 1, 'created_at' => now()]);
         $this->resolver->flush($user->id);
 
         $this->assertTrue($this->resolver->for($user)->isUnrestricted());

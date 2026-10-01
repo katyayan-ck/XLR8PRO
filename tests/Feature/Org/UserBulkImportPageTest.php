@@ -2,10 +2,14 @@
 
 namespace Tests\Feature\Org;
 
+use App\Models\Admin\Branch;
+use App\Models\Admin\Department;
+use App\Models\Admin\Designation;
+use App\Models\Admin\Location;
+use App\Models\Admin\Vertical;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Tests\TestCase;
@@ -24,11 +28,11 @@ class UserBulkImportPageTest extends TestCase
 
     private function workbook(): UploadedFile
     {
-        $branch = DB::table('xlr8_admin_branch')->where('is_active', 1)->value('code');
-        $location = DB::table('xlr8_admin_location')->where('branch_code', $branch)->value('code');
-        $department = DB::table('xlr8_admin_department')->value('code');
-        $vertical = DB::table('xlr8_admin_vertical')->whereNull('deleted_at')->value('code'); // DEC-089: required
-        $designation = DB::table('xlr8_admin_designation')->where('name', '!=', 'superadmin')->value('name');
+        $branch = Branch::withTrashed()->toBase()->where('is_active', 1)->value('code');
+        $location = Location::withTrashed()->toBase()->where('branch_code', $branch)->value('code');
+        $department = Department::withTrashed()->toBase()->value('code');
+        $vertical = Vertical::query()->toBase()->value('code'); // DEC-089: required
+        $designation = Designation::withTrashed()->toBase()->where('name', '!=', 'superadmin')->value('name');
 
         $book = new Spreadsheet;
         $book->getActiveSheet()->setTitle('Users_Import')->fromArray([

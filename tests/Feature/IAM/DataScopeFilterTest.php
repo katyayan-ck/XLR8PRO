@@ -2,16 +2,17 @@
 
 namespace Tests\Feature\IAM;
 
+use App\Models\Admin\Location;
 use App\Models\Module\Booking\Booking;
 use App\Models\Module\Booking\XExchange;
 use App\Models\User;
+use App\Models\Vehicle\VehicleModel;
 use App\Services\IAM\DataScope\DataScopeManager;
 use App\Services\IAM\DataScope\ScopeResolver;
 use App\Services\IAM\UserScopeService;
 use App\Services\Platform\Settings\SettingsService;
 use App\Support\Facades\DataScope;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -62,7 +63,7 @@ class DataScopeFilterTest extends TestCase
 
     public function test_a_location_inside_the_branch_decides_when_the_row_has_one(): void
     {
-        $locations = DB::table('xlr8_admin_location')->whereNull('deleted_at')->where('branch_code', 'BKN')->limit(2)->pluck('code')->all();
+        $locations = Location::query()->toBase()->where('branch_code', 'BKN')->limit(2)->pluck('code')->all();
         if (count($locations) < 2) {
             $this->markTestSkipped('Needs two BKN locations.');
         }
@@ -102,8 +103,8 @@ class DataScopeFilterTest extends TestCase
 
     public function test_a_segment_scope_filters_by_the_most_specific_vehicle_code(): void
     {
-        $pvModel = DB::table('xlr8_vehicle_model')->whereNull('deleted_at')->where('segment_code', 'PV')->value('code');
-        $cvModel = DB::table('xlr8_vehicle_model')->whereNull('deleted_at')->where('segment_code', 'CV')->value('code');
+        $pvModel = VehicleModel::query()->toBase()->where('segment_code', 'PV')->value('code');
+        $cvModel = VehicleModel::query()->toBase()->where('segment_code', 'CV')->value('code');
         if (! $pvModel || ! $cvModel) {
             $this->markTestSkipped('Needs PV and CV models.');
         }
@@ -156,7 +157,7 @@ class DataScopeFilterTest extends TestCase
         $bkn = $this->booking(['branch_code' => 'BKN']);
         $this->actAsScopedUser('branch', 'BKN');
 
-        $query = DB::table('xlr8_booking_master as b')->whereIn('b.id', [$chr->id, $bkn->id]);
+        $query = Booking::withoutGlobalScopes()->from('xlr8_booking_master as b')->toBase()->whereIn('b.id', [$chr->id, $bkn->id]);   // a plain report query
         DataScope::apply($query, Booking::class, 'b');
 
         $this->assertSame([$bkn->id], $query->pluck('b.id')->all());

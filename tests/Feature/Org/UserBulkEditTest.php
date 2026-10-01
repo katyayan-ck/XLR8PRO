@@ -2,9 +2,13 @@
 
 namespace Tests\Feature\Org;
 
+use App\Models\Admin\Branch;
+use App\Models\Admin\Department;
+use App\Models\Admin\Designation;
+use App\Models\Admin\Employee;
+use App\Models\Admin\Vertical;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -35,13 +39,13 @@ class UserBulkEditTest extends TestCase
         $this->actingAs($this->superadmin(), 'backpack');
         do {
             $code = 'BMPL-9'.random_int(100, 999);
-        } while (DB::table('xlr8_admin_employee')->where('code', $code)->exists());
+        } while (Employee::withTrashed()->where('code', $code)->exists());
         $good = [
             'emp_code' => $code, 'name' => 'Grid Tester', 'personal_mobile' => '97'.random_int(10000000, 99999999),
-            'primary_branch' => DB::table('xlr8_admin_branch')->where('is_active', 1)->whereNull('deleted_at')->value('code'),
-            'primary_department' => DB::table('xlr8_admin_department')->where('is_active', 1)->whereNull('deleted_at')->value('code'),
-            'designation' => DB::table('xlr8_admin_designation')->where('is_active', 1)->where('name', '!=', 'superadmin')->value('code'),
-            'vertical' => DB::table('xlr8_admin_vertical')->where('is_active', 1)->whereNull('deleted_at')->value('code'),
+            'primary_branch' => Branch::query()->toBase()->where('is_active', 1)->value('code'),
+            'primary_department' => Department::query()->toBase()->where('is_active', 1)->value('code'),
+            'designation' => Designation::withTrashed()->toBase()->where('is_active', 1)->where('name', '!=', 'superadmin')->value('code'),
+            'vertical' => Vertical::query()->toBase()->where('is_active', 1)->value('code'),
         ];
 
         $body = $this->postJson('/admin/org/user/bulk', ['rows' => [['emp_code' => $code.'X'], $good]])->assertOk()->json();

@@ -2,9 +2,12 @@
 
 namespace Tests\Unit\Services\Vehicle\Pricing;
 
+use App\Models\Vehicle\Pricing\InsAddonRate;
+use App\Models\Vehicle\Pricing\InsBaseRule;
+use App\Models\Vehicle\Pricing\InsDefault;
+use App\Models\Vehicle\Pricing\InsIdvSlot;
 use App\Services\Vehicle\Pricing\InsuranceService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class InsuranceServiceTest extends TestCase
@@ -24,7 +27,7 @@ class InsuranceServiceTest extends TestCase
      */
     private function makeBaseRule(array $overrides = []): int
     {
-        return DB::table('xlr8_vehicle_pricing_ins_base_rules')->insertGetId(array_merge([
+        return InsBaseRule::query()->toBase()->insertGetId(array_merge([
             'company' => 'USGI',
             'plan' => '1+3',
             'od_years' => 1,
@@ -46,7 +49,7 @@ class InsuranceServiceTest extends TestCase
 
     private function makeIdvSlot(int $baseRuleId, int $yearNo, string $basis): void
     {
-        DB::table('xlr8_vehicle_pricing_ins_idv_slots')->insert([
+        InsIdvSlot::query()->toBase()->insert([
             'base_rule_id' => $baseRuleId,
             'year_no' => $yearNo,
             'idv_basis' => $basis,
@@ -146,7 +149,7 @@ class InsuranceServiceTest extends TestCase
     public function test_quote_resolves_default_company_from_ins_defaults_insurance_company_column(): void
     {
         $this->makeBaseRule(['company' => 'ICICI']);
-        DB::table('xlr8_vehicle_pricing_ins_defaults')->insert([
+        InsDefault::query()->toBase()->insert([
             'model_code' => 'ANY',
             'permit' => 'Private',
             'insurance_company' => 'ICICI',
@@ -172,7 +175,7 @@ class InsuranceServiceTest extends TestCase
     {
         $ruleId = $this->makeBaseRule();
         $this->makeIdvSlot($ruleId, 1, '95% of Invoice');
-        DB::table('xlr8_vehicle_pricing_ins_addon_rates')->insert([
+        InsAddonRate::query()->toBase()->insert([
             'insurance_company' => 'USGI',
             'permit' => 'Private',
             'addon_slug' => 'NILDEP',

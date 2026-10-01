@@ -2,9 +2,10 @@
 
 namespace Tests\Feature\Sales;
 
+use App\Models\CRM\Enquiry;
 use App\Models\User;
+use App\Models\Vehicle\Variant;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -24,7 +25,7 @@ class EnquiryFlowTest extends TestCase
     /** @return array<string, string> */
     private function payload(array $overrides = []): array
     {
-        $variant = DB::table('xlr8_vehicle_variant as v')->join('xlr8_vehicle_model as m', 'm.code', '=', 'v.model_code')
+        $variant = Variant::withoutGlobalScopes()->from('xlr8_vehicle_variant as v')->toBase()->join('xlr8_vehicle_model as m', 'm.code', '=', 'v.model_code')
             ->where('v.is_active', 1)->whereNull('v.deleted_at')->whereNotNull('m.segment_code')
             ->first(['v.code', 'v.model_code', 'm.segment_code']) ?? $this->markTestSkipped('no active variant');
 
@@ -43,7 +44,7 @@ class EnquiryFlowTest extends TestCase
 
         $this->post('/admin/sales/enquiry', $data)->assertRedirect(backpack_url('sales/enquiry/xceler8'))->assertSessionHasNoErrors();
 
-        $row = DB::table('xlr8_crm_enquiries')->where('mobile', $data['mobile'])->latest('id')->first();
+        $row = Enquiry::withoutGlobalScopes()->toBase()->where('mobile', $data['mobile'])->latest('id')->first();
         $this->assertNotNull($row);
         $this->assertSame('EN-12345', $row->dms_enq_no);
         $this->assertSame('Xceler8', $row->origin);
@@ -57,7 +58,7 @@ class EnquiryFlowTest extends TestCase
 
         $this->from('/admin/sales/enquiry/create')->post('/admin/sales/enquiry', $data)
             ->assertRedirect('/admin/sales/enquiry/create')->assertSessionHasErrors(['name', 'variant_code', 'zipcode']);
-        $this->assertFalse(DB::table('xlr8_crm_enquiries')->where('mobile', $data['mobile'])->exists());
+        $this->assertFalse(Enquiry::withoutGlobalScopes()->toBase()->where('mobile', $data['mobile'])->exists());
     }
 
     public function test_a_reference_enquiry_needs_the_referee_and_goes_to_the_reference_list(): void
@@ -79,7 +80,7 @@ class EnquiryFlowTest extends TestCase
 
         $this->post('/admin/sales/enquiry', ['call_nature' => 'Service', 'mobile' => $mobile])->assertRedirect()->assertSessionHasNoErrors();
 
-        $this->assertTrue(DB::table('xlr8_crm_enquiries')->where('mobile', $mobile)->exists());
+        $this->assertTrue(Enquiry::withoutGlobalScopes()->toBase()->where('mobile', $mobile)->exists());
     }
 
     public function test_the_duplicate_check_finds_an_enquiry_by_mobile_and_segment(): void
@@ -99,7 +100,7 @@ class EnquiryFlowTest extends TestCase
         $this->actingAs($this->superadmin(), 'backpack');
         $data = $this->payload();
         $this->post('/admin/sales/enquiry', $data);
-        $id = DB::table('xlr8_crm_enquiries')->where('mobile', $data['mobile'])->value('id');
+        $id = Enquiry::withoutGlobalScopes()->toBase()->where('mobile', $data['mobile'])->value('id');
 
         $this->from("/admin/sales/enquiry/{$id}/edit")->put("/admin/sales/enquiry/{$id}", $data)
             ->assertSessionHasErrors(['x8_sc_code', 'cre_customer_stage', 'cre_next_fup_date']);

@@ -8,16 +8,7 @@
     "app/Models/Module/Booking/Booking.php": 27,
     "database/seeders/EnumToKeyValueSeeder.php": 2,
     "tests/Feature/Admin/Vehicle/VehicleMasterWriteTest.php": 13,
-    "tests/Feature/IAM/DataScopeFilterTest.php": 4,
-    "tests/Feature/Org/EmployeeUserEntityServicesTest.php": 7,
-    "tests/Feature/Org/UserBulkEditTest.php": 5,
-    "tests/Feature/Org/UserBulkImportPageTest.php": 5,
     "tests/Feature/Org/UserRbacWorkbookTest.php": 14,
     "tests/Feature/Org/UsersWorkbookTest.php": 10,
-    "tests/Feature/Sales/EnquiryFlowTest.php": 5,
-    "tests/Feature/Vehicle/VehicleEntityServicesTest.php": 3,
-    "tests/Unit/Services/IAM/ScopeResolverTest.php": 3,
-    "tests/Unit/Services/OrgServiceCachingTest.php": 6,
-    "tests/Unit/Services/Vehicle/Pricing/InsuranceServiceTest.php": 4,
     "tests/Unit/StandaloneUsersImportTest.php": 13
 }

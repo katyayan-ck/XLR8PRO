@@ -49,3 +49,8 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - `SystemSettingScreensTest`, `SettingsInterfaceTest`, `PricingProcessStartTest`, `KeywordEntityServicesTest`, `VehicleCompareTest`, `RtoServiceTest`, `EmployeePrimariesRuleTest`, `PlatformFixtures`, `PlatformAcceptanceTest`, `UserBehaviourSettingsTest`, `ScopeCodeFillerTest`: reads through the models; deliberately legacy-shaped rows written through `Model::query()->toBase()` (no events, no entity rules — same as before).
 - **Checked:** the 11 files (+ `ApprovalServiceTest`, which uses the fixtures) 68 passed / 1 skipped before and after.
 - **Baseline:** 218 `DB::` uses in 21 files left.
+
+## W15 — 9 more test files off the DB facade
+- `EnquiryFlowTest`, `DataScopeFilterTest`, `InsuranceServiceTest`, `VehicleEntityServicesTest`, `ScopeResolverTest` (its `codes()` helper takes a model class), `UserBulkEditTest`, `UserBulkImportPageTest`, `OrgServiceCachingTest` (queries counted from `QueryExecuted` events instead of the connection's query log), `EmployeeUserEntityServicesTest`.
+- **Checked:** 59 passed (141 assertions) before and after.
+- **Baseline:** 176 `DB::` uses in 12 files left.

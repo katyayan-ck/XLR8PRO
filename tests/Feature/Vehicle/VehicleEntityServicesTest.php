@@ -2,12 +2,14 @@
 
 namespace Tests\Feature\Vehicle;
 
+use App\Models\Vehicle\Segment;
+use App\Models\Vehicle\SubSegment;
+use App\Models\Vehicle\Variant;
 use App\Models\Vehicle\VehicleModel;
 use App\Services\Vehicle\SegmentService;
 use App\Services\Vehicle\VariantService;
 use App\Services\Vehicle\VehicleModelService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -21,7 +23,7 @@ class VehicleEntityServicesTest extends TestCase
 
     private function aSubSegment(): object
     {
-        return DB::table('xlr8_vehicle_subsegment')->where('is_active', 1)->whereNull('deleted_at')->first(['code', 'segment_code']);
+        return SubSegment::query()->toBase()->where('is_active', 1)->first(['code', 'segment_code']);
     }
 
     public function test_codes_are_normalised_the_same_way_for_every_caller(): void
@@ -66,7 +68,7 @@ class VehicleEntityServicesTest extends TestCase
     public function test_business_rules_run_for_every_caller(): void
     {
         $sub = $this->aSubSegment();
-        $other = DB::table('xlr8_vehicle_segment')->whereNull('deleted_at')->where('code', '!=', $sub->segment_code)->value('code');
+        $other = Segment::query()->toBase()->where('code', '!=', $sub->segment_code)->value('code');
         $models = app(VehicleModelService::class);
 
         $this->expectException(ValidationException::class);
@@ -84,7 +86,7 @@ class VehicleEntityServicesTest extends TestCase
         $variants->upsert($row + ['color' => 'white', 'color_code' => 'ws']);
         $variants->upsert($row + ['color' => 'warm red metallic', 'color_code' => 'WR']);
 
-        $this->assertSame(2, DB::table('xlr8_vehicle_variant')->where('code', '1ZT2UPS0000WR')->whereNull('deleted_at')->count());
+        $this->assertSame(2, Variant::query()->where('code', '1ZT2UPS0000WR')->count());
         $this->assertDatabaseHas('xlr8_vehicle_variant', ['code' => '1ZT2UPS0000WR', 'color_code' => 'WR', 'color' => 'WARM RED METALLIC', 'taxi_price' => 'NO']);
     }
 

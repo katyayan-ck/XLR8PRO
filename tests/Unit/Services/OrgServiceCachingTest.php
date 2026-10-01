@@ -3,9 +3,10 @@
 namespace Tests\Unit\Services;
 
 use App\Services\OrgService;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 /**
@@ -31,10 +32,9 @@ class OrgServiceCachingTest extends TestCase
     {
         $first = OrgService::salesConsultants();
 
-        DB::enableQueryLog();
-        $second = OrgService::salesConsultants();
-        $queriesOnCachedCall = count(DB::getQueryLog());
-        DB::disableQueryLog();
+        $queriesOnCachedCall = $this->countQueries(function () use (&$second): void {
+            $second = OrgService::salesConsultants();
+        });
 
         $this->assertSame($first, $second);
         // The database cache driver itself issues one lookup query - the
@@ -75,10 +75,9 @@ class OrgServiceCachingTest extends TestCase
     {
         $first = OrgService::getKeyValuesByCode('RTO_PERMIT');
 
-        DB::enableQueryLog();
-        $second = OrgService::getKeyValuesByCode('RTO_PERMIT');
-        $queriesOnCachedCall = count(DB::getQueryLog());
-        DB::disableQueryLog();
+        $queriesOnCachedCall = $this->countQueries(function () use (&$second): void {
+            $second = OrgService::getKeyValuesByCode('RTO_PERMIT');
+        });
 
         $this->assertEquals($first?->count(), $second?->count());
         $this->assertLessThanOrEqual(1, $queriesOnCachedCall);
@@ -95,5 +94,17 @@ class OrgServiceCachingTest extends TestCase
         OrgService::keywordValueByCode('EXISTING_CAR_OEM');
 
         $this->assertTrue(Cache::has('org.keyword_value_by_code.EXISTING_CAR_OEM'));
+    }
+
+    /** Queries run by the callback (DEC-093: counted from the query events, not the connection's query log). */
+    private function countQueries(callable $callback): int
+    {
+        $count = 0;
+        Event::listen(QueryExecuted::class, function () use (&$count): void {
+            $count++;
+        });
+        $callback();
+
+        return $count;
     }
 }

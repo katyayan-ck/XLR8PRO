@@ -2,8 +2,12 @@
 
 namespace Tests\Feature\Org;
 
+use App\Models\Admin\Branch;
+use App\Models\Admin\Department;
+use App\Models\Admin\Designation;
 use App\Models\Admin\Employee;
 use App\Models\Admin\UserScope;
+use App\Models\Admin\Vertical;
 use App\Models\User;
 use App\Services\HR\HRJourneyService;
 use App\Services\IAM\UserScopeService;
@@ -11,7 +15,6 @@ use App\Services\IAM\UserService;
 use App\Services\Org\EmployeeService;
 use App\Services\Person\PersonRecordService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -31,12 +34,12 @@ class EmployeeUserEntityServicesTest extends TestCase
 
     private function aBranchCode(): string
     {
-        return (string) DB::table('xlr8_admin_branch')->whereNull('deleted_at')->value('code') ?: $this->markTestSkipped('no branch');
+        return (string) Branch::query()->toBase()->value('code') ?: $this->markTestSkipped('no branch');
     }
 
     public function test_a_new_employee_gets_the_next_code_and_the_legacy_designation_mirror(): void
     {
-        $designation = DB::table('xlr8_admin_designation')->whereNull('deleted_at')->value('code') ?? $this->markTestSkipped('no designation');
+        $designation = Designation::query()->toBase()->value('code') ?? $this->markTestSkipped('no designation');
         $employees = app(EmployeeService::class);
         $expected = $employees->nextCode();
 
@@ -54,9 +57,9 @@ class EmployeeUserEntityServicesTest extends TestCase
      */
     private function primaries(): array
     {
-        $branch = DB::table('xlr8_admin_branch')->whereNull('deleted_at')->value('code') ?? $this->markTestSkipped('no branch');
-        $department = DB::table('xlr8_admin_department')->whereNull('deleted_at')->value('code') ?? $this->markTestSkipped('no department');
-        $vertical = DB::table('xlr8_admin_vertical')->whereNull('deleted_at')->value('code') ?? $this->markTestSkipped('no vertical');
+        $branch = Branch::query()->toBase()->value('code') ?? $this->markTestSkipped('no branch');
+        $department = Department::query()->toBase()->value('code') ?? $this->markTestSkipped('no department');
+        $vertical = Vertical::query()->toBase()->value('code') ?? $this->markTestSkipped('no vertical');
 
         return ['primary_branch_code' => $branch, 'primary_dept_code' => $department, 'vertical_code' => $vertical];
     }
@@ -70,7 +73,7 @@ class EmployeeUserEntityServicesTest extends TestCase
     public function test_a_bad_stored_value_does_not_block_editing_another_field(): void
     {
         $employee = app(EmployeeService::class)->create(['person_code' => $this->personCode()] + $this->primaries());
-        DB::table('xlr8_admin_employee')->where('id', $employee->id)->update(['designation_code' => 'GONE-DESIG']);
+        Employee::query()->toBase()->where('id', $employee->id)->update(['designation_code' => 'GONE-DESIG']);   // past the entity rules
 
         $updated = app(EmployeeService::class)->update($employee->fresh(), ['designation_code' => 'GONE-DESIG', 'mile_id' => 'M-77']);
 
@@ -127,7 +130,7 @@ class EmployeeUserEntityServicesTest extends TestCase
 
     public function test_hr_designation_change_goes_through_the_employee_service(): void
     {
-        $designation = DB::table('xlr8_admin_designation')->whereNull('deleted_at')->value('code') ?? $this->markTestSkipped('no designation');
+        $designation = Designation::query()->toBase()->value('code') ?? $this->markTestSkipped('no designation');
         $employee = app(EmployeeService::class)->create(['person_code' => $this->personCode()] + $this->primaries());
 
         app(HRJourneyService::class)->transfer($employee->code, $designation, now());
