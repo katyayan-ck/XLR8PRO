@@ -6,6 +6,9 @@ use App\Http\Controllers\BaseController;
 use App\Models\Utilities\Docs\DocGroup;
 use App\Models\Utilities\Docs\Document;
 use App\Services\DocService;
+use App\Services\Platform\Chat\ChatService;
+use App\Services\Platform\Docs\DocsService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -96,7 +99,7 @@ class DocController extends BaseController
             ]);
 
             $entity = ($validated['entity_type'] ?? null) && ($validated['entity_id'] ?? null)
-                ? app("App\\Models\\{$validated['entity_type']}")->findOrFail($validated['entity_id'])
+                ? app(ChatService::class)->entityForApi($validated['entity_type'], (int) $validated['entity_id'], (int) auth()->id())   // BUG-182
                 : null;
 
             $doc = $this->docService->upload($validated, $entity);
@@ -262,8 +265,8 @@ class DocController extends BaseController
         try {
             $validated = $request->validate(['doc_id' => 'required|integer|exists:xlr8_utils_docs_document,id']);
 
-            $group = DocGroup::findOrFail($groupId);
-            $doc = Document::findOrFail($validated['doc_id']);
+            $group = $this->ownGroup($groupId);   // DEC-095 #2 / BUG-182: only the caller's group and a document they may see
+            $doc = $this->visibleDoc((int) $validated['doc_id']);
 
             $this->docService->addToGroup($group, $doc);
 
@@ -323,8 +326,8 @@ class DocController extends BaseController
     public function removeFromGroup(int $groupId, int $docId): JsonResponse
     {
         try {
-            $group = DocGroup::findOrFail($groupId);
-            $doc = Document::findOrFail($docId);
+            $group = $this->ownGroup($groupId);   // BUG-182
+            $doc = $this->visibleDoc($docId);
 
             $this->docService->removeFromGroup($group, $doc);
 
@@ -374,7 +377,7 @@ class DocController extends BaseController
     public function downloadGroupZip(int $groupId): Response
     {
         try {
-            $group = DocGroup::findOrFail($groupId);
+            $group = $this->ownGroup($groupId);   // BUG-182
             $zipPath = $this->docService->downloadGroupZip($group);
 
             return response()->download($zipPath)->deleteFileAfterSend(true);
@@ -520,12 +523,45 @@ class DocController extends BaseController
     public function approve(int $docId): JsonResponse
     {
         try {
-            $doc = Document::findOrFail($docId);
+            if (! Auth::user()?->can('UTL_DOCS_MANAGE')) {   // BUG-182: approving is a document manager's action
+                throw new AuthorizationException;
+            }
+            $doc = $this->visibleDoc($docId);
             $this->docService->approve($doc, Auth::user());
 
             return $this->successResponse(null, 'Document approved');
         } catch (Throwable $e) {
             return $this->handleException($e, 'Approve Document');
         }
+    }
+
+    /**
+     * A document group the caller may use: their own, or any group for a document manager (DEC-095 #2, BUG-182).
+     *
+     * @throws AuthorizationException
+     */
+    private function ownGroup(int $groupId): DocGroup
+    {
+        $group = DocGroup::findOrFail($groupId);
+        if ((int) $group->getAttribute('user_id') !== (int) Auth::id() && ! Auth::user()?->can('UTL_DOCS_MANAGE')) {
+            throw new AuthorizationException;
+        }
+
+        return $group;
+    }
+
+    /**
+     * A document the caller may see (`DocsService::canView()`, the only visibility rule).
+     *
+     * @throws AuthorizationException
+     */
+    private function visibleDoc(int $docId): Document
+    {
+        $doc = Document::findOrFail($docId);
+        if (! app(DocsService::class)->canView($docId, (int) Auth::id())) {
+            throw new AuthorizationException;
+        }
+
+        return $doc;
     }
 }

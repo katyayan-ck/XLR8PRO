@@ -102,8 +102,8 @@ class AuthService
             // Check rate limit for OTP requests
             $this->checkOtpRequestRateLimit($mobile);
 
-            // Find user by mobile
-            $user = User::where('mobile', $mobile)->first();
+            // Find user by the person's primary mobile (users has no mobile column — DEC-095 #3 / BUG-187)
+            $user = User::query()->withPrimaryMobile($mobile)->first();
 
             if (! $user) {
                 throw new AuthenticationException(
@@ -138,7 +138,7 @@ class AuthService
             ]);
 
             // Send notifications
-            $emailSent = $this->notificationService->sendViaEmail($user->email, $otp, $mobile);
+            $emailSent = $user->primary_email ? $this->notificationService->sendViaEmail($user->primary_email, $otp, $mobile) : false;
             $smsSent = $this->notificationService->sendViaSms($mobile, $otp);
 
             Log::info('OTP notification sent', [
@@ -313,9 +313,9 @@ class AuthService
                     'expires_at' => $authToken->accessToken->expires_at->toIso8601String(),
                     'user' => [
                         'id' => $user->id,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'mobile' => $user->mobile,
+                        'name' => $user->display_name,
+                        'email' => $user->primary_email,
+                        'mobile' => $user->primary_mobile ?? $mobile,
                         'role' => $user->getRoleNames()->first() ?? 'user',
                     ],
                 ],
@@ -350,9 +350,9 @@ class AuthService
             'message' => 'User profile retrieved',
             'data' => [
                 'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'mobile' => $user->mobile,
+                'name' => $user->display_name,
+                'email' => $user->primary_email,
+                'mobile' => $user->primary_mobile,
                 'role' => $user->getRoleNames()->first() ?? 'user',
                 'permissions' => $user->getAllPermissions()->pluck('name'),
             ],
@@ -370,7 +370,7 @@ class AuthService
     public function logout(User $user): array
     {
         try {
-            $mobile = $user->mobile ?? 'unknown';
+            $mobile = $user->primary_mobile ?? 'unknown';
 
             // Revoke current token
             if ($user->currentAccessToken()) {
@@ -429,7 +429,8 @@ class AuthService
      */
     private function generateOtp(): string
     {
-        return str_pad(rand(0, pow(10, self::OTP_LENGTH) - 1), self::OTP_LENGTH, '0', STR_PAD_LEFT);
+        // cryptographically secure (DEC-095 #1 / BUG-188)
+        return str_pad((string) random_int(0, (10 ** self::OTP_LENGTH) - 1), self::OTP_LENGTH, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -507,10 +508,10 @@ class AuthService
         Cache::put($lockKey, true, self::ACCOUNT_LOCK_DURATION_MINUTES * 60);
 
         // Find user and send notification
-        $user = User::where('mobile', $mobile)->first();
-        if ($user) {
+        $user = User::query()->withPrimaryMobile($mobile)->first();
+        if ($user && $user->primary_email) {
             $this->notificationService->sendAccountLockedEmail(
-                $user->email,
+                $user->primary_email,
                 $mobile,
                 'multiple failed OTP attempts'
             );

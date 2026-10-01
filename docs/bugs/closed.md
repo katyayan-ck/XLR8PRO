@@ -213,6 +213,12 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-217 | v1 notification / alert lists passed `sort_by` / `sort_order` straight into orderBy() — an unknown column or direction was a 500 | Medium | FIXED — per-list allow-list, fallback newest first | 30-09-2026 | 30-09-2026 |
 | BUG-220 | Quotation history page kept a hard-coded list of 18 mock customers ("Rajesh Kumar" …) as the name fallback | Low | FIXED — mock block removed; no name shows `-` | 30-09-2026 | 30-09-2026 |
 | BUG-222 | Pricing reset's queue flush named tables that do not exist here (`jobs`, `job_batches`, `failed_jobs`) and never cleared the queue | Low | FIXED — flush through `queue:clear` / `queue:flush` / `queue:prune-batches` | 01-10-2026 | 01-10-2026 |
+| BUG-182 | v1 `docs/upload` and `history/{entityType}/{entityId}` (+ `/thread`) resolve `App\Models\{entityType}` straight from request input and never check the caller may see that record — any signed-in mobile user can read or append history on, or attach files to, any model row | High | FIXED 02-10 — entity allow-list + record access (DEC-095) | 28-09-2026 | 02-10-2026 |
+| BUG-187 | `AuthService::verifyOtp()` / `getUserDetails()` / `logout()` read `$user->name`, `->email`, `->mobile`, which do not exist on `users` — the mobile app gets null user name, email and mobile | Medium | FIXED 02-10 — person-based lookup and fields (DEC-095) | 28-09-2026 | 02-10-2026 |
+| BUG-188 | `AuthService::generateOtp()` uses `rand()` (not cryptographically secure) for the mobile-app login OTP | High | FIXED 02-10 — random_int (DEC-095) | 28-09-2026 | 02-10-2026 |
+| BUG-207 | v1 `system-settings` read endpoints are open to every signed-in app user and return **all** visible settings (encrypted ones as ciphertext); `GET system-settings/{key}` returns the raw row (validation rules, defaults); update / import go through the legacy `SystemSettingService` | Medium | FIXED 02-10 — managers only (DEC-095) | 29-09-2026 | 02-10-2026 |
+| BUG-209 | `BaseController::authorize()` never works: `canPerform()` calls `parent::authorize()`, which `Controller` does not have (always false), and the throw passed its arguments in the wrong order (a `TypeError` → 500). `PUT api/v1/system-settings/{key}` and `POST …/import/json` therefore always fail; there is no `SystemSetting` policy either | Medium | FIXED 02-10 — Gate check (DEC-095) | 29-09-2026 | 02-10-2026 |
+| BUG-227 | OTP tokens expired the moment their row was updated (`expires_at` had `ON UPDATE CURRENT_TIMESTAMP`) | Medium | FIXED 02-10 — migration removes ON UPDATE | 02-10-2026 | 02-10-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2657,3 +2663,97 @@ guessed at.
 - **Fixed:** 01-10-2026 — with the flush option the reset runs `queue:clear` (database connection), `queue:flush` and
   `queue:prune-batches --hours=0 --unfinished=0 --cancelled=0`; the table lists became model lists (`FLUSH_MODELS`,
   `KEEP_MODELS`). Not run by a test: MySQL `TRUNCATE` commits implicitly and would empty `xlrm_testing`.
+
+### BUG-182 — v1 history/docs endpoints trust a client-supplied model class and skip record access
+
+- **Current status (index):** OPEN (auth + API contract — D3)
+- **Verified 29-09-2026:** `EntityHistoryController::getHistory()` still resolves `App\Models\{$entityType}` from the URL with no access check (D3).
+
+- **Final status:** FIXED · **Fixed:** 02-10-2026
+- **Severity:** High — data exposure across records for any authenticated mobile user.
+- **Found:** 28-09-2026, v1 API smoke during DEC-061.
+- **Where:** `app/Http/Controllers/Api/V1/EntityHistoryController.php` (`getHistory`, `addThread`), `app/Http/Controllers/Api/V1/DocController.php` (`upload`).
+- **Description:** `app("App\\Models\\{$entityType}")->findOrFail($entityId)` builds any class under `App\Models` from the URL/body and loads the row with no permission or scope check, so a user can read the timeline of, post to, or attach files to records they cannot open in the admin.
+- **Proposed solution:** accept only entity codes from `config('platform.entities')` (with the legacy class names mapped to them for the app) and gate with `ChatService::canView()` — the same rule the admin chat/docs endpoints already use. Needs the mobile team to confirm the `entityType` values the app sends.
+- **Resolution (28-09-2026):** Triage 28-09: also `DocController::approve` and the group endpoints (`addToGroup`, `removeFromGroup`, `downloadGroupZip`) have no ownership / permission check. Proposal D3: accept platform entity codes plus a map of the legacy class names the app sends; 403 unless `Chat::canView()`. Needs the list of `entityType` values the app sends.
+- **Fixed 02-10-2026:** only entity codes of `config/platform.php` (or the app's short class names) are accepted; the record is loaded through its model and must pass `ChatService::canView()` (`ChatService::entityForApi()`); document groups / approve check ownership / `UTL_DOCS_MANAGE` / `DocsService::canView()`. Test `tests/Feature/Api/EntityApiAccessTest` (4).
+
+### BUG-187 — v1 auth responses return null name / email / mobile
+
+- **Current status (index):** OPEN (owner approval — D1); worse than logged: mobile login is broken
+- **Verified 29-09-2026:** `AuthService::requestOtp()` still queries `User::where("mobile", …)`; every OTP request is a 500 (D1).
+
+- **Final status:** FIXED · **Fixed:** 02-10-2026
+- **Severity:** Medium.
+- **Found:** 28-09-2026, while writing tech-guides/modules/iam-auth.md.
+- **Evidence:** `Schema::getColumnListing('users')` has no name / email / mobile; the User model has `display_name`, `primary_email`, `primary_mobile` accessors. AuthService lines ~308-313 and ~348-353.
+- **Proposed solution:** fill the same keys from `display_name`, `primary_email`, `primary_mobile` (additive, keeps the v1 contract shape); add an API test asserting non-null values.
+- **Resolution (28-09-2026):** Triage 28-09: `requestOtp()` and `lockAccount()` query `User::where('mobile', …)` but `users` has no `mobile` column, so every OTP request fails before sending; OTP is the only mobile login route. `sendViaEmail($user->email, …)` would also TypeError (no email column). Proposed repair (D1): look the user up via `PersonContact` mobiles → `person_code` → `User`; fill the existing `name`/`email`/`mobile` keys from `display_name`/`primary_email`/`primary_mobile` (same response shape).
+- **Fixed 02-10-2026:** the user is found by the person's primary mobile (`User::withPrimaryMobile()`); responses use `display_name` / `primary_email` / `primary_mobile`; logout / lock e-mail likewise. Test `tests/Feature/Api/AppOtpLoginTest` (2).
+
+### BUG-188 — Login OTP generated with rand()
+
+- **Current status (index):** OPEN (security — owner approval, D2)
+- **Verified 29-09-2026:** `AuthService::generateOtp()` still uses `rand()` (D2).
+
+- **Final status:** FIXED · **Fixed:** 02-10-2026
+- **Severity:** High.
+- **Found:** 28-09-2026, while writing tech-guides/modules/iam-auth.md.
+- **Evidence:** `app/Services/AuthService.php` ~line 430: `str_pad(rand(0, pow(10, self::OTP_LENGTH) - 1), …)`. The platform SMS OTP (`SmsService::otp`) already uses `random_int`.
+- **Proposed solution:** use `random_int(0, 10 ** self::OTP_LENGTH - 1)`; longer term route login OTPs through `Sms::otp()` / `Sms::verify()` (hashed, rate-limited, never logged).
+- **Resolution (28-09-2026):** Triage 28-09: still `rand()` at `AuthService::generateOtp()`. Proposal D2: `random_int()` now; `Sms::otp()` once the MSG91 driver exists.
+- **Fixed 02-10-2026:** the OTP comes from `random_int()` (`AuthService::generateOtp()`).
+
+### BUG-207 — The settings API exposes every setting to any app user
+
+- **Partly fixed 30-09-2026 (DEC-091 Phase 6):** encrypted settings are never listed or returned (`SystemSetting::scopeVisible()` excludes type `encrypted`; `SystemSettingService::getSetting()` reads only visible rows; new secrets are stored `is_visible = 0`; the legacy admin search hides them) — tests `AppSettingsApiTest`, `SystemSettingScreensTest`. The app-facing allow-list exists as `GET /api/v1/app-settings`. **Still open:** narrowing or retiring `GET system-settings` / `topic` / `category` / `{key}` and moving `PUT` / import onto `SettingsService` — owner decision.
+
+- **Current status (index):** OPEN (API access change — owner decision; proposed app-facing allow-list)
+- **Verified 29-09-2026:** unchanged (owner decision on the app-facing allow-list).
+
+- **Final status:** FIXED · **Fixed:** 02-10-2026
+- **Severity:** Medium.
+- **Found:** 29-09-2026, writing `tech-guides/api/system-settings.md` (to-do U11).
+- **Detail:**
+  - `GET /api/v1/system-settings`, `/topic/{topic}`, `/category/*` and `/{key}` need only a device-bound token. Any
+    salesperson's app can read the whole configuration, including webhook secrets as ciphertext and internal driver /
+    security settings.
+  - `/{key}` returns the raw `SystemSetting` row.
+  - `PUT` / import write through the legacy `SystemSettingService`, not `SettingsService` (typed validation, audit
+    trail, `SettingsChanged` event).
+- **Proposed fix:**
+  - an app-facing allow-list (the `site.*`, `dealership.*`, `display.*`, `pricing.*` topics, minus secrets), with a
+    trimmed shape `{key, value, type, updated_at}`;
+  - never return `encrypted` types;
+  - `PUT` / import through `SettingsService`;
+  - keep the v1 paths (DEC-004).
+- **Fixed 02-10-2026:** every `/api/v1/system-settings` endpoint needs `UTL_SETTINGS_MANAGE`; the app uses `/app-settings`; writes go through `SettingsService`. Tests in `AppSettingsApiTest`.
+
+### BUG-209 — The settings API write endpoints always fail (`BaseController::authorize`)
+
+- **Current status (index):** PARTLY FIXED 29-09-2026: the 500 is now the intended 403; making the endpoints work waits on BUG-207 (owner)
+- **Verified 29-09-2026:** partly fixed 29-09 (500 → 403); waits on BUG-207.
+
+- **Final status:** FIXED · **Fixed:** 02-10-2026
+- **Severity:** Medium.
+- **Found:** 29-09-2026, phpstan on `BaseController` during to-do U7.
+- **Detail:**
+  - `canPerform()` calls `parent::authorize()`; `App\Http\Controllers\Controller` has no such method, so the call
+    throws, the `catch` returns false, and every check is denied.
+  - The denial built `new AuthorizationException(ErrorCodeEnum::AUTH_FORBIDDEN, "…")`, whose first parameter is a
+    string: a `TypeError`, answered as a 500.
+  - Only `SystemSettingApiController` (`update`, `import`) uses it, and there is no `SystemSetting` policy, so a working
+    check would still deny everyone but the superadmin.
+- **Fix so far:** the throw passes the ability (`You are not authorized to update.`, 403). Not changed: `canPerform()`
+  (fixing it would open the legacy write path that BUG-207 proposes to replace).
+- **Fixed 02-10-2026:** `BaseController::canPerform()` asks the Gate (`$request->user()->can()`); the settings writes check `UTL_SETTINGS_MANAGE`. Test `AppSettingsApiTest::test_a_settings_manager_updates_a_setting_through_the_api`.
+
+### BUG-227 — OTP tokens expired the moment their row was updated (`expires_at` had `ON UPDATE CURRENT_TIMESTAMP`)
+
+- **Final status:** FIXED · **Fixed:** 02-10-2026
+- **Severity:** Medium (any update of a token — a re-hash, an attempt counter — expired it at once).
+- **Found:** 02-10-2026, writing `AppOtpLoginTest` (W18a).
+- **Where:** `xlr8_iam_otp_token.expires_at` — a MySQL TIMESTAMP created with `DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`.
+- **Fixed 02-10-2026:** migration `2026_10_02_005006_fix_otp_token_expires_at_auto_update_bug227` removes the automatic update
+  (type, NOT NULL and default unchanged; no data changes; `down()` restores it); run on `xlrm` and `xlrm_testing`.
+  `AppOtpLoginTest` asserts the expiry survives an update.

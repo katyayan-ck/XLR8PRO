@@ -272,12 +272,8 @@ abstract class BaseController extends Controller
      */
     protected function canPerform(string $ability, mixed $resource = null): bool
     {
-        try {
-            parent::authorize($ability, $resource);
-
-            return true;
-        } catch (Throwable $e) {
-            return false;
-        }
+        // BUG-209: `parent::authorize()` does not exist on the base controller; ask the Gate (permissions are Gate
+        // abilities through Spatie, and the superadmin bypass is a Gate `before` hook)
+        return (bool) request()->user()?->can($ability, $resource ?? []);
     }
 }

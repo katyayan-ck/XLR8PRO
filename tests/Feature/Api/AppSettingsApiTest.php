@@ -17,9 +17,13 @@ class AppSettingsApiTest extends TestCase
     use DatabaseTransactions;
 
     /** @return array<string, string> */
-    private function headers(): array
+    /** @param  list<string>  $permissions */
+    private function headers(array $permissions = []): array
     {
         $user = User::create(['username' => 'app_'.uniqid(), 'password' => bcrypt('password'), 'user_type' => 'Emp', 'is_active' => 1]);
+        if ($permissions !== []) {
+            $user->givePermissionTo($permissions);
+        }
         $session = DeviceSession::query()->create(['user_id' => $user->id, 'device_id' => 'zq-'.uniqid(), 'device_name' => 'test', 'platform' => 'android', 'last_active_at' => now()]);
 
         return ['Authorization' => 'Bearer '.$user->createToken('test', ['device_id:'.$session->device_id])->plainTextToken];
@@ -50,12 +54,31 @@ class AppSettingsApiTest extends TestCase
         $this->getJson('/api/v1/app-settings')->assertUnauthorized();
     }
 
+    /** DEC-095 #5 / BUG-207: the full settings API is for settings managers only — app users read `app-settings`. */
+    public function test_the_system_settings_api_is_for_settings_managers_only(): void
+    {
+        $this->getJson('/api/v1/system-settings', $this->headers())->assertForbidden();
+        $this->app['auth']->forgetGuards();
+        $this->getJson('/api/v1/system-settings/site.name', $this->headers())->assertForbidden();
+    }
+
     public function test_the_system_settings_api_never_returns_secrets(): void
     {
         app(SettingsService::class)->set('mail.smtp.password', 'never-shown');
-        $headers = $this->headers();
+        $headers = $this->headers(['UTL_SETTINGS_MANAGE']);
 
         $this->getJson('/api/v1/system-settings', $headers)->assertOk()->assertDontSee('mail.smtp.password');
         $this->getJson('/api/v1/system-settings/mail.smtp.password', $headers)->assertNotFound();
+    }
+
+    /** BUG-209: the write endpoint works for a settings manager and writes through SettingsService. */
+    public function test_a_settings_manager_updates_a_setting_through_the_api(): void
+    {
+        app(SettingsService::class)->set('chat.edit_window_minutes', 15);
+        $headers = $this->headers(['UTL_SETTINGS_MANAGE']);
+
+        $this->putJson('/api/v1/system-settings/chat.edit_window_minutes', ['value' => 20], $headers)->assertOk();
+
+        $this->assertSame(20, (int) app(SettingsService::class)->get('chat.edit_window_minutes'));
     }
 }

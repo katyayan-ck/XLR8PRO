@@ -86,8 +86,8 @@ Route::prefix('v1')->group(function () {
         // DEC-091: the settings the app needs, same values as Utilities → Settings
         Route::get('/app-settings', [AppSettingsController::class, 'show'])->name('api.app-settings');
 
-        // System Settings routes (protected)
-        Route::prefix('system-settings')->group(function () {
+        // System Settings routes — settings managers only (DEC-095 #5, BUG-207); the app reads `app-settings` above
+        Route::middleware('permission:UTL_SETTINGS_MANAGE')->prefix('system-settings')->group(function () {
 
             // Get all settings
             Route::get('/', [SystemSettingApiController::class, 'index'])

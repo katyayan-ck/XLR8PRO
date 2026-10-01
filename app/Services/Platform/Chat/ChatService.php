@@ -15,7 +15,9 @@ use App\Services\Platform\Notify\Audience;
 use App\Services\Platform\Notify\NotifyService;
 use App\Services\Platform\Settings\SettingsService;
 use App\Support\Result;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 
@@ -203,6 +205,48 @@ final class ChatService
         $class = config('platform.entities.'.strtoupper($refType).'.model');
 
         return $class && class_exists($class) ? $class::query()->find($refId) : null;
+    }
+
+    /**
+     * The record behind an API entity reference, for the signed-in app user (DEC-095 #2, BUG-182). Accepts only the entity
+     * codes of `config('platform.entities')` (`BOOKING`, `ENQUIRY`, …) or the short class names the app sends today
+     * (`Booking`, `Enquiry`, `Quotation` …, mapped to their code) — never an arbitrary class. The record is loaded through
+     * its model (data scope applies) and must pass `canView()`.
+     *
+     *   $booking = Chat::entityForApi('BOOKING', 42, $userId);
+     *
+     * @throws ModelNotFoundException<Model> unknown type or record (404)
+     * @throws AuthorizationException the user may not see the record (403)
+     */
+    public function entityForApi(string $type, int $id, int $userId): Model
+    {
+        $code = $this->entityCode($type);
+        $class = $code !== null ? config("platform.entities.{$code}.model") : null;
+        if (! $class || ! class_exists($class)) {
+            throw (new ModelNotFoundException)->setModel(Model::class, [$id]);
+        }
+        $model = $class::query()->findOrFail($id);
+        if (! $this->canView($model, $userId)) {
+            throw new AuthorizationException;
+        }
+
+        return $model;
+    }
+
+    /** Entity code for an API type: the code itself, or a registered model's short class name. */
+    private function entityCode(string $type): ?string
+    {
+        $entities = (array) config('platform.entities', []);
+        if (isset($entities[strtoupper($type)]) && ($entities[strtoupper($type)]['model'] ?? null)) {
+            return strtoupper($type);
+        }
+        foreach ($entities as $code => $entity) {
+            if (($entity['model'] ?? null) && strcasecmp(class_basename($entity['model']), $type) === 0) {
+                return $code;
+            }
+        }
+
+        return null;
     }
 
     /** May the user see this record's conversation: the model's own rule, else the entity's view permission. */

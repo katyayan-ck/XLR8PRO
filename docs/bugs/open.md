@@ -38,16 +38,11 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-173 | Variant code convention split: 2,548 colour rows store the OEM code WITHOUT its 2-char colour suffix (booking team's vehicle import cuts it), while pricing profiles and the spec use the full OEM code (code + colour); 104 rows created 23-09 hold full codes with no colour, 103 of them duplicating an existing code+colour row | High | OPEN (owner decision — D25); importer already fixed | 27-09-2026 | — |
 | BUG-177 | Imports menu and the `imports/admin` landing page have no permission check (a user with no import permission opens it; the vehicle import POST itself is gated on `VEH_SEG_CREATE`) | Low | OPEN (permission choice — D14) | 27-09-2026 | — |
 | BUG-180 | `/export/vehicle-data` (`ExportController::vehicleDataExcel`) references `App\Exports\VehicleDataExport`, which does not exist — the route 500s | Low | OPEN (deletion — D6) | 28-09-2026 | — |
-| BUG-182 | v1 `docs/upload` and `history/{entityType}/{entityId}` (+ `/thread`) resolve `App\Models\{entityType}` straight from request input and never check the caller may see that record — any signed-in mobile user can read or append history on, or attach files to, any model row | High | OPEN (auth + API contract — D3) | 28-09-2026 | — |
 | BUG-183 | 36 active employees hold designation codes that are not in the designation master (GM ×4, MAN ×18, CNS ×6, DSA ×3, RTO ×2, SWD, API, TST) — no approval rule (or designation-based notification / docs entitlement) can reach them | Medium | OPEN (owner mapping — D24) | 28-09-2026 | — |
-| BUG-187 | `AuthService::verifyOtp()` / `getUserDetails()` / `logout()` read `$user->name`, `->email`, `->mobile`, which do not exist on `users` — the mobile app gets null user name, email and mobile | Medium | OPEN (owner approval — D1); worse than logged: mobile login is broken | 28-09-2026 | — |
-| BUG-188 | `AuthService::generateOtp()` uses `rand()` (not cryptographically secure) for the mobile-app login OTP | High | OPEN (security — owner approval, D2) | 28-09-2026 | — |
 | BUG-190 | `App\Services\RBACService` is injected into `UserCrudController` but never called; `canUserAccess()` checks `resource.action` names that don't exist (permissions are `MOD_PROC_ACT`), `getUserPermissions()` uses a missing `User::userRoleAssignments` relation and `UserRoleAssignment::isActive()` | Low | OPEN (deletion — D7) | 28-09-2026 | — |
 | BUG-191 | `Booking` scopes `pendingPayment`, `pendingInsurance`, `pendingRTO`, `pendingDeliveries`, `pendingDO` and the static count helpers (`getDynamicBookingCounts`, finance / exchange MTD-YTD) reference `xcelr8_booking_*` / `bookings` tables, a missing `Branches` class and old `branch_id` / `abbr` columns — every call throws; no caller found today | Low | OPEN (booking team — D12) | 28-09-2026 | — |
 | BUG-199 | Variant rows imported before DEC-051 store the OEM code **without** the colour suffix (`code` = 16-char stem, colour only in `color_code`; 2,652 rows for 652 codes). Price-list codes carry the colour, so Detect treats those vehicles as new and creates duplicate INCOMPLETE stubs (test copy: 1,859 of 2,782 PV stubs) | High | DECIDED (DEC-074) — purge + re-import per environment | 28-09-2026 | — |
 | BUG-206 | `person_code` (the person business key, referenced by 14 tables incl. users, bookings, enquiries) holds the person's **PAN (51) or Aadhaar (160)** for 211 of 215 people — government IDs as a key spread into every referencing row, URLs and logs (DPDP / UIDAI Aadhaar-storage risk) | High | OPEN (owner decision: surrogate key + remap — data dictionary §person) | 29-09-2026 | — |
-| BUG-207 | v1 `system-settings` read endpoints are open to every signed-in app user and return **all** visible settings (encrypted ones as ciphertext); `GET system-settings/{key}` returns the raw row (validation rules, defaults); update / import go through the legacy `SystemSettingService` | Medium | PARTLY FIXED 30-09 — secrets never returned; `GET app-settings` is the app-facing allow-list (DEC-091); retiring / restricting the broad endpoints still needs the owner | 29-09-2026 | — |
-| BUG-209 | `BaseController::authorize()` never works: `canPerform()` calls `parent::authorize()`, which `Controller` does not have (always false), and the throw passed its arguments in the wrong order (a `TypeError` → 500). `PUT api/v1/system-settings/{key}` and `POST …/import/json` therefore always fail; there is no `SystemSetting` policy either | Medium | PARTLY FIXED 29-09-2026: the 500 is now the intended 403; making the endpoints work waits on BUG-207 (owner) | 29-09-2026 | — |
 | BUG-218 | Legacy employees without the primaries DEC-089 now requires: of 200 active employees 24 have no branch, 39 no location, 5 no department, 12 no division, 35 no vertical (local `xlrm`, 30-09) | Medium | OPEN — data (HR / owner): fill through the new users workbook (W10) or the bulk screen (W11) | 30-09-2026 | — |
 | BUG-219 | Booking create: for customer type `Dummy` every base validation failure is only logged, so a dummy booking can be saved without name, mobile, branch, vehicle or sale type | Medium | OPEN — owner: should a dummy booking still need the base fields (only finance mode is relaxed today)? | 30-09-2026 | — |
 | BUG-221 | Code referencing classes that do not exist (found by the PHPStan baseline, W4): Booking helper, accessory export, spare master, production RBAC seeder | Low | PARTLY FIXED 01-10 — accessory export repaired; dead Booking helpers / spare master / RBAC seeder await the owner's deletion OK | 30-09-2026 | — |
@@ -55,6 +50,7 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-224 | Booking `{id}/invoiced-show` 500: view `admin.sales.booking.show-invoiced` does not exist | Medium | OPEN — found 01-10 by the booking sweep | 01-10-2026 | — |
 | BUG-225 | Booking `{id}/refund-view` 500: `show.blade.php` reads `$receiptLogs`, which `refundView()` does not pass | Medium | OPEN — found 01-10 by the booking sweep | 01-10-2026 | — |
 | BUG-226 | Enquiry view page 500 for any enquiry that has a CRE follow-up: the view reads `cre_lost_reason`, which `xlr8_cre_enquiry_fup` does not have | High | OPEN — found 02-10 (W15 BT-005 check) | 02-10-2026 | — |
+| BUG-228 | App OTP SMS is never sent: `OtpNotificationService::sendViaSms()` is a placeholder that only logs | High | OPEN — found 02-10 (W18a) | 02-10-2026 | — |
 
 ## Entries
 
@@ -303,19 +299,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 - **Evidence:** `routes/web.php` `export/vehicle-data` → `ExportController::vehicleDataExcel()` → `new VehicleDataExport`. No such class exists under `app/Exports`.
 - **Resolution (28-09-2026):** Triage 28-09: nothing links to the three `export/vehicle-data*` routes; superseded by the pricing workflow's Vehicle Info export. Proposal D6: delete `ExportController` and the routes.
 
-### BUG-182 — v1 history/docs endpoints trust a client-supplied model class and skip record access
-
-- **Current status (index):** OPEN (auth + API contract — D3)
-- **Verified 29-09-2026:** `EntityHistoryController::getHistory()` still resolves `App\Models\{$entityType}` from the URL with no access check (D3).
-
-- **Status:** OPEN (auth + API contract — D3)
-- **Severity:** High — data exposure across records for any authenticated mobile user.
-- **Found:** 28-09-2026, v1 API smoke during DEC-061.
-- **Where:** `app/Http/Controllers/Api/V1/EntityHistoryController.php` (`getHistory`, `addThread`), `app/Http/Controllers/Api/V1/DocController.php` (`upload`).
-- **Description:** `app("App\\Models\\{$entityType}")->findOrFail($entityId)` builds any class under `App\Models` from the URL/body and loads the row with no permission or scope check, so a user can read the timeline of, post to, or attach files to records they cannot open in the admin.
-- **Proposed solution:** accept only entity codes from `config('platform.entities')` (with the legacy class names mapped to them for the app) and gate with `ChatService::canView()` — the same rule the admin chat/docs endpoints already use. Needs the mobile team to confirm the `entityType` values the app sends.
-- **Resolution (28-09-2026):** Triage 28-09: also `DocController::approve` and the group endpoints (`addToGroup`, `removeFromGroup`, `downloadGroupZip`) have no ownership / permission check. Proposal D3: accept platform entity codes plus a map of the legacy class names the app sends; 403 unless `Chat::canView()`. Needs the list of `entityType` values the app sends.
-
 ### BUG-183 — Employees on designation codes missing from the designation master
 
 - **Current status (index):** OPEN (owner mapping — D24)
@@ -327,30 +310,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 - **Evidence:** `select e.designation_code, count(*) from xlr8_admin_employee e left join xlr8_admin_designation d on d.code = e.designation_code where d.code is null and e.deleted_at is null group by 1` → GM 4, MAN 18, CNS 6, DSA 3, RTO 2, SWD 1, API 1, TST 1.
 - **Proposed solution:** map each legacy code to a real designation (or add the missing designations) through `EmployeeService` / `DesignationService`; the power-sheet import already rejects unknown designations, so rules stay consistent.
 - **Resolution (28-09-2026):** Triage 28-09: GM 4, MAN 18, CNS 6, DSA 3, RTO 2, SWD / API / TST 1 each; plus 24 employees with an empty `primary_branch_code` (from BUG-090). Proposal: owner maps each code to an existing or new designation; applied through `EmployeeService` / `DesignationService` in a one-off command.
-
-### BUG-187 — v1 auth responses return null name / email / mobile
-
-- **Current status (index):** OPEN (owner approval — D1); worse than logged: mobile login is broken
-- **Verified 29-09-2026:** `AuthService::requestOtp()` still queries `User::where("mobile", …)`; every OTP request is a 500 (D1).
-
-- **Status:** OPEN (owner approval — D1); worse than logged: mobile login is broken
-- **Severity:** Medium.
-- **Found:** 28-09-2026, while writing tech-guides/modules/iam-auth.md.
-- **Evidence:** `Schema::getColumnListing('users')` has no name / email / mobile; the User model has `display_name`, `primary_email`, `primary_mobile` accessors. AuthService lines ~308-313 and ~348-353.
-- **Proposed solution:** fill the same keys from `display_name`, `primary_email`, `primary_mobile` (additive, keeps the v1 contract shape); add an API test asserting non-null values.
-- **Resolution (28-09-2026):** Triage 28-09: `requestOtp()` and `lockAccount()` query `User::where('mobile', …)` but `users` has no `mobile` column, so every OTP request fails before sending; OTP is the only mobile login route. `sendViaEmail($user->email, …)` would also TypeError (no email column). Proposed repair (D1): look the user up via `PersonContact` mobiles → `person_code` → `User`; fill the existing `name`/`email`/`mobile` keys from `display_name`/`primary_email`/`primary_mobile` (same response shape).
-
-### BUG-188 — Login OTP generated with rand()
-
-- **Current status (index):** OPEN (security — owner approval, D2)
-- **Verified 29-09-2026:** `AuthService::generateOtp()` still uses `rand()` (D2).
-
-- **Status:** OPEN (security — owner approval, D2)
-- **Severity:** High.
-- **Found:** 28-09-2026, while writing tech-guides/modules/iam-auth.md.
-- **Evidence:** `app/Services/AuthService.php` ~line 430: `str_pad(rand(0, pow(10, self::OTP_LENGTH) - 1), …)`. The platform SMS OTP (`SmsService::otp`) already uses `random_int`.
-- **Proposed solution:** use `random_int(0, 10 ** self::OTP_LENGTH - 1)`; longer term route login OTPs through `Sms::otp()` / `Sms::verify()` (hashed, rate-limited, never logged).
-- **Resolution (28-09-2026):** Triage 28-09: still `rand()` at `AuthService::generateOtp()`. Proposal D2: `random_int()` now; `Sms::otp()` once the MSG91 driver exists.
 
 ### BUG-190 — Legacy RBACService (App\Services\RBACService) is unused and partly broken
 
@@ -415,48 +374,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
   2. A mapping table.
   3. A migration that remaps the 14 tables in one transaction, with a backup.
   4. `PersonService` generates new codes; the ID numbers stay only in their (masked / encrypted) columns.
-
-### BUG-207 — The settings API exposes every setting to any app user
-
-- **Partly fixed 30-09-2026 (DEC-091 Phase 6):** encrypted settings are never listed or returned (`SystemSetting::scopeVisible()` excludes type `encrypted`; `SystemSettingService::getSetting()` reads only visible rows; new secrets are stored `is_visible = 0`; the legacy admin search hides them) — tests `AppSettingsApiTest`, `SystemSettingScreensTest`. The app-facing allow-list exists as `GET /api/v1/app-settings`. **Still open:** narrowing or retiring `GET system-settings` / `topic` / `category` / `{key}` and moving `PUT` / import onto `SettingsService` — owner decision.
-
-- **Current status (index):** OPEN (API access change — owner decision; proposed app-facing allow-list)
-- **Verified 29-09-2026:** unchanged (owner decision on the app-facing allow-list).
-
-- **Status:** OPEN (owner decision: an API access change)
-- **Severity:** Medium.
-- **Found:** 29-09-2026, writing `tech-guides/api/system-settings.md` (to-do U11).
-- **Detail:**
-  - `GET /api/v1/system-settings`, `/topic/{topic}`, `/category/*` and `/{key}` need only a device-bound token. Any
-    salesperson's app can read the whole configuration, including webhook secrets as ciphertext and internal driver /
-    security settings.
-  - `/{key}` returns the raw `SystemSetting` row.
-  - `PUT` / import write through the legacy `SystemSettingService`, not `SettingsService` (typed validation, audit
-    trail, `SettingsChanged` event).
-- **Proposed fix:**
-  - an app-facing allow-list (the `site.*`, `dealership.*`, `display.*`, `pricing.*` topics, minus secrets), with a
-    trimmed shape `{key, value, type, updated_at}`;
-  - never return `encrypted` types;
-  - `PUT` / import through `SettingsService`;
-  - keep the v1 paths (DEC-004).
-
-### BUG-209 — The settings API write endpoints always fail (`BaseController::authorize`)
-
-- **Current status (index):** PARTLY FIXED 29-09-2026: the 500 is now the intended 403; making the endpoints work waits on BUG-207 (owner)
-- **Verified 29-09-2026:** partly fixed 29-09 (500 → 403); waits on BUG-207.
-
-- **Status:** PARTLY FIXED 29-09-2026 (500 → the intended 403). Making them work waits on BUG-207 (owner decision).
-- **Severity:** Medium.
-- **Found:** 29-09-2026, phpstan on `BaseController` during to-do U7.
-- **Detail:**
-  - `canPerform()` calls `parent::authorize()`; `App\Http\Controllers\Controller` has no such method, so the call
-    throws, the `catch` returns false, and every check is denied.
-  - The denial built `new AuthorizationException(ErrorCodeEnum::AUTH_FORBIDDEN, "…")`, whose first parameter is a
-    string: a `TypeError`, answered as a 500.
-  - Only `SystemSettingApiController` (`update`, `import`) uses it, and there is no `SystemSetting` policy, so a working
-    check would still deny everyone but the superadmin.
-- **Fix so far:** the throw passes the ability (`You are not authorized to update.`, 403). Not changed: `canPerform()`
-  (fixing it would open the legacy write path that BUG-207 proposes to replace).
 
 ### BUG-218 — Legacy employees without the primaries DEC-089 now requires: of 200 active employees 24 have no branch, 39 no location, 5 no department, 12 
 
@@ -560,3 +477,14 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 - **Proposed solution:** read it null-safe (`$fup->cre_lost_reason ?? '—'`), or add the column if the business still
   records a lost reason per CRE follow-up (owner / booking team). Booking-team area — fix as a logged BT change once
   approved (decision sheet #10 covers the similar BUG-223…225).
+
+### BUG-228 — App OTP SMS is never sent: `OtpNotificationService::sendViaSms()` is a placeholder that only logs
+
+- **Status:** OPEN.
+- **Severity:** High (the mobile-app login code reaches the user by e-mail only; users without an e-mail cannot log in).
+- **Found:** 02-10-2026, fixing BUG-187 (W18a).
+- **Where:** `app/Services/OtpNotificationService.php` `sendViaSms()` — "TODO: Integrate actual SMS provider";
+  `AuthService::requestOtp()` calls it.
+- **Proposed solution:** send the OTP through the platform SMS utility (`Sms` facade → outbox → the configured driver,
+  `sms.driver` in Settings; DLT template `otp.sms`), so it follows the same switches, sandbox and audit as other SMS.
+  Needs the SMS vendor / DLT details for UAT (owner / IT).

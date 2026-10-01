@@ -111,7 +111,7 @@ Indexes: UNIQUE (provider_message_id), (thread_id)
 id bigint unsigned PK, wa_id varchar(30), is_group tinyint(1), title varchar(150)?, person_code varchar(50)?, ref_type varchar(30)?, ref_id bigint unsigned?, assigned_to bigint unsigned?, label varchar(10), session_expires_at timestamp?, last_message_at timestamp?, unread int unsigned, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (assigned_to), (person_code), UNIQUE (wa_id)
 
-## `xlr8_comm_webhook_event` · ~0 rows · model: —
+## `xlr8_comm_webhook_event` · ~0 rows · model: App\Models\Comms\CommWebhookEvent
 id bigint unsigned PK, channel varchar(10), event_id varchar(150), payload json?, result varchar(250)?, created_at timestamp?
 Indexes: UNIQUE (channel,event_id)
 

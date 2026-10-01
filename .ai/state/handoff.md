@@ -25,6 +25,7 @@ nothing local is unpushed. Next push only when the owner asks.
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 02-10: W18a / W18b — app OTP login fixed (BUG-187 / 188 / 227), app API record access (BUG-182), settings API managers only (BUG-207 / 209); BUG-228 logged.
 - 02-10: owner answers recorded (DEC-095); to-do W18 opened.
 - 01-10: BT-007 (booking code) — Main enquiry list scope: `select(DB::raw(1))` → `selectRaw('1')`.
 - 01-10: BT-006 (booking code) — Journal-voucher / receipt lists and their number sequences read through the models.
@@ -56,7 +57,7 @@ nothing local is unpushed. Next push only when the owner asks.
 ## In progress / next
 - **W18 (DEC-095) — building the owner's 02-10 answers, in order W18a → W18m.** Booking items are numbered BT changes
   (`docs/booking-team-changes.md`), each checked with `dev:route-snapshot` / tests before and after, each revertable.
-  Next step: W18a (security quick fixes).
+  Done: W18a, W18b. **Next step: W18c** (booking bugs 223–226, BUG-219, D21) — numbered BT changes.
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;
   booking code **BT-001 … BT-007** (numbered, one commit each, logged in `docs/booking-team-changes.md`: where, what, why,
@@ -96,6 +97,8 @@ nothing local is unpushed. Next push only when the owner asks.
 - **Booking bugs found 01-10 (booking team / owner):** BUG-223 finance view + payout-edit 500 without a finance record;
   BUG-224 `invoiced-show` view missing; BUG-225 `refund-view` undefined `$receiptLogs` — fix with the booking team or
   approve the agent fixing them.
+- **BUG-228:** SMS vendor / DLT details so the app OTP is really sent by SMS.
+- **App team:** use `/app-settings`; history / documents take entity codes.
 - **Bugs:** BUG-219 (should a `Dummy` booking still need the base fields?); BUG-207 remainder (narrow or retire
   `GET system-settings` / `topic` / `category` / `{key}`; move PUT / import onto SettingsService); BUG-218 (HR fills the
   missing employee primaries).

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\BaseController;
-use App\Models\Utilities\Settings\SystemSetting;
+use App\Services\Platform\Settings\SettingsService;
 use App\Services\SystemSettingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -298,9 +298,14 @@ class SystemSettingApiController extends BaseController
                 return $this->notFoundResponse('Setting', $key);
             }
 
-            $this->authorize('update', SystemSetting::class);
+            $this->authorize('UTL_SETTINGS_MANAGE');   // BUG-209: a permission check that can pass (the route checks it too)
 
-            $updated = $this->settingService->set($key, $validated['value'], $setting->topic);
+            // DEC-091 / DEC-095 #5: SettingsService is the only writer (typing, encryption, audit, cache)
+            $written = app(SettingsService::class)->set($key, $validated['value'], null, null, Auth::id());
+            if (! $written->ok) {
+                return $this->errorResponse($written->message, $written->code, 422);
+            }
+            $updated = $this->settingService->getSetting($key);
 
             $this->logAudit('update', 'SystemSetting', ['old' => $setting->value, 'new' => $validated['value']], $setting->id, 'success');
 
@@ -383,7 +388,7 @@ class SystemSettingApiController extends BaseController
     public function importSettings(Request $request): JsonResponse
     {
         try {
-            $this->authorize('import', SystemSetting::class);
+            $this->authorize('UTL_SETTINGS_MANAGE');   // BUG-209
 
             $settings = $request->json()->all();
             $imported = 0;
@@ -392,7 +397,10 @@ class SystemSettingApiController extends BaseController
 
             foreach ($settings as $setting) {
                 try {
-                    $this->settingService->set($setting['key'], $setting['value'], $setting['topic'] ?? null);
+                    $written = app(SettingsService::class)->set((string) $setting['key'], $setting['value'], null, null, Auth::id());
+                    if (! $written->ok) {
+                        throw new \RuntimeException($written->message);
+                    }
                     $imported++;
                 } catch (Throwable $e) {
                     $failed++;

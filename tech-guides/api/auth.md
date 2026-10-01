@@ -5,13 +5,11 @@
 **Source:** `app/Http/Controllers/Api/V1/AuthController.php` → `App\Services\AuthService`.
 **Envelope and common errors:** [index.md](index.md#errors-common-to-every-endpoint-dec-085).
 
-> ⚠ **Known defects (owner decisions pending):**
-> - **BUG-187 — mobile login is broken today.** `requestOtp()` looks the user up by a `users.mobile` column that does
->   not exist, so every OTP request ends in **500 `SYSTEM_ERROR`**. The same missing columns make `name`, `email` and
->   `mobile` in the responses below `null`. Proposed fix D1: find the user through the person's contacts, and fill the
->   same keys from `display_name` / `primary_email` / `primary_mobile` (same shape).
-> - **BUG-188:** the OTP is generated with `rand()` (fix D2: `random_int()`).
-> - The examples below show the intended responses once BUG-187 is fixed.
+> **Fixed 02-10-2026 (DEC-095):** the user is found by the person's **primary mobile** (`users` has no mobile column,
+> BUG-187); `name`, `email` and `mobile` in the responses come from the person (`display_name`, `primary_email`,
+> `primary_mobile`); the OTP is generated with `random_int()` (BUG-188); a token's expiry no longer resets when the row
+> is updated (BUG-227). An unregistered mobile answers **404 `AUTH_USER_NOT_FOUND`**.
+> ⚠ **BUG-228 (open):** the OTP **SMS** is still a placeholder (only logged) — the code reaches the user by e-mail only.
 
 ## Flow
 1. `POST /request-otp` with the mobile → an OTP is sent (SMS + email). In `APP_ENV=local` the OTP is also returned.

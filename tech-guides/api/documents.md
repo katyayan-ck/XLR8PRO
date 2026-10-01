@@ -5,10 +5,10 @@
 `Platform\Docs\DocsService`, see `tech-guides/platform/04-docs.md`).
 **Auth:** Bearer token + a live device session. **Envelope / common errors:** [index.md](index.md#errors-common-to-every-endpoint-dec-085).
 
-> ⚠ **BUG-182 (open, owner decision D3):** `entity_type` is turned into `App\Models\{entity_type}` straight from the
-> request, and the group / approve endpoints do not check that the caller may see the document or group. Any signed-in
-> app user can attach files to any record, add / remove any document in any group, download any group and "approve"
-> any document (approval only writes a history event). Do not build app features on these until D3 is decided.
+> **Access (DEC-095, BUG-182 fixed 02-10-2026):** `entity_type` is an entity code of `config/platform.php` or the
+> app's short class name (as in [history.md](history.md)); the record must be visible to the caller (403 / 404).
+> Group endpoints (`add`, `remove`, `zip`) work only on the caller's own groups (or any group with `UTL_DOCS_MANAGE`)
+> and on documents the caller may see (`DocsService::canView()`); `approve` needs `UTL_DOCS_MANAGE`.
 
 ## POST /upload — upload a document (multipart/form-data)
 
@@ -19,7 +19,7 @@
 | `category_key` | required, string | Docs category |
 | `expiry_date` | date, nullable | ISO `YYYY-MM-DD` |
 | `file` | required, file | Type / size limits from Settings `docs.allowed_mimes`, `docs.max_upload_kb` |
-| `entity_type` | string, nullable | Model class under `App\Models` (e.g. `CRM\Enquiry`) — see BUG-182 |
+| `entity_type` | string, nullable | Entity code (`ENQUIRY`, `BOOKING`, …) or short class name (`Enquiry`) — see the access note |
 | `entity_id` | integer, nullable | With `entity_type` |
 | `requires_approval` | boolean | |
 

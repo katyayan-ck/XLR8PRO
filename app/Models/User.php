@@ -11,8 +11,10 @@ use App\Models\IAM\UserPermissionDenial;
 use App\Models\Traits\HasColumnTransformations;
 use App\Models\Utilities\Noty\NotificationsMaster;
 use App\Services\IAM\UserService;
+use App\Services\IdentifierService;
 use App\Services\OrgService;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -188,6 +190,22 @@ class User extends Authenticatable
     public function getPrimaryMobileAttribute(): ?string
     {
         return $this->person?->primary_mobile;
+    }
+
+    /**
+     * Users whose person has this primary mobile (`users` has no mobile column; contacts store the 10-digit number,
+     * DEC-095 #3 / BUG-187). Used by the app OTP login.
+     *
+     *   User::query()->withPrimaryMobile('9876543210')->first();
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    public function scopeWithPrimaryMobile($query, string $mobile)
+    {
+        $digits = app(IdentifierService::class)->cleanMobile($mobile) ?? $mobile;
+
+        return $query->whereHas('person.mobileContacts', fn ($c) => $c->where('contact_type', 'Primary')->where('contact_detail', $digits));
     }
 
     public function getPrimaryEmailAttribute(): ?string

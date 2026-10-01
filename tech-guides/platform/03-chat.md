@@ -24,6 +24,7 @@ Service `App\Services\Platform\Chat\ChatService` · facade `Chat` · model trait
 | `Chat::events($model)` / `Chat::remarks($model)` | lists |
 | `Chat::subscribe($model, $userId)` / `unsubscribe` / `isSubscribed` | follow a record |
 | `Chat::resolve('BOOKING', $id)` | the model for a ref |
+| `Chat::entityForApi($type, $id, $userId)` | the model for an **API** reference — entity code or short class name only (never a class path), loaded through the model (data scope), must pass `canView()`; throws `ModelNotFoundException` (404) / `AuthorizationException` (403). Used by the v1 history / document endpoints (BUG-182) |
 | `Chat::refType($model)` | `'BOOKING'` etc. |
 
 Timeline entries: `id, kind, action, action_label, actor_name, time_human, time_iso, title, body, files[], parent_id,

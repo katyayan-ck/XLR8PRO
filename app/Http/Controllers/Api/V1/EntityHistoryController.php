@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\BaseController;
 use App\Models\Utilities\CommHistory\CommThread;
+use App\Services\Platform\Chat\ChatService;
 use App\Services\Utils\EntityHistoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -77,8 +78,9 @@ class EntityHistoryController extends BaseController
     public function getHistory(string $entityType, int $entityId): JsonResponse
     {
         try {
-            $entity = app("App\\Models\\{$entityType}")->findOrFail($entityId);
-            $master = $entity->commMaster;
+            // DEC-095 #2 / BUG-182: registered entity types only, record access checked
+            $entity = app(ChatService::class)->entityForApi($entityType, $entityId, (int) auth()->id());
+            $master = $entity->getAttribute('commMaster');
             if (! $master) {
                 return $this->notFoundResponse('History');
             }
@@ -170,8 +172,8 @@ class EntityHistoryController extends BaseController
                 'attachments.*' => 'file',
             ]);
 
-            $entity = app("App\\Models\\{$entityType}")->findOrFail($entityId);
-            $master = $entity->commMaster ?? $this->historyService->createMaster($entity, $entity->title ?? 'Entity History', null, 'active');
+            $entity = app(ChatService::class)->entityForApi($entityType, $entityId, (int) auth()->id());   // BUG-182
+            $master = $entity->getAttribute('commMaster') ?? $this->historyService->createMaster($entity, $entity->getAttribute('title') ?? 'Entity History', null, 'active');
 
             $parent = ($validated['parent_id'] ?? null) ? CommThread::findOrFail($validated['parent_id']) : null;
 

@@ -415,8 +415,8 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W16e | Support request: permissions `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`, categories + settings, `SupportRequestService` (masked zip → ticket, least-loaded admin as owner, executive-only assignment), screens, bundle rights, retention purge | 🔴 |
 | W16f | Developer guide `tech-guides/platform/17-help-support.md` (+ reference) with the build; the **user-facing** help texts / "Getting help" articles move to §13 (last) | 🔴 |
 | W18 | **Owner decisions 02-10 (DEC-095)** — build every item with a definitive answer; booking items as numbered, revertable BT changes | 🟡 in progress |
-| W18a | Security: D2 `random_int` OTP (BUG-188), D3 entity allowlist for `docs/upload` / `history` (BUG-182), D1 OTP login from the person record (BUG-187) | 🔴 |
-| W18b | v1 `system-settings` read endpoints narrowed / retired (BUG-207), `BaseController::authorize()` fixed (BUG-209); note for the app team | 🔴 |
+| W18a | Security: D2 `random_int` OTP (BUG-188), D3 entity allowlist for `docs/upload` / `history` (BUG-182), D1 OTP login from the person record (BUG-187) | ✅ 02-10 (+ BUG-227 fixed; BUG-228 SMS placeholder logged) |
+| W18b | v1 `system-settings` read endpoints narrowed / retired (BUG-207), `BaseController::authorize()` fixed (BUG-209); note for the app team | ✅ 02-10 (managers only; writes via SettingsService) |
 | W18c | Booking bugs BUG-223 / 224 / 225 / 226, BUG-219 (Dummy bookings validated), D21 BEV / Personal SO rule made to work (BUG-101) | 🔴 |
 | W18d | D16 — the hard-coded user-id lists in booking → a permission (BUG-095) | 🔴 |
 | W18e | D13 — the 52 dead menu links open a "coming soon" page (BUG-056 / 062) | 🔴 |
@@ -1273,3 +1273,14 @@ mapping — the user data is refreshed; reset command built, run on your list), 
 prompt; F2 / F3 left open; S6 2FA not now; D14 / S15 / runbook later; UAT settings no; D28 / D4 after go-live.
 **Still open:** D29 key rotation, deletion list (#6), DEC-090 `ALL`, permission grants (#32), the pricing section (#22–27).
 **Next:** to-do W18a–m, in order.
+
+### W18a / W18b — app login fixed, app API access closed (DEC-095 #1–3, #5)
+
+**Delivered:** the mobile-app OTP login works again (it answered 500 for every number): the user is found by the
+person's primary mobile, the responses carry the person's name / mobile / e-mail, the code is generated securely, and a
+token's expiry no longer resets when its row changes (BUG-227, found on the way). The app's history and document
+endpoints accept only registered record types and check that the user may see the record (and own the document group);
+the full settings API is for settings managers only — the app keeps `/app-settings`.
+**Verified:** new API tests for the login, record access and settings (23 API tests passed); PHPStan clean.
+**Found:** BUG-228 — the OTP SMS is still a placeholder (e-mail only); needs the SMS vendor / DLT details.
+**Tell the app team:** use `/app-settings`; history / documents take entity codes (`BOOKING`, …) or the short names.

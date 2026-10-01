@@ -45,3 +45,14 @@ mapping — the user data is refreshed; reset command built, run on your list), 
 prompt; F2 / F3 left open; S6 2FA not now; D14 / S15 / runbook later; UAT settings no; D28 / D4 after go-live.
 **Still open:** D29 key rotation, deletion list (#6), DEC-090 `ALL`, permission grants (#32), the pricing section (#22–27).
 **Next:** to-do W18a–m, in order.
+
+### W18a / W18b — app login fixed, app API access closed (DEC-095 #1–3, #5)
+
+**Delivered:** the mobile-app OTP login works again (it answered 500 for every number): the user is found by the
+person's primary mobile, the responses carry the person's name / mobile / e-mail, the code is generated securely, and a
+token's expiry no longer resets when its row changes (BUG-227, found on the way). The app's history and document
+endpoints accept only registered record types and check that the user may see the record (and own the document group);
+the full settings API is for settings managers only — the app keeps `/app-settings`.
+**Verified:** new API tests for the login, record access and settings (23 API tests passed); PHPStan clean.
+**Found:** BUG-228 — the OTP SMS is still a placeholder (e-mail only); needs the SMS vendor / DLT details.
+**Tell the app team:** use `/app-settings`; history / documents take entity codes (`BOOKING`, …) or the short names.

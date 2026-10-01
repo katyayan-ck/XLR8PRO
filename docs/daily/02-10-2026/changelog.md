@@ -63,3 +63,21 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 ## DEC-095 — owner answers recorded (02-10)
 - `docs/decisions/decision-log.md` DEC-095; `docs/owner-decisions-2026-10-01.md` status note; `docs/todo.md`: decision rows
   D1–D3, D4, D13, D14, D16, D21, D23–D26, D28, N2–N4 marked; new group **W18** (W18a–m) for the items to build.
+
+## W18a / W18b — app OTP login, entity access, settings API (DEC-095 #1–3, #5)
+- **D2 / BUG-188:** `AuthService::generateOtp()` uses `random_int()`.
+- **D1 / BUG-187:** `requestOtp()` finds the user by the person's primary mobile (new scope `User::withPrimaryMobile()`);
+  login / profile responses carry `display_name` / `primary_email` / `primary_mobile`; logout and the lock e-mail likewise.
+  Before: every OTP request answered 500.
+- **BUG-227 (found and fixed):** migration `2026_10_02_005006_fix_otp_token_expires_at_auto_update_bug227` — `expires_at`
+  lost its `ON UPDATE CURRENT_TIMESTAMP` (run on `xlrm` + `xlrm_testing`).
+- **D3 / BUG-182:** `ChatService::entityForApi()` — only registered entity codes / short names, record loaded through its
+  model, `canView()`; used by `EntityHistoryController` (`getHistory`, `addThread`) and `DocController::upload`; document
+  groups (`add`, `remove`, `zip`) need the caller's own group (or `UTL_DOCS_MANAGE`) and a visible document; `approve`
+  needs `UTL_DOCS_MANAGE`.
+- **BUG-207 / BUG-209:** `/api/v1/system-settings/*` behind `UTL_SETTINGS_MANAGE`; `PUT {key}` / `import/json` write through
+  `SettingsService`; `BaseController::canPerform()` asks the Gate.
+- **Open:** BUG-228 — the OTP SMS is a placeholder (only logged).
+- **Tests:** new `AppOtpLoginTest` (2), `EntityApiAccessTest` (4); `AppSettingsApiTest` updated (+2); API suite 23 passed.
+- **Docs:** `tech-guides/api/{auth,history,documents,system-settings}.md`. **App team:** use `/app-settings`; history /
+  documents accept entity codes (`BOOKING`, `ENQUIRY`, …) or the short names they send today.

@@ -174,9 +174,11 @@ Called by `Api\V1\AuthController`; responses are wrapped in the API envelope by 
 | `getUserDetails(User $user)` | `['success', 'message', 'data' => ['id', 'name', 'email', 'mobile', 'role', 'permissions']]` |
 | `logout(User $user)` | revokes the current token; `['success' => true, 'message' => 'Logged out successfully']` |
 
-**Known issues:** mobile login fails today — the user lookup queries `users.mobile`, which doesn't exist, and
-`name` / `email` / `mobile` in the responses are always null (BUG-187, repair awaits approval); the OTP uses `rand()`
-(BUG-188). Logs carry masked numbers and never the OTP (BUG-189 fixed, DEC-070). New OTP flows should use `Sms::otp()` / `Sms::verify()`
+**Lookup and fields (DEC-095, 02-10):** the user is found by the person's primary mobile —
+`User::query()->withPrimaryMobile($mobile)` (contacts store the 10-digit number; `IdentifierService::cleanMobile()`) —
+and `name` / `email` / `mobile` come from `display_name` / `primary_email` / `primary_mobile` (BUG-187 fixed). The OTP
+is `random_int()` (BUG-188 fixed); `xlr8_iam_otp_token.expires_at` no longer auto-updates (BUG-227). **Open:** the SMS is
+a placeholder in `OtpNotificationService::sendViaSms()` — e-mail only (BUG-228). Logs carry masked numbers and never the OTP (BUG-189 fixed, DEC-070). New OTP flows should use `Sms::otp()` / `Sms::verify()`
 (tech-guides/platform/11-sms.md), which are hashed, rate-limited and never logged.
 
 ## Users workbook (DEC-089 / DEC-090)

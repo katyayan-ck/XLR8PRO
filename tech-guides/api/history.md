@@ -5,12 +5,12 @@
 Chat utility, `tech-guides/platform/03-chat.md`).
 **Auth:** Bearer token + a live device session. **Envelope / common errors:** [index.md](index.md#errors-common-to-every-endpoint-dec-085).
 
-> ⚠ **BUG-182 (open, owner decision D3):** `{entityType}` is resolved as `App\Models\{entityType}` from the URL and the
-> caller's right to see that record is not checked — any signed-in user can read or append to any record's history.
-> Admin screens use the access-checked Chat utility (`ChatService::canView()`).
+> **Access (DEC-095, BUG-182 fixed 02-10-2026):** `{entityType}` is an entity code of `config/platform.php`
+> (`BOOKING`, `ENQUIRY`, `QUOTE`, `TASK`, `TICKET`, `APPROVAL`, `DOC`, `VEHICLE`, `PERSON`, …) or the short class name
+> the app used before (`Booking`, `Enquiry`, `Quotation`, …), never a class path. The record is loaded through its model
+> (the user's data scope applies) and must pass `ChatService::canView()` (the entity's view permission).
 
-**`entityType`:** the model class under `App\Models`, URL-encoded (e.g. `CRM%5CEnquiry` for `CRM\Enquiry`,
-`Module%5CBooking%5CBooking`). **`entityId`:** the record id.
+**`entityType`:** entity code or short class name (see above). **`entityId`:** the record id.
 
 ## GET /{entityType}/{entityId} — the record's history
 **200:** `data` = the root threads, each with `children`, `media`, `actor`, `action`:
@@ -27,7 +27,8 @@ Each item is a `CommThread` row (`comm_master_id`, `parent_id`, `actor_id`, `act
 type (`action`).
 
 - **404:** `History not found` (the record has no history yet) or unknown record.
-- **500:** unknown `entityType` (not a model class) — logged with a reference.
+- **404 `RESOURCE_NOT_FOUND`:** unknown / unregistered `entityType`, or no such record in the user's scope.
+- **403 `AUTH_FORBIDDEN`:** the user may not see the record.
 
 ## POST /{entityType}/{entityId}/thread — add a comment / event (multipart/form-data)
 

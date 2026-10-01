@@ -7,12 +7,10 @@ legacy adapter over `xlr8_utils_system_setting`; the admin screen and new code u
 `Platform\Settings\SettingsService`).
 **Envelope and authentication:** as in [index.md](index.md) — a Sanctum token + a live device session.
 
-> ⚠ **BUG-207 (open, owner decision):**
-> - Every read endpoint below is open to **any** signed-in app user and returns **all** visible settings.
-> - For a setting of type `encrypted`, `value` is the ciphertext (never the plaintext).
-> - `GET {key}` returns the raw database row (including `validation_rules`, `default_value`).
-> - The proposed fix is an allow-list of app-facing keys / topics (site, dealership, pricing, `display.*`) and a
->   trimmed row shape; that is an API behaviour change, so it waits for the owner.
+> **Settings managers only (DEC-095, BUG-207 / BUG-209 fixed 02-10-2026):** every endpoint below needs
+> `UTL_SETTINGS_MANAGE` (others get **403**). The app reads its settings from [`GET /app-settings`](app-settings.md).
+> Encrypted settings are never listed or returned. `PUT {key}` and `import/json` write through `SettingsService` (typed,
+> encrypted, audited). **App team:** stop calling `/system-settings` from the app; use `/app-settings`.
 
 ## Keys the app needs
 
