@@ -48,6 +48,18 @@ class BookingBugFixesTest extends TestCase
         $this->get("/admin/sales/booking/{$booking->id}/invoiced-show")->assertOk();
     }
 
+    /** BT-012 / BUG-219 (DEC-095 #11): a Dummy booking still needs the customer, branch, vehicle and sale type. */
+    public function test_a_dummy_booking_without_its_base_fields_is_refused_and_nothing_is_saved(): void
+    {
+        $count = Booking::query()->withoutGlobalScopes()->count();
+
+        $this->from('/admin/sales/booking/create')->post('/admin/sales/booking', ['customertype' => 'Dummy', 'customercat' => 'Individual'])
+            ->assertRedirect('/admin/sales/booking/create')
+            ->assertSessionHas('error');
+
+        $this->assertSame($count, Booking::query()->withoutGlobalScopes()->count());
+    }
+
     /** BT-010 / BUG-225: the refund view of a booking with a refund record opens (it read an undefined `$receiptLogs`). */
     public function test_the_refund_view_opens_for_a_booking_with_a_refund(): void
     {

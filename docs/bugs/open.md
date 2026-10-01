@@ -44,7 +44,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-199 | Variant rows imported before DEC-051 store the OEM code **without** the colour suffix (`code` = 16-char stem, colour only in `color_code`; 2,652 rows for 652 codes). Price-list codes carry the colour, so Detect treats those vehicles as new and creates duplicate INCOMPLETE stubs (test copy: 1,859 of 2,782 PV stubs) | High | DECIDED (DEC-074) — purge + re-import per environment | 28-09-2026 | — |
 | BUG-206 | `person_code` (the person business key, referenced by 14 tables incl. users, bookings, enquiries) holds the person's **PAN (51) or Aadhaar (160)** for 211 of 215 people — government IDs as a key spread into every referencing row, URLs and logs (DPDP / UIDAI Aadhaar-storage risk) | High | OPEN (owner decision: surrogate key + remap — data dictionary §person) | 29-09-2026 | — |
 | BUG-218 | Legacy employees without the primaries DEC-089 now requires: of 200 active employees 24 have no branch, 39 no location, 5 no department, 12 no division, 35 no vertical (local `xlrm`, 30-09) | Medium | OPEN — data (HR / owner): fill through the new users workbook (W10) or the bulk screen (W11) | 30-09-2026 | — |
-| BUG-219 | Booking create: for customer type `Dummy` every base validation failure is only logged, so a dummy booking can be saved without name, mobile, branch, vehicle or sale type | Medium | OPEN — owner: should a dummy booking still need the base fields (only finance mode is relaxed today)? | 30-09-2026 | — |
 | BUG-221 | Code referencing classes that do not exist (found by the PHPStan baseline, W4): Booking helper, accessory export, spare master, production RBAC seeder | Low | PARTLY FIXED 01-10 — accessory export repaired; dead Booking helpers / spare master / RBAC seeder await the owner's deletion OK | 30-09-2026 | — |
 | BUG-228 | App OTP SMS is never sent: `OtpNotificationService::sendViaSms()` is a placeholder that only logs | High | OPEN — found 02-10 (W18a) | 02-10-2026 | — |
 
@@ -383,20 +382,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
   they are (DEC-050 / DEC-054: no silent correction), so they need filling.
 - **Proposed solution:** HR exports the new users workbook (W10), fills the blanks from the dropdowns and re-imports; or uses
   the bulk screen (W11). A blank location / division then defaults to the parent's same-code child.
-
-### BUG-219 — Booking create: for customer type `Dummy` every base validation failure is only logged, so a dummy booking can be saved without name, mobile, branch, vehicle or sale type
-
-- **Status:** OPEN (business question before a fix — UAT-visible).
-- **Severity:** Medium (incomplete dummy bookings reach lists, dashboards and exports).
-- **Found:** 30-09-2026, writing the booking HTTP tests (to-do W3).
-- **Where:** `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` `store()` — the base `Validator::make()`
-  (customer type / category, branch, location, segment, model, variant, colour, body type, sale type, name, mobile,
-  delivery type …) is checked with `if ($validator->fails())` that only logs; the early return is inside
-  `if ($request->customertype != 'Dummy')`.
-- **Description:** the rule set already relaxes finance mode for Dummy (`$finModeRule`), which suggests the other base
-  fields were meant to apply; today they don't.
-- **Proposed solution:** return on base-validation failure for every customer type (and relax only the fields a dummy
-  booking really doesn't have), after the owner / booking team confirms.
 
 ### BUG-221 — Code referencing classes that do not exist (found by the PHPStan baseline, W4): Booking helper, accessory export, spare master, production RBAC seeder
 

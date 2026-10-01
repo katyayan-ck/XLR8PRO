@@ -101,3 +101,8 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - `resources/views/admin/sales/enquiry/view.blade.php` · the CRE "Lost Reason" / "Lost Sub Reason" fields. BUG-226, DEC-095 #10. `cre_lost_reason` / `cre_lost_sub_reason` are columns of `xlr8_crm_enquiries` (the enquiry grid reads them there); `xlr8_cre_enquiry_fup` has no such columns, so the view crashed for every enquiry with a CRE follow-up.
 - Checked: enquiry 60922 view / edit (with the CRE fixture), 60923 / 60920 view as superadmin + user 40: only the crashing view changed (500 → 200); new `EnquiryFollowupWritesTest::test_the_enquiry_view_opens_with_a_cre_follow_up`. Log: `docs/booking-team-changes.md`.
 - **Baseline:** 126 `DB::` uses in 8 files left.
+
+## BT-012 (booking code, DEC-093) — A Dummy booking is refused (with the first validation message, nothing saved) when the customer, branch / location, vehicle or sale type is missing
+- `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` · `store()`, after the base validator. BUG-219, DEC-095 #11 ("Dummy bookings still need the base fields"). Before, a Dummy booking skipped validation entirely and reached the insert, which failed with a database error (`del_type` cannot be null) or saved an incomplete row.
+- Checked: new `BookingBugFixesTest::test_a_dummy_booking_without_its_base_fields_is_refused_and_nothing_is_saved` (failed before: SQL error); `BookingFlowTest` + `BookingBugFixesTest` 8 passed — non-Dummy bookings unchanged; payment / receipt fields stay optional for Dummy. Log: `docs/booking-team-changes.md`.
+- **Baseline:** 126 `DB::` uses in 8 files left.

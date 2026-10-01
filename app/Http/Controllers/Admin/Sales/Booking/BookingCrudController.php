@@ -433,6 +433,17 @@ class BookingCrudController extends CrudController
             ]);
         }
 
+        // BT-012 / BUG-219 (DEC-095 #11): a Dummy booking skips the payment fields but still needs the customer, the
+        // branch / location, the vehicle and the sale type — the first of those errors is returned
+        if ($request->customertype == 'Dummy') {
+            $dummyError = collect(['customertype', 'customercat', 'branch', 'location', 'segment', 'model', 'variant', 'color', 'sale_type', 'name', 'mobile'])
+                ->map(fn (string $field) => $validator->errors()->first($field))
+                ->first(fn (string $message) => $message !== '');
+            if ($dummyError !== null) {
+                return redirect()->back()->withInput()->with('error', $dummyError);
+            }
+        }
+
         if ($request->customertype != 'Dummy') {
             if ($validator->fails()) {
                 return redirect()->back()->withInput()->with('error', $validator->messages()->first());

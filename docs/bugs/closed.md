@@ -223,6 +223,7 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-224 | Booking `{id}/invoiced-show` 500: view `admin.sales.booking.show-invoiced` does not exist | Medium | FIXED 02-10 — BT-009 | 01-10-2026 | 02-10-2026 |
 | BUG-225 | Booking `{id}/refund-view` 500: `show.blade.php` reads `$receiptLogs`, which `refundView()` does not pass | Medium | FIXED 02-10 — BT-010 | 01-10-2026 | 02-10-2026 |
 | BUG-226 | Enquiry view page 500 for any enquiry that has a CRE follow-up: the view reads `cre_lost_reason`, which `xlr8_cre_enquiry_fup` does not have | High | FIXED 02-10 — BT-011 | 02-10-2026 | 02-10-2026 |
+| BUG-219 | Booking create: for customer type `Dummy` every base validation failure is only logged, so a dummy booking can be saved without name, mobile, branch, vehicle or sale type | Medium | FIXED 02-10 — BT-012 | 30-09-2026 | 02-10-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2808,3 +2809,18 @@ guessed at.
   records a lost reason per CRE follow-up (owner / booking team). Booking-team area — fix as a logged BT change once
   approved (decision sheet #10 covers the similar BUG-223…225).
 - **Fixed 02-10-2026:** BT-011 — the view reads the lost reason / sub-reason from the enquiry (`xlr8_crm_enquiries`). Test `EnquiryFollowupWritesTest::test_the_enquiry_view_opens_with_a_cre_follow_up`.
+
+### BUG-219 — Booking create: for customer type `Dummy` every base validation failure is only logged, so a dummy booking can be saved without name, mobile, branch, vehicle or sale type
+
+- **Final status:** FIXED · **Fixed:** 02-10-2026
+- **Severity:** Medium (incomplete dummy bookings reach lists, dashboards and exports).
+- **Found:** 30-09-2026, writing the booking HTTP tests (to-do W3).
+- **Where:** `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` `store()` — the base `Validator::make()`
+  (customer type / category, branch, location, segment, model, variant, colour, body type, sale type, name, mobile,
+  delivery type …) is checked with `if ($validator->fails())` that only logs; the early return is inside
+  `if ($request->customertype != 'Dummy')`.
+- **Description:** the rule set already relaxes finance mode for Dummy (`$finModeRule`), which suggests the other base
+  fields were meant to apply; today they don't.
+- **Proposed solution:** return on base-validation failure for every customer type (and relax only the fields a dummy
+  booking really doesn't have), after the owner / booking team confirms.
+- **Fixed 02-10-2026:** BT-012 — Dummy bookings are validated for customer, branch / location, vehicle and sale type before saving. Test `BookingBugFixesTest::test_a_dummy_booking_without_its_base_fields_is_refused_and_nothing_is_saved`.
