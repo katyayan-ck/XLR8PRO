@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Comms\CommTemplateVersion;
+use App\Models\Comms\CommWebhookEvent;
 use App\Services\Platform\Comms\ContactService;
 use App\Services\Platform\Comms\OutboxService;
 use App\Services\Platform\Comms\SmsService;
@@ -14,7 +15,6 @@ use App\Support\Result;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Inbound comms webhooks (FRS WA-03, EML-07, SMS-08, TEL-03/04). Signed with HMAC-SHA256 of the
@@ -38,7 +38,7 @@ class CommsWebhookController extends Controller
             return response()->json(['ok' => false, 'code' => 'EVENT_ID_REQUIRED'], 422);
         }
         try {
-            DB::table('xlr8_comm_webhook_event')->insert(['channel' => $channel, 'event_id' => mb_substr($eventId, 0, 150), 'payload' => json_encode($this->redact($event)), 'created_at' => now()]);
+            CommWebhookEvent::query()->insert(['channel' => $channel, 'event_id' => mb_substr($eventId, 0, 150), 'payload' => json_encode($this->redact($event)), 'created_at' => now()]);
         } catch (UniqueConstraintViolationException) {
             return response()->json(['ok' => true, 'duplicate' => true]);
         }
@@ -49,7 +49,7 @@ class CommsWebhookController extends Controller
             'WHATSAPP' => $this->whatsapp($event),
             'TELEPHONY' => app(TelephonyService::class)->event($event),
         };
-        DB::table('xlr8_comm_webhook_event')->where('channel', $channel)->where('event_id', $eventId)->update(['result' => mb_substr(($result->ok ? 'OK ' : 'FAIL ').$result->message, 0, 250)]);
+        CommWebhookEvent::query()->where('channel', $channel)->where('event_id', $eventId)->update(['result' => mb_substr(($result->ok ? 'OK ' : 'FAIL ').$result->message, 0, 250)]);
 
         return response()->json($result->toArray(), $result->ok ? 200 : 422);
     }

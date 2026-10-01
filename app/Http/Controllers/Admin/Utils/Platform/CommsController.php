@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Utils\Platform;
 use App\Http\Controllers\Controller;
 use App\Models\Comms\CommCall;
 use App\Models\Comms\CommOutbox;
+use App\Models\Comms\CommSandbox;
 use App\Models\Comms\WaMessage;
 use App\Models\Comms\WaThread;
 use App\Models\Utilities\Docs\Document;
@@ -19,7 +20,6 @@ use App\Support\Result;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Prologue\Alerts\Facades\Alert;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -48,7 +48,7 @@ class CommsController extends Controller
         return view('admin.utils.platform.comms.outbox', [
             'title' => 'Outbox', 'tab' => $tab, 'filters' => $filters, 'stats' => $this->outbox->stats(),
             'rows' => $tab === 'outbox' ? $this->outbox->search($filters) : null,
-            'sandbox' => $tab === 'sandbox' ? DB::table('xlr8_comm_sandbox')->latest('id')->paginate(30)->withQueryString() : null,
+            'sandbox' => $tab === 'sandbox' ? CommSandbox::query()->toBase()->latest('id')->paginate(30)->withQueryString() : null,
             'contacts' => $this->contacts,
         ]);
     }
@@ -61,7 +61,7 @@ class CommsController extends Controller
         return view('admin.utils.platform.comms.outbox-show', [
             'title' => "Outbox #{$id}", 'row' => $row, 'contacts' => $this->contacts,
             'copies' => CommOutbox::query()->where('parent_outbox_id', $row->parent_outbox_id ?? $row->id)->orWhere('id', $row->parent_outbox_id)->orderBy('id')->get(['id', 'status', 'driver', 'created_at']),
-            'sandbox' => DB::table('xlr8_comm_sandbox')->where('outbox_id', $row->id)->first(),
+            'sandbox' => CommSandbox::query()->where('outbox_id', $row->id)->toBase()->first(),
         ]);
     }
 

@@ -96,9 +96,9 @@ class AdminImportController extends Controller
                 }
             }
 
-            $keyvalues = \DB::table('xlr8_utils_keyvalue')
+            $keyvalues = Keyvalue::withTrashed()   // DEC-093: every row, plain objects, as before
                 ->whereIn('keyword_code', ['FUEL_TYPE', 'BODY_MAKE', 'BODY_TYPE', 'PERMIT', 'VEHICLE_STATUS'])
-                ->get()
+                ->toBase()->get()
                 ->groupBy('keyword_code');
 
             $fuelMap = $this->buildKeyMap($keyvalues->get('FUEL_TYPE', collect()));
