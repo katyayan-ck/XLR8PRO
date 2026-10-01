@@ -148,3 +148,4 @@ that is the only write path (DEC-050); blank = written by its owning service / c
 | `CRM\CreFollowup` | `xlr8_cre_enquiry_fup` | enquiry screen CRE follow-up form | [crm-enquiry-quotation](../modules/crm-enquiry-quotation.md) |
 | `CRM\FinanceExchangeFollowup` | `xlr8_finexch_fup` | enquiry finance / exchange remarks (`FINANCE` = 1, `EXCHANGE` = 2) | [crm-enquiry-quotation](../modules/crm-enquiry-quotation.md) |
 | `CRM\OtfBooking` | `xlr8_crm_booking` | OEM OTF bookings (enquiry OTF list / detail) | [crm-enquiry-quotation](../modules/crm-enquiry-quotation.md) |
+| `Comms\CommWebhookEvent` | `xlr8_comm_webhook_event` | written by `Api\CommsWebhookController` (append-only, redacted payload) | [10-email](../platform/10-email.md) |

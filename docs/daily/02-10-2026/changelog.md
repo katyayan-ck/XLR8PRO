@@ -17,3 +17,12 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - `app/Models/CRM/Enquiry.php` · `scopeMainListing()` (CRE follow-up `whereExists`). DEC-093. Same SQL: the generated query of `Enquiry::query()->mainListing()` has the same hash before and after (`… exists (select 1 from xlr8_cre_enquiry_fup …)`).
 - Checked: SQL of the scope compared before / after (identical); enquiry flow tests passed; the default enquiry grid (`grid-data list_type=all`) is part of `tests/RouteSnapshots/enquiry.txt`. Log: `docs/booking-team-changes.md`.
 - **Baseline:** 261 `DB::` uses in 37 files left.
+
+## W15 — comms screens, comms webhook and the admin vehicle import off the DB facade (commit b4c51f5)
+- **New model:** `App\Models\Comms\CommWebhookEvent` (`xlr8_comm_webhook_event`, no `updated_at`).
+- **Converted:** `Api\CommsWebhookController` (event log insert / result update through the model, same columns),
+  `Admin\Utils\Platform\CommsController` (sandbox list / record through `CommSandbox`, plain rows via `toBase()` — the
+  view reads the stored payload string), `Admin\Import\AdminImportController` (key-value maps via `Keyvalue::withTrashed()->toBase()`).
+- **Checked:** comms outbox list, sandbox tab and message page as superadmin + user 40 with a rolled-back fixture
+  (`tests/RouteSnapshots/accounts-comms.txt`) identical; `CommsWebhookControllerTest` and the platform store tests passed.
+- **Baseline:** 261 `DB::` uses in 37 files left.
