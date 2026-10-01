@@ -54,14 +54,19 @@ nothing local is unpushed. Next push only when the owner asks.
   `docs/daily/30-09-2026/`.
 
 ## In progress / next
-- **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (314 uses / 45 files left).
+- **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (271 uses / 43 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;
-  booking code **BT-001, BT-002, BT-003** (numbered, one commit each, logged in `docs/booking-team-changes.md`: where, what, why,
+  booking code **BT-001 … BT-005** (numbered, one commit each, logged in `docs/booking-team-changes.md`: where, what, why,
   before → after, checked, revert).
-  **Next step: BT-004** — `QuotationCrudController` (22 uses), then `EnquiryCrudController` (21), `ImportEnquiriesJob`
-  (26), `SalesImportController` (11). `BookingCrudController` is done except the reports (`branchBookingReport`,
-  `consolidatedBookingReport`, `liveOrderReport`, `pendingActionsReport`, `stockReport` — they already 500, wait for
-  owner decision D23) and the uncalled `fetchCbrData()` / `fetchPendBkData()` (deletion list, decision 6).
+  **Booking team's code: done up to BT-005** (booking grids / lookups, quotation, enquiry). Blocked by the plan, not
+  converted: `ImportEnquiriesJob` + `SalesImportController` (importers → phase 5, rewritten on entity services after the
+  formats sign-off, so converting now would be redone), the booking reports (D23), uncalled `fetchCbrData()` /
+  `fetchPendBkData()` (deletion list).
+  **Next step: BT-006 / W15 rest** — small controllers (`Accounts/JournalVoucher` 2, `Accounts/Receipt` 2,
+  `Import/AdminImportController` 1, `Utils/Platform/CommsController` 2, `Api/CommsWebhookController` 2), the `CRM\Enquiry`
+  model (1), console (`DataScopeBackfill` 16, `RefreshAiContext` 4, `RefreshTestingDatabase` 3), user importers
+  (`StandaloneUsersImport` 4, `UserScopesSheetImport` 3), seeders, tests. Skipped by decision: `BrandCrudController`
+  (deletion D5), `SpareRequestCrudController` (spares rebuild D28), `Booking` model dead helpers.
   **Per change:** `APP_DEBUG=false DB_DATABASE=xlrm_testing php artisan dev:route-snapshot 1,40 <spec> before.json [--setup=fixture.php]` on the unchanged
   code → edit → pint the file (only sorts imports) → `php -l` → phpstan (no new errors) → the same command with
   `--compare=before.json` (must report 0 differences) → Sales tests → lower the baseline
