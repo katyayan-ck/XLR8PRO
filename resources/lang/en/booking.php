@@ -171,6 +171,7 @@ return [
 
     // Flash messages shown on admin screens (to-do W6): wording lives here, controllers call __('booking.flash.key').
     'flash' => [
+        'finance_record_missing' => 'This booking has no finance details yet.',
         'dealer_invoice_details_updated_successfully_booking' => 'Dealer invoice details updated successfully for Booking #:booking_id',
         'delivery_updated_successfully_with_photos_booking' => 'Delivery updated successfully with photos! Booking #:id',
         'failed_save_rto_data' => 'Failed to save RTO data: :message',

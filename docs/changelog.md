@@ -10236,3 +10236,8 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 - **Tests:** new `AppOtpLoginTest` (2), `EntityApiAccessTest` (4); `AppSettingsApiTest` updated (+2); API suite 23 passed.
 - **Docs:** `tech-guides/api/{auth,history,documents,system-settings}.md`. **App team:** use `/app-settings`; history /
   documents accept entity codes (`BOOKING`, `ENQUIRY`, …) or the short names they send today.
+
+## BT-008 (booking code, DEC-093) — Finance view / payout edit of a booking without a finance record go back to the finance list with a message (was a 500)
+- `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php` · `PayoutEdit()`, `financeView()`; `resources/lang/en/booking.php` (`flash.finance_record_missing`). BUG-223, DEC-095 #10 (owner: fix). Both pages need the booking's finance record (86 reads of it in the two views); the finance lists only link bookings that have one, so the crash came from direct links. A guard in the controller is safer than making every read null-safe (a payout must not be saved without finance).
+- Checked: finance view + payout edit for one booking per status (7) as superadmin + user 40: the 4 bookings with finance render byte-identically to the committed code (superadmin's finance/5/view was re-rendered on the committed controller to confirm); the 3 without finance went 500 → 302 to `sales/booking/finance` with the message; new `BookingBugFixesTest::test_finance_pages_without_a_finance_record_return_to_the_list`; lang test passed; PHPStan no new errors. Log: `docs/booking-team-changes.md`.
+- **Baseline:** 126 `DB::` uses in 8 files left.

@@ -28,6 +28,7 @@ nothing local is unpushed. Next push only when the owner asks.
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 01-10: BT-008 (booking code) — Finance view / payout edit of a booking without a finance record go back to the finance list with a message (was a 500).
 - 02-10: W18a / W18b — app OTP login fixed (BUG-187 / 188 / 227), app API record access (BUG-182), settings API managers only (BUG-207 / 209); BUG-228 logged.
 - 02-10: owner answers recorded (DEC-095); to-do W18 opened.
 - 01-10: BT-007 (booking code) — Main enquiry list scope: `select(DB::raw(1))` → `selectRaw('1')`.

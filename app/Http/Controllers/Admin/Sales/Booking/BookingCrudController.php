@@ -7940,6 +7940,10 @@ class BookingCrudController extends CrudController
             'bookingHistory' => $bookingHistory,
         ] = $this->financeService->resolvePayoutEditData($booking);
 
+        if ($finance === null) {   // BT-008 / BUG-223: no finance record yet — the page needs one
+            return redirect(backpack_url('sales/booking/finance'))->with('error', __('booking.flash.finance_record_missing'));
+        }
+
         return view('admin.sales.booking.payout-edit', compact(
             'booking',
             'finance',
@@ -8044,6 +8048,10 @@ class BookingCrudController extends CrudController
         $booking = Booking::findOrFail($id);
 
         ['finance' => $finance, 'data' => $data] = $this->financeService->resolveFinanceViewData($booking);
+
+        if ($finance === null) {   // BT-008 / BUG-223: no finance record yet — the page needs one
+            return redirect(backpack_url('sales/booking/finance'))->with('error', __('booking.flash.finance_record_missing'));
+        }
 
         return view(
             'admin.sales.booking.finance-view',

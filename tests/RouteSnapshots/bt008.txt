@@ -1,0 +1,14 @@
+GET sales/booking/finance/22/view
+GET sales/booking/finance/22/payout-edit
+GET sales/booking/finance/5/view
+GET sales/booking/finance/5/payout-edit
+GET sales/booking/finance/6/view
+GET sales/booking/finance/6/payout-edit
+GET sales/booking/finance/14/view
+GET sales/booking/finance/14/payout-edit
+GET sales/booking/finance/40/view
+GET sales/booking/finance/40/payout-edit
+GET sales/booking/finance/3/view
+GET sales/booking/finance/3/payout-edit
+GET sales/booking/finance/1/view
+GET sales/booking/finance/1/payout-edit

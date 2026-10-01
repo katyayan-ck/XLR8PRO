@@ -219,6 +219,7 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-207 | v1 `system-settings` read endpoints are open to every signed-in app user and return **all** visible settings (encrypted ones as ciphertext); `GET system-settings/{key}` returns the raw row (validation rules, defaults); update / import go through the legacy `SystemSettingService` | Medium | FIXED 02-10 — managers only (DEC-095) | 29-09-2026 | 02-10-2026 |
 | BUG-209 | `BaseController::authorize()` never works: `canPerform()` calls `parent::authorize()`, which `Controller` does not have (always false), and the throw passed its arguments in the wrong order (a `TypeError` → 500). `PUT api/v1/system-settings/{key}` and `POST …/import/json` therefore always fail; there is no `SystemSetting` policy either | Medium | FIXED 02-10 — Gate check (DEC-095) | 29-09-2026 | 02-10-2026 |
 | BUG-227 | OTP tokens expired the moment their row was updated (`expires_at` had `ON UPDATE CURRENT_TIMESTAMP`) | Medium | FIXED 02-10 — migration removes ON UPDATE | 02-10-2026 | 02-10-2026 |
+| BUG-223 | Booking finance view and payout-edit pages 500 when the booking has no finance record (`financier` read on null) | Medium | FIXED 02-10 — BT-008 | 01-10-2026 | 02-10-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2757,3 +2758,15 @@ guessed at.
 - **Fixed 02-10-2026:** migration `2026_10_02_005006_fix_otp_token_expires_at_auto_update_bug227` removes the automatic update
   (type, NOT NULL and default unchanged; no data changes; `down()` restores it); run on `xlrm` and `xlrm_testing`.
   `AppOtpLoginTest` asserts the expiry survives an update.
+
+### BUG-223 — Booking finance view and payout-edit pages 500 when the booking has no finance record
+
+- **Final status:** FIXED · **Fixed:** 02-10-2026
+- **Severity:** Medium (a user opening Finance → View / Payout edit for such a booking gets the error page).
+- **Found:** 01-10-2026, full booking-screen sweep on `xlrm_testing` before the W15 booking changes (unchanged code).
+- **Where:** `BookingCrudController::financeView()` / `PayoutEdit()` → `resources/views/admin/sales/booking/finance-view.blade.php`
+  (~line 168 compiled) and `payout-edit.blade.php` — `Attempt to read property "financier" on null`.
+- **Seen with:** bookings 22, 3 and 1 (statuses 1, 7, 8), as superadmin and a scoped user.
+- **Proposed solution:** the pages should say "no finance details yet" (or the routes should only open for bookings with a
+  finance record); null-safe reads in the views. Booking-team area — fix with them.
+- **Fixed 02-10-2026:** BT-008 — both pages return to the finance list with "This booking has no finance details yet." when the booking has no finance record. Test `BookingBugFixesTest`.

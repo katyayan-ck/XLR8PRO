@@ -46,7 +46,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-218 | Legacy employees without the primaries DEC-089 now requires: of 200 active employees 24 have no branch, 39 no location, 5 no department, 12 no division, 35 no vertical (local `xlrm`, 30-09) | Medium | OPEN — data (HR / owner): fill through the new users workbook (W10) or the bulk screen (W11) | 30-09-2026 | — |
 | BUG-219 | Booking create: for customer type `Dummy` every base validation failure is only logged, so a dummy booking can be saved without name, mobile, branch, vehicle or sale type | Medium | OPEN — owner: should a dummy booking still need the base fields (only finance mode is relaxed today)? | 30-09-2026 | — |
 | BUG-221 | Code referencing classes that do not exist (found by the PHPStan baseline, W4): Booking helper, accessory export, spare master, production RBAC seeder | Low | PARTLY FIXED 01-10 — accessory export repaired; dead Booking helpers / spare master / RBAC seeder await the owner's deletion OK | 30-09-2026 | — |
-| BUG-223 | Booking finance view and payout-edit pages 500 when the booking has no finance record (`financier` read on null) | Medium | OPEN — found 01-10 by the booking sweep | 01-10-2026 | — |
 | BUG-224 | Booking `{id}/invoiced-show` 500: view `admin.sales.booking.show-invoiced` does not exist | Medium | OPEN — found 01-10 by the booking sweep | 01-10-2026 | — |
 | BUG-225 | Booking `{id}/refund-view` 500: `show.blade.php` reads `$receiptLogs`, which `refundView()` does not pass | Medium | OPEN — found 01-10 by the booking sweep | 01-10-2026 | — |
 | BUG-226 | Enquiry view page 500 for any enquiry that has a CRE follow-up: the view reads `cre_lost_reason`, which `xlr8_cre_enquiry_fup` does not have | High | OPEN — found 02-10 (W15 BT-005 check) | 02-10-2026 | — |
@@ -434,17 +433,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
   exist (`xcelr8_vehicle_master`, `bmpl_enum_master`, `branches`, `locations`); proposal: delete them (the agent's
   deletion was held back for approval). `XlSpareMaster` `EnumMaster` relations and `ProductionRBACSeeder`: delete with
   D5–D12. `config/media-library.php` PRO class: harmless unless temporary uploads are used.
-
-### BUG-223 — Booking finance view and payout-edit pages 500 when the booking has no finance record
-
-- **Status:** OPEN.
-- **Severity:** Medium (a user opening Finance → View / Payout edit for such a booking gets the error page).
-- **Found:** 01-10-2026, full booking-screen sweep on `xlrm_testing` before the W15 booking changes (unchanged code).
-- **Where:** `BookingCrudController::financeView()` / `PayoutEdit()` → `resources/views/admin/sales/booking/finance-view.blade.php`
-  (~line 168 compiled) and `payout-edit.blade.php` — `Attempt to read property "financier" on null`.
-- **Seen with:** bookings 22, 3 and 1 (statuses 1, 7, 8), as superadmin and a scoped user.
-- **Proposed solution:** the pages should say "no finance details yet" (or the routes should only open for bookings with a
-  finance record); null-safe reads in the views. Booking-team area — fix with them.
 
 ### BUG-224 — Booking `invoiced-show` page 500: its view does not exist
 
