@@ -29,7 +29,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-056 | Admin menu's "Approved Quotations" link points at a route/feature that has never existed (pre-existing, unrelated to URL rename) | Low | OPEN (UAT-visible — D13) | 20-09-2026 05:10 | — |
 | BUG-062 | 5 Booking menu links (dummy, ready-to-invoice, pending-incomplete-votfs, rto-agent-tracker, brokerage) point at URLs with no route ever registered | Low | OPEN (UAT-visible — D13) | 20-09-2026 07:20 | — |
 | BUG-085 | `vendor/bin/phpstan analyse` (Larastan) OOMs on a full-project run in this dev environment (Windows paging file too small) | Low | OPEN (environment only — no code action) | 22-09-2026 | — |
-| BUG-095 | 3 hardcoded user-ID whitelists (`[5, 23, 123]`, one also adds `$user->id`) gate Order Verification / Pending DMS action buttons in `BookingCrudController.php`, bypassing the app's normal `SLS_BKNG_*` Spatie-permission gating | Medium | OPEN (access change — D16) | 22-09-2026 | — |
 | BUG-116 | Spares module's create/edit forms call 3 AJAX endpoints that don't exist as routes at all: `admin/fetch-parts` (controller method `fetchParts()` exists but has zero route registered for it), `admin/check-ro-number` (no matching method anywhere), `admin/get-variants` (no matching method anywhere) — the parts-autocomplete, RO-number-duplicate-check, and model→variant cascading dropdown are all completely non-functional in `SpareRequestCrudController`'s create/edit screens | High | OPEN (Spares rebuild — D28) | 23-09-2026 | — |
 | BUG-122 | 5 Booking listing screens (`reports/branch-booking`, `reports/consolidated-booking`, `reports/live-order`, `reports/pending-actions`, `reports/stock`) 500 because `xlr8_vehicle_master` and `xlr8_us_location` don't exist as tables in this database — same class of issue as BUG-009 (`xlr8_vehicle_brand`), a genuinely missing schema, not a code bug | High | OPEN (booking team — D23) | 23-09-2026 | — |
 | BUG-153 | `getChassisNumbers` filters on `status = 'available'`, which no stock row has | Low | OPEN — worse: endpoint errors; unused (D9) | 24-09-2026 | — |
@@ -45,6 +44,7 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-218 | Legacy employees without the primaries DEC-089 now requires: of 200 active employees 24 have no branch, 39 no location, 5 no department, 12 no division, 35 no vertical (local `xlrm`, 30-09) | Medium | OPEN — data (HR / owner): fill through the new users workbook (W10) or the bulk screen (W11) | 30-09-2026 | — |
 | BUG-221 | Code referencing classes that do not exist (found by the PHPStan baseline, W4): Booking helper, accessory export, spare master, production RBAC seeder | Low | PARTLY FIXED 01-10 — accessory export repaired; dead Booking helpers / spare master / RBAC seeder await the owner's deletion OK | 30-09-2026 | — |
 | BUG-228 | App OTP SMS is never sent: `OtpNotificationService::sendViaSms()` is a placeholder that only logs | High | OPEN — found 02-10 (W18a) | 02-10-2026 | — |
+| BUG-229 | Order Verification's Accept / Reject do not match `orderUpdate()`: Accept links status 2 but only 0 / 1 are accepted ("invalid status"); Reject links 0, which `orderUpdate()` records as "Hold released, booking activated" | Medium | OPEN — owner question (what Reject sets) | 02-10-2026 | — |
 
 ## Entries
 
@@ -178,19 +178,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 - **Description:** `vendor/bin/phpstan analyse` (no path, default or `--memory-limit=1G`) fails with `VirtualAlloc() failed: [0x000005af] The paging file is too small for this operation to complete`, cascading into a misleading `Internal error: Class ... was not found while trying to analyse it` (a downstream symptom of the OOM, not a real missing-class bug).
 - **Proposed solution:** scope every Larastan run to the specific directory/files just touched, with an explicit higher memory limit — confirmed working: `vendor/bin/phpstan analyse app/Services/Org --memory-limit=2G`. A real fix (increasing the Windows paging file size) is a machine-level change outside this repo's or an AI agent's scope — flag to the human operator if a full-project run is ever actually needed.
 - **Resolution (28-09-2026):** Triage 28-09: scoped PHPStan runs work; a full-project run needs a larger Windows paging file on the dev machine.
-
-### BUG-095 — Hardcoded user-ID whitelists gate Order Verification / Pending DMS action buttons
-
-- **Current status (index):** OPEN (access change — D16)
-- **Verified 29-09-2026:** `BookingCrudController.php` lines ~3884 and ~4397 still hold `$allowedUsers = [5, 23, 123]` (D16).
-
-- **Status:** OPEN (access change — D16)
-- **Severity:** Medium — not a crash risk, but a real access-control inconsistency: every other gated action in this controller (and the whole Module/Process/Activity rollout, `.ai/rules/module-structure.md`) uses Spatie permissions (`SLS_BKNG_ORDER_VERIFY`, etc.); these three spots instead hardcode literal user IDs.
-- **Found:** 22-09-2026, during the FRS-driven Sales-process audit, while tracing the Order Verification/Pending DMS grids' action-button logic to fix BUG-093's stale routes.
-- **Where:** `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php:4192` (`orderVerification()`), `:4352` (one of the pending-DMS/order listings — adds `$user->id` to the whitelist, so it's "these 3 fixed IDs, or yourself"), `:5051` (another DMS-related listing).
-- **Description:** `$allowedUsers = [5, 23, 123]` (or `[5, 23, 123, $user->id]`) is checked with `in_array($user->id, $allowedUsers)` to decide whether a row shows its Accept/Reject/Hold/Resume/Process action buttons or just `---`. The method itself is already gated by a real permission (`SLS_BKNG_ORDER_VERIFY` etc.) as the first statement, so this is a *second*, narrower, undocumented gate layered on top — meaning a user who legitimately holds the permission but isn't one of these 3 IDs can view the list but never act on any row.
-- **Proposed solution:** needs a decision from whoever owns this workflow — either (a) these 3 IDs represent a specific ops/admin team and should be replaced with a proper permission or role check (e.g. a dedicated `SLS_BKNG_ORDER_APPROVE` permission) so it's maintainable without editing code to add/remove a person, or (b) it's leftover debug/test scaffolding and the whitelist should be removed entirely in favor of the existing permission check. Not guessed at here — could silently lock out or unlock the wrong people.
-- **Resolution (28-09-2026):** Triage 28-09: the ids are still hardcoded in `BookingCrudController` (order verification, pending DMS). Proposal D16: new permission `SLS_BKNG_ORDER_APPROVE` granted to exactly those users' designations.
 
 ### BUG-116 — Spares module's 3 AJAX-driven fields call routes/methods that were never implemented
 
@@ -412,3 +399,12 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 - **Proposed solution:** send the OTP through the platform SMS utility (`Sms` facade → outbox → the configured driver,
   `sms.driver` in Settings; DLT template `otp.sms`), so it follows the same switches, sandbox and audit as other SMS.
   Needs the SMS vendor / DLT details for UAT (owner / IT).
+
+### BUG-229 — Order Verification's Accept / Reject do not match `orderUpdate()`: Accept links status 2 but only 0 / 1 are accepted ("invalid status"); Reject links 0, which `orderUpdate()` records as "Hold released, booking activated"
+
+- **Status:** OPEN — owner question
+- **Severity:** Medium — the verification step cannot be completed from the screen (became reachable once BT-014 showed the buttons to approvers).
+- **Found:** 02-10-2026, W18d (BT-014).
+- **Where:** `BookingCrudController::orderVerification()` (buttons) and `orderUpdate()` (`$allowedStatuses = [0, 1]`, hold / resume wording).
+- **Description:** the grid offers Accept → `order-update/{id}/2` (order 1 → 2, "verified" per the booking guide) and Reject → `…/0`. `orderUpdate()` was written for the older hold (1) / resume (0) meaning: Accept is refused as an invalid status; Reject sets `order = 0` and records "Hold released, booking activated".
+- **Needs:** owner — what Reject should do (order 0 = rejected? cancel the booking? back to the requester?) and whether hold / resume is still wanted. Then fix `orderUpdate()` to accept 2 and record the right events.

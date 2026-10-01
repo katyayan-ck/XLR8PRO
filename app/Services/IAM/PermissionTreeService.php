@@ -77,6 +77,7 @@ class PermissionTreeService
         'IMPORT' => 'Import',
         'MANAGE' => 'Manage',
         'ORDER_VERIFY' => 'Order Verification',
+        'ORDER_APPROVE' => 'Order Approval',
     ];
 
     /** Build the full Module -> Process -> Permission tree from real permission rows. */

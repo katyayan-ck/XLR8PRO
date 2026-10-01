@@ -80,3 +80,17 @@ the full settings API is for settings managers only — the app keeps `/app-sett
 - For BEV / PV bookings, the SO field on the DMS form and order 3 when it is left empty (owner-approved rules).
 
 **Left:** nothing in W18c. Next is W18d (D16 whitelists → permission).
+
+### W18d — booking approvals by permission, not user ids (DEC-095 #9, D16; BT-014)
+
+**Delivered:** new permission `SLS_BKNG_ORDER_APPROVE` (migration, run on `xlrm` + `xlrm_testing`). Order Verification
+shows Accept / Reject only to its holders, and the `order-update` action requires it. The hard-coded ids `[5, 23, 123]`
+pointed at unrelated people in this database, so nobody (superadmin included) could act before. The two id lists that
+did nothing (Pending Order, Pending DMS) are removed with no change in behaviour. The permission tree labels it "Order
+Approval". Guide `tech-guides/modules/sales-booking.md` updated (also the BT-012 / BT-013 rules and the order codes).
+**Verified:**
+- New `BookingBugFixesTest` case; 17 booking tests pass; IAM tests pass; PHPStan clean.
+- Route snapshots as superadmin and user 40: only superadmin's action cell changed.
+**Owner to do:** grant `SLS_BKNG_ORDER_APPROVE` to the approving designation(s).
+**Found:** BUG-229 — Accept / Reject do not match `orderUpdate()` (Accept refused; Reject recorded as "hold released").
+Needs the owner's rule for Reject.

@@ -153,7 +153,7 @@ convention and matches our route names (`module.process.activity`), so it is a g
 | D5–D12 | Deletions: Brand (BUG-009), ExportController (BUG-180), RBACService (BUG-190), Core graph models, getChassisNumbers (BUG-153), dead Org views (BUG-154), seeder test users, Booking scopes (BUG-191) | P1 | Clean-up |
 | D13 | 52 dead menu links (BUG-056 / 062) — **✅ decided 02-10 (DEC-095): keep, show "coming soon" → W18e** | **P0** | UAT-visible |
 | D14 | Import permissions (BUG-177) — **⏸ 02-10: later** | P1 | Access |
-| D16 | Hard-coded user-id whitelists in booking (BUG-095) — **✅ decided 02-10 (DEC-095): permission → W18d** | P1 | Access |
+| D16 | Hard-coded user-id whitelists in booking (BUG-095) — **✅ decided 02-10 (DEC-095): permission → done 02-10 (BT-014)** | P1 | Access |
 | D18 | Pricing | ✅ | Closed (BUG-178 fixed) |
 | D19 | Accessory importer | ✅ | Closed (DEC-083) |
 | D20 | RTO sheet id (BUG-029) | P1 | RTO import |
@@ -418,7 +418,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W18a | Security: D2 `random_int` OTP (BUG-188), D3 entity allowlist for `docs/upload` / `history` (BUG-182), D1 OTP login from the person record (BUG-187) | ✅ 02-10 (+ BUG-227 fixed; BUG-228 SMS placeholder logged) |
 | W18b | v1 `system-settings` read endpoints narrowed / retired (BUG-207), `BaseController::authorize()` fixed (BUG-209); note for the app team | ✅ 02-10 (managers only; writes via SettingsService) |
 | W18c | Booking bugs BUG-223 / 224 / 225 / 226, BUG-219 (Dummy bookings validated), D21 BEV / Personal SO rule made to work (BUG-101) — ✅ 02-10 (BT-008 … BT-013) | ✅ |
-| W18d | D16 — the hard-coded user-id lists in booking → a permission (BUG-095) — paused 02-10, plan in the handoff | 🟡 |
+| W18d | D16 — the hard-coded user-id lists in booking → a permission (BUG-095) — ✅ 02-10 (BT-014); grant `SLS_BKNG_ORDER_APPROVE` to designations (owner); BUG-229 found | ✅ |
 | W18e | D13 — the 52 dead menu links open a "coming soon" page (BUG-056 / 062) | 🔴 |
 | W18f | D23 — the 5 booking reports rewritten on the current tables, inside a `Booking*Service` (BUG-122, #13) | 🔴 |
 | W18g | DEC-093 #21 — schema tooling exemption in the guard (`ai:refresh-context`) | 🔴 |
@@ -1308,3 +1308,17 @@ the full settings API is for settings managers only — the app keeps `/app-sett
 - For BEV / PV bookings, the SO field on the DMS form and order 3 when it is left empty (owner-approved rules).
 
 **Left:** nothing in W18c. Next is W18d (D16 whitelists → permission).
+
+### W18d — booking approvals by permission, not user ids (DEC-095 #9, D16; BT-014)
+
+**Delivered:** new permission `SLS_BKNG_ORDER_APPROVE` (migration, run on `xlrm` + `xlrm_testing`). Order Verification
+shows Accept / Reject only to its holders, and the `order-update` action requires it. The hard-coded ids `[5, 23, 123]`
+pointed at unrelated people in this database, so nobody (superadmin included) could act before. The two id lists that
+did nothing (Pending Order, Pending DMS) are removed with no change in behaviour. The permission tree labels it "Order
+Approval". Guide `tech-guides/modules/sales-booking.md` updated (also the BT-012 / BT-013 rules and the order codes).
+**Verified:**
+- New `BookingBugFixesTest` case; 17 booking tests pass; IAM tests pass; PHPStan clean.
+- Route snapshots as superadmin and user 40: only superadmin's action cell changed.
+**Owner to do:** grant `SLS_BKNG_ORDER_APPROVE` to the approving designation(s).
+**Found:** BUG-229 — Accept / Reject do not match `orderUpdate()` (Accept refused; Reject recorded as "hold released").
+Needs the owner's rule for Reject.

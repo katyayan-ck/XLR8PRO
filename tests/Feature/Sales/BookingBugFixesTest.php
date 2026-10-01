@@ -60,6 +60,23 @@ class BookingBugFixesTest extends TestCase
         $this->assertSame($count, Booking::query()->withoutGlobalScopes()->count());
     }
 
+    /** BT-014 / BUG-095 (DEC-095 #9): Order Verification's Accept / Reject follow a permission, not a list of user ids. */
+    public function test_order_verification_actions_need_the_approve_permission(): void
+    {
+        $booking = Booking::query()->withoutGlobalScopes()->where('order', 1)->first() ?? $this->markTestSkipped('No booking awaiting verification.');
+        $this->assertStringContainsString('order-update\/', $this->get('/admin/sales/booking/order-verification')->assertOk()->getContent(), 'superadmin sees Accept / Reject');
+
+        $verifier = User::query()->find(40) ?? $this->markTestSkipped('Scoped test user 40 is missing.');   // a non-superadmin who opens the admin
+        $verifier->givePermissionTo('SLS_BKNG_ORDER_VERIFY');
+        $this->flushSession();   // the superadmin request above left its session-auth marker
+        $this->actingAs($verifier, 'backpack');
+        $this->get("/admin/sales/booking/order-update/{$booking->id}/1")->assertForbidden();
+
+        $verifier->givePermissionTo('SLS_BKNG_ORDER_APPROVE');
+        $this->from('/admin/sales/booking/order-verification')->get("/admin/sales/booking/order-update/{$booking->id}/1")
+            ->assertRedirect('/admin/sales/booking/order-verification');
+    }
+
     /** BT-010 / BUG-225: the refund view of a booking with a refund record opens (it read an undefined `$receiptLogs`). */
     public function test_the_refund_view_opens_for_a_booking_with_a_refund(): void
     {

@@ -4001,21 +4001,20 @@ class BookingCrudController extends CrudController
         $lookups = $this->getCommonLookups();
         extract($lookups);
 
-        $user = backpack_user();
-        $allowedUsers = [5, 23, 123];
+        // BT-014 / BUG-095 (DEC-095 #9): who may Accept / Reject is a permission, not a list of user ids
+        $canApprove = backpack_user()->can('SLS_BKNG_ORDER_APPROVE');
         $gridLookups = $this->preloadGridLookups($paginatedBookings->getCollection());
 
         $gridData = $paginatedBookings->map(function ($t, $index) use (
             $paginatedBookings,
-            $user,
-            $allowedUsers,
+            $canApprove,
             $gridLookups
         ) {
             $row = $this->mapBookingForGrid($t, $gridLookups);
 
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
-            if (in_array($user->id, $allowedUsers)) {
+            if ($canApprove) {
                 $action = '<div style="display:flex;gap:8px;justify-content:center;">';
                 if ($t->order == 1) {
                     $action .= '<a href="'.route('sales.booking.order-update', ['id' => $t->id, 'status' => 2]).'"
@@ -4076,7 +4075,8 @@ class BookingCrudController extends CrudController
 
     public function orderUpdate(Request $request, $id, $status)
     {
-        if (! backpack_user()->can('SLS_BKNG_ORDER_VERIFY')) {
+        // BT-014 / BUG-095: the action needs the approval permission its buttons are shown for
+        if (! backpack_user()->can('SLS_BKNG_ORDER_VERIFY') || ! backpack_user()->can('SLS_BKNG_ORDER_APPROVE')) {
             abort(403, 'Unauthorized. You do not have permission to perform this action.');
         }
 
@@ -4159,14 +4159,10 @@ class BookingCrudController extends CrudController
         $lookups = $this->getCommonLookups();
         extract($lookups);
 
-        $user = backpack_user();
-        $allowedUsers = [5, 23, 123, $user->id];
         $gridLookups = $this->preloadGridLookups($paginatedBookings->getCollection());
 
         $gridData = $paginatedBookings->map(function ($t, $index) use (
             $paginatedBookings,
-            $user,
-            $allowedUsers,
             $gridLookups
         ) {
 
@@ -4178,15 +4174,12 @@ class BookingCrudController extends CrudController
 
             $row->serial_no = ($paginatedBookings->currentPage() - 1) * $paginatedBookings->perPage() + $index + 1;
 
-            if (in_array($user->id, $allowedUsers)) {
-                $row->action = '<div class="d-flex justify-content-center gap-2">
+            // BT-014 / BUG-095: the old id list always held the current user, so every viewer gets "Process" (unchanged)
+            $row->action = '<div class="d-flex justify-content-center gap-2">
                     <a class="btn btn-sm btn-primary" href="'.route('sales.booking.dms-edit', $t->id).'?from=pending" title="Edit DMS / SO">
                         Process
                     </a>
                 </div>';
-            } else {
-                $row->action = '<div class="table-actions text-center text-muted">---</div>';
-            }
 
             return $row;
         })->values();
@@ -4514,9 +4507,7 @@ class BookingCrudController extends CrudController
         $lookups = $this->getCommonLookups();
         extract($lookups);
 
-        $user = backpack_user();
-        $allowedUsers = [5, 23, 123];
-        $gridLookups = $this->preloadGridLookups($paginatedBookings->getCollection());
+        $gridLookups = $this->preloadGridLookups($paginatedBookings->getCollection());   // BT-014: unused id list removed
 
         $gridData = $paginatedBookings->map(function ($t, $index) use (
             $paginatedBookings,

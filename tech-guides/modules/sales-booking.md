@@ -81,10 +81,24 @@ combination), `XlDelivery` (`xlr8_booking_delivered`, photo collections), `Xl_Re
   characters (`XXXXXX234F`, BUG-195).
 
 ### BookingDmsService
-- `resolveEditData(Booking $b, bool $fromPending): array` — DMS fields with enquiry fallbacks (mutates `$b`).
+- `resolveEditData(Booking $b, bool $fromPending): array` — DMS fields with enquiry fallbacks (mutates `$b`); keys
+  `branch, location, collector_name, accessories, total_amount, is_bev_or_personal, from_pending, so_required`
+  (`so_required` = from Pending Order **and** BEV / Personal — the form then shows and requires the SO field).
 - `apply(Booking $b, array $validated, bool $dmsSoApplies): Booking` — `$validated = ['dms_no', 'dms_otf', 'otf_date',
-  'dms_so']`; recomputes the pending-items list, moves `order` 2 → 3 when `dms_so` is given, records "Pending Order
-  Processed". `dms_so` is saved only when `$dmsSoApplies` (order = 2).
+  'dms_so']`; recomputes the pending-items list, sets `order` = 2, or **3 when the booking is BEV / Personal and no
+  `dms_so` was submitted** (DEC-095 #12, BT-013), records "Pending Order Processed". `dms_so` is saved only when
+  `$dmsSoApplies` (order = 2). Nothing else is saved on the booking.
+- BEV / Personal = segment code `BEV` or `PV`, resolved booking `segment_code` → linked enquiry `segment_code` →
+  `VehicleModel` (by model code) `segment_code` (bookings keep the vehicle on the enquiry; BUG-101 fixed).
+
+### Order verification and Pending Order (controller)
+- **Order Verification** (`order-verification`, `SLS_BKNG_ORDER_VERIFY`): Accept / Reject buttons show only to holders
+  of **`SLS_BKNG_ORDER_APPROVE`** (DEC-095 #9, BT-014 — replaced a hard-coded user-id list, BUG-095); `order-update`
+  requires both permissions. The approve permission is granted to no designation by default (grant it on
+  Org → Designation). Known defect: Accept sends `order` 2 but `orderUpdate()` accepts only 0 / 1 (BUG-229).
+- **Pending Order** (`pending-order`): every viewer gets "Process" (opens the DMS form with `from=pending`).
+- **Dummy bookings** (`store()`): payment fields are optional, but customer type / category, branch, location, segment,
+  model, variant, colour, sale type, name and mobile are validated (DEC-095 #11, BT-012).
 
 ### BookingOtfService
 - `resolveOtfFormData(Booking $b): ?array` — everything the OTF form shows; `null` when the linked quotation is missing.

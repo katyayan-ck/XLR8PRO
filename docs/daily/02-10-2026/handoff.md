@@ -28,6 +28,7 @@ nothing local is unpushed. Next push only when the owner asks.
   Permission 8, Firebase 8, PHPUnit 12/13, Swagger 11.
 
 ## Just done (latest first; older days in `docs/daily/`)
+- 01-10: BT-014 (booking code) — The hard-coded user-id lists `[5, 23, 123]` are replaced by the new permission `SLS_BKNG_ORDER_APPROVE`: Order Verification shows Accept / Reject only to its holders, and `order-update` requires it too; the two lists that did nothing are removed.
 - 01-10: BT-013 (booking code) — The "BEV / Personal booking submitted without a DMS SO → order 3" rule now fires: segment codes `BEV` / `PV` (were the old numeric ids 753 / 21589), and the segment is resolved from the booking, else the linked enquiry, else the segment of the model.
 - 01-10: BT-012 (booking code) — A Dummy booking is refused (with the first validation message, nothing saved) when the customer, branch / location, vehicle or sale type is missing.
 - 01-10: BT-011 (booking code) — Enquiry view reads the CRE lost reason / sub-reason from the enquiry (where they are stored), not from the follow-up row.
@@ -66,28 +67,11 @@ nothing local is unpushed. Next push only when the owner asks.
 ## In progress / next
 - **W18 (DEC-095) — building the owner's 02-10 answers, in order W18a → W18m.** Booking items are numbered BT changes
   (`docs/booking-team-changes.md`), each checked with `dev:route-snapshot` / tests before and after, each revertable.
-  Done: W18a, W18b, W18c (BT-008 … BT-013). **PAUSED by the owner 02-10 during W18d — wait for the owner's command.**
-  **W18d (D16, BUG-095) state:** nothing changed in code yet; working tree clean except untracked `booking.sql` and an
-  LSP temp file. Before-snapshot taken: spec `tests/RouteSnapshots/bt014.txt` (order-verification, pending-order,
-  pending-dms; users 1 + 40, 6/6 OK, 200). **Findings:**
-  - `BookingCrudController::orderVerification()` (~l.4005): `$allowedUsers = [5, 23, 123]` gates Accept / Reject.
-    In this DB those ids are an Accessories Executive, a Service Cashier and a Sales Consultant, none holding
-    `SLS_BKNG_ORDER_VERIFY` — so today **nobody (not even superadmin) sees the buttons** (ids from the booking team's DB).
-  - `pendingorder()` (~l.4163): `[5, 23, 123, $user->id]` always contains the user → a no-op; `pendingDms()` (~l.4518):
-    `$allowedUsers` defined but never used.
-  - **New bug to log (BUG-229, owner question):** the grid's Accept links `order-update/{id}/2`, Reject `…/0`, but
-    `orderUpdate()` accepts only 0 / 1 with the old hold / resume meaning → Accept answers "invalid status", Reject
-    records "Hold released, booking activated". Order meanings in code: 1 = awaiting verification, 2 = order made / SO
-    pending, 3 = BEV / PV without SO. What Reject should set is a business rule — ask, don't guess.
-  **Planned BT-014 (next step on resume):** migration (via `make:migration … --no-interaction`, pattern of
-  `2026_09_29_192847_pricing_master_permissions_dec083.php`) minting `SLS_BKNG_ORDER_APPROVE` (module SLS, process
-  BKNG, guard web), granted to no role (superadmin via the Gate bypass; grants are the owner's — #32 open); run on
-  `xlrm` + `xlrm_testing`. Controller: order-verification buttons on `$user->can('SLS_BKNG_ORDER_APPROVE')`;
-  `orderUpdate()` also requires it; drop the no-op list in `pendingorder()` (behaviour unchanged) and the unused one in
-  `pendingDms()`. `PermissionTreeService::ACTIVITY_LABELS` += `'ORDER_APPROVE' => 'Order Approval'`. Test: VERIFY
-  without APPROVE → no buttons + 403 on order-update; with APPROVE → buttons. After-snapshot `--compare` (expect only
-  superadmin's order-verification to change). Log BT-014, close BUG-095, log BUG-229.
-  Then W18e (D13 "coming soon" page for dead menu links).
+  Done: W18a, W18b, W18c (BT-008 … BT-013), W18d (BT-014: `SLS_BKNG_ORDER_APPROVE`, granted to no designation yet;
+  BUG-229 logged — owner: what should Reject do). **Next step: W18e** — D13: the 52 dead menu links show a "coming
+  soon" page (BUG-056 / BUG-062): find the links (`resources/views/vendor/backpack/ui/inc/menu_items.blade.php`), add one
+  gated "coming soon" route / view, point the dead links at it; not a booking-module change unless a link is.
+
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;
   booking code **BT-001 … BT-007** (numbered, one commit each, logged in `docs/booking-team-changes.md`: where, what, why,

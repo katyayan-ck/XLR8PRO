@@ -225,6 +225,7 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-226 | Enquiry view page 500 for any enquiry that has a CRE follow-up: the view reads `cre_lost_reason`, which `xlr8_cre_enquiry_fup` does not have | High | FIXED 02-10 — BT-011 | 02-10-2026 | 02-10-2026 |
 | BUG-219 | Booking create: for customer type `Dummy` every base validation failure is only logged, so a dummy booking can be saved without name, mobile, branch, vehicle or sale type | Medium | FIXED 02-10 — BT-012 | 30-09-2026 | 02-10-2026 |
 | BUG-101 | `dmsupdate()`'s "BEV/Personal segment → order 3 when DMS SO missing" branch is dead code — `xlr8_booking_master` has no `segment_code` column, so a freshly-loaded `Booking` always has `segment_code = null` there, and `dmsupdate()` (unlike `dmsedit()`) never resolves it from the linked Enquiry before the check runs | Low | FIXED 02-10 — BT-013 | 23-09-2026 | 02-10-2026 |
+| BUG-095 | 3 hardcoded user-ID whitelists (`[5, 23, 123]`, one also adds `$user->id`) gate Order Verification / Pending DMS action buttons in `BookingCrudController.php`, bypassing the app's normal `SLS_BKNG_*` Spatie-permission gating | Medium | FIXED 02-10 — BT-014 | 22-09-2026 | 02-10-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2839,3 +2840,17 @@ guessed at.
 - **Proposed solution:** needs a decision: either (a) `dmsupdate()` should resolve `segment_code` from the linked Enquiry the same way `dmsedit()` does before this check (if the BEV/Personal SO-required business rule is still wanted), or (b) the branch and its associated `so_required` UI logic are genuinely obsolete and can be removed. Not guessed at here — could be intentionally simplified already, or could be a real gap in the DMS/SO workflow for BEV/Personal segment bookings.
 - **Resolution (28-09-2026):** Triage 28-09: `BookingDmsService::isBevOrPersonal()` casts the string `segment_code` to int and compares with the old numeric ids, and `segment_code` is null on every booking — the branch is dead. Owner: is "SO required for BEV / Personal" still a rule?
 - **Fixed 02-10-2026:** BT-013 — segment codes BEV / PV and the segment resolved from booking → enquiry → model; the order-3 rule fires (owner DEC-095 #12: keep the rule). Tests in `BookingDmsServiceTest`.
+
+### BUG-095 — Hardcoded user-ID whitelists gate Order Verification / Pending DMS action buttons
+
+- **Current status (index):** OPEN (access change — D16)
+- **Verified 29-09-2026:** `BookingCrudController.php` lines ~3884 and ~4397 still hold `$allowedUsers = [5, 23, 123]` (D16).
+
+- **Final status:** FIXED · **Fixed:** 02-10-2026
+- **Severity:** Medium — not a crash risk, but a real access-control inconsistency: every other gated action in this controller (and the whole Module/Process/Activity rollout, `.ai/rules/module-structure.md`) uses Spatie permissions (`SLS_BKNG_ORDER_VERIFY`, etc.); these three spots instead hardcode literal user IDs.
+- **Found:** 22-09-2026, during the FRS-driven Sales-process audit, while tracing the Order Verification/Pending DMS grids' action-button logic to fix BUG-093's stale routes.
+- **Where:** `app/Http/Controllers/Admin/Sales/Booking/BookingCrudController.php:4192` (`orderVerification()`), `:4352` (one of the pending-DMS/order listings — adds `$user->id` to the whitelist, so it's "these 3 fixed IDs, or yourself"), `:5051` (another DMS-related listing).
+- **Description:** `$allowedUsers = [5, 23, 123]` (or `[5, 23, 123, $user->id]`) is checked with `in_array($user->id, $allowedUsers)` to decide whether a row shows its Accept/Reject/Hold/Resume/Process action buttons or just `---`. The method itself is already gated by a real permission (`SLS_BKNG_ORDER_VERIFY` etc.) as the first statement, so this is a *second*, narrower, undocumented gate layered on top — meaning a user who legitimately holds the permission but isn't one of these 3 IDs can view the list but never act on any row.
+- **Proposed solution:** needs a decision from whoever owns this workflow — either (a) these 3 IDs represent a specific ops/admin team and should be replaced with a proper permission or role check (e.g. a dedicated `SLS_BKNG_ORDER_APPROVE` permission) so it's maintainable without editing code to add/remove a person, or (b) it's leftover debug/test scaffolding and the whitelist should be removed entirely in favor of the existing permission check. Not guessed at here — could silently lock out or unlock the wrong people.
+- **Resolution (28-09-2026):** Triage 28-09: the ids are still hardcoded in `BookingCrudController` (order verification, pending DMS). Proposal D16: new permission `SLS_BKNG_ORDER_APPROVE` granted to exactly those users' designations.
+- **Fixed 02-10-2026:** BT-014 — the id lists are replaced by the permission `SLS_BKNG_ORDER_APPROVE` (granted to no designation yet; superadmin bypasses). Test `BookingBugFixesTest::test_order_verification_actions_need_the_approve_permission`.
