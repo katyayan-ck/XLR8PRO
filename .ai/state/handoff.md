@@ -67,7 +67,9 @@ nothing local is unpushed. Next push only when the owner asks.
   (`UPDATE_DB_FACADE_BASELINE=1 php artisan test --compact tests/Unit/Architecture`) → log entry → commit.
   Keep behaviour identical: raw reads saw soft-deleted / out-of-scope rows → `withTrashed()` / `withoutGlobalScopes()`;
   plain row objects → `->toBase()`.
-- **W16 (DEC-094) — help & support mechanism** (F1 pane, tours, support requests): after W15. **User manual + help
+- **W16 (DEC-094) — help & support mechanism — NEXT** (F1 pane, tours, support requests; owner 01-10: build after W15's
+  unblocked part, which is done). Start with W16b (help engine + F1 pane) per
+  `tech-guides/frs-and-workflows/plans/2026-10-01-help-and-support-DEC-094.md`. **User manual + help
   texts (W17) come last** (to-do §13 — after bugs are fixed and QA has vetted; owner 01-10).
 - **Execution order:** `tech-guides/frs-and-workflows/plans/2026-10-01-execution-order.md` (phases 0–10, proposed 01-10;
   decisions listed to the owner). Until the owner answers, continue with work that is not blocked (BT-003 grid helpers).
