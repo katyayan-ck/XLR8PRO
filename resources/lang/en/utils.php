@@ -84,6 +84,7 @@ return [
         'description' => 'Describe the problem',
         'diagnostics' => 'Attach diagnostics (this page, your recent actions and errors — never what you typed)',
         'screenshot' => 'Include this screenshot',
+        'screenshot_failed' => 'A screenshot of this page could not be taken; the rest of the diagnostics will still be sent.',
         'send' => 'Send',
         'cancel' => 'Cancel',
         'sending' => 'Sending…',

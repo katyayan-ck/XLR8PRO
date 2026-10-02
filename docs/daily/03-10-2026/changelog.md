@@ -213,3 +213,14 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
   - `SupportRequestTest` 4 passed: the requester gets 403 on the zip and no card / remark / Remove on the ticket. Admin,
     assignee and snooper see the card and download. A non-executive assignee is refused. Purge → 410.
   - Platform / menu / lang / architecture suites: 94 passed. Pages 200 for superadmin and user 40. PHPStan clean.
+
+### BUG-232 — support screenshot never captured; silent failure fixed
+- Owner 03-10: ticket #1 (Shankar Giri, My Account) has no screenshot.
+- **Cause, reproduced in Chromium:** html2canvas 1.4.1 throws on Tabler 1.4's modern CSS colour functions
+  (`Attempting to parse an unsupported color function "color"`) on every page. The pane caught the error and sent the
+  request without a screenshot, without telling anyone.
+- **Changed now:** `public/js/xl-help.js` shows "A screenshot of this page could not be taken…" in the form and logs the
+  reason through `console.error`, so it lands in the diagnostics' `errors.json`. New lang key
+  `support.screenshot_failed`.
+- **Pending owner approval:** swap to `html2canvas-pro` (MIT drop-in fork). It was verified working on the same page in
+  a probe; nothing was installed.

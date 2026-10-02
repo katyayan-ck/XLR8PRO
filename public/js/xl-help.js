@@ -170,7 +170,14 @@
                 var box = form.querySelector('[data-xl-shot]');
                 box.querySelector('[data-xl-shot-img]').src = dataUrl;
                 box.hidden = false;
-            }).catch(function () { shot = null; });
+            }).catch(function (err) {
+                // BUG-232: never fail silently — tell the user, and record why in the diagnostics (errors.json)
+                shot = null;
+                var box = form.querySelector('[data-xl-shot]');
+                box.innerHTML = '<div class="small text-warning">' + esc(L.screenshot_failed) + '</div>';
+                box.hidden = false;
+                if (window.console && window.console.error) { window.console.error('Support screenshot failed: ' + (err && err.message ? err.message : String(err))); }
+            });
         }
     }
 
