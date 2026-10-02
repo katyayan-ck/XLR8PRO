@@ -124,6 +124,23 @@ still writes (the row just has no `action_id`); the timeline label is always der
 Workers: `php artisan queue:work` must run for sends and push outside tests. The scheduler needs the usual
 `php artisan schedule:run` cron.
 
+**Queue `retry_after` (BUG-230):** 1900 s on the database and Redis queues — longer than the longest job (pricing,
+1800 s), so a running job is never handed to a second worker. `QueueRetryAfterTest` fails if a job's `$timeout` reaches
+it. Run workers with `--timeout` at or below the job timeouts (pricing worker: `queue:work --timeout=1800 --tries=1`).
+
+**Redis for UAT / production (O7, DEC-095 #33)** — no code change needed; set in `.env`:
+- `SESSION_DRIVER=redis`, `CACHE_STORE=redis`, `QUEUE_CONNECTION=redis`, `REDIS_CLIENT=phpredis` (PHP extension, already
+  in the local PHP 8.4 build; no Composer package), `REDIS_HOST` / `REDIS_PASSWORD` / `REDIS_PORT`, `REDIS_PREFIX`
+  per environment (e.g. `xlrm-uat-`).
+- The cache uses its own Redis database (`REDIS_CACHE_DB`, default 1); sessions and queue use `REDIS_DB` (0).
+  `Cache::flush()` (keyword cache clear, pricing reset) clears only the cache database, so users stay signed in and
+  queued jobs stay. Give each environment its own Redis instance or database numbers; never share them with another
+  app.
+- Locks (`Cache::lock`: VOTF numbering, pricing recalculation) work on Redis as they do now.
+- Batches and failed jobs stay in MySQL (`xlr8_system_job_batches`, `xlr8_system_failed_jobs`).
+- After switching: `php artisan config:cache`, restart the workers (`queue:restart`). The `xlr8_system_sessions` and
+  `xlr8_system_jobs` tables stop filling; existing sessions end (users sign in again once).
+
 ## 5. Settings seed pack (`config/platform.php` → `settings`)
 | Key | Default | Type | Used by |
 |---|---|---|---|

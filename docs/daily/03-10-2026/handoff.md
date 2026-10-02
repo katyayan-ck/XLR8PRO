@@ -1,3 +1,6 @@
+<!-- Date-wise copy of .ai/state/handoff.md for 03-10-2026: kept identical to it through the day (rewrite both with every
+     commit); from the next day it stays as that day's closing hand-over. -->
+
 # Handoff — the one live state file (rewrite with every commit; `.ai/guidelines/10-workflow.md`)
 
 **Updated:** 01-10-2026 · **Branch:** `dev/admin` · **Pushed:** 01-10 end of day (owner request) — `origin/dev/admin` = this branch;

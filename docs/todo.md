@@ -238,7 +238,7 @@ The booking team owns it (DEC-034); these are the items we know of.
 | O4 | Scheduler cron on each server | 🧪 | P0 | 4 scheduled jobs exist (docs purge, ticket SLA, auto-close, call recordings); verify the cPanel cron |
 | O5 | Monitoring / alerting | 🔴 | P1 | Uptime check, failed-job alert (Notify to IT), disk / DB size, slow-query log, log daily rotation (`LOG_STACK=daily`, 14 days) |
 | O6 | Error tracking | 🔴 | P1 | Sentry / Flare (package approval), or a mailed exception digest via Comms |
-| O7 | Cache / session / queue on Redis in prod | 🔴 | P2 | All `database` today; fine for UAT, slow at scale (BUG-198) |
+| O7 | Cache / session / queue on Redis in prod | 🟡 | P2 | App ready 03-10 (W18m: `.env` switch only, guide 16-reference §4); IT to provide Redis per environment |
 | O8 | Environments parity (dev / uat / prod) + seeding of reference data | 🟡 | P1 | Settings seed pack ✅; keyword seeds ✅; permissions via migrations ✅ (DEC-083) |
 | O9 | Go-live runbook + rollback plan + hypercare roster | 🔴 | P0 | Cut-over steps, data freeze, smoke list, who to call |
 | O10 | Performance / load test (100 concurrent users, the grids with 60k enquiries) | 🔴 | P1 | Indexes on `*_code` (known wart), N+1 audit |
@@ -427,7 +427,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W18j | #18 — local-only user reset command (keep a given list of accounts; dry run, backup) — run on the owner's list — ✅ built 02-10 (`users:reset`); run when the owner sends the list | ✅ |
 | W18k | N4 — session / password / lockout / self-service values as Settings (S3 / S4 / S5 / S7) — ✅ 02-10 (part 1 sign-in / OTP / lockout / device limits; part 2 password expiry + history, off by default) | ✅ |
 | W18l | BUG-206 — generated `person_code`; PAN / Aadhaar only masked (14 tables) — 🟡 02-10: new persons generated + upsert by ID ✅; remap of the remaining rows after the user reset (W18j) | 🟡 |
-| W18m | #33 Redis for cache + queue (UAT / production config, with IT); #34 Playwright E2E (with Q3) | 🔴 |
+| W18m | #33 Redis for cache + queue (UAT / production config, with IT); #34 Playwright E2E (with Q3) — 🟡 03-10: Redis ready (no code change; guide + `.env.example`; BUG-230 fixed); Playwright install (`@playwright/test` dev dependency + Chromium download) awaits the owner's go | 🟡 |
 
 **Needs you (not started):** D1–D29, N1, N3 / F2 formats, N4 security values (S3, S4, S5, S7), S6 / O3 / O6 / Q3 package
 approvals, O1 / O2 / O5 CI and server changes, V8 app-sync endpoint shape, V10 / DA6 deletions, the push to `stage`.
@@ -1395,3 +1395,18 @@ or re-entry by Aadhaar, PAN or TAN (a deleted one is restored), so there are no 
 **Verified:** person and org suites: 46 tests, including the users workbook round-trip and a new dedupe test.
 **Left:** the old codes of the persons that survive the user reset (W18j) are remapped afterwards, keeping an
 old → new map for rollback, with the owner's go.
+
+## 03-10-2026
+
+### W18m (Redis part) — ready for Redis; duplicate-job risk fixed (DEC-095 #33, BUG-230)
+
+**Delivered:**
+- The app needs no code change to move cache, sessions and queue to Redis. IT sets five `.env` values per
+  environment (guide in `16-reference.md` §4, notes in `.env.example`).
+- On the way, fixed BUG-230: the queue gave up on a job after 90 s while pricing imports may run 30 minutes, which with
+  two workers would run an import twice. The limit is now 1900 s, and a test keeps it above every job's timeout.
+
+**Verified:** `QueueRetryAfterTest` fails on the old setting and passes on the new.
+**Left:**
+- Playwright E2E waits for the owner's go to install `@playwright/test` plus a Chromium download.
+- IT provides Redis for UAT / production.

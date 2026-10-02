@@ -228,6 +228,7 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-095 | 3 hardcoded user-ID whitelists (`[5, 23, 123]`, one also adds `$user->id`) gate Order Verification / Pending DMS action buttons in `BookingCrudController.php`, bypassing the app's normal `SLS_BKNG_*` Spatie-permission gating | Medium | FIXED 02-10 — BT-014 | 22-09-2026 | 02-10-2026 |
 | BUG-056 | Admin menu's "Approved Quotations" link points at a route/feature that has never existed (pre-existing, unrelated to URL rename) | Low | FIXED 02-10 — coming-soon page (W18e) | 20-09-2026 05:10 | 02-10-2026 |
 | BUG-062 | 5 Booking menu links (dummy, ready-to-invoice, pending-incomplete-votfs, rto-agent-tracker, brokerage) point at URLs with no route ever registered | Low | FIXED 02-10 — coming-soon page (W18e, BT-015) | 20-09-2026 07:20 | 02-10-2026 |
+| BUG-230 | Queue `retry_after` (90 s) was shorter than the pricing jobs' timeout (1800 s): with more than one worker a running import is handed to a second worker and runs twice | Medium | FIXED 03-10 — retry_after 1900 s (W18m) | 03-10-2026 | 03-10-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2885,3 +2886,9 @@ guessed at.
 - **Proposed solution:** either implement the 5 missing features or remove the dead menu links. Not fixed — outside a route/permission migration's scope.
 - **Resolution (28-09-2026):** Triage 28-09: the five links plus "Nil Payment Bookings" (`href="#"`) are still dead. Proposal D13: comment them out citing the bug.
 - **Fixed 02-10-2026:** W18e / BT-015 (DEC-095 #8) — the dead booking items (and "Nil Payment Bookings") open the coming-soon page. Test `MenuLinksTest`.
+
+### BUG-230 — Queue `retry_after` (90 s) was shorter than the pricing jobs' timeout (1800 s): with more than one worker a running import is handed to a second worker and runs twice
+
+- **Found:** 03-10-2026, W18m (Redis readiness review).
+- **Where:** `config/queue.php` (`database` / `redis` connections, `retry_after` default 90); `app/Jobs/Vehicle/Pricing/**` (`$timeout = 1800`).
+- **Fix:** defaults raised to 1900 s on both connections (`DB_QUEUE_RETRY_AFTER` / `REDIS_QUEUE_RETRY_AFTER` still override; the local `.env` sets neither). Test `QueueRetryAfterTest` compares every job `$timeout` with both connections — it failed before the fix.
