@@ -10490,3 +10490,24 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
     hidden text, escaped HTML, pane on every page).
   - Platform / menu / UI / lang suites: 91 passed.
   - Dashboard, Help centre, pane JSON and bookings → 200 as superadmin and user 40. PHPStan clean.
+
+### W16c — on-demand page tours and the "new" dot (DEC-094)
+- **Files:**
+  - `public/js/xl-help.js`: `fetchPane()` shared, `tourSteps()` (exposed as `XL.help.tourSteps`), `runTour()`,
+    "Take the tour" button, `?tour=1` start, "new" dot via localStorage.
+  - `header_metas.blade.php`: meta `article {key, updated, tour}`; Driver.js 1.3.1 CSS / JS through `@basset` only
+    when the screen's article has a tour.
+  - `HelpService::forRoute()` gains `$logMissing` (false for the per-page lookup).
+  - `resources/lang/en/utils.php`: `help.new`, `tour_next / prev / done / empty`.
+  - `public/css/xl-ui.css`: dot.
+  - `tests/Feature/Platform/HelpTest.php` (+1 test, +1 assertion).
+  - Guide `17-help-support.md` (page tours section); plan / to-do status.
+- **Behaviour:**
+  - The tour highlights each step's element. Steps whose element is missing or hidden (permission / state) are
+    skipped.
+  - No step left → a note in the pane, nothing runs.
+  - The tour never changes data and is never forced.
+- **Checked:**
+  - `HelpTest` 5 passed: Driver.js only where a tour exists; meta article / tour.
+  - Lang tests pass. JS syntax checked.
+  - Screens unchanged except the meta (+300 bytes on every page, superadmin and user 40, all 200).

@@ -26,10 +26,20 @@
 <link rel="stylesheet" href="{{ asset('css/xl-ui.css') }}?v={{ @filemtime(public_path('css/xl-ui.css')) }}">
 <script defer src="{{ asset('js/xl-ui.js') }}?v={{ @filemtime(public_path('js/xl-ui.js')) }}"></script>
 <script defer src="{{ asset('js/xl-theme.js') }}?v={{ @filemtime(public_path('js/xl-theme.js')) }}"></script>
-{{-- F1 help pane (DEC-094, W16b) — signed-in admin pages; the article is fetched on the first open only --}}
+{{-- F1 help pane (DEC-094, W16b) — signed-in admin pages; the article is fetched on the first open only. `article`
+     (key + updated) drives the "new" dot on ?; tours run with Driver.js (W16c, approved in DEC-094) --}}
 @if (backpack_user())
-    <meta name="xl-help" content="{{ json_encode(['route' => (string) \Illuminate\Support\Facades\Route::currentRouteName(), 'pane' => route('utils.help.pane'),
-        'search' => route('utils.help.search'), 'centre' => route('utils.help.index'), 'labels' => trans('utils.help')]) }}">
+    @php
+        $xlHelpRoute = (string) \Illuminate\Support\Facades\Route::currentRouteName();
+        $xlHelpArticle = $xlHelpRoute !== '' ? app(\App\Services\Platform\Help\HelpService::class)->forRoute($xlHelpRoute, backpack_user(), false) : null;
+    @endphp
+    <meta name="xl-help" content="{{ json_encode(['route' => $xlHelpRoute, 'pane' => route('utils.help.pane'),
+        'search' => route('utils.help.search'), 'centre' => route('utils.help.index'), 'labels' => trans('utils.help'),
+        'article' => $xlHelpArticle ? ['key' => $xlHelpArticle['key'], 'updated' => (string) $xlHelpArticle['updated'], 'tour' => $xlHelpArticle['tour'] !== []] : null]) }}">
+    @if ($xlHelpArticle && $xlHelpArticle['tour'] !== [])
+        @basset('https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css')
+        @basset('https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js')
+    @endif
     <script defer src="{{ asset('js/xl-help.js') }}?v={{ @filemtime(public_path('js/xl-help.js')) }}"></script>
 @endif
 {{-- Idle auto-logout / screen lock (go-live to-do S1 / S2) — signed-in pages only, never on the lock screen itself --}}

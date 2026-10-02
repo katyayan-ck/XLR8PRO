@@ -410,7 +410,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W16 | **Help & support utility** (your request 01-10, DEC-094) — F1 help pane, page tours, "Still need help?" support request with a diagnostic zip, support admin → executive routing; FRS `tech-guides/frs-and-workflows/frs/help-and-support-frs.md`, plan `…/plans/2026-10-01-help-and-support-DEC-094.md` | 🟡 planned — W16a ✅; build after W15a |
 | W16a | FRS + plan + DEC-094 + to-do | ✅ 01-10 |
 | W16b | Help engine: Markdown articles in `resources/help/`, route → article, `::: can CODE` sections, cache, search, coverage; F1 / `?` right-side pane; Help centre screen — ✅ 03-10 | ✅ |
-| W16c | On-demand page tour (Driver.js via Basset): steps from the article / `data-xl-tour`, skip missing elements, "new" dot | 🔴 |
+| W16c | On-demand page tour (Driver.js via Basset): steps from the article / `data-xl-tour`, skip missing elements, "new" dot — ✅ 03-10 | ✅ |
 | W16d | Diagnostics collector: actions / AJAX / JS errors ring buffer (no typed values), server request trail, html2canvas screenshot with sensitive-field blanking + preview | 🔴 |
 | W16e | Support request: permissions `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`, categories + settings, `SupportRequestService` (masked zip → ticket, least-loaded admin as owner, executive-only assignment), screens, bundle rights, retention purge | 🔴 |
 | W16f | Developer guide `tech-guides/platform/17-help-support.md` (+ reference) with the build; the **user-facing** help texts / "Getting help" articles move to §13 (last) | 🔴 |
@@ -1421,3 +1421,12 @@ Help centre lists the articles by module and, for settings managers, how many sc
 **Left:**
 - W16c page tours (Driver.js), W16d diagnostics, W16e support requests, W16f guide.
 - Writing the articles themselves is last (§13).
+
+### W16c — page tours (DEC-094)
+
+**Delivered:** a screen whose help article lists tour steps gets a **Take the tour** button in the F1 pane (also
+`?tour=1` in a link). The tour highlights the screen's parts one by one and skips any part the user cannot see. The `?`
+button shows a small dot when the screen's help changed since the user last read it. The tour library loads only on
+screens that have a tour.
+**Verified:** `HelpTest` (5 tests); page smoke for superadmin and user 40.
+**Left:** the tours themselves are written with the articles (§13); next is W16d diagnostics.

@@ -1,7 +1,7 @@
 # 17 — Help & support (F1 help, tours, support requests)
 
 > DEC-094, to-do W16. FRS: [help-and-support-frs.md](../frs-and-workflows/frs/help-and-support-frs.md).
-> Built so far: **W16b help engine** (03-10-2026). Tours (W16c), diagnostics (W16d) and support requests (W16e) follow;
+> Built so far: **W16b help engine**, **W16c page tours** (03-10-2026). Diagnostics (W16d) and support requests (W16e) follow;
 > this guide grows with them (W16f). Help **content** (the articles themselves) is written last (§13).
 
 ## F1 help pane — how it works
@@ -13,6 +13,17 @@
 - The pane calls `utils.help.pane?route=<route name>` once per page, shows the article and a search box, and fires
   `xl:help-loaded` (detail = the pane JSON) for the tour runner (W16c).
 - `window.XL.help.open()` / `.close()` open it from code.
+
+## Page tours (W16c)
+- An article's `tour` front matter lists steps `{ element: <CSS selector>, title, text }`. Mark stable targets in the
+  screen with `data-xl-tour="name"` and use `'[data-xl-tour=name]'` as the element (preferred over ids / classes).
+- Driver.js **1.3.1** (MIT, approved in DEC-094) is loaded through Basset **only on pages whose article has a tour**
+  (`header_metas.blade.php`).
+- The pane shows **Take the tour** when the article has steps. The tour also starts from a link with `?tour=1`.
+- `XL.help.tourSteps(tour)` keeps only steps whose element is on the page and visible; a bad selector is skipped. With
+  no step left, the pane says so and nothing runs. Tours never change data.
+- **"New" dot:** the page meta carries `article: {key, updated, tour}` (looked up without logging a miss). When
+  `localStorage['xl.help.seen.'+key]` differs from `updated`, the `?` button shows a dot until the article is opened.
 
 ## Writing an article
 Files under `resources/help/` (`config('platform.help.path')`), versioned with the code — change a screen and its help in

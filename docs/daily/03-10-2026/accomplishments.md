@@ -26,3 +26,12 @@ Help centre lists the articles by module and, for settings managers, how many sc
 **Left:**
 - W16c page tours (Driver.js), W16d diagnostics, W16e support requests, W16f guide.
 - Writing the articles themselves is last (§13).
+
+### W16c — page tours (DEC-094)
+
+**Delivered:** a screen whose help article lists tour steps gets a **Take the tour** button in the F1 pane (also
+`?tour=1` in a link). The tour highlights the screen's parts one by one and skips any part the user cannot see. The `?`
+button shows a small dot when the screen's help changed since the user last read it. The tour library loads only on
+screens that have a tour.
+**Verified:** `HelpTest` (5 tests); page smoke for superadmin and user 40.
+**Left:** the tours themselves are written with the articles (§13); next is W16d diagnostics.

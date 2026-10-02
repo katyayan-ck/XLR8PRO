@@ -106,6 +106,18 @@ class HelpTest extends TestCase
     public function test_every_admin_page_carries_the_help_pane(): void
     {
         $this->actingAs($this->superadmin(), 'backpack')->get('/admin/dashboard')
-            ->assertOk()->assertSee('name="xl-help"', false)->assertSee('js/xl-help.js', false)->assertSee('data-xl-help-open', false);
+            ->assertOk()->assertSee('name="xl-help"', false)->assertSee('js/xl-help.js', false)->assertSee('data-xl-help-open', false)
+            ->assertDontSee('driver.js', false);   // no tour on this page → Driver.js is not loaded
+    }
+
+    /** W16c: a screen whose article has a tour loads Driver.js and tells the page (key, updated, tour) for the "new" dot. */
+    public function test_a_screen_with_a_tour_loads_the_tour_runner_and_announces_its_article(): void
+    {
+        File::put($this->dir.'/dashboard.md', "---\ntitle: Dashboard\nroutes: [backpack.dashboard]\nupdated: 2026-10-03\ntour:\n  - { element: '.page-title', title: Hello, text: Your dashboard }\n---\nThe dashboard.\n");
+
+        $page = $this->actingAs($this->superadmin(), 'backpack')->get('/admin/dashboard')->assertOk()->assertSee('driver.js@1.3.1', false);
+        preg_match('/<meta name="xl-help" content="([^"]+)"/', $page->getContent(), $m);
+        $meta = json_decode(html_entity_decode($m[1] ?? ''), true);
+        $this->assertSame(['key' => 'dashboard', 'updated' => '2026-10-03', 'tour' => true], $meta['article'] ?? null);
     }
 }

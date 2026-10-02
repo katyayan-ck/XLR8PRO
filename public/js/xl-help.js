@@ -2,6 +2,8 @@
  * Xceler8 F1 help (DEC-094, W16b): F1, Shift+? or the "?" top-bar button opens a right-side pane with the help article
  * for the current screen (route name from <meta name="xl-help">). Esc, the close button or F1 again closes it; focus moves
  * into the pane and back. Nothing is loaded until the first open. Also drives the Help centre search box.
+ * Page tours (W16c): the article's `tour` steps run with Driver.js — from the pane's "Take the tour" button or `?tour=1`;
+ * steps whose element is not on the page are skipped. A dot on ? marks an article changed since this browser last opened it.
  */
 (function () {
     'use strict';
@@ -64,19 +66,67 @@
         bindSearch(pane.querySelector('.xl-help-search input'));
     }
 
+    var panePromise = null;
+
+    function fetchPane() {
+        if (!panePromise) {
+            panePromise = getJson(cfg.pane + '?route=' + encodeURIComponent(cfg.route || ''))
+                .catch(function (err) { panePromise = null; return Promise.reject(err); });
+        }
+        return panePromise;
+    }
+
+    /** Tour steps whose element is on the page and visible, in Driver.js shape (pure; exposed for checks). */
+    function tourSteps(tour, root) {
+        root = root || document;
+        return (tour || []).map(function (step) {
+            var el = null;
+            try { el = step && step.element ? root.querySelector(step.element) : null; } catch (e) { el = null; }   // bad selector = skipped
+            if (!el || !(el.offsetParent !== null || el.getClientRects().length)) { return null; }
+            return { element: el, popover: { title: String(step.title || ''), description: String(step.text || '') } };
+        }).filter(Boolean);
+    }
+
+    function runTour(data) {
+        var make = window.driver && window.driver.js && window.driver.js.driver;
+        var steps = tourSteps(data && data.tour);
+        if (!make || !steps.length) {
+            if (pane && pane.classList.contains('show')) {
+                var note = pane.querySelector('[data-xl-tour-note]');
+                if (note) { note.textContent = t.tour_empty || ''; }
+            }
+            return;
+        }
+        close();
+        make({ showProgress: true, nextBtnText: t.tour_next, prevBtnText: t.tour_prev, doneBtnText: t.tour_done, steps: steps }).drive();
+    }
+
+    function markSeen() {
+        if (!cfg.article) { return; }
+        try { localStorage.setItem('xl.help.seen.' + cfg.article.key, cfg.article.updated || '1'); } catch (e) { /* storage blocked */ }
+        Array.prototype.forEach.call(document.querySelectorAll('[data-xl-help-open]'), function (b) { b.classList.remove('xl-help-new'); });
+    }
+
     function load() {
         if (loaded) { return; }
         loaded = true;
         var body = pane.querySelector('.xl-help-body');
-        getJson(cfg.pane + '?route=' + encodeURIComponent(cfg.route || '')).then(function (data) {
+        fetchPane().then(function (data) {
             pane.querySelector('#xl-help-title').textContent = data.title || t.title;
             if (data.missing) {
                 body.innerHTML = '<div class="alert alert-info mb-0">' + esc(data.message) + '</div>';
                 return;
             }
-            body.innerHTML = '<div class="xl-help-article">' + data.html + '</div>' +   // server-rendered, raw HTML escaped
+            var tourBtn = (data.tour || []).length
+                ? '<div class="mb-3"><button type="button" class="btn btn-sm btn-outline-primary" data-xl-tour-start><i class="la la-route me-1" aria-hidden="true"></i>' + esc(t.take_tour) + '</button>' +
+                  ' <span class="small text-body-secondary ms-2" data-xl-tour-note></span></div>'
+                : '';
+            body.innerHTML = tourBtn + '<div class="xl-help-article">' + data.html + '</div>' +   // server-rendered, raw HTML escaped
                 '<div class="small text-body-secondary mt-3">' + esc(data.updated || '') + ' · <a href="' + esc(data.url) + '">' + esc(t.open_full) + '</a></div>';
-            document.dispatchEvent(new CustomEvent('xl:help-loaded', { detail: data }));   // tours hook in here (W16c)
+            var start = body.querySelector('[data-xl-tour-start]');
+            if (start) { start.addEventListener('click', function () { runTour(data); }); }
+            markSeen();
+            document.dispatchEvent(new CustomEvent('xl:help-loaded', { detail: data }));
         }).catch(function () {
             loaded = false;
             body.innerHTML = '<div class="alert alert-warning mb-0">' + esc(t.missing) + '</div>';
@@ -120,8 +170,21 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         Array.prototype.forEach.call(document.querySelectorAll('[data-xl-help-search]'), bindSearch);
+        if (cfg.article) {
+            var seen = null;
+            try { seen = localStorage.getItem('xl.help.seen.' + cfg.article.key); } catch (e) { seen = null; }
+            if (seen !== (cfg.article.updated || '1')) {
+                Array.prototype.forEach.call(document.querySelectorAll('[data-xl-help-open]'), function (b) {
+                    b.classList.add('xl-help-new');
+                    b.setAttribute('title', (b.getAttribute('title') || '') + ' — ' + (t['new'] || ''));
+                });
+            }
+            if (cfg.article.tour && /[?&]tour=1(&|$)/.test(window.location.search)) {
+                fetchPane().then(function (data) { markSeen(); runTour(data); }).catch(function () { /* no tour */ });
+            }
+        }
     });
 
     window.XL = window.XL || {};
-    window.XL.help = { open: open, close: close };
+    window.XL.help = { open: open, close: close, tourSteps: tourSteps };
 })();

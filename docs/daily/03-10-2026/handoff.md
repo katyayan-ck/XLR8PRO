@@ -93,13 +93,13 @@ nothing local is unpushed. Next push only when the owner asks.
   `php artisan privacy:mask-kyc-history --apply || echo "KYC masking failed"` to `deploy-hook.sh` (agent edits to the
   deploy hook and the npm install were blocked by the tool's permission guard — do not retry them).
   **Owner deals later:** W18f report definitions (R1–R8), BUG-229 Reject rule, `users:reset` account list.
-- **W16 help & support (DEC-094):** W16b ✅ 03-10 (HelpService, pane `public/js/xl-help.js`, Help centre, guide
-  `tech-guides/platform/17-help-support.md`). **Next step: W16c** — on-demand page tour: Driver.js via Basset (approved
-  in DEC-094; pin a version, load only when a tour starts), steps from the article's `tour` front matter (already in
-  the pane JSON as `tour`), runner listens to `xl:help-loaded`, "Take the tour" button in the pane, `?tour=1` URL
-  start, skip steps whose element is missing, a "new" dot on `?` when the article changed since last opened
-  (localStorage per article key + `updated`); tests for the pane JSON tour data + a JS-free check that missing elements
-  are skipped (runner logic in a small pure function).
+- **W16 help & support (DEC-094):** W16b ✅, W16c ✅ 03-10 (pane, Help centre, tours, "new" dot; guide
+  `tech-guides/platform/17-help-support.md`). **Next step: W16d** — diagnostics collector: `public/js/xl-diag.js` ring
+  buffer in sessionStorage per tab (last 50 page loads / clicks with label + selector, form submits with field
+  **names** only, fetch / XHR / jQuery AJAX method-URL-status-time, JS errors, alerts shown — never typed values);
+  server request trail middleware (cache, 50 per user, 2 h: route, status, time, error ref); html2canvas (approved in
+  DEC-094, via Basset, loaded on demand) screenshot with password / OTP / `data-xl-sensitive` fields blanked + preview;
+  tests for the trail + masking helpers. FRS §5.2 lists the bundle files.
 
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;

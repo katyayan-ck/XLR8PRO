@@ -330,3 +330,5 @@ label .required-mark { display: inline !important; }
 .xl-help-article img { max-width: 100%; height: auto; }
 @media (max-width: 575.98px) { .xl-help-pane { width: 100vw; } }
 @media print { .xl-help-pane { display: none !important; } }
+[data-xl-help-open] { position: relative; }
+[data-xl-help-open].xl-help-new::after { content: ''; position: absolute; top: .35rem; right: .3rem; width: .5rem; height: .5rem; border-radius: 50%; background: var(--tblr-primary); }

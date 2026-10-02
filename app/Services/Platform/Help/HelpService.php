@@ -68,11 +68,11 @@ class HelpService
 
     /**
      * The article for a route the user may open: one that lists the route, else the overview with the longest matching
-     * `route_prefix`, else null (the miss is logged so writers see the gap).
+     * `route_prefix`, else null (the miss is logged so writers see the gap — off for the per-page "new" check).
      *
      * @return array<string, mixed>|null
      */
-    public function forRoute(string $route, User $user): ?array
+    public function forRoute(string $route, User $user, bool $logMissing = true): ?array
     {
         $articles = array_filter($this->articles(), fn (array $a) => $this->canOpen($a, $user));
         foreach ($articles as $article) {
@@ -88,7 +88,7 @@ class HelpService
                 $best = $article;
             }
         }
-        if ($best === null) {
+        if ($best === null && $logMissing) {
             Log::info('Help article missing', ['route' => $route]);
         }
 
