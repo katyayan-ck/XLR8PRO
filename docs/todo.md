@@ -161,7 +161,7 @@ convention and matches our route names (`module.process.activity`), so it is a g
 | D23 | 5 booking reports 500 (BUG-122) — **✅ decided 02-10 (DEC-095): rewrite → W18f** | **P0** | Booking team |
 | D24 | 36 employees on unknown designation codes (BUG-183) — **✅ decided 02-10 (DEC-095): no mapping — the user data is refreshed (W18j)** | P1 | Approvals routing |
 | D25 | Variant code split (BUG-173) — **✅ decided 02-10 (DEC-095): codes with the colour suffix → W18i** | P1 | Booking ↔ pricing |
-| D26 | Mask old KYC rows — **✅ decided 02-10 (DEC-095): mask → W18h** | P1 | Compliance |
+| D26 | Mask old KYC rows — **✅ decided 02-10 (DEC-095): mask → done 02-10 locally (W18h)** | P1 | Compliance |
 | D28 | Spares module rebuild (BUG-031 / 032 / 116) — **⏸ decided 02-10: after go-live** | ⏸ | Spares (hidden) |
 | D29 | Rotate the Google API key | **P0** | Security |
 | N1 | **COD in on-road** (setting `pricing.dealer_charges.include_cod`, off today) | P1 | Pricing numbers |
@@ -422,8 +422,8 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W18e | D13 — the 52 dead menu links open a "coming soon" page (BUG-056 / 062) — ✅ 02-10 (59 items, BT-015) | ✅ |
 | W18f | D23 — the 5 booking reports rewritten on the current tables, inside a `Booking*Service` (BUG-122, #13) — ⏸ 02-10: needs report definitions R1–R8 (owner-decisions sheet, W18f section) | ⏸ |
 | W18g | DEC-093 #21 — schema tooling exemption in the guard (`ai:refresh-context`) — ✅ 02-10 | ✅ |
-| W18h | D26 — mask Aadhaar / PAN in old KYC rows (reversible: encrypted backup) | 🔴 |
-| W18i | D25 / BUG-173 — booking reads / writes variant codes with the colour suffix; vehicle master purge + re-import (V7 / DA2, with the pricing run) | 🔴 |
+| W18h | D26 — mask Aadhaar / PAN in old KYC rows (reversible: encrypted backup) — ✅ 02-10 local (`privacy:mask-kyc-history`); UAT / prod run needs approval | ✅ |
+| W18i | D25 / BUG-173 — booking reads / writes variant codes with the colour suffix; vehicle master purge + re-import (V7 / DA2, with the pricing run) — ⏸ goes with the pricing run (owner: pricing decided later) | ⏸ |
 | W18j | #18 — local-only user reset command (keep a given list of accounts; dry run, backup) — run on the owner's list | 🔴 |
 | W18k | N4 — session / password / lockout / self-service values as Settings (S3 / S4 / S5 / S7) | 🔴 |
 | W18l | BUG-206 — generated `person_code`; PAN / Aadhaar only masked (14 tables) | 🔴 |
@@ -1340,3 +1340,17 @@ reads `information_schema`. The file left the W15 baseline (now 7 files), and th
 says so.
 **Verified:** architecture test passes.
 **Left:** W15's remaining 7 files are all waiting on owner answers (deletions #6, D5, D23 reports, D28, importers phase 5).
+
+### W18h — old Aadhaar / PAN copies masked (D26, DEC-095 #19; BUG-195 closed for old rows)
+
+**Delivered:** `privacy:mask-kyc-history` reports, masks (`--apply`) and undoes (`--restore`) the Aadhaar / PAN copies
+kept in history: the booking timeline and the change log. It finds them by key, also inside nested JSON, so other
+numbers are never touched, and keeps every original encrypted. Run on local `xlrm` and `xlrm_testing`: 24 Aadhaar and
+20 PAN values in 25 cells. The KYC record itself is unchanged.
+**Verified:**
+- `KycHistoryMaskingTest`; a real apply → restore → apply cycle on the test copy.
+- Booking 10 timeline renders for superadmin and user 40.
+- PHPStan and the architecture guard are clean.
+**Left:**
+- Running it on UAT / production needs the owner's approval (non-local data change).
+- Encrypting Aadhaar / PAN at rest and the other DPDP items stay under S12.

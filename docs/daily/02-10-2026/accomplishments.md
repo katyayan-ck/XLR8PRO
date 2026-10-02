@@ -112,3 +112,17 @@ reads `information_schema`. The file left the W15 baseline (now 7 files), and th
 says so.
 **Verified:** architecture test passes.
 **Left:** W15's remaining 7 files are all waiting on owner answers (deletions #6, D5, D23 reports, D28, importers phase 5).
+
+### W18h — old Aadhaar / PAN copies masked (D26, DEC-095 #19; BUG-195 closed for old rows)
+
+**Delivered:** `privacy:mask-kyc-history` reports, masks (`--apply`) and undoes (`--restore`) the Aadhaar / PAN copies
+kept in history: the booking timeline and the change log. It finds them by key, also inside nested JSON, so other
+numbers are never touched, and keeps every original encrypted. Run on local `xlrm` and `xlrm_testing`: 24 Aadhaar and
+20 PAN values in 25 cells. The KYC record itself is unchanged.
+**Verified:**
+- `KycHistoryMaskingTest`; a real apply → restore → apply cycle on the test copy.
+- Booking 10 timeline renders for superadmin and user 40.
+- PHPStan and the architecture guard are clean.
+**Left:**
+- Running it on UAT / production needs the owner's approval (non-local data change).
+- Encrypting Aadhaar / PAN at rest and the other DPDP items stay under S12.

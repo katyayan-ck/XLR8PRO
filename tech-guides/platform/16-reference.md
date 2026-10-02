@@ -200,3 +200,16 @@ entity's `permission` in `config/platform.php`, or from the model's `chatCanView
 HMAC-SHA256 of the raw body with `comms.webhook_secret` in header `X-Signature`. Idempotent on `event_id` (and on the
 vendor message / call id). Responses: `401` bad signature, `200` with `duplicate: true` on a repeat, `404` unknown
 message. Payload shapes: email in guide 10, SMS in 11, WhatsApp in 12, telephony in 13.
+
+## 8. Privacy: masking KYC copies in history (D26, DEC-095 #19)
+`App\Services\Platform\Privacy\KycHistoryMaskingService` + command `privacy:mask-kyc-history`.
+- `run(bool $apply): array{cells, values{aadhaar, pan, other}, tables, applied}` — scans `xlr8_utils_comm_thread.extra_data`
+  and `audits.old_values` / `new_values`; masks by key (`adhar_no` / `aadhaar_no` / `aadhar_no` → `XXXXXXXX` + last 4
+  digits, spaces / dashes allowed; `pan_no` → `XXXXXX` + last 4), at any depth and inside JSON stored as a string.
+  Other numbers (TRC, application, account, GSTIN) are never touched; malformed values are counted as `other`.
+- `--apply` keeps each changed cell's original in `xlr8_privacy_kyc_mask_backup` (`KycMaskBackup`), encrypted with
+  the app key (restore needs the same `APP_KEY`), then writes with base-query updates (no events, no new audit rows).
+- `restore(): int` / `--restore` puts every original back and removes its backup row. A second `--apply` finds nothing.
+- The KYC record itself (booking `adhar_no` / `pan_no`) is not masked. New timeline entries are masked at source
+  (BUG-195). Run on UAT / production only with the owner's approval.
+- Local 02-10: 25 cells (24 Aadhaar, 20 PAN values) masked on `xlrm` and `xlrm_testing`. Test `KycHistoryMaskingTest`.

@@ -72,10 +72,12 @@ nothing local is unpushed. Next push only when the owner asks.
   liveOrderReport, ~9219 fetchCbrData, ~9612 consolidatedBookingReport, ~9888 branchBookingReport, ~10134
   pendingActionsReport; stock = `Stock` model `xlr8_booking_stock_master`, `location_id` = `xlr8_admin_location.id`).
   W18g ✅ (guard `EXEMPT` list: `RefreshAiContext`; baseline 7 files).
-  **Next step: W18h** — D26: mask Aadhaar / PAN in old KYC rows, reversibly (encrypted backup first). Find every column
-  holding full Aadhaar / PAN (bookings `pan_no` / `adhar_no`, KYC tables, history / event JSON), count rows per column on
-  local `xlrm`, design an artisan command (dry run default, `--apply`, backup table with `Crypt::encryptString` of the
-  originals, `--restore`), local only; the booking part is a numbered BT change.
+  W18h ✅ (`privacy:mask-kyc-history`, applied locally on both DBs: 25 cells; UAT / prod run needs approval).
+  W18i ⏸ (D25 variant codes + purge / re-import go with the pricing run — owner: pricing later).
+  **Next step: W18j** — #18: local-only user reset command — keep a given list of accounts (by username), remove the
+  rest permanently; dry run by default, `--apply` after a backup (mysqldump of the user / person / employee / scope /
+  role tables to `storage/app/backups/`), refuses outside `local`; run only when the owner sends the list (1 super
+  admin, 5 dev, 1 app dev). First map every table that references `users.id` / `person_code`.
 
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;

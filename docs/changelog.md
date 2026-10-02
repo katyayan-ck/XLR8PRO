@@ -10312,3 +10312,28 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
   model possible) sat in the W15 baseline as 4 uses to convert. It is now exempt by name, with the owner-confirmed
   reason. Baseline: 122 uses in 7 files.
 - **Checked:** `tests/Unit/Architecture` passes.
+
+### W18h — Aadhaar / PAN copies in history masked, reversibly (D26, DEC-095 #19; BUG-195)
+- **Files (new):**
+  - `app/Services/Platform/Privacy/KycHistoryMaskingService.php`.
+  - `app/Console/Commands/MaskKycHistory.php` (`privacy:mask-kyc-history [--apply|--restore]`).
+  - `app/Models/Utilities/Privacy/KycMaskBackup.php`.
+  - Migration `2026_10_02_230836_create_kyc_mask_backup_table_d26.php` (`xlr8_privacy_kyc_mask_backup`; run on `xlrm` +
+    `xlrm_testing`).
+  - `tests/Feature/Platform/KycHistoryMaskingTest.php`.
+- **Docs:** `tech-guides/platform/16-reference.md` §8; BUG-195 Fixed line.
+- **Before → after:** the full numbers were copied into one booking-timeline row (`xlr8_utils_comm_thread` 27, booking
+  10) and the booking change log (`audits`, written until 13-06 by the booking team's code). They are now masked by
+  key: Aadhaar `XXXXXXXX1234` (also when written with spaces / dashes), PAN `XXXXXX234F`. That is 24 Aadhaar + 20 PAN
+  values in 25 cells on each database.
+- **Not touched:**
+  - TRC / application / account numbers and GSTINs (masking is by key, never by pattern).
+  - The KYC record itself (booking `adhar_no` / `pan_no`).
+- **Reversible:** originals are kept encrypted per cell; `--restore` puts them back. Proven on `xlrm_testing` (apply →
+  restore 25 → apply).
+- **Checked:**
+  - Feature test covers mask, nested JSON, other numbers untouched, idempotency, report-only, and exact restore.
+  - Architecture guard and PHPStan clean.
+  - Booking 10 view as superadmin and user 40 → 200.
+- **Other environments:** run `php artisan privacy:mask-kyc-history --apply` on UAT / production only with the owner's
+  approval.

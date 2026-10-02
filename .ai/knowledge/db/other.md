@@ -119,5 +119,9 @@ Indexes: UNIQUE (channel,event_id)
 id bigint unsigned PK, master varchar(40), status varchar(16), file_name varchar(190)?, path varchar(255), wef_date date?, message varchar(255)?, result json?, created_by bigint unsigned?, created_at timestamp?, updated_at timestamp?
 Indexes: (master,created_at)
 
+## `xlr8_privacy_kyc_mask_backup` · ~25 rows · model: App\Models\Utilities\Privacy\KycMaskBackup
+id bigint unsigned PK, source_table varchar(64), source_id bigint unsigned, source_column varchar(64), original_encrypted longtext, created_at timestamp?
+Indexes: UNIQUE (source_table,source_id,source_column)
+
 ## `xlr8_user_branches` · ~279 rows · model: —
 user_id bigint unsigned PK, branch_id bigint unsigned PK
