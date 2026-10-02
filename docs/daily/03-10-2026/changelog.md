@@ -234,3 +234,26 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
   `Attempting to parse an unsupported color function "color"`. One run hit a blank page from BUG-231 (local env race),
   not the screenshot.
 - Ticket #1 (Shankar Giri) was sent before the fix, so it has no screenshot. New requests will include one.
+
+### Support: on / off switch for pane requests; "My support tickets" in the user menu (owner 03-10, DEC-094)
+- **Owner asked:**
+  - A site-settings switch for the "Still need help?" auto-ticket.
+  - A My Account menu option where every signed-in user sees all the tickets they created and can create a new one.
+- **Files:**
+  - `config/platform.php`: `support.pane_requests` (bool, default on).
+  - `header_metas.blade.php`: `support: null` when off, so the pane shows no button.
+  - `SupportController`: `store` answers 403 `SUPPORT_PANE_DISABLED` when off; new `mine()` / `open()`.
+  - Routes `utils.support.mine`, `utils.support.open`.
+  - New view `support/mine.blade.php`: own tickets list plus a New support ticket form.
+  - `menu_user_dropdown.blade.php`: **My support tickets** under My Account.
+  - Lang `support.*` (new keys; the "sent" message points there).
+  - Guides `17-help-support.md`, `16-reference.md`.
+- **Behaviour:**
+  - A plain ticket has no diagnostics and is routed like a pane request: `SUP_*` category, P2 when urgent, owned by the
+    least-loaded support admin.
+  - The list shows only the user's own tickets. "My support tickets" works whatever the switch says.
+- **Checked:**
+  - `SupportRequestTest` 6 passed: switch off → 403 + no pane button; the menu link; the plain ticket's owner /
+    priority / no zip; the list shows own tickets only; the requester opens their ticket.
+  - Platform / IAM / menu / lang / architecture suites: 126 passed.
+  - Pages 200 for superadmin and user 40. PHPStan clean.

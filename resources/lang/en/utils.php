@@ -70,7 +70,11 @@ return [
     'support' => [
         'still_need_help' => 'Still need help?',
         'title' => 'Support request',
-        'my_requests' => 'My tickets',
+        'my_requests' => 'My support tickets',
+        'new_ticket' => 'New support ticket',
+        'no_tickets' => 'You have not raised any support tickets yet.',
+        'created' => 'Support ticket :number created.',
+        'pane_disabled' => 'Support requests from the help pane are switched off. Raise a ticket from My Account → My support tickets.',
         'what' => 'What do you need?',
         'categories' => [
             'SUP_HOWTO' => 'How do I…?',
@@ -88,7 +92,7 @@ return [
         'send' => 'Send',
         'cancel' => 'Cancel',
         'sending' => 'Sending…',
-        'sent' => 'Support request :number sent. You can follow it under Utilities → Tickets.',
+        'sent' => 'Support request :number sent. You can follow it under My Account → My support tickets.',
         'failed' => 'The request could not be sent. Please try again.',
         'invalid_category' => 'Choose what you need.',
         'owner_notification' => 'New support request :number',

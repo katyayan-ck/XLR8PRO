@@ -225,7 +225,7 @@ entity's `permission` in `config/platform.php`, or from the model's `chatCanView
 **Support requests (DEC-094, W16e):** `UTL_SUPP_ADMIN` (receives new support tickets; sees and manages every `SUP_*`
 ticket like the desk; sees all diagnostics), `UTL_SUPP_EXEC` (the only assignees a support ticket takes). Diagnostics
 are for the support team only (owner, assignees, snoopers, support admins) — never the requester — minted by
-`2026_10_03_004646_create_support_requests_dec094`, superadmin only. Settings `support.bundle_retention_days` (90),
+`2026_10_03_004646_create_support_requests_dec094`, superadmin only. Settings `support.pane_requests` (true — the pane's "Still need help?"), `support.bundle_retention_days` (90),
 `support.max_screenshot_kb` (4096).
 
 ## 7. Webhooks (`POST /api/webhooks/comms/{channel}`)

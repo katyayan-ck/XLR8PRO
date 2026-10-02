@@ -78,6 +78,7 @@ return [
         'docs.allowed_mimes' => ['value' => 'jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx,csv,txt,mp3,mp4,wav', 'type' => 'string', 'label' => 'Allowed file types'],
         'docs.purge_after_days' => ['value' => 30, 'type' => 'int', 'label' => 'Purge deleted documents after (days)'],
         // Support requests (DEC-094, W16e)
+        'support.pane_requests' => ['value' => true, 'type' => 'bool', 'label' => 'Support requests: "Still need help?" in the F1 help pane opens a ticket with diagnostics (off: users raise tickets from My Account → My support tickets)'],
         'support.bundle_retention_days' => ['value' => 90, 'type' => 'int', 'label' => 'Support requests: delete the diagnostic zip after (days)'],
         'support.max_screenshot_kb' => ['value' => 4096, 'type' => 'int', 'label' => 'Support requests: largest screenshot accepted (KB)'],
         'notify.quiet_hours' => ['value' => '', 'type' => 'string', 'label' => 'Quiet hours (HH:MM-HH:MM, blank = none)'],

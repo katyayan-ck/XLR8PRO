@@ -35,6 +35,8 @@ Route::group([
     // Support requests (DEC-094, W16e) — send: every signed-in user (it becomes a ticket); the diagnostics show on the
     // ticket page and download for the support team only (checked in the controller)
     Route::post('support', [SupportController::class, 'store'])->name('utils.support.store');
+    Route::get('support/mine', [SupportController::class, 'mine'])->name('utils.support.mine');        // My Account → My support tickets
+    Route::post('support/ticket', [SupportController::class, 'open'])->name('utils.support.open');     // a plain support ticket (no diagnostics)
     Route::get('support/{id}/download', [SupportController::class, 'download'])->whereNumber('id')->name('utils.support.download');
 
     // Notify inbox

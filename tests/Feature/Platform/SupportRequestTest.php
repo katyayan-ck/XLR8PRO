@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Utilities\Support\SupportRequest;
 use App\Models\Utilities\Ticket\Ticket;
 use App\Services\Platform\Help\SupportRequestService;
+use App\Services\Platform\Settings\SettingsService;
 use App\Services\Platform\Ticket\TicketService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Storage;
@@ -116,6 +117,33 @@ class SupportRequestTest extends TestCase
             $this->actingAs($member, 'backpack')->get($page)->assertOk()->assertSee('data-xl-diagnostics', false);
             $this->get($download)->assertOk();
         }
+    }
+
+    /** Owner 03-10: the pane request can be switched off in Settings; the pane then shows no "Still need help?". */
+    public function test_the_pane_request_can_be_switched_off(): void
+    {
+        app(SettingsService::class)->set('support.pane_requests', false);
+
+        $this->send()->assertForbidden()->assertJsonPath('code', 'SUPPORT_PANE_DISABLED');
+        $this->get('/admin/dashboard')->assertOk()->assertDontSee('utils\/support"', false)->assertSee('&quot;support&quot;:null', false);
+    }
+
+    /** Owner 03-10: My Account → My support tickets lists the user's own tickets and opens a plain support ticket. */
+    public function test_my_support_tickets_lists_own_tickets_and_opens_a_plain_one(): void
+    {
+        [$requester, $admin, , $outsider] = $this->u;
+        app(SettingsService::class)->set('support.pane_requests', false);   // still available when the pane is off
+        $other = app(TicketService::class)->open(['category' => 'SUP_HOWTO', 'title' => 'Someone else', 'requester_id' => $outsider->id], $outsider->id);
+
+        $this->actingAs($requester, 'backpack')->get('/admin/dashboard')->assertSee(route('utils.support.mine'), false);   // user menu
+        $response = $this->post(route('utils.support.open'), ['category' => 'SUP_ACCESS', 'urgent' => '1', 'subject' => 'Need booking access', 'description' => 'Please give me booking access']);
+        $ticket = Ticket::query()->where('requester_id', $requester->id)->where('title', 'Need booking access')->firstOrFail();
+        $response->assertRedirect(route('utils.tickets.show', ['id' => $ticket->id]));
+        $this->assertSame(['SUP_ACCESS', 'P2', $admin->id], [$ticket->category, $ticket->priority, (int) $ticket->owner_id]);
+        $this->assertNull(SupportRequest::query()->where('ticket_id', $ticket->id)->value('bundle_path'), 'a plain ticket carries no diagnostics');
+
+        $this->get(route('utils.support.mine'))->assertOk()->assertSee($ticket->number)->assertDontSee(Ticket::query()->findOrFail($other->get('id'))->number);
+        $this->get(route('utils.tickets.show', ['id' => $ticket->id]))->assertOk();
     }
 
     public function test_the_bundle_is_purged_after_the_retention_period_and_bad_input_is_refused(): void

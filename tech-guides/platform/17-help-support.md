@@ -83,11 +83,17 @@ Gathered for a support request (W16e builds the zip; FRS §5.2). **Never records
   lines of its error references, last 2 MB of `laravel.log`), `user.json` (roles, permissions, data scopes, last login),
   `screenshot.png|jpg` (PNG / JPEG only, signature-checked, ≤ `support.max_screenshot_kb`). Every text file passes
   `DiagnosticsService::mask()`.
-- **Routes:** `utils.support.store` (POST JSON → 201 / 422), `utils.support.download` (support team only; 403 / 410).
+- **Switch:** setting `support.pane_requests` (Settings → Support, default on). Off → the pane shows no "Still need
+  help?" (the page meta carries `support: null`) and `utils.support.store` answers 403 `SUPPORT_PANE_DISABLED`.
+- **My support tickets** (user menu, every signed-in user, always on): `utils.support.mine` lists the tickets the user
+  raised (newest first) with a **New support ticket** form → `utils.support.open` (POST) → `submit()` without
+  diagnostics → the new ticket's page. Same routing (category, P2 when urgent, least-loaded support admin).
+- **Routes:** `utils.support.store` (POST JSON → 201 / 403 / 422), `utils.support.mine`, `utils.support.open`,
+  `utils.support.download` (support team only; 403 / 410).
 - **Permissions:** `UTL_SUPP_ADMIN`, `UTL_SUPP_EXEC` (process UTL / SUPP), granted to superadmin only — attach them to
   designations on Org → Designation. Ticket categories `SUP_HOWTO`, `SUP_NOT_WORKING`, `SUP_WRONG_DATA`, `SUP_ACCESS`,
   `SUP_SUGGESTION` (KeyValue `TICKET_CATEGORY`).
-- **Menu:** Utilities → Help Centre (every signed-in user); support requests are under Utilities → Tickets.
+- **Menu:** Utilities → Help Centre and user menu → My support tickets (every signed-in user).
 - Tests: `tests/Feature/Platform/SupportRequestTest.php`.
 
 ## Writing an article

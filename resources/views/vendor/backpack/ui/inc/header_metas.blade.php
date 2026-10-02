@@ -35,7 +35,7 @@
     @endphp
     <meta name="xl-help" content="{{ json_encode(['route' => $xlHelpRoute, 'pane' => route('utils.help.pane'),
         'search' => route('utils.help.search'), 'centre' => route('utils.help.index'), 'labels' => trans('utils.help'),
-        'support' => ['store' => route('utils.support.store'), 'list' => route('utils.tickets.index'), 'labels' => trans('utils.support')],
+        'support' => setting('support.pane_requests', true) ? ['store' => route('utils.support.store'), 'list' => route('utils.support.mine'), 'labels' => trans('utils.support')] : null,
         'article' => $xlHelpArticle ? ['key' => $xlHelpArticle['key'], 'updated' => (string) $xlHelpArticle['updated'], 'tour' => $xlHelpArticle['tour'] !== []] : null]) }}">
     @if ($xlHelpArticle && $xlHelpArticle['tour'] !== [])
         @basset('https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css')

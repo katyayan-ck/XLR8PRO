@@ -39,6 +39,12 @@
                 <i class="la la-user-circle dropdown-item-icon"></i> {{ trans('backpack::base.my_account') }}
             </a>
         @endif
+        @if (Route::has('utils.support.mine'))
+            {{-- DEC-094 (owner 03-10): every signed-in user — the tickets they raised, and a new one --}}
+            <a href="{{ route('utils.support.mine') }}" class="dropdown-item">
+                <i class="la la-life-ring dropdown-item-icon"></i> {{ __('utils.support.my_requests') }}
+            </a>
+        @endif
         <a href="{{ route('utils.inbox.index') }}" class="dropdown-item">
             <i class="la la-inbox dropdown-item-icon"></i> My inbox
         </a>
