@@ -42,10 +42,10 @@
         @basset('https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js')
     @endif
     <script defer src="{{ asset('js/xl-help.js') }}?v={{ @filemtime(public_path('js/xl-help.js')) }}"></script>
-    {{-- Diagnostics for support requests (DEC-094, W16d): action / network / error buffer; html2canvas (approved) is cached
+    {{-- Diagnostics for support requests (DEC-094, W16d): action / network / error buffer; html2canvas-pro (approved 03-10, BUG-232) is cached
          by Basset here but only loaded when a screenshot is taken --}}
     @php
-        $xlH2c = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+        $xlH2c = 'https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.11/dist/html2canvas-pro.min.js';
         try {
             \Backpack\Basset\Facades\Basset::basset($xlH2c, false);
             $xlH2cUrl = \Backpack\Basset\Facades\Basset::isAssetCached($xlH2c) ? \Backpack\Basset\Facades\Basset::getUrl($xlH2c) : $xlH2c;

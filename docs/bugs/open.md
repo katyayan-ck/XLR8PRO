@@ -44,7 +44,6 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-228 | App OTP SMS is never sent: `OtpNotificationService::sendViaSms()` is a placeholder that only logs | High | OPEN — found 02-10 (W18a) | 02-10-2026 | — |
 | BUG-229 | Order Verification's Accept / Reject do not match `orderUpdate()`: Accept links status 2 but only 0 / 1 are accepted ("invalid status"); Reject links 0, which `orderUpdate()` records as "Hold released, booking activated" | Medium | OPEN — owner question (what Reject sets) | 02-10-2026 | — |
 | BUG-231 | Local web server intermittently runs a request without `.env` (Laragon / threaded Apache on Windows): the request falls back to the SQLite session store or `production` with no APP_KEY and answers 500 | Low | OPEN — local environment (owner: run `php artisan config:cache` locally, or switch Laragon to NTS PHP / FastCGI) | 03-10-2026 | — |
-| BUG-232 | Support-request screenshot is never captured: html2canvas 1.4.1 throws on modern CSS colours (`Attempting to parse an unsupported color function "color"`, Tabler 1.4), and the pane sent the request without it silently | Medium | OPEN — silent failure fixed 03-10; capture needs the html2canvas-pro swap (owner approval: library change) | 03-10-2026 | — |
 
 ## Entries
 
@@ -397,12 +396,3 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 - **Evidence (log, 03-10 00:54):** `Database file at path [...database.sqlite] does not exist` while reading `xlr8_system_sessions` (default `sqlite` connection = `DB_CONNECTION` unset), then `production.ERROR: No application encryption key has been specified` — the same seconds that other requests ran normally on `local` with MySQL.
 - **Cause:** Laravel reads `.env` with `putenv` / `$_ENV`, which are not thread-safe under thread-safe PHP in threaded Apache on Windows (Laragon's default); concurrent requests (the browser loads several at once) can see an empty environment. No config cache exists (`bootstrap/cache/config.php` absent), so every request depends on `.env`.
 - **Fix (owner's choice, local machine change):** `php artisan config:cache` (re-run after any `.env` / config change; `config:clear` undoes it), or run PHP through FastCGI / NTS in Laragon. Tests are unaffected (phpunit sets its own env).
-
-### BUG-232 — Support-request screenshot is never captured: html2canvas 1.4.1 throws on modern CSS colours (`Attempting to parse an unsupported color function "color"`, Tabler 1.4), and the pane sent the request without it silently
-
-- **Status:** OPEN — part fixed
-- **Severity:** Medium (support team gets no screenshot; FRS §8.4 expects the preview)
-- **Found:** 03-10-2026, owner: ticket TCK/BKN/26-27/00001 (Shankar Giri, My Account, Firefox) has no screenshot — the zip holds every other file.
-- **Reproduced:** Playwright (Chromium) on `admin/edit-account-info`: `XL.diag.screenshot()` → `FAILED: Attempting to parse an unsupported color function "color"`. html2canvas 1.4.1 (last release 2022) cannot parse `color()` / `oklch()` / `color-mix()`, which Tabler 1.4 uses — every page fails.
-- **Done 03-10:** the failure is no longer silent — the pane says "A screenshot of this page could not be taken…" and the reason goes to `console.error`, which `xl-diag.js` records in `errors.json`.
-- **Fix:** swap to **html2canvas-pro** (MIT, drop-in fork, same API) — verified on the same page: `OK`, an 84 KB JPEG. Needs the owner's approval (library change; DEC-094 approved html2canvas).

@@ -224,3 +224,13 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
   `support.screenshot_failed`.
 - **Pending owner approval:** swap to `html2canvas-pro` (MIT drop-in fork). It was verified working on the same page in
   a probe; nothing was installed.
+
+### BUG-232 fixed — screenshots captured again with html2canvas-pro (owner approved 03-10)
+- `resources/views/vendor/backpack/ui/inc/header_metas.blade.php`: html2canvas 1.4.1 → **html2canvas-pro 1.5.11** (MIT,
+  drop-in fork with the same `window.html2canvas` API; Basset-cached, loaded only when a screenshot is taken). Guide
+  `17-help-support.md` updated; BUG-232 moved to closed.
+- **Checked** (Chromium, the app's own loading path, owner's local test account): `XL.diag.screenshot()` returns a JPEG
+  on My Account (82 KB), dashboard (66 KB), bookings (131 KB) and tickets (47 KB). Before, every page failed with
+  `Attempting to parse an unsupported color function "color"`. One run hit a blank page from BUG-231 (local env race),
+  not the screenshot.
+- Ticket #1 (Shankar Giri) was sent before the fix, so it has no screenshot. New requests will include one.

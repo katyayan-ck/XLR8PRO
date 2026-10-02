@@ -229,6 +229,7 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-056 | Admin menu's "Approved Quotations" link points at a route/feature that has never existed (pre-existing, unrelated to URL rename) | Low | FIXED 02-10 — coming-soon page (W18e) | 20-09-2026 05:10 | 02-10-2026 |
 | BUG-062 | 5 Booking menu links (dummy, ready-to-invoice, pending-incomplete-votfs, rto-agent-tracker, brokerage) point at URLs with no route ever registered | Low | FIXED 02-10 — coming-soon page (W18e, BT-015) | 20-09-2026 07:20 | 02-10-2026 |
 | BUG-230 | Queue `retry_after` (90 s) was shorter than the pricing jobs' timeout (1800 s): with more than one worker a running import is handed to a second worker and runs twice | Medium | FIXED 03-10 — retry_after 1900 s (W18m) | 03-10-2026 | 03-10-2026 |
+| BUG-232 | Support-request screenshot is never captured: html2canvas 1.4.1 throws on modern CSS colours (`Attempting to parse an unsupported color function "color"`, Tabler 1.4), and the pane sent the request without it silently | Medium | FIXED 03-10 — html2canvas-pro | 03-10-2026 | 03-10-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2892,3 +2893,13 @@ guessed at.
 - **Found:** 03-10-2026, W18m (Redis readiness review).
 - **Where:** `config/queue.php` (`database` / `redis` connections, `retry_after` default 90); `app/Jobs/Vehicle/Pricing/**` (`$timeout = 1800`).
 - **Fix:** defaults raised to 1900 s on both connections (`DB_QUEUE_RETRY_AFTER` / `REDIS_QUEUE_RETRY_AFTER` still override; the local `.env` sets neither). Test `QueueRetryAfterTest` compares every job `$timeout` with both connections — it failed before the fix.
+
+### BUG-232 — Support-request screenshot is never captured: html2canvas 1.4.1 throws on modern CSS colours (`Attempting to parse an unsupported color function "color"`, Tabler 1.4), and the pane sent the request without it silently
+
+- **Final status:** FIXED · **Fixed:** 03-10-2026
+- **Severity:** Medium (support team gets no screenshot; FRS §8.4 expects the preview)
+- **Found:** 03-10-2026, owner: ticket TCK/BKN/26-27/00001 (Shankar Giri, My Account, Firefox) has no screenshot — the zip holds every other file.
+- **Reproduced:** Playwright (Chromium) on `admin/edit-account-info`: `XL.diag.screenshot()` → `FAILED: Attempting to parse an unsupported color function "color"`. html2canvas 1.4.1 (last release 2022) cannot parse `color()` / `oklch()` / `color-mix()`, which Tabler 1.4 uses — every page fails.
+- **Done 03-10:** the failure is no longer silent — the pane says "A screenshot of this page could not be taken…" and the reason goes to `console.error`, which `xl-diag.js` records in `errors.json`.
+- **Fix:** swap to **html2canvas-pro** (MIT, drop-in fork, same API) — verified on the same page: `OK`, an 84 KB JPEG. Needs the owner's approval (library change; DEC-094 approved html2canvas).
+- **Fixed 03-10-2026:** owner approved 03-10: `html2canvas-pro` 1.5.11 (MIT drop-in fork) replaces html2canvas 1.4.1 in `header_metas.blade.php` (Basset-cached, loaded on demand). Verified in Chromium with `XL.diag.screenshot()`: My Account 82 KB, dashboard 66 KB, bookings 131 KB, tickets 47 KB — all JPEG. Failures are no longer silent (pane note + `errors.json`).

@@ -36,8 +36,10 @@ Gathered for a support request (W16e builds the zip; FRS §5.2). **Never records
   - `errors`: `window.onerror`, unhandled promise rejections, `console.error`.
   - `XL.diag.snapshot()` → `{page{url, route, title, screen, viewport, browser, time, version, theme}, actions,
     network, errors}`.
-  - `XL.diag.screenshot()` → PNG data URL of the visible page via **html2canvas 1.4.1** (approved in DEC-094; cached by
-    Basset, loaded only when called). In the copy only, password / OTP inputs and anything marked
+  - `XL.diag.screenshot()` → JPEG data URL of the visible page via **html2canvas-pro 1.5.11** (MIT fork of html2canvas;
+    the original 1.4.1 cannot parse Tabler 1.4's `color()` / `oklch()` / `color-mix()` and failed on every page —
+    BUG-232; owner approved the swap 03-10). Cached by Basset, loaded only when called. When a capture fails the pane
+    says so and the reason lands in `errors.json`. In the copy only, password / OTP inputs and anything marked
     `data-xl-sensitive` (mark Aadhaar, PAN and bank-account fields with it) are blanked; the help pane is left out.
   - `XL.diag.mask(text)` / `XL.diag.cleanUrl(url)` mirror the server helpers.
 - **Server — `App\Http\Middleware\RecordRequestTrail`** (admin middleware stack): each request of the signed-in user
