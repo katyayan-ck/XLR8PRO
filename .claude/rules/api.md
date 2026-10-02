@@ -20,6 +20,11 @@ paths:
 - Every route must map to an existing method; verify with a device-bound token round trip
   (see `.ai/rules/testing.md`) — `route:list` alone doesn't prove it works.
 - Changing a response shape = breaking the mobile app: add fields, don't rename/remove; new shapes go to v2 (Track B).
+- **Target format (DEC-097, owner 03-10, to-do W19a):** every endpoint answers
+  `{api, method, http_response_code, status (Success / Failed / Timeout), project_response_code,
+  project_response_message, data, time_taken (ms), sync_timestamp}` with codes from the Module → Process → Activity
+  registry (W19b). How the app moves over (in place vs. v2) is an open owner question — until it is answered, keep v1
+  as it is.
 - Never log OTPs, tokens or full phone numbers.
 - Errors: every API error is the envelope with a registered `ErrorCodeEnum` code and its HTTP status; unhandled
   exceptions go through the central handler (never a raw HTML page or stack trace to the app).

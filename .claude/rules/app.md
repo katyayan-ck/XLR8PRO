@@ -13,7 +13,9 @@ Keep the developer guides, `tech-guides/platform/16-reference.md`, the module ru
 dictionary (`tech-guides/architecture/data-dictionary*.md`) and the API docs (`tech-guides/api/`, OpenAPI annotations) up to date on **every** change
 to a model, service, module, business rule or API — in the same commit, not later.
 
-## One error, response and exception pipeline (user standing instruction, 29-09-2026)
+## One error, response and exception pipeline (user standing instruction, 29-09-2026; extended by DEC-097)
+- **Target (DEC-097, W19b):** every response / error code lives in one registry structured Module → Process → Activity
+  (numeric `project_response_code` + lang message), used by both web results and the API format (W19a).
 - **Business failures are `App\Support\Result`.** Carry a module-scoped code (`{MODULE}_{NAME}`, e.g.
   `PRICING_NOT_FOUND`, `SLS_QUOTE_GATE`) and a message from the module's lang file, so the message is customisable per
   module without code changes.

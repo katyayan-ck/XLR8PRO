@@ -99,7 +99,12 @@ unless asked or required by this workflow.
   Gate `before` hook in `AppServiceProvider`. Roles **are** designations (`xlr8_admin_designation`).
 - **Data scoping:** `App\Services\IAM\DataScopeService` on `xlr8_admin_user_scopes`; `ScopedQuery`/`ScopedCrud`
   exist but are not yet switched on (decision pending). Jobs must not depend on a user scope.
-- **API envelope:** `{http_status, success, code, message, data}` via `BaseController` helpers.
+- **API envelope:** today `{http_status, success, code, message, data}` via `BaseController` helpers. **Target (DEC-097,
+  to-do W19a):** `{api, method, http_response_code, status, project_response_code, project_response_message, data,
+  time_taken, sync_timestamp}` for every endpoint, codes from a Module → Process → Activity registry (W19b).
+- **Project standards (DEC-097, owner 03-10):** routes split per module / process with web / API / both and their
+  permission / role / superadmin gates in the route file (W19c); logic in services, data in Eloquent models; every view
+  on the standard interface; RBAC + per-user data scoping on every model, screen, export and API.
 - **Dates:** app timezone `Asia/Kolkata`: timestamps are stored and compared in IST (DEC-046; rows before 26-09-2026 are UTC and are intentionally not converted). Displayed with `site_date()` / `@sitedate` (site setting `display.date_format`).
 - **Labels:** `resources/lang/en/{module}.php` is the single source for field labels & validation names.
 - **Money:** new columns `DECIMAL(15,2)`; legacy varchar money is being normalised (DEC-003).

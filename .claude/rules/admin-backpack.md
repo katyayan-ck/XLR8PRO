@@ -45,6 +45,9 @@ Module is chosen by business domain, not menu placement.
 
 ## Routes
 - Files under `routes/backpack/*.php`, one per module group, auto-loaded by `AppServiceProvider::boot()`.
+- **Target (DEC-097, to-do W19c):** one route file per module / process (e.g. `sales/booking.php`, `sales/quotation.php`,
+  `admin/approvals.php`), each stating web-only / API-only / both, with the permission / role / superadmin gates on the
+  routes (`->middleware('permission:CODE')` / `can:`), **plus** the in-action `can()` check (defence in depth).
 - URI `/admin/{module}/{process}/{activity}` kebab-case; name `module.process.activity`.
 - When renaming a route/URI, audit Blade **and** controller PHP for hardcoded URLs:
   `grep -rn "backpack_url(" <files>` and the multi-line form `grep -n "backpack_url($"`. Prefer `route('name')`.

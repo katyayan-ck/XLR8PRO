@@ -318,3 +318,23 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
     W18f.
   - Q3 → 🟡: Playwright smoke done. Write-path E2E needs the web server on a test database, never `xlrm`; owner to
     decide.
+
+### DEC-097 — project-wide standards recorded (owner directions 03-10)
+- **Owner directions:**
+  1. One API response format.
+  2. A Module → Process → Activity response-code registry.
+  3. Route files per module / process with web / API / both and gates in the route file.
+  4. Logic in services, data in Eloquent models.
+  5. A standard view interface.
+  6. RBAC + data scoping everywhere with superadmin gates.
+- **Status:**
+  - 4, 5 and 6 were already rules; coverage is tracked.
+  - 2 and 3 existed in part.
+  - 1 was new: the current envelope differs.
+- **Files:**
+  - `docs/decisions/decision-log.md` (DEC-097).
+  - Rules: `.ai/guidelines/20-architecture.md` (+ `CLAUDE.md`, `AGENTS.md`), `.ai/rules/api.md`,
+    `.ai/rules/admin-backpack.md`, `.ai/rules/app.md` (target formats / structure).
+  - `docs/todo.md`: W19, W19a–f.
+- **Open owner questions before W19a:** the app migration path (in place vs. v2), `project_response_code` numbering,
+  when `Timeout` applies, the form of `api`.

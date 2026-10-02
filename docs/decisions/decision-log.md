@@ -1561,3 +1561,28 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
      was run on the servers by the owner.
 - **Approved-by:** owner (03-10, in conversation) · **Risk:** low (UI / access of a new feature) · **Reversal:** per
   changelog entry of 03-10.
+
+### DEC-097 | 03-10-2026 | A (all) | Project-wide standards (owner directions)
+- **Decided (standing rules for all new and touched code):**
+  1. **One API response format** for every endpoint:
+     `{api, method, http_response_code, status, project_response_code, project_response_message, data, time_taken,
+     sync_timestamp}` — `api` the endpoint (e.g. `users/get`), `method` the HTTP verb, `status` Success / Failed /
+     Timeout, `time_taken` in milliseconds, `sync_timestamp` the data-update stamp (details to be discussed later).
+  2. A **response / error code registry structured Module → Process → Activity** behind `project_response_code` /
+     `project_response_message` (messages from the module lang files).
+  3. **Routes separated per module / process** (e.g. `routes/…/sales/booking.php`, `sales/quotation.php`,
+     `admin/approvals.php`), each declaring whether it is web-only, API-only or both, with its permission / role /
+     superadmin gates **in the route file** (in addition to the in-action check).
+  4. All logic in **service classes**; data access / manipulation in **Eloquent models** (DEC-050 / DEC-093 restated).
+  5. Every view uses the **standard interface** (UI kit, page shell — DEC-066 / 067 restated).
+  6. **RBAC Module → Process → Permission plus per-user data scoping implemented everywhere** (every business model,
+     screen, grid, export and API), with superadmin gates (DEC-071 restated, coverage to be completed).
+- **Already in place:** 4, 5 and 6 as rules (coverage gaps tracked); 2 in part (named codes `{MODULE}_{NAME}` in
+  `ErrorCodeEnum`); 3 in part (route files per area, gates inside actions).
+- **To build:** to-do W19 (W19a response format, W19b code registry, W19c route files + route gates, W19d
+  service / model gaps = W15, W19e view gaps = U2 / Q7, W19f RBAC + scope coverage audit).
+- **Open (owner):** how the mobile app moves to the new format (it reads `{http_status, success, code, message, data}`
+  today — DEC-004 / DEC-085 say "no breaking change in v1"); the numbering of `project_response_code`; the meaning of
+  `Timeout`; the form of `api`.
+- **Approved-by:** owner (03-10) · **Risk:** high for item 1 (mobile app contract), medium for item 3 (every route
+  touched) · **Reversal:** per W19 commit.

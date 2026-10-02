@@ -415,6 +415,13 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W16e | Support request: permissions `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`, categories + settings, `SupportRequestService` (masked zip → ticket, least-loaded admin as owner, executive-only assignment), screens, bundle rights, retention purge — ✅ 03-10 (grant the two permissions to designations: owner) | ✅ |
 | W16f | Developer guide `tech-guides/platform/17-help-support.md` (+ reference) with the build; the **user-facing** help texts / "Getting help" articles move to §13 (last) — ✅ 03-10 (guide complete incl. writing conventions; help-usage log + Help Centre report, FRS §7) | ✅ |
 | W18 | **Owner decisions 02-10 (DEC-095)** — build every item with a definitive answer; booking items as numbered, revertable BT changes | 🟡 in progress |
+| W19 | **Project-wide standards (DEC-097, owner 03-10)** — one API format, code registry, route files per process with gates, services / models, standard views, RBAC + data scope everywhere | 🟡 recorded 03-10; build after the owner answers the W19a questions |
+| W19a | API response format `{api, method, http_response_code, status, project_response_code, project_response_message, data, time_taken, sync_timestamp}` on every endpoint (+ docs / Postman / tests) — **owner: app migration path, code numbering, Timeout, `api` form** | 🔴 |
+| W19b | Response / error code registry Module → Process → Activity (numeric code + lang message), used by web `Result` and the API | 🔴 |
+| W19c | Routes: one file per module / process (`sales/booking.php`, `sales/quotation.php`, `admin/approvals.php`, …), web / API / both declared, permission / role / superadmin gates on the routes + in-action checks; route-snapshot before / after | 🔴 |
+| W19d | Logic in services, data in Eloquent models — remaining gaps = W15 (122 `DB::` uses / 7 files) + booking controller carve-out (SL6) | 🟡 |
+| W19e | Standard view interface on every screen — remaining = U2 / Q7 (legacy views) | 🟡 |
+| W19f | RBAC + per-user data scope coverage audit: every business model / grid / export / API endpoint has its permission gate and scope (report + fixes) | 🔴 |
 | W18a | Security: D2 `random_int` OTP (BUG-188), D3 entity allowlist for `docs/upload` / `history` (BUG-182), D1 OTP login from the person record (BUG-187) | ✅ 02-10 (+ BUG-227 fixed; BUG-228 SMS placeholder logged) |
 | W18b | v1 `system-settings` read endpoints narrowed / retired (BUG-207), `BaseController::authorize()` fixed (BUG-209); note for the app team | ✅ 02-10 (managers only; writes via SettingsService) |
 | W18c | Booking bugs BUG-223 / 224 / 225 / 226, BUG-219 (Dummy bookings validated), D21 BEV / Personal SO rule made to work (BUG-101) — ✅ 02-10 (BT-008 … BT-013) | ✅ |
