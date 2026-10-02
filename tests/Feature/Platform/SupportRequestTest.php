@@ -3,6 +3,7 @@
 namespace Tests\Feature\Platform;
 
 use App\Models\User;
+use App\Models\Utilities\Help\HelpUsage;
 use App\Models\Utilities\Support\SupportRequest;
 use App\Models\Utilities\Ticket\Ticket;
 use App\Services\Platform\Help\SupportRequestService;
@@ -66,6 +67,7 @@ class SupportRequestTest extends TestCase
         $ticket = Ticket::query()->findOrFail($response->json('data.ticket_id'));
         $this->assertSame(['SUP_NOT_WORKING', 'P3', $this->u[1]->id], [$ticket->category, $ticket->priority, (int) $ticket->owner_id]);
         $this->assertStringNotContainsString('ABCDE1234F', (string) $ticket->details);
+        $this->assertTrue(HelpUsage::query()->where('event', 'SUPPORT')->where('ref', $ticket->number)->exists(), 'W16f usage log');
 
         $request = SupportRequest::query()->findOrFail($response->json('data.id'));
         $zip = new ZipArchive;

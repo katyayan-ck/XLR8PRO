@@ -120,6 +120,7 @@ still writes (the row just has no `action_id`); the timeline label is always der
 | `AutoCloseResolvedTickets` | daily 03:00 | closes RESOLVED tickets after `ticket.autoclose_days` when enabled |
 | `FlagMissingCallRecordings` | every 15 min | flags calls without a recording after `telephony.recording_grace_minutes` and alerts `UTL_COMM_VIEW` |
 | `PurgeDeletedDocuments` | daily 02:30 | permanently removes documents soft-deleted more than `docs.purge_after_days` ago |
+| `PurgeHelpUsage` | daily 02:50 | deletes help-usage events older than `help.usage_retention_days` (W16f) |
 | `PurgeSupportBundles` | daily 02:45 | deletes support-request diagnostic zips older than `support.bundle_retention_days` (DEC-094) |
 
 Workers: `php artisan queue:work` must run for sends and push outside tests. The scheduler needs the usual
@@ -225,7 +226,7 @@ entity's `permission` in `config/platform.php`, or from the model's `chatCanView
 **Support requests (DEC-094, W16e):** `UTL_SUPP_ADMIN` (receives new support tickets; sees and manages every `SUP_*`
 ticket like the desk; sees all diagnostics), `UTL_SUPP_EXEC` (the only assignees a support ticket takes). Diagnostics
 are for the support team only (owner, assignees, snoopers, support admins) — never the requester — minted by
-`2026_10_03_004646_create_support_requests_dec094`, superadmin only. Settings `support.pane_requests` (true — the pane's "Still need help?"), `support.bundle_retention_days` (90),
+`2026_10_03_004646_create_support_requests_dec094`, superadmin only. Settings `help.usage_retention_days` (180), `support.pane_requests` (true — the pane's "Still need help?"), `support.bundle_retention_days` (90),
 `support.max_screenshot_kb` (4096).
 
 ## 7. Webhooks (`POST /api/webhooks/comms/{channel}`)

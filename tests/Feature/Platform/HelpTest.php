@@ -3,6 +3,8 @@
 namespace Tests\Feature\Platform;
 
 use App\Models\User;
+use App\Models\Utilities\Help\HelpUsage;
+use App\Services\Platform\Help\HelpUsageService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
@@ -101,6 +103,31 @@ class HelpTest extends TestCase
         $this->getJson(route('utils.help.search', ['q' => 'zebra']))->assertOk()->assertJsonCount(0, 'results');
         $this->getJson(route('utils.help.search', ['q' => 'managers']))->assertOk()->assertJsonCount(0, 'results');
         $this->get(route('utils.help.index'))->assertOk()->assertSee('Booking — edit')->assertDontSee('Settings secrets');
+    }
+
+    /** W16f: opens, missing screens, searches (masked), finished tours are logged; settings managers see the report; old rows purge. */
+    public function test_help_usage_is_logged_reported_and_purged(): void
+    {
+        HelpUsage::query()->delete();
+        $super = $this->superadmin();
+        $this->actingAs($super, 'backpack');
+
+        $this->getJson(route('utils.help.pane', ['route' => 'sales.booking.edit']))->assertOk();
+        $this->getJson(route('utils.help.pane', ['route' => 'org.branch.index']))->assertOk();
+        $this->getJson(route('utils.help.search', ['q' => 'booking']))->assertOk();
+        $this->getJson(route('utils.help.search', ['q' => 'ABCDE1234F']))->assertOk()->assertJsonCount(0, 'results');
+        $this->postJson(route('utils.help.track'), ['event' => 'TOUR_DONE', 'key' => 'sales/booking/edit'])->assertOk();
+        $this->postJson(route('utils.help.track'), ['event' => 'OPEN', 'key' => 'x'])->assertStatus(422);   // only tours come from the browser
+
+        $rows = HelpUsage::query()->orderBy('id')->get(['event', 'ref'])->map(fn ($r) => $r->event.':'.$r->ref)->all();
+        $this->assertSame(['OPEN:sales/booking/edit', 'MISSING:org.branch.index', 'SEARCH:booking', 'SEARCH_EMPTY:xxxxxx234f', 'TOUR_DONE:sales/booking/edit'], $rows);
+
+        $this->get(route('utils.help.index'))->assertOk()->assertSee('data-xl-help-usage', false)->assertSee('xxxxxx234f');
+        $this->flushSession();
+        $this->actingAs($this->bookingViewer(), 'backpack')->get(route('utils.help.index'))->assertOk()->assertDontSee('data-xl-help-usage', false);
+
+        HelpUsage::query()->update(['created_at' => now()->subDays(181)]);
+        $this->assertSame(5, app(HelpUsageService::class)->purge());
     }
 
     public function test_every_admin_page_carries_the_help_pane(): void

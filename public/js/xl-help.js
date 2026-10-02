@@ -102,7 +102,22 @@
             return;
         }
         close();
-        make({ showProgress: true, nextBtnText: t.tour_next, prevBtnText: t.tour_prev, doneBtnText: t.tour_done, steps: steps }).drive();
+        var tour = make({
+            showProgress: true, nextBtnText: t.tour_next, prevBtnText: t.tour_prev, doneBtnText: t.tour_done, steps: steps,
+            onDestroyStarted: function () {
+                if (!tour.hasNextStep()) { track('TOUR_DONE', data && data.key); }   // W16f: finished, not abandoned
+                tour.destroy();
+            },
+        });
+        tour.drive();
+    }
+
+    function track(event, key) {
+        if (!cfg.track || !key) { return; }
+        var csrf = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+        fetch(cfg.track, { method: 'POST', credentials: 'same-origin', body: JSON.stringify({ event: event, key: key }),
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf, 'X-Requested-With': 'XMLHttpRequest' } })
+            .catch(function () { /* usage logging never bothers the user */ });
     }
 
     function markSeen() {

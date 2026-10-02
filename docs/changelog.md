@@ -10706,3 +10706,26 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
   - `booking.sql` (booking team dump, untracked by rule).
   - `storage/basset/.basset` (local asset cache map — committing it would make the servers believe assets are cached).
   - The editor's temp file in `storage/framework/`.
+
+### W16f — help-usage log, Help Centre report, guide complete (DEC-094, FRS §7)
+- **Files (new):**
+  - Migration `2026_10_03_022308_create_help_usage_table_w16f.php` (`xlr8_utils_help_usage`; run on both DBs).
+  - `app/Models/Utilities/Help/HelpUsage.php`.
+  - `app/Services/Platform/Help/HelpUsageService.php`.
+  - `app/Jobs/Platform/PurgeHelpUsage.php` (daily 02:50).
+- **Changed:**
+  - `HelpController`: pane logs OPEN / MISSING, search logs SEARCH / SEARCH_EMPTY, new `track` (TOUR_DONE only), and
+    the report on the index for settings managers.
+  - `SupportRequestService` logs SUPPORT.
+  - `public/js/xl-help.js`: reports a tour that ends on its last step.
+  - Route `utils.help.track`; meta `track`; setting `help.usage_retention_days` (180); lang `help.usage_title`.
+  - `help/index.blade.php`: usage card.
+  - Guides `17-help-support.md` (writing conventions + usage log) and `16-reference.md`.
+- **Privacy:** search text masked (PAN / Aadhaar / mobile / e-mail / tokens) and cut to 100 characters; logging never
+  breaks a request.
+- **Checked:**
+  - `HelpTest` (+1: the events in order, masked query, client may send only TOUR_DONE, the report for superadmin and
+    not for a viewer, purge).
+  - `SupportRequestTest` (+SUPPORT event).
+  - Platform / lang / architecture / menu suites: 97 passed.
+  - Pages 200 for superadmin and user 40. PHPStan clean.

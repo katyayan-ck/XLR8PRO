@@ -59,6 +59,7 @@ return [
         'none_yet' => 'No help articles have been written yet.',
         'shortcut' => 'Press F1 (or ?) on any screen for its help.',
         'close' => 'Close help',
+        'usage_title' => 'Help usage — last :days days',
         'new' => 'help updated since you last read it',
         'tour_next' => 'Next',
         'tour_prev' => 'Back',

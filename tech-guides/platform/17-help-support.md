@@ -1,7 +1,7 @@
 # 17 — Help & support (F1 help, tours, support requests)
 
 > DEC-094, to-do W16. FRS: [help-and-support-frs.md](../frs-and-workflows/frs/help-and-support-frs.md).
-> Built: **W16b help engine**, **W16c page tours**, **W16d diagnostics**, **W16e support requests** (03-10-2026);
+> Built: **W16b help engine**, **W16c page tours**, **W16d diagnostics**, **W16e support requests**, **W16f usage log** (03-10-2026);
 > this guide grows with them (W16f). Help **content** (the articles themselves) is written last (§13).
 
 ## F1 help pane — how it works
@@ -127,6 +127,32 @@ Shown only to users with this permission (several codes: `::: can A, B` = any of
 - An article with invalid front matter is skipped and logged (`Help article front matter is invalid`).
 - A route with no article and no matching overview shows the "not written yet" message and logs `Help article
   missing` with the route, so writers see the gaps (also listed in the Help centre's coverage report).
+
+### Writing conventions (for the W17 articles)
+- One article per screen (or per list + form pair); the file path follows the menu: `{module}/{process}/{screen}.md`.
+  `routes:` lists every route name the screen uses (list, create, edit, show) so F1 finds it from each.
+- Sections, in this order: **What this screen is for** (1–2 sentences) · **Common tasks** (numbered steps, one action
+  per step, the button / field names exactly as on screen in **bold**) · **Fields** (name — what to enter, format, who
+  fills it) · **Rules** (validations and business rules in plain words, with the reason) · **FAQ** · **Related screens**
+  (links `[Bookings](/admin/sales/booking)`).
+- Sections only some users may act on go inside `::: can CODE` (e.g. approvers). Never put customer data, test
+  credentials or internal URLs in an article.
+- Plain words, short sentences, present tense, "you". Keep `updated:` current — it drives the "new" dot.
+- Tours: 3–7 steps, each on a stable `data-xl-tour` target; a step never asks the user to type or save.
+- Check gaps on the Help Centre: the coverage line and the usage report's "Screens without help (asked for)".
+
+## Help usage log (W16f, FRS §7)
+`App\Services\Platform\Help\HelpUsageService` → table `xlr8_utils_help_usage` (`HelpUsage`, append-only).
+| Event | Recorded by |
+|---|---|
+| `OPEN` (article key) / `MISSING` (route) | `HelpController::pane` |
+| `SEARCH` / `SEARCH_EMPTY` (query, masked, lower-case, ≤ 100 chars) | `HelpController::search` |
+| `TOUR_DONE` (article key) | the browser, when a tour ends on its last step → `POST utils.help.track` (the only client-sent event; others → 422) |
+| `SUPPORT` (ticket number) | `SupportRequestService::submit` |
+- `record(string $event, ?string $ref, ?int $userId): void` — never throws (a failure is logged).
+- `report(int $days = 30): array{days, totals, articles, missing, empty_searches, searches}` — the Help Centre shows it
+  to `UTL_SETTINGS_MANAGE` holders (totals + top 10 lists).
+- `purge(): int` — rows older than `help.usage_retention_days` (180); daily job `PurgeHelpUsage` 02:50.
 
 ## `App\Services\Platform\Help\HelpService`
 | Method | Returns |

@@ -35,6 +35,10 @@ Indexes: (doc_group_id), (document_id)
 id int PK, keyword varchar(50), name varchar(100)?, tbl_name varchar(50)?, col_name varchar(50)?, details varchar(250)?, recursive int, status int, created_at timestamp, created_by int?, updated_at timestamp?, updated_by int?, deleted_at timestamp?, deleted_by int?
 Indexes: UNIQUE (keyword)
 
+## `xlr8_utils_help_usage` · ~0 rows · model: App\Models\Utilities\Help\HelpUsage
+id bigint unsigned PK, user_id bigint unsigned?, event varchar(20), ref varchar(190)?, created_at timestamp?
+Indexes: (created_at), (event), (user_id)
+
 ## `xlr8_utils_keyvalue` · ~5478 rows · model: App\Models\Utilities\KeyValue\Keyvalue
 id bigint unsigned PK, keyword_code varchar(50)?, key varchar(255)?, code varchar(150), value text, details text?, parent_id varchar(255)?, level int, path text?, extra_data longtext?, status int, is_active tinyint(1), created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: UNIQUE (keyword_code,code), (created_by), (deleted_by), (parent_id), (status), (updated_by), UNIQUE (keyword_code,code)

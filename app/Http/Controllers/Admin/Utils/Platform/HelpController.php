@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Utils\Platform;
 
 use App\Http\Controllers\Controller;
 use App\Services\Platform\Help\HelpService;
+use App\Services\Platform\Help\HelpUsageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -15,7 +16,7 @@ use Illuminate\View\View;
  */
 class HelpController extends Controller
 {
-    public function __construct(private readonly HelpService $help) {}
+    public function __construct(private readonly HelpService $help, private readonly HelpUsageService $usage) {}
 
     /** Help centre: the articles the user may open, by module; screen coverage for settings managers. */
     public function index(): View
@@ -28,6 +29,7 @@ class HelpController extends Controller
             'title' => __('utils.help.centre'),
             'articles' => $articles,
             'coverage' => $user->can('UTL_SETTINGS_MANAGE') ? $this->help->coverage() : null,
+            'usage' => $user->can('UTL_SETTINGS_MANAGE') ? $this->usage->report(30) : null,   // W16f
         ]);
     }
 
@@ -36,6 +38,7 @@ class HelpController extends Controller
     {
         $route = (string) $request->validate(['route' => 'required|string|max:190'])['route'];
         $article = $this->help->forRoute($route, backpack_user());
+        $this->usage->record($article === null ? 'MISSING' : 'OPEN', $article['key'] ?? $route, backpack_user()->id);   // W16f
         if ($article === null) {
             return response()->json(['ok' => true, 'missing' => true, 'title' => __('utils.help.title'), 'message' => __('utils.help.missing')]);
         }
@@ -57,8 +60,18 @@ class HelpController extends Controller
     {
         $query = (string) $request->validate(['q' => 'required|string|min:2|max:100'])['q'];
         $results = array_map(fn (array $r) => $r + ['url' => route('utils.help.show', ['key' => $r['key']])], $this->help->search($query, backpack_user()));
+        $this->usage->record($results === [] ? 'SEARCH_EMPTY' : 'SEARCH', $query, backpack_user()->id);   // W16f
 
         return response()->json(['ok' => true, 'results' => $results]);
+    }
+
+    /** The browser reports a finished tour (W16f): `{event: TOUR_DONE, key}` — the only client-sent usage event. */
+    public function track(Request $request): JsonResponse
+    {
+        $data = $request->validate(['event' => 'required|in:TOUR_DONE', 'key' => 'required|string|max:190']);
+        $this->usage->record($data['event'], $data['key'], backpack_user()->id);
+
+        return response()->json(['ok' => true]);
     }
 
     /** One article as a full page (404 when missing or not allowed). */

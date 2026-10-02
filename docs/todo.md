@@ -413,7 +413,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W16c | On-demand page tour (Driver.js via Basset): steps from the article / `data-xl-tour`, skip missing elements, "new" dot — ✅ 03-10 | ✅ |
 | W16d | Diagnostics collector: actions / AJAX / JS errors ring buffer (no typed values), server request trail, html2canvas screenshot with sensitive-field blanking + preview — ✅ 03-10 (preview UI comes with the W16e form) | ✅ |
 | W16e | Support request: permissions `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`, categories + settings, `SupportRequestService` (masked zip → ticket, least-loaded admin as owner, executive-only assignment), screens, bundle rights, retention purge — ✅ 03-10 (grant the two permissions to designations: owner) | ✅ |
-| W16f | Developer guide `tech-guides/platform/17-help-support.md` (+ reference) with the build; the **user-facing** help texts / "Getting help" articles move to §13 (last) | 🔴 |
+| W16f | Developer guide `tech-guides/platform/17-help-support.md` (+ reference) with the build; the **user-facing** help texts / "Getting help" articles move to §13 (last) — ✅ 03-10 (guide complete incl. writing conventions; help-usage log + Help Centre report, FRS §7) | ✅ |
 | W18 | **Owner decisions 02-10 (DEC-095)** — build every item with a definitive answer; booking items as numbered, revertable BT changes | 🟡 in progress |
 | W18a | Security: D2 `random_int` OTP (BUG-188), D3 entity allowlist for `docs/upload` / `history` (BUG-182), D1 OTP login from the person record (BUG-187) | ✅ 02-10 (+ BUG-227 fixed; BUG-228 SMS placeholder logged) |
 | W18b | v1 `system-settings` read endpoints narrowed / retired (BUG-207), `BaseController::authorize()` fixed (BUG-209); note for the app team | ✅ 02-10 (managers only; writes via SettingsService) |
@@ -1490,3 +1490,13 @@ default, the page's diagnostics with a screenshot preview they can drop.
 - The owner grants `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC` to designations.
 - Firefox capture to be re-checked by the owner (no Firefox in the local Playwright).
 - W16f, the help-usage log.
+
+### W16f — help usage log and the finished help & support guide (DEC-094)
+
+**Delivered:** the help system now records how it is used: articles opened, screens with no help, searches (and those
+that find nothing), tours finished and support requests sent. Search text is masked. Settings managers see a 30-day
+report on the Help Centre: totals, most-read articles, screens people wanted help for, failed searches. Old events are
+purged after 180 days (a setting). The developer guide is complete, with writing conventions for the help articles.
+**Verified:** new tests; 97 related; page smoke for superadmin and user 40.
+**Left:**
+- W16 is done. Writing the help articles and the user manual (W17) stays last, after QA.

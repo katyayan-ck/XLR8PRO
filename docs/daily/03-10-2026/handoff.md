@@ -49,10 +49,10 @@
 - Full suite on 03-10: see "How to verify".
 
 ## In progress / next
-- **Next step: W16f** — finish `tech-guides/platform/17-help-support.md` (article-writing guide) and add the help-usage
-  log (FRS §7: articles opened, searches with no result, tours finished, requests sent — a small log table + a report on
-  the Help Centre for settings managers). Then the remaining unblocked work in `docs/todo.md` Part 1. The W17 manual /
-  help-article content stays last (§13).
+- **W16 help & support is complete** (W16b–f + owner rework DEC-096; guide `tech-guides/platform/17-help-support.md`).
+  W17 (help articles + user manual) stays last (§13, after bugs are fixed and QA has vetted).
+- **Next step:** pick the next unblocked row in `docs/todo.md` Part 1 (🔴 / 🟡 not marked ⏸ or waiting on the owner);
+  record it 🟡 here first.
 - **Blocked / waiting (do not start without the owner):**
   - W18f — the 5 booking reports (questions R1–R8 in `docs/owner-decisions-2026-10-01.md`, W18f section).
   - BUG-229 — what Order Verification's Reject should set.

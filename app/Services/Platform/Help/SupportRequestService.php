@@ -40,6 +40,7 @@ class SupportRequestService
         private readonly TicketService $tickets,
         private readonly DiagnosticsService $diagnostics,
         private readonly NotifyService $notify,
+        private readonly HelpUsageService $usage,
     ) {}
 
     /**
@@ -79,6 +80,8 @@ class SupportRequestService
             $this->notify->to($ownerId)->kind('N')->about('TICKET', $ticketId)->actor($user->id)
                 ->title(__('utils.support.owner_notification', ['number' => $opened->data['number']]))->send();
         }
+
+        $this->usage->record('SUPPORT', (string) $opened->data['number'], $user->id);   // W16f
 
         return Result::ok(['id' => $request->id, 'ticket_id' => $ticketId, 'number' => $opened->data['number']]);
     }

@@ -30,6 +30,7 @@ Route::group([
     Route::get('help', [HelpController::class, 'index'])->name('utils.help.index');
     Route::get('help/pane', [HelpController::class, 'pane'])->name('utils.help.pane');
     Route::get('help/search', [HelpController::class, 'search'])->name('utils.help.search');
+    Route::post('help/track', [HelpController::class, 'track'])->name('utils.help.track');   // W16f: tour finished
     Route::get('help/article/{key}', [HelpController::class, 'show'])->where('key', '[a-z0-9_\-/]+')->name('utils.help.show');
 
     // Support requests (DEC-094, W16e) — send: every signed-in user (it becomes a ticket); the diagnostics show on the

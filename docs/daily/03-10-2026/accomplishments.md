@@ -95,3 +95,13 @@ default, the page's diagnostics with a screenshot preview they can drop.
 - The owner grants `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC` to designations.
 - Firefox capture to be re-checked by the owner (no Firefox in the local Playwright).
 - W16f, the help-usage log.
+
+### W16f — help usage log and the finished help & support guide (DEC-094)
+
+**Delivered:** the help system now records how it is used: articles opened, screens with no help, searches (and those
+that find nothing), tours finished and support requests sent. Search text is masked. Settings managers see a 30-day
+report on the Help Centre: totals, most-read articles, screens people wanted help for, failed searches. Old events are
+purged after 180 days (a setting). The developer guide is complete, with writing conventions for the help articles.
+**Verified:** new tests; 97 related; page smoke for superadmin and user 40.
+**Left:**
+- W16 is done. Writing the help articles and the user manual (W17) stays last, after QA.
