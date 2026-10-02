@@ -87,9 +87,12 @@ nothing local is unpushed. Next push only when the owner asks.
   existing codes waits for the user reset (W18j): afterwards only the kept accounts' persons remain → small remap with
   an old → new map, owner's go.
   W18m 🟡 — Redis ready (`.env` switch only, guide 16-reference §4; BUG-230 queue `retry_after` 1900 s fixed).
-  **Waiting for the owner:** go to install Playwright (`npm i -D @playwright/test` + `npx playwright install chromium`),
-  then add `playwright.config.ts` + `tests/E2E/smoke.spec.ts` (login as a test user → dashboard → bookings list) and an
-  `npm run e2e` script.
+  **Owner 03-10:** Playwright approved; config + `tests/E2E/smoke.spec.ts` written. Owner runs the install
+  (`npm i -D @playwright/test`, `npx playwright install chromium`); then
+  `E2E_USER=… E2E_PASSWORD=… npx playwright test`. KYC masking on UAT / production approved; the owner adds
+  `php artisan privacy:mask-kyc-history --apply || echo "KYC masking failed"` to `deploy-hook.sh` (agent edits to the
+  deploy hook and the npm install were blocked by the tool's permission guard — do not retry them).
+  **Owner deals later:** W18f report definitions (R1–R8), BUG-229 Reject rule, `users:reset` account list.
   **Next step (no owner input needed): W16b** — help & support (see the W16 rows in `docs/todo.md` Part 1 and the FRS
   `tech-guides/frs-and-workflows/frs/help-and-support-frs.md`); user docs stay last (§13).
 

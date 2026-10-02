@@ -67,3 +67,7 @@ gscreds.json
 # Owner sample workbooks for to-do W14 (reference only, never committed)
 /Vehicle_Specifications.xlsx
 /Vehicle-Features.xlsx
+
+# Playwright (DEC-095 #34)
+/test-results
+/playwright-report

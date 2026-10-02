@@ -10435,3 +10435,15 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
 - **Not done:** Playwright E2E — installing `@playwright/test` (dev dependency) and its Chromium download needs the
   owner's go (new dependency / machine change). The plan is an E2E smoke (login → dashboard → bookings) under
   `tests/E2E`.
+
+### Owner 03-10: Playwright and the UAT / production KYC masking approved (DEC-095 #34, #19)
+- **Files:** new `playwright.config.ts` (dev-only, base URL / credentials from env) and `tests/E2E/smoke.spec.ts`
+  (sign in → dashboard → bookings → coming-soon page, no error page); `.gitignore` ignores `/test-results`,
+  `/playwright-report`.
+- **Not done by the agent (blocked by the tool's permission guard, left to the owner):**
+  1. `npm i -D @playwright/test` and `npx playwright install chromium`.
+  2. Adding `php artisan privacy:mask-kyc-history --apply || echo "KYC masking failed"` to `deploy-hook.sh`. It must
+     be non-fatal: the workflow stops on a failing step while the site is `down`. It runs idempotently on stage, UAT and
+     production at their next deploy.
+- **Owner later (unchanged):** booking report definitions R1–R8, the Reject rule (BUG-229), the account list for
+  `users:reset`.

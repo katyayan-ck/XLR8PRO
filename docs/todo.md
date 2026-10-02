@@ -422,12 +422,12 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W18e | D13 — the 52 dead menu links open a "coming soon" page (BUG-056 / 062) — ✅ 02-10 (59 items, BT-015) | ✅ |
 | W18f | D23 — the 5 booking reports rewritten on the current tables, inside a `Booking*Service` (BUG-122, #13) — ⏸ 02-10: needs report definitions R1–R8 (owner-decisions sheet, W18f section) | ⏸ |
 | W18g | DEC-093 #21 — schema tooling exemption in the guard (`ai:refresh-context`) — ✅ 02-10 | ✅ |
-| W18h | D26 — mask Aadhaar / PAN in old KYC rows (reversible: encrypted backup) — ✅ 02-10 local (`privacy:mask-kyc-history`); UAT / prod run needs approval | ✅ |
+| W18h | D26 — mask Aadhaar / PAN in old KYC rows (reversible: encrypted backup) — ✅ 02-10 local (`privacy:mask-kyc-history`); UAT / prod approved by the owner 03-10 — the owner adds the command to `deploy-hook.sh` (agent edit blocked by the permission guard) | ✅ |
 | W18i | D25 / BUG-173 — booking reads / writes variant codes with the colour suffix; vehicle master purge + re-import (V7 / DA2, with the pricing run) — ⏸ goes with the pricing run (owner: pricing decided later) | ⏸ |
 | W18j | #18 — local-only user reset command (keep a given list of accounts; dry run, backup) — run on the owner's list — ✅ built 02-10 (`users:reset`); run when the owner sends the list | ✅ |
 | W18k | N4 — session / password / lockout / self-service values as Settings (S3 / S4 / S5 / S7) — ✅ 02-10 (part 1 sign-in / OTP / lockout / device limits; part 2 password expiry + history, off by default) | ✅ |
 | W18l | BUG-206 — generated `person_code`; PAN / Aadhaar only masked (14 tables) — 🟡 02-10: new persons generated + upsert by ID ✅; remap of the remaining rows after the user reset (W18j) | 🟡 |
-| W18m | #33 Redis for cache + queue (UAT / production config, with IT); #34 Playwright E2E (with Q3) — 🟡 03-10: Redis ready (no code change; guide + `.env.example`; BUG-230 fixed); Playwright install (`@playwright/test` dev dependency + Chromium download) awaits the owner's go | 🟡 |
+| W18m | #33 Redis for cache + queue (UAT / production config, with IT); #34 Playwright E2E (with Q3) — 🟡 03-10: Redis ready (no code change; guide + `.env.example`; BUG-230 fixed); Playwright approved by the owner 03-10; `playwright.config.ts` + `tests/E2E/smoke.spec.ts` ready; the install (`npm i -D @playwright/test`, `npx playwright install chromium`) is run by the owner (the agent's install was blocked by the tool's permission guard) | 🟡 |
 
 **Needs you (not started):** D1–D29, N1, N3 / F2 formats, N4 security values (S3, S4, S5, S7), S6 / O3 / O6 / Q3 package
 approvals, O1 / O2 / O5 CI and server changes, V8 app-sync endpoint shape, V10 / DA6 deletions, the push to `stage`.
