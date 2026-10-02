@@ -1,7 +1,9 @@
 # Handoff — the one live state file (rewrite with every commit; `.ai/guidelines/10-workflow.md`)
 
-**Updated:** 03-10-2026 · **Branch:** `dev/admin` · **Pushed:** 03-10 (owner request) — `origin/dev/admin` = this branch
-after the end-of-day commit. The next push only when the owner asks; merge to `stage` (N2) only on the owner's prompt.
+**Updated:** 03-10-2026 · **Branch:** `dev/admin` · **Push pending:** the owner asked for a push on 03-10, but the agent's
+`git push` was blocked by the tool's permission guard (and GitHub was unreachable once) — the owner runs
+`git push origin dev/admin`. Local is 49+ commits ahead of `origin/dev/admin` (last pushed: `ad3824ee`, 01-10). Merge to
+`stage` (N2) only on the owner's prompt.
 
 ## Where things are (DEC-086 layout)
 - Guides: `tech-guides/README.md` (load map) · project card `tech-guides/00-project.md` · platform guides
@@ -14,7 +16,7 @@ after the end-of-day commit. The next push only when the owner asks; merge to `s
 
 ## Project state (summary; details in `docs/todo.md` Part 2 and `docs/daily/`)
 - **On `stage`:** entity services, platform utilities, UI layer, data scoping (DEC-050…071).
-- **On `origin/dev/admin`:** everything up to 03-10 — DEC-070…096, W1–W15, W16b–e, W18a–m (see below).
+- **On local `dev/admin` (push pending):** everything up to 03-10 — DEC-070…096, W1–W15, W16b–e, W18a–m (see below).
 - **Local data (`xlrm`):** vehicle masters purged (DEC-051) awaiting a fresh import; no published price snapshots.
   KYC copies in history masked (W18h); one test support ticket each from the owner (#1 no screenshot, #2 washed-out
   screenshot — both from before the fixes).
