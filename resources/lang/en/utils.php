@@ -45,6 +45,22 @@ return [
         'updated' => ':key updated.',
     ],
 
+    // F1 help pane and Help centre (DEC-094, W16b).
+    'help' => [
+        'title' => 'Help',
+        'centre' => 'Help centre',
+        'missing' => 'Help for this screen has not been written yet. Use "Still need help?" if you are stuck.',
+        'search' => 'Search help',
+        'no_results' => 'No help article matches.',
+        'updated' => 'Updated :date',
+        'open_full' => 'Open as a page',
+        'take_tour' => 'Take the tour',
+        'coverage' => 'Screens with their own help: :covered of :total',
+        'none_yet' => 'No help articles have been written yet.',
+        'shortcut' => 'Press F1 (or ?) on any screen for its help.',
+        'close' => 'Close help',
+    ],
+
     // "Coming soon" page for menu items whose screen is not built yet (DEC-095 #8, D13).
     'coming_soon' => [
         'title' => 'Coming soon',

@@ -10461,3 +10461,32 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
   `tests/Feature/Platform/KycHistoryMaskingTest.php`, `tests/Feature/Admin/Org/PersonCrudTest.php`, guide
   `16-reference.md` §8.
 - **Checked:** both tests pass (9 tests); PHPStan clean.
+
+### W16b — F1 help engine, pane and Help centre (DEC-094)
+- **Files (new):**
+  - `app/Services/Platform/Help/HelpService.php`.
+  - `app/Http/Controllers/Admin/Utils/Platform/HelpController.php`.
+  - Views `resources/views/admin/utils/platform/help/{index,show}.blade.php`.
+  - `public/js/xl-help.js`.
+  - `resources/help/` (articles folder; content comes last, §13).
+  - `tests/Feature/Platform/HelpTest.php`.
+  - Guide `tech-guides/platform/17-help-support.md` (+ README row).
+- **Changed:**
+  - `routes/backpack/utils.php`: `utils.help.{index,pane,search,show}`.
+  - `config/platform.php`: `help.path`.
+  - `resources/lang/en/utils.php`: `help.*`.
+  - `public/css/xl-ui.css`: `.xl-help-*`.
+  - `header_metas.blade.php`: `xl-help` meta + script on signed-in pages.
+  - `topbar_right_content.blade.php`: `?` button.
+- **Behaviour:**
+  - F1 / Shift+? / `?` opens a right-side pane with the current screen's article (route name → article, else the
+    process overview, else "not written yet", logged).
+  - `::: can CODE` sections show only to holders. Articles can be limited to permissions. Raw HTML is escaped.
+  - Search covers only what the user may see. The Help centre lists articles by module, plus screen coverage for
+    settings managers.
+  - Nothing loads until the first F1.
+- **Checked:**
+  - `HelpTest` (4 tests: sections per permission, overview / missing fallbacks, article permissions + search without
+    hidden text, escaped HTML, pane on every page).
+  - Platform / menu / UI / lang suites: 91 passed.
+  - Dashboard, Help centre, pane JSON and bookings → 200 as superadmin and user 40. PHPStan clean.

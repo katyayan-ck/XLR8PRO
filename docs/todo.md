@@ -409,7 +409,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W15 | **No `DB::` queries — convert to Eloquent** (your rule 01-10, DEC-093). Guard test + baseline (473 uses / 72 files). Order: W15a services / jobs / console / imports / models / support; W15b admin controllers outside Booking; W15c tests / seeders; W15d Booking controller + booking models (with the booking team) | 🟡 unblocked part ✅ 02-10 (473 → 126 uses; all tests, services, platform, booking BT-001…007); left 126 in 8 files — blocked: deletions #6 / D5, reports D23, spares D28, importers (phase 5), schema tooling #21 |
 | W16 | **Help & support utility** (your request 01-10, DEC-094) — F1 help pane, page tours, "Still need help?" support request with a diagnostic zip, support admin → executive routing; FRS `tech-guides/frs-and-workflows/frs/help-and-support-frs.md`, plan `…/plans/2026-10-01-help-and-support-DEC-094.md` | 🟡 planned — W16a ✅; build after W15a |
 | W16a | FRS + plan + DEC-094 + to-do | ✅ 01-10 |
-| W16b | Help engine: Markdown articles in `resources/help/`, route → article, `::: can CODE` sections, cache, search, coverage; F1 / `?` right-side pane; Help centre screen | 🔴 |
+| W16b | Help engine: Markdown articles in `resources/help/`, route → article, `::: can CODE` sections, cache, search, coverage; F1 / `?` right-side pane; Help centre screen — ✅ 03-10 | ✅ |
 | W16c | On-demand page tour (Driver.js via Basset): steps from the article / `data-xl-tour`, skip missing elements, "new" dot | 🔴 |
 | W16d | Diagnostics collector: actions / AJAX / JS errors ring buffer (no typed values), server request trail, html2canvas screenshot with sensitive-field blanking + preview | 🔴 |
 | W16e | Support request: permissions `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`, categories + settings, `SupportRequestService` (masked zip → ticket, least-loaded admin as owner, executive-only assignment), screens, bundle rights, retention purge | 🔴 |
@@ -1410,3 +1410,14 @@ old → new map for rollback, with the owner's go.
 **Left:**
 - Playwright E2E waits for the owner's go to install `@playwright/test` plus a Chromium download.
 - IT provides Redis for UAT / production.
+
+### W16b — F1 help on every screen (DEC-094)
+
+**Delivered:** pressing F1 (or the new `?` in the top bar) on any admin screen opens a help pane on the right with that
+screen's article, a search box and a link to the Help centre. Articles are Markdown files kept with the code. They can
+hide sections from users without a permission, and screens without an article show a friendly "not written yet". The
+Help centre lists the articles by module and, for settings managers, how many screens still lack help.
+**Verified:** 4 new tests plus 91 related tests; screens checked for superadmin and a scoped user; PHPStan clean.
+**Left:**
+- W16c page tours (Driver.js), W16d diagnostics, W16e support requests, W16f guide.
+- Writing the articles themselves is last (§13).

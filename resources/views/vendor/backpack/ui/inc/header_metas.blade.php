@@ -26,6 +26,12 @@
 <link rel="stylesheet" href="{{ asset('css/xl-ui.css') }}?v={{ @filemtime(public_path('css/xl-ui.css')) }}">
 <script defer src="{{ asset('js/xl-ui.js') }}?v={{ @filemtime(public_path('js/xl-ui.js')) }}"></script>
 <script defer src="{{ asset('js/xl-theme.js') }}?v={{ @filemtime(public_path('js/xl-theme.js')) }}"></script>
+{{-- F1 help pane (DEC-094, W16b) — signed-in admin pages; the article is fetched on the first open only --}}
+@if (backpack_user())
+    <meta name="xl-help" content="{{ json_encode(['route' => (string) \Illuminate\Support\Facades\Route::currentRouteName(), 'pane' => route('utils.help.pane'),
+        'search' => route('utils.help.search'), 'centre' => route('utils.help.index'), 'labels' => trans('utils.help')]) }}">
+    <script defer src="{{ asset('js/xl-help.js') }}?v={{ @filemtime(public_path('js/xl-help.js')) }}"></script>
+@endif
 {{-- Idle auto-logout / screen lock (go-live to-do S1 / S2) — signed-in pages only, never on the lock screen itself --}}
 @if (backpack_user() && ! request()->routeIs('xl.session.lock-screen'))
     @php $xlIdle = app(\App\Services\IAM\SessionGuardService::class)->config(); @endphp

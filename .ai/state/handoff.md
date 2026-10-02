@@ -90,8 +90,13 @@ nothing local is unpushed. Next push only when the owner asks.
   `php artisan privacy:mask-kyc-history --apply || echo "KYC masking failed"` to `deploy-hook.sh` (agent edits to the
   deploy hook and the npm install were blocked by the tool's permission guard — do not retry them).
   **Owner deals later:** W18f report definitions (R1–R8), BUG-229 Reject rule, `users:reset` account list.
-  **Next step (no owner input needed): W16b** — help & support (see the W16 rows in `docs/todo.md` Part 1 and the FRS
-  `tech-guides/frs-and-workflows/frs/help-and-support-frs.md`); user docs stay last (§13).
+- **W16 help & support (DEC-094):** W16b ✅ 03-10 (HelpService, pane `public/js/xl-help.js`, Help centre, guide
+  `tech-guides/platform/17-help-support.md`). **Next step: W16c** — on-demand page tour: Driver.js via Basset (approved
+  in DEC-094; pin a version, load only when a tour starts), steps from the article's `tour` front matter (already in
+  the pane JSON as `tour`), runner listens to `xl:help-loaded`, "Take the tour" button in the pane, `?tour=1` URL
+  start, skip steps whose element is missing, a "new" dot on `?` when the article changed since last opened
+  (localStorage per article key + `updated`); tests for the pane JSON tour data + a JS-free check that missing elements
+  are skipped (runner logic in a small pure function).
 
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;

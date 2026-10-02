@@ -24,6 +24,7 @@ Decisions: DEC-060 … DEC-067 in `docs/decisions/decision-log.md`. Rules for ag
 | 14 | Cookbook | wire a new module to all utilities, end to end (worked example + checklist) | — | [14-cookbook.md](14-cookbook.md) |
 | 15 | Testing | write feature tests for code that uses the utilities | — | [15-testing.md](15-testing.md) |
 | 16 | Reference | every result code, event, job, setting, permission, webhook rule | — | [16-reference.md](16-reference.md) |
+| 17 | Help & support | F1 help pane, help articles, Help centre (tours / support requests to come) | `HelpService`, `XL.help` | [17-help-support.md](17-help-support.md) |
 
 **New here?** Read the rules below, then [14-cookbook.md](14-cookbook.md), then the guide for each utility you touch.
 

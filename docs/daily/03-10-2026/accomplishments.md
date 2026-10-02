@@ -15,3 +15,14 @@ Tasks completed today, with full details (the date-wise copy). The same entries 
 **Left:**
 - Playwright E2E waits for the owner's go to install `@playwright/test` plus a Chromium download.
 - IT provides Redis for UAT / production.
+
+### W16b — F1 help on every screen (DEC-094)
+
+**Delivered:** pressing F1 (or the new `?` in the top bar) on any admin screen opens a help pane on the right with that
+screen's article, a search box and a link to the Help centre. Articles are Markdown files kept with the code. They can
+hide sections from users without a permission, and screens without an article show a friendly "not written yet". The
+Help centre lists the articles by module and, for settings managers, how many screens still lack help.
+**Verified:** 4 new tests plus 91 related tests; screens checked for superadmin and a scoped user; PHPStan clean.
+**Left:**
+- W16c page tours (Driver.js), W16d diagnostics, W16e support requests, W16f guide.
+- Writing the articles themselves is last (§13).

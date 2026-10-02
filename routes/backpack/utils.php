@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Utils\Platform\ApprovalReportController;
 use App\Http\Controllers\Admin\Utils\Platform\ChatController;
 use App\Http\Controllers\Admin\Utils\Platform\CommsController;
 use App\Http\Controllers\Admin\Utils\Platform\DocsLibraryController;
+use App\Http\Controllers\Admin\Utils\Platform\HelpController;
 use App\Http\Controllers\Admin\Utils\Platform\NotificationInboxController;
 use App\Http\Controllers\Admin\Utils\Platform\SettingsAdminController;
 use App\Http\Controllers\Admin\Utils\Platform\TaskController;
@@ -24,6 +25,12 @@ Route::group([
         (array) config('backpack.base.middleware_key', 'admin')
     ),
 ], function () {
+    // F1 help (DEC-094, W16b) — every signed-in user; articles follow their own `permissions`
+    Route::get('help', [HelpController::class, 'index'])->name('utils.help.index');
+    Route::get('help/pane', [HelpController::class, 'pane'])->name('utils.help.pane');
+    Route::get('help/search', [HelpController::class, 'search'])->name('utils.help.search');
+    Route::get('help/article/{key}', [HelpController::class, 'show'])->where('key', '[a-z0-9_\-/]+')->name('utils.help.show');
+
     // Notify inbox
     Route::get('inbox', [NotificationInboxController::class, 'index'])->name('utils.inbox.index');
     Route::post('inbox/mark-all', [NotificationInboxController::class, 'markAll'])->name('utils.inbox.mark-all');

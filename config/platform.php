@@ -58,6 +58,11 @@ return [
         'actions_keyword' => 'ENTITY_ACTIONS',
     ],
 
+    // F1 help articles (DEC-094, W16b): Markdown with front matter, one per screen; see HelpService.
+    'help' => [
+        'path' => resource_path('help'),
+    ],
+
     'docs' => [
         'kinds' => ['IMAGE', 'DOCUMENT', 'INFORMATION'],
         'collections' => ['docs', 'kyc', 'quote-pdf', 'thread-docs', 'wa-inbound', 'call-recordings'],

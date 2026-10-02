@@ -1,7 +1,7 @@
 # Plan: contextual help (F1), page tours, support requests with diagnostics, user manual (DEC-094, to-do W16 / W17)
 
-> **Status (01-10-2026): 📝 planned** — requirements in
-> [FRS](../frs/help-and-support-frs.md); build starts after W15 (owner, 01-10). Next step: W16b help engine.
+> **Status (03-10-2026): 🟡 in progress** — phase B (W16b help engine) done 03-10; next: W16c page tours. Requirements in
+> [FRS](../frs/help-and-support-frs.md).
 > **Owner 01-10:** the user manual (W17) and the help-article **content** move to the end of the to-do list (§13), after
 > all bugs are fixed and QA has vetted the functionality; the engine, pane, tours and support requests are built as planned.
 

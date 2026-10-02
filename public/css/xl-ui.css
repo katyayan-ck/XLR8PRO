@@ -313,3 +313,20 @@ label .required-mark { display: inline !important; }
 .xl-compare tr.xl-compare-differs > td { background: rgba(var(--tblr-warning-rgb), .08); }
 .xl-compare tr.xl-compare-differs > td.xl-compare-sticky { background: color-mix(in srgb, var(--tblr-bg-surface) 92%, var(--tblr-warning)); }
 @media print { .xl-compare { overflow: visible !important; } .xl-compare .xl-compare-sticky { position: static; } }
+
+/* F1 help pane (DEC-094, W16b) — right side, 420 px; full width on a phone */
+.xl-help-pane { position: fixed; top: 0; right: 0; bottom: 0; width: 420px; max-width: 100vw; z-index: 1060; display: flex; flex-direction: column;
+    background: var(--tblr-bg-surface); border-left: 1px solid var(--tblr-border-color); box-shadow: -.5rem 0 1.5rem rgba(0, 0, 0, .12);
+    transform: translateX(100%); visibility: hidden; transition: transform .2s ease, visibility .2s; }
+.xl-help-pane.show { transform: none; visibility: visible; }
+.xl-help-pane:focus { outline: none; }
+.xl-help-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .75rem 1rem; border-bottom: 1px solid var(--tblr-border-color); }
+.xl-help-search { padding: .75rem 1rem 0; }
+.xl-help-search [data-xl-help-results] { max-height: 40vh; overflow-y: auto; }
+.xl-help-body { flex: 1; overflow-y: auto; padding: 1rem; }
+.xl-help-foot { padding: .5rem 1rem; border-top: 1px solid var(--tblr-border-color); font-size: .875rem; }
+.xl-help-article h1, .xl-help-article h2 { font-size: 1.1rem; margin-top: 1rem; }
+.xl-help-article h3 { font-size: 1rem; margin-top: .75rem; }
+.xl-help-article img { max-width: 100%; height: auto; }
+@media (max-width: 575.98px) { .xl-help-pane { width: 100vw; } }
+@media print { .xl-help-pane { display: none !important; } }
