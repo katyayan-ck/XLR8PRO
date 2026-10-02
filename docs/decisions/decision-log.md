@@ -1545,3 +1545,19 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   no; #37 D28 spares, D4 leads — after go-live; #4 D29, #6 deletions, #20 DEC-090, #32 grants — not answered yet.
 - **Approved-by:** owner (02-10) · **Risk:** per item (the data items #15, #16, #18, #19 are the risky ones: each gets a
   dry run, a backup and a written reversal) · **Reversal:** per item, in its changelog / BT entry.
+
+### DEC-096 | 03-10-2026 | A (all) | Owner rules for support requests (help & support follow-up to DEC-094)
+- **Decided:**
+  1. Diagnostics of a support request are for the support team only. They are shown and downloadable on the ticket
+     page for support admins and the ticket's owner, assignees and snoopers — never for the requester, who must not see
+     or remove what was shared. No separate "Support Requests" section.
+  2. A site setting switches the pane's "Still need help?" auto-ticket on / off (`support.pane_requests`, default on).
+  3. Every signed-in user gets "My support tickets" in the user menu: the tickets they raised, plus a new plain
+     support ticket (always available).
+  4. html2canvas 1.4.1 is replaced by **html2canvas-pro 1.5.11** (MIT drop-in fork) — the original cannot render the
+     theme's modern CSS colours (BUG-232).
+  5. Screenshots capture the base page only: never the help pane or a backdrop, and never mid-animation (BUG-233).
+  6. Playwright E2E runs locally with the owner's test account (credentials only in env vars). The KYC-history masking
+     was run on the servers by the owner.
+- **Approved-by:** owner (03-10, in conversation) · **Risk:** low (UI / access of a new feature) · **Reversal:** per
+  changelog entry of 03-10.

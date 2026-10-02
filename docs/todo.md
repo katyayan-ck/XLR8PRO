@@ -1463,3 +1463,30 @@ default, the page's diagnostics with a screenshot preview they can drop.
 **Left:**
 - The owner grants the two support permissions to designations.
 - W16f guide wrap-up; help articles last (§13).
+
+### Support requests reworked to the owner's rules (03-10, DEC-096; BUG-232, BUG-233)
+
+**Delivered:**
+- **Ticket page:** diagnostics (screenshot, page, actions, network, errors, server, user, zip) show as a card on the
+  ticket page for the support team only — support admins, the owner, assignees and snoopers. The requester never sees
+  them and has no remove button: nothing is posted to the conversation.
+- **Removed:** the separate Support Requests section.
+- **Ticket rules:** support admins see and manage every support ticket; support tickets take only support executives as
+  assignees.
+- **Switch:** Settings → Support turns the pane's "Still need help?" on or off.
+- **My support tickets** (user menu): every user sees their own tickets and can raise a plain one.
+- **Screenshots work again:**
+  - The library was swapped to html2canvas-pro (the old one failed on every page).
+  - The base page is captured sharp, without the help pane or the theme's fade-in.
+  - A failed capture is shown and recorded, never silent.
+- **E2E smoke:** passes with the owner's test account.
+
+**Verified:**
+- `SupportRequestTest` (6), `HelpTest`, `DiagnosticsTest`, platform / IAM suites.
+- Real-browser captures (Chromium) on dashboard, My Account, bookings, tickets; light and dark.
+- Pages 200 for superadmin and user 40.
+
+**Left:**
+- The owner grants `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC` to designations.
+- Firefox capture to be re-checked by the owner (no Firefox in the local Playwright).
+- W16f, the help-usage log.

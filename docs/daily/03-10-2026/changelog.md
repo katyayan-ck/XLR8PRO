@@ -271,3 +271,19 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
   - Guide `17-help-support.md`.
 - **Verified:** Chromium through the real pane flow, dashboard + My Account, light + dark → clean base-page images.
   Ticket #2 keeps its old washed-out image; new requests are sharp.
+
+### End of day 03-10 — records brought to the current state; pushed to `origin/dev/admin` (owner request)
+- **Records:**
+  - DEC-096 (owner rules for support requests, html2canvas-pro, E2E) in `docs/decisions/decision-log.md`.
+  - Accomplishment "Support requests reworked to the owner's rules".
+  - To-do W16 status.
+  - Handoff rewritten (stale 01-10 header / sections replaced by the current state, waiting items, next step W16f).
+  - Daily copies `docs/daily/03-10-2026/`.
+- **Bugs:** 24 open / 209 closed.
+  - 03-10: BUG-230, BUG-232, BUG-233 closed.
+  - BUG-231 (local env) open.
+- **Full suite:** 613 passed, 1 known skip, 0 failures (329 s).
+- **Not committed on purpose:**
+  - `booking.sql` (booking team dump, untracked by rule).
+  - `storage/basset/.basset` (local asset cache map — committing it would make the servers believe assets are cached).
+  - The editor's temp file in `storage/framework/`.
