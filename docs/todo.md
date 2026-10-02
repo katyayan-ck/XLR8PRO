@@ -427,7 +427,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W18j | #18 — local-only user reset command (keep a given list of accounts; dry run, backup) — run on the owner's list — ✅ built 02-10 (`users:reset`); run when the owner sends the list | ✅ |
 | W18k | N4 — session / password / lockout / self-service values as Settings (S3 / S4 / S5 / S7) — ✅ 02-10 (part 1 sign-in / OTP / lockout / device limits; part 2 password expiry + history, off by default) | ✅ |
 | W18l | BUG-206 — generated `person_code`; PAN / Aadhaar only masked (14 tables) — 🟡 02-10: new persons generated + upsert by ID ✅; remap of the remaining rows after the user reset (W18j) | 🟡 |
-| W18m | #33 Redis for cache + queue (UAT / production config, with IT); #34 Playwright E2E (with Q3) — 🟡 03-10: Redis ready (no code change; guide + `.env.example`; BUG-230 fixed); Playwright installed by the owner 03-10 (`@playwright/test` 1.63, Chromium); `npm run e2e` — sign-in check passes; signed-in smoke needs `E2E_USER` / `E2E_PASSWORD` (a test account) | ✅ |
+| W18m | #33 Redis for cache + queue (UAT / production config, with IT); #34 Playwright E2E (with Q3) — 🟡 03-10: Redis ready (no code change; guide + `.env.example`; BUG-230 fixed); Playwright installed by the owner 03-10 (`@playwright/test` 1.63, Chromium); `npm run e2e` — both tests pass 03-10 with an owner-provided local account (credentials only in env vars, never committed) | ✅ |
 
 **Needs you (not started):** D1–D29, N1, N3 / F2 formats, N4 security values (S3, S4, S5, S7), S6 / O3 / O6 / Q3 package
 approvals, O1 / O2 / O5 CI and server changes, V8 app-sync endpoint shape, V10 / DA6 deletions, the push to `stage`.

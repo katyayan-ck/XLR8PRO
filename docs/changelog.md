@@ -10545,3 +10545,9 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
   - `DiagnosticsTest` (masking, URL cleaning, trail cap, heartbeat skipped, page wiring).
   - Platform / IAM / admin-auth / architecture suites: 116 passed.
   - Pages 200 for superadmin and user 40. PHPStan clean; JS syntax checked.
+
+### E2E smoke passes end to end (DEC-095 #34)
+- `npx playwright test` with an owner-provided local account (passed in `E2E_USER` / `E2E_PASSWORD` only): 2 passed —
+  the sign-in page, then sign in → dashboard → bookings list → coming-soon page with no error page.
+- Windows cmd usage: `set "E2E_USER=…" && set "E2E_PASSWORD=…" && npm run e2e` (quotes keep the trailing space out of
+  the value); bash: `E2E_USER=… E2E_PASSWORD=… npm run e2e`.

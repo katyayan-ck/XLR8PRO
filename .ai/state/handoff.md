@@ -84,8 +84,8 @@ nothing local is unpushed. Next push only when the owner asks.
   existing codes waits for the user reset (W18j): afterwards only the kept accounts' persons remain → small remap with
   an old → new map, owner's go.
   W18m 🟡 — Redis ready (`.env` switch only, guide 16-reference §4; BUG-230 queue `retry_after` 1900 s fixed).
-  **Owner 03-10:** Playwright installed (1.63, Chromium) — `npm run e2e`: sign-in check passes; the signed-in smoke
-  needs `E2E_USER` / `E2E_PASSWORD` (a test account — ask the owner; never set passwords ourselves). KYC masking run
+  **Owner 03-10:** Playwright installed (1.63, Chromium) — `npm run e2e`: both tests pass with the owner's local test
+  account (ask the owner for it; never store it; cmd: `set "E2E_USER=…" && set "E2E_PASSWORD=…" && npm run e2e`). KYC masking run
   on the servers by the owner; local DBs show 0 left.
   **Owner deals later:** W18f report definitions (R1–R8), BUG-229 Reject rule, `users:reset` account list.
 - **W16 help & support (DEC-094):** W16b, W16c, W16d ✅ 03-10 (pane, Help centre, tours, diagnostics collector
