@@ -246,3 +246,19 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
   - `PasswordPolicyTest` (history on / off, expiry redirect / JSON / account page open / cleared by a change).
   - IAM + Lang + architecture suites: 36 passed.
   - Dashboard, My Account and booking list → 200 as superadmin and user 40. PHPStan clean.
+
+### W18l — `person_code` is generated, never a government ID (BUG-206, DEC-095 #15)
+- **Files:**
+  - `app/Services/Person/PersonRecordService.php`: `derive()` no longer copies Aadhaar / PAN / TAN into the code;
+    `upsert()` without a code finds the existing person by Aadhaar → PAN → TAN (new private `findByIdentifiers()`,
+    deleted ones restored).
+  - Doc line in `app/Services/PersonService.php`.
+  - `tests/Feature/Person/PersonEntityServicesTest.php`: the old "derived from Aadhaar" test now asserts a generated
+    code; new dedupe test.
+  - Guides `tech-guides/modules/person.md` and `README.md`; BUG-206 entry.
+- **Before → after:** a new person's key was their Aadhaar (or PAN / TAN), spreading the ID into 14 referencing
+  tables, URLs and logs. Now it is `PERS-######` (the existing fallback format). Finding the same person again works
+  through the unique ID columns, so imports still update rather than duplicate.
+- **Checked:** Person, Org (incl. users workbook) and user-behaviour suites: 46 passed. PHPStan clean.
+- **Left:** remap the existing codes. After the user reset (W18j), only the kept accounts' persons remain; that remap
+  runs with the owner's go.

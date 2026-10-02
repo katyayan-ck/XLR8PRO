@@ -38,7 +38,7 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-190 | `App\Services\RBACService` is injected into `UserCrudController` but never called; `canUserAccess()` checks `resource.action` names that don't exist (permissions are `MOD_PROC_ACT`), `getUserPermissions()` uses a missing `User::userRoleAssignments` relation and `UserRoleAssignment::isActive()` | Low | OPEN (deletion — D7) | 28-09-2026 | — |
 | BUG-191 | `Booking` scopes `pendingPayment`, `pendingInsurance`, `pendingRTO`, `pendingDeliveries`, `pendingDO` and the static count helpers (`getDynamicBookingCounts`, finance / exchange MTD-YTD) reference `xcelr8_booking_*` / `bookings` tables, a missing `Branches` class and old `branch_id` / `abbr` columns — every call throws; no caller found today | Low | OPEN (booking team — D12) | 28-09-2026 | — |
 | BUG-199 | Variant rows imported before DEC-051 store the OEM code **without** the colour suffix (`code` = 16-char stem, colour only in `color_code`; 2,652 rows for 652 codes). Price-list codes carry the colour, so Detect treats those vehicles as new and creates duplicate INCOMPLETE stubs (test copy: 1,859 of 2,782 PV stubs) | High | DECIDED (DEC-074) — purge + re-import per environment | 28-09-2026 | — |
-| BUG-206 | `person_code` (the person business key, referenced by 14 tables incl. users, bookings, enquiries) holds the person's **PAN (51) or Aadhaar (160)** for 211 of 215 people — government IDs as a key spread into every referencing row, URLs and logs (DPDP / UIDAI Aadhaar-storage risk) | High | OPEN (owner decision: surrogate key + remap — data dictionary §person) | 29-09-2026 | — |
+| BUG-206 | `person_code` (the person business key, referenced by 14 tables incl. users, bookings, enquiries) holds the person's **PAN (51) or Aadhaar (160)** for 211 of 215 people — government IDs as a key spread into every referencing row, URLs and logs (DPDP / UIDAI Aadhaar-storage risk) | High | PARTLY FIXED 02-10 — new persons get generated codes; existing codes remapped after the user reset (W18j) | 29-09-2026 | 02-10-2026 |
 | BUG-218 | Legacy employees without the primaries DEC-089 now requires: of 200 active employees 24 have no branch, 39 no location, 5 no department, 12 no division, 35 no vertical (local `xlrm`, 30-09) | Medium | OPEN — data (HR / owner): fill through the new users workbook (W10) or the bulk screen (W11) | 30-09-2026 | — |
 | BUG-221 | Code referencing classes that do not exist (found by the PHPStan baseline, W4): Booking helper, accessory export, spare master, production RBAC seeder | Low | PARTLY FIXED 01-10 — accessory export repaired; dead Booking helpers / spare master / RBAC seeder await the owner's deletion OK | 30-09-2026 | — |
 | BUG-228 | App OTP SMS is never sent: `OtpNotificationService::sendViaSms()` is a placeholder that only logs | High | OPEN — found 02-10 (W18a) | 02-10-2026 | — |
@@ -314,6 +314,12 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
   2. A mapping table.
   3. A migration that remaps the 14 tables in one transaction, with a backup.
   4. `PersonService` generates new codes; the ID numbers stay only in their (masked / encrypted) columns.
+- **Partly fixed (02-10-2026, W18l, DEC-095 #15):** `PersonRecordService` no longer turns the Aadhaar / PAN into the code
+  — every new person gets `PERS-######`, and an upsert without a code finds the same person by Aadhaar, then PAN, then TAN
+  (deleted ones restored), so no duplicates. Tests `PersonEntityServicesTest::test_person_fields_are_normalised_and_the_code_is_generated_not_a_government_id`,
+  `::test_an_upsert_finds_the_existing_person_by_a_government_id`. **Left:** the existing rows' codes. The user reset
+  (W18j) removes all but the kept accounts' persons; the few that remain are remapped (with an old → new mapping kept
+  for rollback) after it — a key remap across the referencing tables, run with the owner's go.
 
 ### BUG-218 — Legacy employees without the primaries DEC-089 now requires: of 200 active employees 24 have no branch, 39 no location, 5 no department, 12 
 

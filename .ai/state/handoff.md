@@ -80,11 +80,13 @@ nothing local is unpushed. Next push only when the owner asks.
   `AdminLoginController` bound over Backpack's).
   W18k ✅ (part 2: `account.password_expiry_days` / `account.password_history_count`, off by default;
   `EnforcePasswordExpiry` middleware; `xlr8_iam_password_history`).
-  **Next step: W18l** — BUG-206: generated `person_code` (surrogate) instead of PAN / Aadhaar, remapped across the 14
-  referencing tables. This is a mass data remap (stop-and-ask list), so first write the plan: the code format, the
-  mapping table (old → new, kept for rollback), the tables / columns, and whether to run before or after the user reset
-  (W18j). Then ask the owner to approve the run; the code (generator in `PersonRecordService`, migration with the
-  mapping table, artisan remap command with dry run + `--restore`) can be built and tested on `xlrm_testing` first.
+  W18l 🟡 — new persons get `PERS-######`, upsert finds a person by Aadhaar → PAN → TAN (done). The remap of the
+  existing codes waits for the user reset (W18j): afterwards only the kept accounts' persons remain → small remap with
+  an old → new map, owner's go.
+  **Next step: W18m** — #33 Redis config prep for UAT / production (config + `.env.example` keys + doc for IT;
+  local stays on the database / file drivers, no new dependency without approval — phpredis vs predis is IT's call);
+  #34 Playwright E2E: Playwright is approved dev-only for the manual; check `package.json` / existing setup, then add
+  an E2E smoke (login → dashboard → bookings) runnable locally.
 
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;

@@ -39,7 +39,7 @@ Email / SMS / WhatsApp / Telephony, UI kit).
 
 **Person** — [person.md](person.md) · rules `.ai/rules/modules/org-person.md` · spec `frs/person-system-frs.md`
 - One row per human or company (`xlr8_admin_person`, key `person_code`); contacts / addresses / banking in fixed type slots (DEC-053).
-- `PersonService::find($anything)`; open issue BUG-206 (`person_code` = PAN / Aadhaar).
+- `PersonService::find($anything)`; `person_code` is generated (`PERS-######`) since 02-10 — older rows still to remap (BUG-206).
 
 **HR** — [hr.md](hr.md) · employee history over time (`xlr8_admin_employee_history`), written only by `EmployeeJourneyService`.
 

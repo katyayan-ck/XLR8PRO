@@ -27,7 +27,8 @@ class PersonEntityServicesTest extends TestCase
         return app(PersonRecordService::class)->create(['display_name' => 'slot test person']);
     }
 
-    public function test_person_fields_are_normalised_and_the_code_is_derived_from_aadhaar(): void
+    /** BUG-206 (DEC-095 #15): the code is generated, never the Aadhaar / PAN. */
+    public function test_person_fields_are_normalised_and_the_code_is_generated_not_a_government_id(): void
     {
         $person = app(PersonRecordService::class)->create([
             'display_name' => '  ravi   kumar sharma ',
@@ -39,11 +40,28 @@ class PersonEntityServicesTest extends TestCase
             'mobile' => '+91 98765 00111',
         ]);
 
-        $this->assertSame('234567890199', $person->person_code);
+        $this->assertMatchesRegularExpression('/^PERS-\d{6,}$/', $person->person_code);
+        $this->assertSame('234567890199', $person->aadhaar_no);
         $this->assertSame('Ravi Kumar Sharma', $person->display_name);
         $this->assertSame(['Ravi', 'Kumar', 'Sharma'], [$person->first_name, $person->middle_name, $person->last_name]);
         $this->assertSame(['ABCDE1234F', 'Male', 'Mr'], [$person->pan_no, $person->gender, $person->salutation]);
         $this->assertSame('9876500111', $person->primary_mobile);
+    }
+
+    /** BUG-206: an upsert without a code finds the same person by Aadhaar (then PAN), also a deleted one. */
+    public function test_an_upsert_finds_the_existing_person_by_a_government_id(): void
+    {
+        $service = app(PersonRecordService::class);
+        $first = $service->create(['display_name' => 'Dedupe Person', 'aadhaar_no' => '345678901288', 'pan_no' => 'BCDEF2345G']);
+
+        $byAadhaar = $service->upsert(['display_name' => 'Dedupe Person Again', 'aadhaar_no' => '3456 7890 1288']);
+        $this->assertSame($first->person_code, $byAadhaar->person_code);
+
+        $first->delete();
+        $byPan = $service->upsert(['display_name' => 'Dedupe Person', 'pan_no' => 'bcdef2345g']);
+        $this->assertSame($first->person_code, $byPan->person_code);
+        $this->assertNull($byPan->fresh()->deleted_at, 'the deleted person is restored');
+        $this->assertSame(1, Person::withTrashed()->where('pan_no', 'BCDEF2345G')->count());
     }
 
     public function test_a_two_word_name_splits_into_first_and_last_only(): void

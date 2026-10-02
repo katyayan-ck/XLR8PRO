@@ -159,3 +159,11 @@ N4 list (idle logout, lockout, password rules / expiry / history, self-service c
 **Verified:** `PasswordPolicyTest`; 36 IAM / Lang / architecture tests; smoke of dashboard, My Account and bookings for
 superadmin and user 40.
 **Left:** the owner chooses the values in Settings.
+
+### W18l — new persons get a generated code instead of their Aadhaar / PAN (BUG-206, DEC-095 #15)
+
+**Delivered:** every person created from now on is keyed `PERS-######`. The same person is still recognised on re-import
+or re-entry by Aadhaar, PAN or TAN (a deleted one is restored), so there are no duplicates.
+**Verified:** person and org suites: 46 tests, including the users workbook round-trip and a new dedupe test.
+**Left:** the old codes of the persons that survive the user reset (W18j) are remapped afterwards, keeping an
+old → new map for rollback, with the owner's go.

@@ -93,10 +93,12 @@ $person = PersonService::upsert([
     'addresses' => [['address_line_1' => '12, Malviya Nagar', 'city' => 'jaipur', 'state' => 'rajasthan', 'pincode' => '302017']],
     'banking'   => [['bank_name' => 'HDFC', 'account_number' => '5010 0012 3456', 'ifsc_code' => 'hdfc0001234', 'account_holder_name' => 'Ravi Kumar Sharma']],
 ]);
-// → person_code derived from PAN (individual: Aadhaar, then PAN; legal entity: PAN, then TAN; else PERS-######),
-//   names split from the display name, salutation "Mr", email lower-cased, first address/bank land in the Primary slot.
+// → person_code generated (PERS-######, never a government ID — BUG-206, DEC-095 #15), names split from the display
+//   name, salutation "Mr", email lower-cased, first address/bank land in the Primary slot.
 ```
-- Matches an existing person by the given or derived `person_code`; a **soft-deleted** person with that code is restored.
+- Matches an existing person by the given `person_code`, else by Aadhaar, then PAN, then TAN (deleted ones included);
+  a **soft-deleted** match is restored. Persons created before 02-10-2026 may still carry a PAN / Aadhaar code until the
+  remap (BUG-206).
 - Aadhaar / PAN / TAN / GSTIN are unique across all persons including deleted ones.
 - Options `with` = relations to return loaded.
 

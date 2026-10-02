@@ -20,8 +20,9 @@ use Illuminate\Validation\Rule;
 /**
  * The person row (xlr8_admin_person) — its only write path (DEC-050/053).
  *
- * - person_code is derived when not given: individual → Aadhaar, then PAN; legal entity → PAN,
- *   then TAN; otherwise PERS-###### at create. It never changes afterwards.
+ * - person_code is generated at create (PERS-######) and never changes; it is never a government ID (BUG-206,
+ *   DEC-095 #15). An upsert without a code finds the existing person by Aadhaar, PAN, then TAN (deleted ones
+ *   restored), so the same person is not created twice.
  * - display_name and first/middle/last name fill each other: a missing display name is built from
  *   the parts, missing parts are split from the display name.
  * - Aadhaar/PAN/TAN/GSTIN are unique across all persons, deleted ones included (DB unique keys).
@@ -101,7 +102,16 @@ final class PersonRecordService extends EntityService
      */
     public function upsert(array $input, ?array $key = null): Model
     {
-        $code = $this->normalise($input)['person_code'] ?? null;
+        $normalised = $this->normalise($input);
+        $code = $normalised['person_code'] ?? null;
+        if ($code === null) {
+            // BUG-206 (DEC-095 #15): the same person is found by a government ID, never by turning it into the code
+            $existing = $this->findByIdentifiers($normalised);
+            if ($existing !== null) {
+                $code = (string) $existing->getAttribute('person_code');
+                $input['person_code'] = $code;
+            }
+        }
         if ($code !== null) {
             Person::onlyTrashed()->where('person_code', $code)->first()?->restore();
         }
@@ -109,18 +119,28 @@ final class PersonRecordService extends EntityService
         return parent::upsert($input, $key);
     }
 
-    protected function derive(array $data, array $input): array
+    /**
+     * The person (deleted ones included) holding one of these identifiers: Aadhaar, then PAN, then TAN.
+     *
+     * @param  array<string, mixed>  $data  normalised input
+     */
+    private function findByIdentifiers(array $data): ?Person
     {
-        if (($data['person_code'] ?? null) === null) {
-            $identifiers = ($data['entity_type'] ?? 'individual') === 'legal_entity'
-                ? [$data['pan_no'] ?? null, $data['tan_no'] ?? null]
-                : [$data['aadhaar_no'] ?? null, $data['pan_no'] ?? null];
-            $derived = collect($identifiers)->first(fn ($v) => $v !== null);
-            if ($derived !== null) {
-                $data['person_code'] = $this->normaliseField('person_code', $derived);
+        foreach (['aadhaar_no', 'pan_no', 'tan_no'] as $column) {
+            $value = $data[$column] ?? null;
+            if ($value !== null && $value !== '') {
+                $person = Person::withTrashed()->where($column, $value)->first();
+                if ($person !== null) {
+                    return $person;
+                }
             }
         }
 
+        return null;
+    }
+
+    protected function derive(array $data, array $input): array
+    {
         $parts = array_filter([$data['first_name'] ?? null, $data['middle_name'] ?? null, $data['last_name'] ?? null]);
 
         if (($data['display_name'] ?? null) !== null && ($data['entity_type'] ?? 'individual') === 'individual') {

@@ -113,7 +113,7 @@ class PersonService
     // ─────────────────────────────────────────────────────────────────────
 
     /**
-     * Create or update a person (by given or derived person_code; a deleted one is restored)
+     * Create or update a person (by the given person_code, else by Aadhaar / PAN / TAN — BUG-206; a deleted one is restored)
      * plus any `contacts`, `addresses` and `banking` rows, in one transaction.
      *
      * @param  array<string, mixed>  $data

@@ -426,7 +426,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W18i | D25 / BUG-173 — booking reads / writes variant codes with the colour suffix; vehicle master purge + re-import (V7 / DA2, with the pricing run) — ⏸ goes with the pricing run (owner: pricing decided later) | ⏸ |
 | W18j | #18 — local-only user reset command (keep a given list of accounts; dry run, backup) — run on the owner's list — ✅ built 02-10 (`users:reset`); run when the owner sends the list | ✅ |
 | W18k | N4 — session / password / lockout / self-service values as Settings (S3 / S4 / S5 / S7) — ✅ 02-10 (part 1 sign-in / OTP / lockout / device limits; part 2 password expiry + history, off by default) | ✅ |
-| W18l | BUG-206 — generated `person_code`; PAN / Aadhaar only masked (14 tables) | 🔴 |
+| W18l | BUG-206 — generated `person_code`; PAN / Aadhaar only masked (14 tables) — 🟡 02-10: new persons generated + upsert by ID ✅; remap of the remaining rows after the user reset (W18j) | 🟡 |
 | W18m | #33 Redis for cache + queue (UAT / production config, with IT); #34 Playwright E2E (with Q3) | 🔴 |
 
 **Needs you (not started):** D1–D29, N1, N3 / F2 formats, N4 security values (S3, S4, S5, S7), S6 / O3 / O6 / Q3 package
@@ -1387,3 +1387,11 @@ N4 list (idle logout, lockout, password rules / expiry / history, self-service c
 **Verified:** `PasswordPolicyTest`; 36 IAM / Lang / architecture tests; smoke of dashboard, My Account and bookings for
 superadmin and user 40.
 **Left:** the owner chooses the values in Settings.
+
+### W18l — new persons get a generated code instead of their Aadhaar / PAN (BUG-206, DEC-095 #15)
+
+**Delivered:** every person created from now on is keyed `PERS-######`. The same person is still recognised on re-import
+or re-entry by Aadhaar, PAN or TAN (a deleted one is restored), so there are no duplicates.
+**Verified:** person and org suites: 46 tests, including the users workbook round-trip and a new dedupe test.
+**Left:** the old codes of the persons that survive the user reset (W18j) are remapped afterwards, keeping an
+old → new map for rollback, with the owner's go.
