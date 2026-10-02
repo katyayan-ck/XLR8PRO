@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\Admin\Account\AdminLoginController;
 use App\Models\Utilities\Settings\SystemSetting;
 use App\Models\Vehicle\Pricing\Pricing;
 use App\Services\AuthService;
@@ -35,6 +36,7 @@ use App\Services\Vehicle\Pricing\Engine\PricingRecalcService;
 use App\Services\Vehicle\Pricing\PricingSyncStamp;
 use App\Services\Vehicle\Pricing\Session\PricingChangeObserver;
 use App\Services\Vehicle\Pricing\Session\PricingChangeRecorder;
+use Backpack\CRUD\app\Http\Controllers\Auth\LoginController;
 use Illuminate\Cache\CacheManager;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
 use Illuminate\Http\Request;
@@ -49,6 +51,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // N4 (DEC-095 #28): the admin login's lockout limits come from site settings
+        $this->app->bind(LoginController::class, AdminLoginController::class);
+
         // // Register services as singletons for performance
         $this->app->singleton(RBACService::class, function ($app) {
             return new RBACService;

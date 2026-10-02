@@ -138,3 +138,13 @@ affected tables before removing anything.
 - Run it when the owner sends the account list (1 super admin, 5 dev, 1 app dev). Pass
   `--bin-dir=D:\laragon\bin\mysql\mysql-8.4.3-winx64\bin` (`MYSQL_BIN_DIR` is not in the local `.env`).
 - Then the new user import (W10 workbook).
+
+### W18k part 1 — sign-in limits editable as site settings (N4, DEC-095 #28)
+
+**Delivered:** Settings → Security now holds the admin sign-in lockout (wrong passwords, lock minutes) and the mobile
+app's OTP limits (validity, requests per window, wrong OTPs, lock length, device limit). Defaults are the previous fixed
+values, so there is no change until edited. Idle logout, password rules and self-service changes were already
+settings.
+**Verified:** new lockout / OTP tests; 76 API / IAM / Utils / admin-auth tests pass; PHPStan clean.
+**Left (part 2):** password expiry and password history do not exist yet. They will be added switched off by default
+(0 = off), as settings.

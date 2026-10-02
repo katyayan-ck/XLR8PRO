@@ -43,19 +43,16 @@ class AuthService
      */
     private const OTP_LENGTH = 6;
 
-    private const OTP_EXPIRY_MINUTES = 10;
-
-    private const MAX_OTP_REQUESTS = 5;
-
-    private const OTP_REQUEST_WINDOW_MINUTES = 15;
-
-    private const MAX_OTP_ATTEMPTS = 5;
-
-    private const OTP_ATTEMPT_WINDOW_MINUTES = 15;
-
-    private const ACCOUNT_LOCK_DURATION_MINUTES = 30;
-
-    private const DEVICE_LIMIT = 5;
+    /** Limits are site settings (N4, DEC-095 #28): `security.app_*` seeds in config/platform.php hold the defaults. */
+    private const LIMIT_SETTINGS = [
+        'OTP_EXPIRY_MINUTES' => 'security.app_otp_expiry_minutes',
+        'MAX_OTP_REQUESTS' => 'security.app_otp_max_requests',
+        'OTP_REQUEST_WINDOW_MINUTES' => 'security.app_otp_request_window_minutes',
+        'MAX_OTP_ATTEMPTS' => 'security.app_otp_max_attempts',
+        'OTP_ATTEMPT_WINDOW_MINUTES' => 'security.app_otp_attempt_window_minutes',
+        'ACCOUNT_LOCK_DURATION_MINUTES' => 'security.app_lock_minutes',
+        'DEVICE_LIMIT' => 'security.app_device_limit',
+    ];
 
     protected Request $request;
 
@@ -130,7 +127,7 @@ class AuthService
                 'user_id' => $user->id,
                 'mobile' => $mobile,
                 'otp_hash' => Hash::make($otp),
-                'expires_at' => now()->addMinutes(self::OTP_EXPIRY_MINUTES),
+                'expires_at' => now()->addMinutes($this->limit('OTP_EXPIRY_MINUTES')),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'created_by' => $user->id,
@@ -167,7 +164,7 @@ class AuthService
             $data = [
                 'mobile' => $mobile,
                 'expires_at' => $token->expires_at->toIso8601String(),
-                'expires_in_minutes' => self::OTP_EXPIRY_MINUTES,
+                'expires_in_minutes' => $this->limit('OTP_EXPIRY_MINUTES'),
             ];
 
             // Add OTP in local environment for testing
@@ -443,15 +440,15 @@ class AuthService
         $key = "otp_request_count_{$mobile}";
         $count = Cache::get($key, 0);
 
-        if ($count >= self::MAX_OTP_REQUESTS) {
+        if ($count >= $this->limit('MAX_OTP_REQUESTS')) {
             throw new RateLimitException(
                 'OTP requests',
-                self::MAX_OTP_REQUESTS,
-                self::OTP_REQUEST_WINDOW_MINUTES * 60
+                $this->limit('MAX_OTP_REQUESTS'),
+                $this->limit('OTP_REQUEST_WINDOW_MINUTES') * 60
             );
         }
 
-        Cache::put($key, $count + 1, self::OTP_REQUEST_WINDOW_MINUTES * 60);
+        Cache::put($key, $count + 1, $this->limit('OTP_REQUEST_WINDOW_MINUTES') * 60);
     }
 
     /**
@@ -464,15 +461,15 @@ class AuthService
         $key = "otp_attempt_count_{$mobile}";
         $count = Cache::get($key, 0);
 
-        if ($count >= self::MAX_OTP_ATTEMPTS) {
+        if ($count >= $this->limit('MAX_OTP_ATTEMPTS')) {
             $this->lockAccount($mobile);
             throw new AccountLockedException(
                 'Too many failed OTP attempts',
-                self::ACCOUNT_LOCK_DURATION_MINUTES
+                $this->limit('ACCOUNT_LOCK_DURATION_MINUTES')
             );
         }
 
-        Cache::put($key, $count + 1, self::OTP_ATTEMPT_WINDOW_MINUTES * 60);
+        Cache::put($key, $count + 1, $this->limit('OTP_ATTEMPT_WINDOW_MINUTES') * 60);
     }
 
     /**
@@ -486,7 +483,7 @@ class AuthService
         if (Cache::has($lockKey)) {
             throw new AccountLockedException(
                 'Account locked due to multiple failed attempts',
-                self::ACCOUNT_LOCK_DURATION_MINUTES
+                $this->limit('ACCOUNT_LOCK_DURATION_MINUTES')
             );
         }
     }
@@ -505,7 +502,7 @@ class AuthService
     private function lockAccount(string $mobile): void
     {
         $lockKey = "account_lock_{$mobile}";
-        Cache::put($lockKey, true, self::ACCOUNT_LOCK_DURATION_MINUTES * 60);
+        Cache::put($lockKey, true, $this->limit('ACCOUNT_LOCK_DURATION_MINUTES') * 60);
 
         // Find user and send notification
         $user = User::query()->withPrimaryMobile($mobile)->first();
@@ -556,7 +553,7 @@ class AuthService
         $key = "otp_attempt_count_{$mobile}";
         $count = Cache::get($key, 0);
 
-        if ($count >= self::MAX_OTP_ATTEMPTS) {
+        if ($count >= $this->limit('MAX_OTP_ATTEMPTS')) {
             $this->lockAccount($mobile);
         }
     }
@@ -580,10 +577,10 @@ class AuthService
             ->where('last_active_at', '>', now()->subDays(30))  // Consider sessions active in last 30 days
             ->count();
 
-        if ($activeSessions >= self::DEVICE_LIMIT) {
+        if ($activeSessions >= $this->limit('DEVICE_LIMIT')) {
             throw new AuthenticationException(
                 ErrorCodeEnum::AUTH_DEVICE_BINDING_FAILED,
-                'Device limit exceeded. Maximum '.self::DEVICE_LIMIT.' devices allowed.',
+                'Device limit exceeded. Maximum '.$this->limit('DEVICE_LIMIT').' devices allowed.',
                 403
             );
         }
@@ -607,5 +604,11 @@ class AuthService
                 'updated_by' => $user->id,
             ]
         );
+    }
+
+    /** A sign-in limit from its site setting (at least 1). */
+    private function limit(string $name): int
+    {
+        return max(1, (int) setting(self::LIMIT_SETTINGS[$name]));
     }
 }

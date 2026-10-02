@@ -163,6 +163,12 @@ Workers: `php artisan queue:work` must run for sends and push outside tests. The
 | `security.screen_lock_enabled` | true | bool | "Lock screen" in the user menu |
 | `security.unlock_max_attempts` | 5 | int | wrong unlock passwords before sign-out |
 | `security.csp_mode` | report | string | Content Security Policy: off / report / enforce (`SecurityHeaders`) |
+| `security.admin_login_max_attempts` / `security.admin_login_lock_minutes` | 5 / 1 | int | admin sign-in lockout (`Admin\Account\AdminLoginController`, bound over Backpack's login; N4) |
+| `security.app_otp_expiry_minutes` | 10 | int | mobile-app OTP validity (`AuthService`; N4) |
+| `security.app_otp_max_requests` / `security.app_otp_request_window_minutes` | 5 / 15 | int | OTP requests per window |
+| `security.app_otp_max_attempts` / `security.app_otp_attempt_window_minutes` | 5 / 15 | int | wrong OTPs before the account locks, counting window |
+| `security.app_lock_minutes` | 30 | int | app account lock length |
+| `security.app_device_limit` | 5 | int | devices a user may be signed in on |
 | `branding.logo` | '' | image | site logo (DEC-083): admin header / sidebar (links to the dashboard), login page, quotation / OTF prints; upload on Settings (`utils.settings.image`); blank = the built-in images (`site_logo_url($fallback)`) |
 | `pricing.last_updated_at` | '' | string | ISO-8601 stamp set automatically (`PricingSyncStamp`, DEC-083) on any published-price, vehicle master or accessory change; the app re-syncs offline data when it moves (served by `v1/settings/category/pricing`) |
 | `dealership.*` | name 'Bikaner Motors', legal_name 'Bikaner Motors Private Limited', tagline '', url 'https://www.BikanerMotors.com', favicon (image), address, email, phone, gstin | string / image | Site tab (DEC-091): title `site_title()`, footer link + tagline, favicon in `header_metas`, legal name on prints (`dealership()`) |

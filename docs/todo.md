@@ -425,7 +425,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W18h | D26 — mask Aadhaar / PAN in old KYC rows (reversible: encrypted backup) — ✅ 02-10 local (`privacy:mask-kyc-history`); UAT / prod run needs approval | ✅ |
 | W18i | D25 / BUG-173 — booking reads / writes variant codes with the colour suffix; vehicle master purge + re-import (V7 / DA2, with the pricing run) — ⏸ goes with the pricing run (owner: pricing decided later) | ⏸ |
 | W18j | #18 — local-only user reset command (keep a given list of accounts; dry run, backup) — run on the owner's list — ✅ built 02-10 (`users:reset`); run when the owner sends the list | ✅ |
-| W18k | N4 — session / password / lockout / self-service values as Settings (S3 / S4 / S5 / S7) | 🔴 |
+| W18k | N4 — session / password / lockout / self-service values as Settings (S3 / S4 / S5 / S7) — part 1 ✅ 02-10 (sign-in / OTP / lockout / device limits); part 2: password expiry + history (off by default) | 🟡 |
 | W18l | BUG-206 — generated `person_code`; PAN / Aadhaar only masked (14 tables) | 🔴 |
 | W18m | #33 Redis for cache + queue (UAT / production config, with IT); #34 Playwright E2E (with Q3) | 🔴 |
 
@@ -1366,3 +1366,13 @@ affected tables before removing anything.
 - Run it when the owner sends the account list (1 super admin, 5 dev, 1 app dev). Pass
   `--bin-dir=D:\laragon\bin\mysql\mysql-8.4.3-winx64\bin` (`MYSQL_BIN_DIR` is not in the local `.env`).
 - Then the new user import (W10 workbook).
+
+### W18k part 1 — sign-in limits editable as site settings (N4, DEC-095 #28)
+
+**Delivered:** Settings → Security now holds the admin sign-in lockout (wrong passwords, lock minutes) and the mobile
+app's OTP limits (validity, requests per window, wrong OTPs, lock length, device limit). Defaults are the previous fixed
+values, so there is no change until edited. Idle logout, password rules and self-service changes were already
+settings.
+**Verified:** new lockout / OTP tests; 76 API / IAM / Utils / admin-auth tests pass; PHPStan clean.
+**Left (part 2):** password expiry and password history do not exist yet. They will be added switched off by default
+(0 = off), as settings.

@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\IAM\OtpToken;
 use App\Models\User;
+use App\Services\Platform\Settings\SettingsService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
@@ -43,6 +44,23 @@ class AppOtpLoginTest extends TestCase
         $this->assertSame($mobile, $login->json('data.user.mobile'));
         $this->assertSame($user->primary_email, $login->json('data.user.email'));
         $this->assertNotEmpty($login->json('data.token'));
+    }
+
+    /** N4 (DEC-095 #28): the OTP validity and the request limit follow the site settings. */
+    public function test_the_otp_limits_follow_the_site_settings(): void
+    {
+        Mail::fake();
+        $person = $this->peopleWithMobiles(1)->first();
+        $mobile = substr(preg_replace('/\D/', '', $person->mobile), -10);
+        Cache::forget("account_lock_{$mobile}");
+        Cache::forget("otp_request_count_{$mobile}");
+        app(SettingsService::class)->set('security.app_otp_expiry_minutes', 3);
+        app(SettingsService::class)->set('security.app_otp_max_requests', 1);
+
+        $this->postJson('/api/v1/auth/request-otp', ['mobile' => $mobile])->assertOk()->assertJsonPath('data.expires_in_minutes', 3);
+        $this->assertTrue(OtpToken::query()->where('mobile', $mobile)->latest('id')->firstOrFail()->expires_at->lessThanOrEqualTo(now()->addMinutes(3)));
+
+        $this->postJson('/api/v1/auth/request-otp', ['mobile' => $mobile])->assertStatus(429);
     }
 
     public function test_an_unregistered_mobile_is_refused_without_an_error_page(): void

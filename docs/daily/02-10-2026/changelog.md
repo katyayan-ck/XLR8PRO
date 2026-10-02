@@ -204,3 +204,22 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
   - The dump of the 22 tables succeeded (with `--bin-dir`).
   - PHPStan and the architecture guard are clean.
 - **Not run:** waiting for the owner's account list (1 super admin, 5 dev, 1 app dev).
+
+### W18k part 1 — sign-in limits are site settings (N4, DEC-095 #28)
+- **Files:**
+  - `config/platform.php`: 9 new `security.*` seeds.
+  - `app/Services/AuthService.php`: the 7 OTP / lockout / device constants become `limit()` reading
+    `security.app_*`.
+  - New `app/Http/Controllers/Admin/Account/AdminLoginController.php`, bound in `AppServiceProvider::register()` over
+    Backpack's `LoginController`; `maxAttempts()` / `decayMinutes()` read `security.admin_login_*`.
+  - Tests: `tests/Feature/Admin/AdminLoginLockoutTest.php` (new), `tests/Feature/Api/AppOtpLoginTest.php` (+1).
+  - Guides: `tech-guides/platform/16-reference.md`, `tech-guides/modules/iam-auth.md`.
+- **Before → after:** the values were fixed in code (app: OTP 10 min, 5 requests / 15 min, 5 wrong OTPs / 15 min, 30-min
+  lock, 5 devices; admin login: Backpack's 5 wrong passwords → 1-minute lock). They are now editable under Settings →
+  Security, with the same defaults, so nothing changes until someone edits them.
+  - Already settings before: idle logout / lock, password length / complexity, self-service e-mail / mobile / other
+    field changes.
+- **Checked:**
+  - New tests: the admin login locks after the configured count; the OTP validity and request limit follow the
+    settings.
+  - API, IAM, Utils and admin-auth suites: 76 passed. PHPStan clean.

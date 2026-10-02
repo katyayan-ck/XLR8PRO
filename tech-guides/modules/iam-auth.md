@@ -158,6 +158,9 @@ Profile, Contact and Security.
 
 **Self-service (S5 / S7):**
 - `MyAccountController::passwordRule()` is the settings-driven password rule (`account.password_*`).
+- Sign-in limits are settings (N4, DEC-095 #28): the app OTP / lockout / device limits in `AuthService::limit()` read
+  `security.app_*`; the admin login lockout reads `security.admin_login_*` through `AdminLoginController` (bound in
+  `AppServiceProvider::register()` in place of Backpack's `LoginController`). Defaults are the previous fixed values.
 - The `account.can_change_{display_name,photo,password}` switches gate both the forms and the endpoints (403, "managed
   by your administrator").
 

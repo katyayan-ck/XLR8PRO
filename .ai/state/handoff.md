@@ -76,10 +76,17 @@ nothing local is unpushed. Next push only when the owner asks.
   W18i ⏸ (D25 variant codes + purge / re-import go with the pricing run — owner: pricing later).
   W18j ✅ built (`users:reset`, local only; run when the owner sends the account list; use
   `--bin-dir=D:\laragon\bin\mysql\mysql-8.4.3-winx64\bin`).
-  **Next step: W18k** — N4: session / password / lockout / self-service values as Settings (S3 / S4 / S5 / S7): find
-  where each value is hard-coded today (`config/session.php` lifetime, `AuthService` lockout / OTP limits, password
-  rules, My Account self-service), add dotted keys to `config/platform.php` settings seeds (defaults = today's values),
-  read them through `setting()`; no behaviour change at the defaults.
+  W18k part 1 ✅ (sign-in / OTP / lockout / device limits as `security.*` settings; admin login via
+  `AdminLoginController` bound over Backpack's).
+  **Next step: W18k part 2** — password expiry + history, both **off by default**:
+  - settings `account.password_expiry_days` (0 = off) and `account.password_history_count` (0 = off);
+  - migration: `users.password_changed_at` (nullable) + `xlr8_iam_password_history` (user_id, password hash,
+    created_at), with a model;
+  - My Account password change (`MyAccountController`) refuses a reuse of the last N and records history /
+    `password_changed_at`;
+  - after login, an expired password redirects to the change-password page (middleware on the admin group, skipped
+    for the account routes);
+  - tests for both; then W18l (BUG-206 generated `person_code`).
 
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;
