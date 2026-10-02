@@ -14,7 +14,8 @@ export default defineConfig({
     retries: 0,
     reporter: [['list']],
     use: {
-        baseURL: process.env.E2E_BASE_URL ?? 'http://localhost/xlrm/public',
+        // trailing slash required: tests use relative paths ('admin/login') under a sub-folder app URL
+        baseURL: (process.env.E2E_BASE_URL ?? 'http://localhost/xlrm/public').replace(/\/?$/, '/'),
         trace: 'retain-on-failure',
         screenshot: 'only-on-failure',
     },

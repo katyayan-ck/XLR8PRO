@@ -7,9 +7,16 @@ import { expect, test } from '@playwright/test';
 const user = process.env.E2E_USER ?? '';
 const password = process.env.E2E_PASSWORD ?? '';
 
-test.skip(!user || !password, 'Set E2E_USER and E2E_PASSWORD to run the E2E smoke.');
+test('the sign-in page renders without an error', async ({ page }) => {
+    const response = await page.goto('admin/login');
+    expect(response?.status()).toBe(200);
+    await expect(page.locator('#username')).toBeVisible();
+    await expect(page.locator('#password')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText(/Server Error|Whoops/i);
+});
 
 test('a user signs in and opens the main screens', async ({ page }) => {
+    test.skip(!user || !password, 'Set E2E_USER and E2E_PASSWORD to run the signed-in smoke.');
     await page.goto('admin/login');
     await page.locator('#username').fill(user);
     await page.locator('#password').fill(password);

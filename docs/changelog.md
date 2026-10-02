@@ -10511,3 +10511,15 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
   - `HelpTest` 5 passed: Driver.js only where a tour exists; meta article / tour.
   - Lang tests pass. JS syntax checked.
   - Screens unchanged except the meta (+300 bytes on every page, superadmin and user 40, all 200).
+
+### Playwright E2E running (DEC-095 #34); KYC masking run by the owner (D26)
+- **Owner 03-10:** installed `@playwright/test` 1.63.0 + Chromium (`package.json`, `package-lock.json`) and ran
+  `privacy:mask-kyc-history` on the servers. Local re-check: the report finds 0 Aadhaar / PAN values on `xlrm` and
+  `xlrm_testing`.
+- **Fixes:**
+  - `playwright.config.ts`: the base URL now always ends with `/`. Without it, `admin/login` resolved to
+    `/xlrm/admin/login` (404) under the sub-folder app URL.
+  - `tests/E2E/smoke.spec.ts`: a new sign-in-page check needs no login; the signed-in smoke skips until
+    `E2E_USER` / `E2E_PASSWORD` are set.
+  - `package.json`: `npm run e2e`.
+- **Checked:** `npx playwright test` → 1 passed (sign-in page), 1 skipped (no test credentials).

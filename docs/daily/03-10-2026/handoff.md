@@ -87,11 +87,9 @@ nothing local is unpushed. Next push only when the owner asks.
   existing codes waits for the user reset (W18j): afterwards only the kept accounts' persons remain → small remap with
   an old → new map, owner's go.
   W18m 🟡 — Redis ready (`.env` switch only, guide 16-reference §4; BUG-230 queue `retry_after` 1900 s fixed).
-  **Owner 03-10:** Playwright approved; config + `tests/E2E/smoke.spec.ts` written. Owner runs the install
-  (`npm i -D @playwright/test`, `npx playwright install chromium`); then
-  `E2E_USER=… E2E_PASSWORD=… npx playwright test`. KYC masking on UAT / production approved; the owner adds
-  `php artisan privacy:mask-kyc-history --apply || echo "KYC masking failed"` to `deploy-hook.sh` (agent edits to the
-  deploy hook and the npm install were blocked by the tool's permission guard — do not retry them).
+  **Owner 03-10:** Playwright installed (1.63, Chromium) — `npm run e2e`: sign-in check passes; the signed-in smoke
+  needs `E2E_USER` / `E2E_PASSWORD` (a test account — ask the owner; never set passwords ourselves). KYC masking run
+  on the servers by the owner; local DBs show 0 left.
   **Owner deals later:** W18f report definitions (R1–R8), BUG-229 Reject rule, `users:reset` account list.
 - **W16 help & support (DEC-094):** W16b ✅, W16c ✅ 03-10 (pane, Help centre, tours, "new" dot; guide
   `tech-guides/platform/17-help-support.md`). **Next step: W16d** — diagnostics collector: `public/js/xl-diag.js` ring

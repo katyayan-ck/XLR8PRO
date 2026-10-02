@@ -35,3 +35,11 @@ button shows a small dot when the screen's help changed since the user last read
 screens that have a tour.
 **Verified:** `HelpTest` (5 tests); page smoke for superadmin and user 40.
 **Left:** the tours themselves are written with the articles (§13); next is W16d diagnostics.
+
+### End-to-end tests running (DEC-095 #34)
+
+**Delivered:** with Playwright installed by the owner, `npm run e2e` runs the browser smoke in Chromium against the local
+app. The sign-in page check passes. The signed-in walk (dashboard → bookings → coming-soon) runs once a test account's
+credentials are given in `E2E_USER` / `E2E_PASSWORD`. The owner also ran the KYC masking on the servers; the local
+databases show nothing left to mask.
+**Left:** a dedicated E2E test account (owner) to enable the signed-in run.
