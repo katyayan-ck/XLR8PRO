@@ -68,6 +68,21 @@ class SupportController extends Controller
         return response()->json($result->toArray(), $result->ok ? 201 : 422);
     }
 
+    /** The diagnostics on screen: screenshot, page, actions, network, errors, server trail, user (same rights as the zip). */
+    public function show(int $id): View
+    {
+        $request = SupportRequest::query()->with(['ticket', 'requester'])->findOrFail($id);
+        abort_unless($this->support->canDownload($request, backpack_user()), 403);
+        $bundle = $this->support->bundleContents($request);
+        abort_if($bundle === null, 410, __('utils.support.bundle_gone'));
+
+        return view('admin.utils.platform.support.show', [
+            'title' => __('utils.support.diagnostics_title', ['number' => $request->ticket ? (string) $request->ticket->getAttribute('number') : '#'.$request->id]),
+            'row' => $request,
+            'bundle' => $bundle,
+        ]);
+    }
+
     /** The diagnostic zip (requester, support admins, assignees only; 410 once purged). */
     public function download(int $id): BinaryFileResponse
     {

@@ -170,3 +170,19 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - Found by the E2E smoke (1 of 3 runs): a request ran without `.env` (SQLite session store / `production` without
   APP_KEY). Not an app bug; local fix = `php artisan config:cache` (owner's call — local environment change). Entry in
   `docs/bugs/open.md`.
+
+### Support requests: menu entries and an on-screen diagnostics viewer (owner question 03-10)
+- **Owner asked:** where the Support Requests menu is and how to open the attached data.
+  - Before: reachable only through `?` → Help Centre → button.
+  - The zip had to be downloaded and unpacked.
+- **Changed:**
+  - `menu_items.blade.php`: Utilities → **Help Centre** and **Support Requests** (every signed-in user).
+  - New `utils.support.show` + view `support/show.blade.php` (screenshot, page facts, tabs for actions / network
+    calls / script errors / server requests + log lines / user & access). Same rights as the download (requester,
+    support admins, assignees), 410 once purged.
+  - `SupportRequestService::bundleContents()`.
+  - List: **Diagnostics** opens the viewer; a zip icon still downloads.
+  - Lang `support.download_zip`, `support.diagnostics_title`; guide `17-help-support.md`.
+- **Checked:**
+  - New test (opens for the requester with the screenshot and masked values, 403 for an outsider).
+  - `SupportRequestTest` + `MenuLinksTest` 6 passed; pages 200 for superadmin and user 40.

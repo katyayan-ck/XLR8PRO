@@ -16,6 +16,15 @@
                 href="{{ route('utils.inbox.index') }}">
                 <span><i class="la la-inbox me-2"></i>My Inbox</span>
             </a>
+            {{-- Help & support (DEC-094) — every signed-in user; F1 opens the same help on any screen --}}
+            <a class="dropdown-item d-flex align-items-center justify-content-between"
+                href="{{ route('utils.help.index') }}">
+                <span><i class="la la-question-circle me-2"></i>Help Centre</span>
+            </a>
+            <a class="dropdown-item d-flex align-items-center justify-content-between"
+                href="{{ route('utils.support.index') }}">
+                <span><i class="la la-hands-helping me-2"></i>Support Requests</span>
+            </a>
             @if (backpack_user()->can('UTL_TASK_VIEW'))
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
                     href="{{ route('utils.tasks.index') }}">

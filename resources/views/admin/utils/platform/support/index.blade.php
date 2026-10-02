@@ -42,9 +42,14 @@
                                 <td>{{ site_datetime($row->created_at) }}</td>
                                 <td class="text-end">
                                     @if ($row->bundle_path)
-                                        <a class="btn btn-sm btn-outline-secondary" href="{{ route('utils.support.download', ['id' => $row->id]) }}">
-                                            <i class="la la-file-archive me-1" aria-hidden="true"></i>{{ __('utils.support.download') }}
-                                        </a>
+                                        <div class="btn-group btn-group-sm">
+                                            <a class="btn btn-outline-primary" href="{{ route('utils.support.show', ['id' => $row->id]) }}">
+                                                <i class="la la-eye me-1" aria-hidden="true"></i>{{ __('utils.support.download') }}
+                                            </a>
+                                            <a class="btn btn-outline-secondary" href="{{ route('utils.support.download', ['id' => $row->id]) }}" title="{{ __('utils.support.download_zip') }}" aria-label="{{ __('utils.support.download_zip') }}">
+                                                <i class="la la-file-archive" aria-hidden="true"></i>
+                                            </a>
+                                        </div>
                                     @endif
                                 </td>
                             </tr>

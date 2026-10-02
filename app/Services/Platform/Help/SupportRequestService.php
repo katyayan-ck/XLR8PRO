@@ -139,6 +139,35 @@ class SupportRequestService
             ? Storage::disk(self::DISK)->path($request->bundle_path) : null;
     }
 
+    /**
+     * The zip's contents for the on-screen viewer: each JSON file decoded (already masked when stored) and the screenshot
+     * as a data URL. Null when there is no zip (none sent, or purged).
+     *
+     * @return array{files: array<string, mixed>, screenshot: ?string}|null
+     */
+    public function bundleContents(SupportRequest $request): ?array
+    {
+        $file = $this->bundleFile($request);
+        $zip = new ZipArchive;
+        if ($file === null || $zip->open($file) !== true) {
+            return null;
+        }
+        $files = [];
+        $screenshot = null;
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $name = (string) $zip->getNameIndex($i);
+            $body = (string) $zip->getFromIndex($i);
+            if (preg_match('/^screenshot\.(png|jpg)$/', $name, $m)) {
+                $screenshot = 'data:image/'.($m[1] === 'png' ? 'png' : 'jpeg').';base64,'.base64_encode($body);
+            } elseif (str_ends_with($name, '.json')) {
+                $files[substr($name, 0, -5)] = json_decode($body, true);
+            }
+        }
+        $zip->close();
+
+        return ['files' => $files, 'screenshot' => $screenshot];
+    }
+
     /** Deletes zips older than `support.bundle_retention_days` (the request and ticket stay). @return int zips removed */
     public function purge(): int
     {

@@ -71,9 +71,13 @@ Gathered for a support request (W16e builds the zip; FRS §5.2). **Never records
   log lines of its error references, last 2 MB of `laravel.log`), `user.json` (roles, permissions, data scopes, last
   login), `screenshot.png|jpg` (PNG / JPEG only, signature-checked, ≤ `support.max_screenshot_kb`). Every text file
   passes `DiagnosticsService::mask()`.
+- **Menu:** Utilities → Help Centre / Support Requests (every signed-in user); also the `?` in the top bar (F1).
 - **Screens / routes** (`routes/backpack/utils.php`): `utils.support.index` (own requests; admins: all, with an executive
-  picker; executives: also assigned ones), `utils.support.store` (POST JSON → 201 / 422), `utils.support.download`
-  (403 without rights, 410 once purged), `utils.support.assign` (POST, admins).
+  picker; executives: also assigned ones), `utils.support.show` (the diagnostics on screen: screenshot, page facts, tabs
+  for actions / network / errors / server requests + log lines / user & access; same rights as the zip, 410 once
+  purged), `utils.support.store` (POST JSON → 201 / 422), `utils.support.download` (the zip; 403 without rights, 410
+  once purged), `utils.support.assign` (POST, admins).
+- `bundleContents(SupportRequest $r): ?array` (`{files, screenshot}`) feeds the on-screen viewer.
 - **Permissions:** `UTL_SUPP_ADMIN`, `UTL_SUPP_EXEC` (process UTL / SUPP), granted to superadmin only — attach them to
   designations on Org → Designation. Ticket categories `SUP_HOWTO`, `SUP_NOT_WORKING`, `SUP_WRONG_DATA`,
   `SUP_ACCESS`, `SUP_SUGGESTION` (KeyValue `TICKET_CATEGORY`).

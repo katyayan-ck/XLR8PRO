@@ -99,6 +99,8 @@ return [
         'bundle_gone' => 'The diagnostics were deleted after the retention period.',
         'none' => 'No support requests yet.',
         'download' => 'Diagnostics',
+        'download_zip' => 'Download zip',
+        'diagnostics_title' => 'Diagnostics — :number',
         'assign' => 'Assign',
     ],
 

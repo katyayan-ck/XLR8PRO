@@ -35,6 +35,7 @@ Route::group([
     // Support requests (DEC-094, W16e) — send: every signed-in user; list / download / assign: checked in the controller
     Route::get('support', [SupportController::class, 'index'])->name('utils.support.index');
     Route::post('support', [SupportController::class, 'store'])->name('utils.support.store');
+    Route::get('support/{id}', [SupportController::class, 'show'])->whereNumber('id')->name('utils.support.show');
     Route::get('support/{id}/download', [SupportController::class, 'download'])->whereNumber('id')->name('utils.support.download');
     Route::post('support/{id}/assign', [SupportController::class, 'assign'])->whereNumber('id')->name('utils.support.assign');
 

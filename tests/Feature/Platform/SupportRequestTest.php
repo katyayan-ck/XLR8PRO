@@ -100,6 +100,20 @@ class SupportRequestTest extends TestCase
         $this->actingAs($exec, 'backpack')->get($url)->assertOk();
     }
 
+    public function test_the_diagnostics_open_on_screen_for_those_who_may_download_them(): void
+    {
+        [$requester, , , $outsider] = $this->u;
+        $id = $this->send()->assertCreated()->json('data.id');
+
+        $this->actingAs($requester, 'backpack')->get(route('utils.support.show', ['id' => $id]))->assertOk()
+            ->assertSee('data:image/png;base64,', false)->assertSee('XXXXXXXX0123')->assertDontSee('2345 6789 0123')
+            ->assertSee('Network calls')->assertSee('sales.booking.index');
+        $this->get(route('utils.support.index'))->assertOk()->assertSee(route('utils.support.show', ['id' => $id]), false);
+
+        $this->flushSession();
+        $this->actingAs($outsider, 'backpack')->get(route('utils.support.show', ['id' => $id]))->assertForbidden();
+    }
+
     public function test_the_bundle_is_purged_after_the_retention_period_and_bad_input_is_refused(): void
     {
         $this->send(['category' => 'NOT_A_CATEGORY'])->assertStatus(422);
