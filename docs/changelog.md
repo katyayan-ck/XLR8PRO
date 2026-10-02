@@ -10523,3 +10523,25 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
     `E2E_USER` / `E2E_PASSWORD` are set.
   - `package.json`: `npm run e2e`.
 - **Checked:** `npx playwright test` → 1 passed (sign-in page), 1 skipped (no test credentials).
+
+### W16d — diagnostics collector for support requests (DEC-094)
+- **Files (new):**
+  - `public/js/xl-diag.js`.
+  - `app/Services/Platform/Help/DiagnosticsService.php`.
+  - `app/Http/Middleware/RecordRequestTrail.php`.
+  - `tests/Feature/Platform/DiagnosticsTest.php`.
+- **Changed:**
+  - `config/backpack/base.php`: trail middleware added to the admin stack, after the auth guards and before the
+    redirecting idle / password guards.
+  - `header_metas.blade.php`: `xl-diag` meta, plus html2canvas 1.4.1 cached by Basset and loaded only when a screenshot
+    is taken.
+  - Guide `17-help-support.md`; plan / to-do status.
+- **Behaviour:**
+  - Per tab, the last 50 actions, network calls and JS errors (field names, never values).
+  - Per user on the server, the last 50 requests for 2 hours (route, status, time, error ref).
+  - Masking of Aadhaar / PAN / mobile / e-mail / tokens and secret URL parameters.
+  - A screenshot with password / OTP / `data-xl-sensitive` fields blanked.
+- **Checked:**
+  - `DiagnosticsTest` (masking, URL cleaning, trail cap, heartbeat skipped, page wiring).
+  - Platform / IAM / admin-auth / architecture suites: 116 passed.
+  - Pages 200 for superadmin and user 40. PHPStan clean; JS syntax checked.

@@ -43,3 +43,12 @@ app. The sign-in page check passes. The signed-in walk (dashboard → bookings �
 credentials are given in `E2E_USER` / `E2E_PASSWORD`. The owner also ran the KYC masking on the servers; the local
 databases show nothing left to mask.
 **Left:** a dedicated E2E test account (owner) to enable the signed-in run.
+
+### W16d — diagnostics for support requests (DEC-094)
+
+**Delivered:** every admin page now quietly keeps what support needs when a user asks for help: the last 50 clicks,
+form submits (field names only), messages, network calls and script errors in that tab, plus the user's last 50
+server requests with any error reference. Personal data (Aadhaar, PAN, mobile, e-mail, tokens) is masked, and nothing a
+user types is recorded. A screenshot of the page can be taken with sensitive fields blanked.
+**Verified:** new `DiagnosticsTest`; 116 related tests; page smoke for superadmin and user 40.
+**Left:** W16e — the support-request form that shows this, builds the zip and opens the ticket.

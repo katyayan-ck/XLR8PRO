@@ -91,13 +91,15 @@ nothing local is unpushed. Next push only when the owner asks.
   needs `E2E_USER` / `E2E_PASSWORD` (a test account — ask the owner; never set passwords ourselves). KYC masking run
   on the servers by the owner; local DBs show 0 left.
   **Owner deals later:** W18f report definitions (R1–R8), BUG-229 Reject rule, `users:reset` account list.
-- **W16 help & support (DEC-094):** W16b ✅, W16c ✅ 03-10 (pane, Help centre, tours, "new" dot; guide
-  `tech-guides/platform/17-help-support.md`). **Next step: W16d** — diagnostics collector: `public/js/xl-diag.js` ring
-  buffer in sessionStorage per tab (last 50 page loads / clicks with label + selector, form submits with field
-  **names** only, fetch / XHR / jQuery AJAX method-URL-status-time, JS errors, alerts shown — never typed values);
-  server request trail middleware (cache, 50 per user, 2 h: route, status, time, error ref); html2canvas (approved in
-  DEC-094, via Basset, loaded on demand) screenshot with password / OTP / `data-xl-sensitive` fields blanked + preview;
-  tests for the trail + masking helpers. FRS §5.2 lists the bundle files.
+- **W16 help & support (DEC-094):** W16b, W16c, W16d ✅ 03-10 (pane, Help centre, tours, diagnostics collector
+  `xl-diag.js` + `RecordRequestTrail` + `DiagnosticsService`; guide `tech-guides/platform/17-help-support.md`).
+  **Next step: W16e** — support requests (FRS §5): migration minting `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC` (superadmin
+  only), KeyValue support categories (`SUPPORT_CATEGORY`) via `KeyvalueService`, settings `support.*` (retention
+  days, max bundle size); `SupportRequestService` (bundle zip on the server from client snapshot + screenshot + trail
+  + user / access facts, all masked; `Ticket::open` with owner = least-loaded `UTL_SUPP_ADMIN`; executive-only
+  assignee picker); "Still need help?" form in the pane (preview, untick diagnostics / screenshot) + My support
+  requests; bundle download only for owner / assignee / admins; daily retention purge job; notifications; tests.
+  Read `TicketService` (`open/transition/update/inbox`) and `DocsService` first.
 
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;

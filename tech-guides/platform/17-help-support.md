@@ -1,7 +1,7 @@
 # 17 — Help & support (F1 help, tours, support requests)
 
 > DEC-094, to-do W16. FRS: [help-and-support-frs.md](../frs-and-workflows/frs/help-and-support-frs.md).
-> Built so far: **W16b help engine**, **W16c page tours** (03-10-2026). Diagnostics (W16d) and support requests (W16e) follow;
+> Built so far: **W16b help engine**, **W16c page tours**, **W16d diagnostics** (03-10-2026). Support requests (W16e) follow;
 > this guide grows with them (W16f). Help **content** (the articles themselves) is written last (§13).
 
 ## F1 help pane — how it works
@@ -24,6 +24,32 @@
   no step left, the pane says so and nothing runs. Tours never change data.
 - **"New" dot:** the page meta carries `article: {key, updated, tour}` (looked up without logging a miss). When
   `localStorage['xl.help.seen.'+key]` differs from `updated`, the `?` button shows a dot until the article is opened.
+
+## Diagnostics collector (W16d)
+Gathered for a support request (W16e builds the zip; FRS §5.2). **Never records what a user types.**
+- **Browser — `public/js/xl-diag.js`** (every signed-in admin page; ring buffers in `sessionStorage['xl.diag']`, per
+  tab, 50 each):
+  - `actions`: page loads, clicks (label + selector), form submits (field **names** only, `_token` dropped), alerts /
+    validation messages shown;
+  - `network`: fetch and XHR (so jQuery AJAX too) — method, URL, status, ms, size; for 4xx / 5xx the first 2 KB of the
+    body, masked;
+  - `errors`: `window.onerror`, unhandled promise rejections, `console.error`.
+  - `XL.diag.snapshot()` → `{page{url, route, title, screen, viewport, browser, time, version, theme}, actions,
+    network, errors}`.
+  - `XL.diag.screenshot()` → PNG data URL of the visible page via **html2canvas 1.4.1** (approved in DEC-094; cached by
+    Basset, loaded only when called). In the copy only, password / OTP inputs and anything marked
+    `data-xl-sensitive` (mark Aadhaar, PAN and bank-account fields with it) are blanked; the help pane is left out.
+  - `XL.diag.mask(text)` / `XL.diag.cleanUrl(url)` mirror the server helpers.
+- **Server — `App\Http\Middleware\RecordRequestTrail`** (admin middleware stack): each request of the signed-in user
+  → `{method, route, path (cleaned), status, ms, ref (ErrorRef on 5xx), at}`; the idle heartbeat is skipped.
+- **`App\Services\Platform\Help\DiagnosticsService`:**
+
+  | Method | Does |
+  |---|---|
+  | `record(int $userId, array $entry): void` | prepend to the trail (cache `help.trail.{id}`, `TRAIL_SIZE` 50, `TRAIL_MINUTES` 120) |
+  | `trail(int $userId): array` | newest first |
+  | `static mask(string $text): string` | Aadhaar → `XXXXXXXX1234` (spaces / dashes too), PAN → `XXXXXX234F`, mobile → `XXXXXX3210` (+91 too), e-mail → `r***@domain`, 32+ char tokens → `[token]` |
+  | `static cleanUrl(string $url): string` | path + query with `token / _token / password / otp / signature / code / key / secret / api_key / access_token` values → `[removed]`, then `mask()` |
 
 ## Writing an article
 Files under `resources/help/` (`config('platform.help.path')`), versioned with the code — change a screen and its help in

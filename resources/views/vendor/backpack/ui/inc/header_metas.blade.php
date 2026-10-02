@@ -41,6 +41,19 @@
         @basset('https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js')
     @endif
     <script defer src="{{ asset('js/xl-help.js') }}?v={{ @filemtime(public_path('js/xl-help.js')) }}"></script>
+    {{-- Diagnostics for support requests (DEC-094, W16d): action / network / error buffer; html2canvas (approved) is cached
+         by Basset here but only loaded when a screenshot is taken --}}
+    @php
+        $xlH2c = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+        try {
+            \Backpack\Basset\Facades\Basset::basset($xlH2c, false);
+            $xlH2cUrl = \Backpack\Basset\Facades\Basset::isAssetCached($xlH2c) ? \Backpack\Basset\Facades\Basset::getUrl($xlH2c) : $xlH2c;
+        } catch (\Throwable $e) {
+            $xlH2cUrl = $xlH2c;
+        }
+    @endphp
+    <meta name="xl-diag" content="{{ json_encode(['route' => $xlHelpRoute, 'version' => config('app.version'), 'html2canvas' => $xlH2cUrl]) }}">
+    <script defer src="{{ asset('js/xl-diag.js') }}?v={{ @filemtime(public_path('js/xl-diag.js')) }}"></script>
 @endif
 {{-- Idle auto-logout / screen lock (go-live to-do S1 / S2) — signed-in pages only, never on the lock screen itself --}}
 @if (backpack_user() && ! request()->routeIs('xl.session.lock-screen'))

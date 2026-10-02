@@ -4,6 +4,7 @@ use App\Http\Middleware\ApplyUiPreferences;
 use App\Http\Middleware\CheckIfAdmin;
 use App\Http\Middleware\EnforceIdleSession;
 use App\Http\Middleware\EnforcePasswordExpiry;
+use App\Http\Middleware\RecordRequestTrail;
 use Backpack\CRUD\app\Http\Middleware\AuthenticateSession;
 use Backpack\CRUD\app\Http\Middleware\UseBackpackAuthGuardInsteadOfDefaultAuthGuard;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
@@ -123,6 +124,8 @@ return [
         AuthenticateSession::class,
         // Makes auth()/@can/Gate resolve the admin (backpack) user during admin requests (BUG-055, DEC-042).
         UseBackpackAuthGuardInsteadOfDefaultAuthGuard::class,
+        // Short per-user server trail for support requests (DEC-094, W16d); outside the redirecting guards below.
+        RecordRequestTrail::class,
         // Applies the per-browser menu layout chosen in the Appearance panel (DEC-067).
         ApplyUiPreferences::class,
         // Idle auto-logout + screen lock, driven by the security.* settings (go-live to-do S1 / S2).

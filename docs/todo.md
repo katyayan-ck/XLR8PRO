@@ -411,7 +411,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W16a | FRS + plan + DEC-094 + to-do | ✅ 01-10 |
 | W16b | Help engine: Markdown articles in `resources/help/`, route → article, `::: can CODE` sections, cache, search, coverage; F1 / `?` right-side pane; Help centre screen — ✅ 03-10 | ✅ |
 | W16c | On-demand page tour (Driver.js via Basset): steps from the article / `data-xl-tour`, skip missing elements, "new" dot — ✅ 03-10 | ✅ |
-| W16d | Diagnostics collector: actions / AJAX / JS errors ring buffer (no typed values), server request trail, html2canvas screenshot with sensitive-field blanking + preview | 🔴 |
+| W16d | Diagnostics collector: actions / AJAX / JS errors ring buffer (no typed values), server request trail, html2canvas screenshot with sensitive-field blanking + preview — ✅ 03-10 (preview UI comes with the W16e form) | ✅ |
 | W16e | Support request: permissions `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`, categories + settings, `SupportRequestService` (masked zip → ticket, least-loaded admin as owner, executive-only assignment), screens, bundle rights, retention purge | 🔴 |
 | W16f | Developer guide `tech-guides/platform/17-help-support.md` (+ reference) with the build; the **user-facing** help texts / "Getting help" articles move to §13 (last) | 🔴 |
 | W18 | **Owner decisions 02-10 (DEC-095)** — build every item with a definitive answer; booking items as numbered, revertable BT changes | 🟡 in progress |
@@ -1438,3 +1438,12 @@ app. The sign-in page check passes. The signed-in walk (dashboard → bookings �
 credentials are given in `E2E_USER` / `E2E_PASSWORD`. The owner also ran the KYC masking on the servers; the local
 databases show nothing left to mask.
 **Left:** a dedicated E2E test account (owner) to enable the signed-in run.
+
+### W16d — diagnostics for support requests (DEC-094)
+
+**Delivered:** every admin page now quietly keeps what support needs when a user asks for help: the last 50 clicks,
+form submits (field names only), messages, network calls and script errors in that tab, plus the user's last 50
+server requests with any error reference. Personal data (Aadhaar, PAN, mobile, e-mail, tokens) is masked, and nothing a
+user types is recorded. A screenshot of the page can be taken with sensitive fields blanked.
+**Verified:** new `DiagnosticsTest`; 116 related tests; page smoke for superadmin and user 40.
+**Left:** W16e — the support-request form that shows this, builds the zip and opens the ticket.
