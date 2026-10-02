@@ -201,6 +201,9 @@ final class TicketService
             return Result::fail('INVALID', 'Unknown priority or category.');
         }
         $people = $this->people($payload);
+        if (str_starts_with($category, 'SUP_') && array_diff($people[self::ASSIGNEE], $this->supportExecutiveIds()) !== []) {
+            return Result::fail('SUPPORT_NOT_EXECUTIVE', __('utils.support.not_executive'));
+        }
         $ownerId = array_key_exists('owner_id', $payload) ? ((int) $payload['owner_id'] ?: null) : $ticket->owner_id;
         if (($error = $this->peopleError($people, $ownerId)) !== null) {
             return $error;
@@ -291,6 +294,18 @@ final class TicketService
         return Result::ok($this->dto($ticket, (int) $actorId));
     }
 
+    /** Support tickets (`SUP_*`, DEC-094): support admins see and manage every one of them, like the service desk. */
+    public function isSupportDesk(Ticket $ticket, ?User $user): bool
+    {
+        return $user !== null && str_starts_with((string) $ticket->category, 'SUP_') && $user->can('UTL_SUPP_ADMIN');
+    }
+
+    /** @return list<int> active `UTL_SUPP_EXEC` holders — the only assignees a support ticket takes */
+    public function supportExecutiveIds(): array
+    {
+        return User::permission('UTL_SUPP_EXEC')->where('is_active', 1)->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+    }
+
     public function canView(Ticket $ticket, int $userId): bool
     {
         if ($this->rolesOf($ticket, $userId) !== []) {
@@ -298,7 +313,7 @@ final class TicketService
         }
         $user = User::query()->find($userId);
 
-        return (bool) ($user?->can('UTL_TCKT_DESK') || $user?->can('UTL_TCKT_REPORT'));
+        return (bool) ($user?->can('UTL_TCKT_DESK') || $user?->can('UTL_TCKT_REPORT') || $this->isSupportDesk($ticket, $user));
     }
 
     /**
@@ -312,7 +327,8 @@ final class TicketService
             return [];
         }
         $roles = $this->rolesOf($ticket, $userId);
-        $isDesk = (bool) User::query()->find($userId)?->can('UTL_TCKT_DESK');
+        $user = User::query()->find($userId);
+        $isDesk = (bool) $user?->can('UTL_TCKT_DESK') || $this->isSupportDesk($ticket, $user);
         $isOwner = in_array(self::OWNER, $roles, true);
         $isAssignee = in_array(self::ASSIGNEE, $roles, true);
         $isRequester = in_array(self::REQUESTER, $roles, true);

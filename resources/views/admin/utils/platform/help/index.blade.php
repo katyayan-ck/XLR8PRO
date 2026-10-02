@@ -11,7 +11,6 @@
                 <h2 class="page-title">{{ $title }}</h2>
                 <div class="text-body-secondary small">{{ __('utils.help.shortcut') }}</div>
             </div>
-            <a href="{{ route('utils.support.index') }}" class="btn btn-outline-primary"><i class="la la-life-ring me-1" aria-hidden="true"></i>{{ __('utils.support.my_requests') }}</a>
         </div>
     </div>
 

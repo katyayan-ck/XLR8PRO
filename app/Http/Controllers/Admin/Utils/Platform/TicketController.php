@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Utilities\Ticket\Ticket;
 use App\Services\KeywordValueService;
 use App\Services\OrgService;
+use App\Services\Platform\Help\SupportRequestService;
 use App\Services\Platform\Ticket\TicketService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -88,14 +89,23 @@ class TicketController extends Controller
     {
         $result = $this->tickets->get($id, backpack_user()->id);
         abort_unless($result->ok, 403, 'You cannot see this ticket.');
+        $model = Ticket::query()->findOrFail($id);
+        $team = in_array('manage', $result->get('user_can'), true) ? OrgService::teamOptions() : [];
+        // Support tickets (DEC-094): diagnostics for the support team only; assignees are support executives only
+        $support = app(SupportRequestService::class);
+        $supportRequest = $support->canViewDiagnostics($model, backpack_user()) ? $support->forTicket($model) : null;
+        $isSupport = str_starts_with((string) $model->category, 'SUP_');
 
         return view('admin.utils.platform.tickets.show', [
             'title' => $result->get('number'),
             'ticket' => $result->data,
-            'model' => Ticket::query()->findOrFail($id),
+            'model' => $model,
             'categories' => KeywordValueService::getEnum('TICKET_CATEGORY'),
             'priorities' => KeywordValueService::getEnum('TICKET_PRIORITY'),
-            'team' => in_array('manage', $result->get('user_can'), true) ? OrgService::teamOptions() : [],
+            'team' => $team,
+            'assigneeOptions' => $isSupport && $team !== [] ? array_intersect_key($team, array_flip($this->tickets->supportExecutiveIds())) : $team,
+            'supportRequest' => $supportRequest,
+            'diagnostics' => $supportRequest ? $support->bundleContents($supportRequest) : null,
         ]);
     }
 

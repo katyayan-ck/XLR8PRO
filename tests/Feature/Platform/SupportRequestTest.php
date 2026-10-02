@@ -16,8 +16,9 @@ use ZipArchive;
 
 /**
  * Support requests (DEC-094, W16e; FRS §5 / §8.4–8.6): a request opens a SUP_* ticket owned by the least-loaded support
- * admin, keeps a masked diagnostic zip that only the requester, support admins and assignees may download, assigns
- * only support executives, and purges the zip after the retention period.
+ * admin and keeps a masked diagnostic zip that only the support team (admins, owner, assignees, snoopers) may see on
+ * the ticket page and download — never the requester. Support tickets take only support executives as assignees; the
+ * zip is purged after the retention period.
  */
 class SupportRequestTest extends TestCase
 {
@@ -78,40 +79,43 @@ class SupportRequestTest extends TestCase
         $this->assertStringContainsString('XXXXXXXX0123', $text);
     }
 
-    public function test_only_the_requester_admins_and_assignees_download_and_only_executives_are_assigned(): void
+    /** Owner 03-10: the requester neither sees, downloads nor removes the diagnostics; nothing about them is in the chat. */
+    public function test_the_requester_cannot_see_download_or_remove_the_diagnostics(): void
     {
-        [$requester, $admin, $exec, $outsider] = $this->u;
+        $requester = $this->u[0];
         $id = $this->send()->assertCreated()->json('data.id');
-        $url = route('utils.support.download', ['id' => $id]);
+        $ticketId = SupportRequest::query()->findOrFail($id)->ticket_id;
 
-        $this->actingAs($requester, 'backpack')->get($url)->assertOk();
-        $this->flushSession();
-        $this->actingAs($outsider, 'backpack')->get($url)->assertForbidden();
-        $this->flushSession();
-        $this->actingAs($exec, 'backpack')->get($url)->assertForbidden();
-
-        $this->flushSession();
-        $this->actingAs($admin, 'backpack')->get($url)->assertOk();
-        $this->from(route('utils.support.index'))->post(route('utils.support.assign', ['id' => $id]), ['executives' => [$outsider->id]])->assertSessionHas('error');
-        $this->from(route('utils.support.index'))->post(route('utils.support.assign', ['id' => $id]), ['executives' => [$exec->id]])->assertSessionHas('success');
-        $this->get(route('utils.support.index'))->assertOk()->assertSee(SupportRequest::query()->findOrFail($id)->ticket->number);
-
-        $this->flushSession();
-        $this->actingAs($exec, 'backpack')->get($url)->assertOk();
+        $this->actingAs($requester, 'backpack')->get(route('utils.support.download', ['id' => $id]))->assertForbidden();
+        $this->get(route('utils.tickets.show', ['id' => $ticketId]))->assertOk()
+            ->assertDontSee('data-xl-diagnostics', false)->assertDontSee('data:image/png;base64,', false)
+            ->assertDontSee('Diagnostics attached')->assertDontSee('Remove this remark?');
     }
 
-    public function test_the_diagnostics_open_on_screen_for_those_who_may_download_them(): void
+    /** The support team (admins, owner, assignees, snoopers) sees the diagnostics on the ticket page; assignees are executives only. */
+    public function test_the_support_team_sees_the_diagnostics_on_the_ticket_and_only_executives_are_assigned(): void
     {
-        [$requester, , , $outsider] = $this->u;
+        [, $admin, $exec, $outsider] = $this->u;
         $id = $this->send()->assertCreated()->json('data.id');
+        $ticketId = SupportRequest::query()->findOrFail($id)->ticket_id;
+        $download = route('utils.support.download', ['id' => $id]);
+        $page = route('utils.tickets.show', ['id' => $ticketId]);
 
-        $this->actingAs($requester, 'backpack')->get(route('utils.support.show', ['id' => $id]))->assertOk()
-            ->assertSee('data:image/png;base64,', false)->assertSee('XXXXXXXX0123')->assertDontSee('2345 6789 0123')
-            ->assertSee('Network calls')->assertSee('sales.booking.index');
-        $this->get(route('utils.support.index'))->assertOk()->assertSee(route('utils.support.show', ['id' => $id]), false);
+        $this->flushSession();   // send() signed in as the requester
+        $this->actingAs($admin, 'backpack')->get($page)->assertOk()
+            ->assertSee('data-xl-diagnostics', false)->assertSee('data:image/png;base64,', false)
+            ->assertSee('XXXXXXXX0123')->assertDontSee('2345 6789 0123')->assertSee('sales.booking.index');
+        $this->get($download)->assertOk();
 
-        $this->flushSession();
-        $this->actingAs($outsider, 'backpack')->get(route('utils.support.show', ['id' => $id]))->assertForbidden();
+        $tickets = app(TicketService::class);
+        $this->assertSame('SUPPORT_NOT_EXECUTIVE', $tickets->update($ticketId, ['owner_id' => $admin->id, 'assignees' => [$outsider->id]], $admin->id)->code);
+        $this->assertTrue($tickets->update($ticketId, ['owner_id' => $admin->id, 'assignees' => [$exec->id], 'snoopers' => [$outsider->id]], $admin->id)->ok);
+
+        foreach ([$exec, $outsider] as $member) {   // assignee, snooper
+            $this->flushSession();
+            $this->actingAs($member, 'backpack')->get($page)->assertOk()->assertSee('data-xl-diagnostics', false);
+            $this->get($download)->assertOk();
+        }
     }
 
     public function test_the_bundle_is_purged_after_the_retention_period_and_bad_input_is_refused(): void
@@ -122,7 +126,8 @@ class SupportRequestTest extends TestCase
         SupportRequest::query()->whereKey($id)->update(['created_at' => now()->subDays(91)]);
         $this->assertSame(1, app(SupportRequestService::class)->purge());
 
-        $this->actingAs($this->u[0], 'backpack')->get(route('utils.support.download', ['id' => $id]))->assertStatus(410);
+        $this->flushSession();
+        $this->actingAs($this->u[1], 'backpack')->get(route('utils.support.download', ['id' => $id]))->assertStatus(410);
         $this->assertNotNull(SupportRequest::query()->findOrFail($id)->ticket, 'the ticket stays');
     }
 }

@@ -186,3 +186,30 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
 - **Checked:**
   - New test (opens for the requester with the screenshot and masked values, 403 for an outsider).
   - `SupportRequestTest` + `MenuLinksTest` 6 passed; pages 200 for superadmin and user 40.
+
+### Support diagnostics move onto the ticket page, support team only (owner 03-10, DEC-094)
+- **Owner asked:**
+  - No separate section: the diagnostics belong on the ticket page, for the assigned users / snoopers.
+  - Not for the user who created the ticket.
+  - Remove the "Remove" button the requester saw.
+- **Cause of that button:** the request posted a chat remark in the requester's own name ("Diagnostics attached…"),
+  which its author may delete — and which told the requester what was shared.
+- **Changed:**
+  - `SupportRequestService`: no remark is posted. `canDownload()` / `assign()` replaced by `canViewDiagnostics()`
+    (support admins + the ticket's owner / assignees / snoopers, never the requester) and `forTicket()`.
+  - `TicketService`: `isSupportDesk()` (support admins see / manage every `SUP_*` ticket), `supportExecutiveIds()`;
+    `update()` refuses non-executive assignees on support tickets (`SUPPORT_NOT_EXECUTIVE`).
+  - `TicketController::show` passes the request + decoded zip only to the support team, and executive-only assignee
+    options for support tickets.
+  - `tickets/show.blade.php` includes the new **Diagnostics** card (`support/_diagnostics.blade.php`, formerly the
+    viewer page).
+  - `SupportController` keeps only `store` / `download` (support team only).
+- **Removed:**
+  - Routes `utils.support.index`, `.show`, `.assign`; the view `support/index.blade.php`.
+  - The Utilities → Support Requests menu item and the Help Centre button.
+  - Unused lang keys. The pane's "sent" message now points to Utilities → Tickets.
+- **Data:** the one remark of the owner's local test request (thread 1284) was removed permanently (local `xlrm` only).
+- **Checked:**
+  - `SupportRequestTest` 4 passed: the requester gets 403 on the zip and no card / remark / Remove on the ticket. Admin,
+    assignee and snooper see the card and download. A non-executive assignee is refused. Purge → 410.
+  - Platform / menu / lang / architecture suites: 94 passed. Pages 200 for superadmin and user 40. PHPStan clean.

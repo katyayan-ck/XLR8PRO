@@ -32,12 +32,10 @@ Route::group([
     Route::get('help/search', [HelpController::class, 'search'])->name('utils.help.search');
     Route::get('help/article/{key}', [HelpController::class, 'show'])->where('key', '[a-z0-9_\-/]+')->name('utils.help.show');
 
-    // Support requests (DEC-094, W16e) — send: every signed-in user; list / download / assign: checked in the controller
-    Route::get('support', [SupportController::class, 'index'])->name('utils.support.index');
+    // Support requests (DEC-094, W16e) — send: every signed-in user (it becomes a ticket); the diagnostics show on the
+    // ticket page and download for the support team only (checked in the controller)
     Route::post('support', [SupportController::class, 'store'])->name('utils.support.store');
-    Route::get('support/{id}', [SupportController::class, 'show'])->whereNumber('id')->name('utils.support.show');
     Route::get('support/{id}/download', [SupportController::class, 'download'])->whereNumber('id')->name('utils.support.download');
-    Route::post('support/{id}/assign', [SupportController::class, 'assign'])->whereNumber('id')->name('utils.support.assign');
 
     // Notify inbox
     Route::get('inbox', [NotificationInboxController::class, 'index'])->name('utils.inbox.index');

@@ -53,34 +53,39 @@ Gathered for a support request (W16e builds the zip; FRS §5.2). **Never records
 
 ## Support requests — "Still need help?" (W16e)
 - **Pane:** the footer button opens a form in the pane: what you need (5 categories), urgent (→ P2, else P3), subject
-  (default: page title), description, "Attach diagnostics" (on), and a screenshot preview that can be left out. It
-  posts JSON to `utils.support.store`. `XL.help.support()` opens it from code.
+  (default: page title), description, "Attach diagnostics" (on), and a screenshot preview that can be left out. It posts
+  JSON to `utils.support.store`; the request becomes a **ticket** the user follows under Utilities → Tickets.
+  `XL.help.support()` opens the form from code.
+- **Diagnostics are for the support team only (owner 03-10):** they show as a **Diagnostics** card on the ticket page
+  (`tickets/show.blade.php` includes `support/_diagnostics.blade.php`: screenshot, page facts, Actions / Network / Errors /
+  Server / User tabs, zip download) for support admins (`UTL_SUPP_ADMIN`) and the ticket's owner, assignees and
+  snoopers. The **requester never sees them**, cannot download them (403) and nothing about them is posted to the
+  ticket conversation (so there is nothing to remove). There is no separate support section or menu.
+- **Support tickets in the ticket engine** (`TicketService`):
+  - `isSupportDesk()`: support admins see and manage every `SUP_*` ticket like the service desk.
+  - `update()` refuses assignees who are not `UTL_SUPP_EXEC` holders (`SUPPORT_NOT_EXECUTIVE`).
+  - `supportExecutiveIds()` feeds the ticket page's assignee picker.
 - **`App\Services\Platform\Help\SupportRequestService`:**
 
   | Method | Does |
   |---|---|
-  | `submit(User $user, array $input): Result` | `Ticket::open` (category `SUP_*`, P2 / P3, title + masked description, `ref_type = SUPPORT`, owner = `supportAdmin()`), a `SupportRequest` row, the zip (when diagnostics are on), a ticket remark, Notify to the owner; ok data `{id, ticket_id, number}`; `SUPPORT_CATEGORY` on an unknown category |
+  | `submit(User $user, array $input): Result` | `Ticket::open` (category `SUP_*`, P2 / P3, title + masked description, `ref_type = SUPPORT`, owner = `supportAdmin()`), a `SupportRequest` row, the zip (when diagnostics are on), Notify to the owner; ok data `{id, ticket_id, number}`; `SUPPORT_CATEGORY` on an unknown category |
   | `supportAdmin(): ?int` | active `UTL_SUPP_ADMIN` holder with the fewest open `SUP_*` tickets; ties → the one without a new support ticket longest; null when nobody holds it |
-  | `assign(SupportRequest $r, array $executiveIds, User $actor): Result` | support admins only; every id must hold `UTL_SUPP_EXEC` (`SUPPORT_NOT_EXECUTIVE`); then `TicketService::update` (owner / desk rights) |
-  | `canDownload(SupportRequest $r, User $u): bool` | requester, any `UTL_SUPP_ADMIN`, or an ASSIGNEE of the ticket (not the ticket desk, not followers) |
-  | `bundleFile(SupportRequest $r): ?string` | absolute path of the zip, null when none / purged |
+  | `forTicket(Ticket $t): ?SupportRequest` | the request behind a ticket |
+  | `canViewDiagnostics(?Ticket $t, User $u): bool` | any `UTL_SUPP_ADMIN`, or the ticket's OWNER / ASSIGNEE / SNOOPER — never the requester or followers (unless they also hold one of those roles) |
+  | `bundleFile(SupportRequest $r): ?string` / `bundleContents(SupportRequest $r): ?array` | the zip's path / its decoded files `{files, screenshot}` for the card; null when none or purged |
   | `purge(): int` | deletes zips older than `support.bundle_retention_days` (the request and ticket stay); daily job `PurgeSupportBundles` 02:45 |
   | `holders(string $permission): array` | active user ids holding a permission (role or direct) |
 - **Zip** (`storage/app/private/support/{id}/diagnostics-{id}.zip`, disk `local`, never public): `page.json`,
-  `actions.json`, `network.json`, `errors.json` (from `XL.diag.snapshot()`), `server.json` (the user's trail + the
-  log lines of its error references, last 2 MB of `laravel.log`), `user.json` (roles, permissions, data scopes, last
-  login), `screenshot.png|jpg` (PNG / JPEG only, signature-checked, ≤ `support.max_screenshot_kb`). Every text file
-  passes `DiagnosticsService::mask()`.
-- **Menu:** Utilities → Help Centre / Support Requests (every signed-in user); also the `?` in the top bar (F1).
-- **Screens / routes** (`routes/backpack/utils.php`): `utils.support.index` (own requests; admins: all, with an executive
-  picker; executives: also assigned ones), `utils.support.show` (the diagnostics on screen: screenshot, page facts, tabs
-  for actions / network / errors / server requests + log lines / user & access; same rights as the zip, 410 once
-  purged), `utils.support.store` (POST JSON → 201 / 422), `utils.support.download` (the zip; 403 without rights, 410
-  once purged), `utils.support.assign` (POST, admins).
-- `bundleContents(SupportRequest $r): ?array` (`{files, screenshot}`) feeds the on-screen viewer.
+  `actions.json`, `network.json`, `errors.json` (from `XL.diag.snapshot()`), `server.json` (the user's trail + the log
+  lines of its error references, last 2 MB of `laravel.log`), `user.json` (roles, permissions, data scopes, last login),
+  `screenshot.png|jpg` (PNG / JPEG only, signature-checked, ≤ `support.max_screenshot_kb`). Every text file passes
+  `DiagnosticsService::mask()`.
+- **Routes:** `utils.support.store` (POST JSON → 201 / 422), `utils.support.download` (support team only; 403 / 410).
 - **Permissions:** `UTL_SUPP_ADMIN`, `UTL_SUPP_EXEC` (process UTL / SUPP), granted to superadmin only — attach them to
-  designations on Org → Designation. Ticket categories `SUP_HOWTO`, `SUP_NOT_WORKING`, `SUP_WRONG_DATA`,
-  `SUP_ACCESS`, `SUP_SUGGESTION` (KeyValue `TICKET_CATEGORY`).
+  designations on Org → Designation. Ticket categories `SUP_HOWTO`, `SUP_NOT_WORKING`, `SUP_WRONG_DATA`, `SUP_ACCESS`,
+  `SUP_SUGGESTION` (KeyValue `TICKET_CATEGORY`).
+- **Menu:** Utilities → Help Centre (every signed-in user); support requests are under Utilities → Tickets.
 - Tests: `tests/Feature/Platform/SupportRequestTest.php`.
 
 ## Writing an article

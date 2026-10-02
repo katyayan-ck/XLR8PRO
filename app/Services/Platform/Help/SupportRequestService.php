@@ -19,8 +19,10 @@ use ZipArchive;
  * `SUP_*`, P2 when urgent else P3) owned by the `UTL_SUPP_ADMIN` holder with the fewest open support tickets (ties →
  * the one idle longest), and keeps a diagnostic zip in private storage: page / actions / network / errors from the
  * browser (`xl-diag.js`), the user's server trail, user / access facts and an optional screenshot — all text masked.
- * Only the requester, support admins and the ticket's assignees may download it; it is deleted after
- * `support.bundle_retention_days`. The support admin assigns `UTL_SUPP_EXEC` holders only.
+ * The diagnostics are for the support team only: they show on the ticket page (and download) for support admins and
+ * the ticket's owner, assignees and snoopers — never for the requester, who cannot see or remove what was shared. They
+ * are deleted after `support.bundle_retention_days`. On a support ticket only `UTL_SUPP_EXEC` holders can be assigned
+ * (enforced by `TicketService::update`).
  *
  * Example:
  *
@@ -70,8 +72,8 @@ class SupportRequestService
 
         $request = SupportRequest::query()->create(['ticket_id' => $ticketId, 'requester_id' => $user->id, 'category' => $input['category'], 'route' => $route]);
         if (! empty($input['diagnostics'])) {
+            // no remark on the ticket: the requester must not see (or remove) what was shared — owner 03-10
             $this->storeBundle($request, $user, (array) ($input['snapshot'] ?? []), $input['screenshot'] ?? null);
-            $this->tickets->remark($ticketId, $user->id, __('utils.support.bundle_remark', ['id' => $request->id]));
         }
         if ($ownerId !== null) {
             $this->notify->to($ownerId)->kind('N')->about('TICKET', $ticketId)->actor($user->id)
@@ -97,39 +99,27 @@ class SupportRequestService
         return $admins[0];
     }
 
-    /**
-     * Assign support executives (only `UTL_SUPP_EXEC` holders) to a support ticket; the ticket routine checks that the
-     * actor may manage it (owner or service desk).
-     *
-     * @param  list<int>  $executiveIds
-     */
-    public function assign(SupportRequest $request, array $executiveIds, User $actor): Result
+    /** The support request behind a ticket, if any. */
+    public function forTicket(Ticket $ticket): ?SupportRequest
     {
-        if (! $actor->can('UTL_SUPP_ADMIN')) {
-            return Result::fail('FORBIDDEN', __('utils.support.only_admin_assigns'));
-        }
-        $allowed = $this->holders('UTL_SUPP_EXEC');
-        $executiveIds = array_values(array_unique(array_map('intval', $executiveIds)));
-        if (array_diff($executiveIds, $allowed) !== []) {
-            return Result::fail('SUPPORT_NOT_EXECUTIVE', __('utils.support.not_executive'));
-        }
-        $ticket = Ticket::query()->find($request->ticket_id);
-        if ($ticket === null) {
-            return Result::fail('NOT_FOUND', __('utils.support.ticket_missing'));
-        }
-
-        return $this->tickets->update($ticket->id, ['owner_id' => $ticket->owner_id ?? $actor->id, 'assignees' => $executiveIds], $actor->id);
+        return SupportRequest::query()->where('ticket_id', $ticket->id)->latest('id')->first();
     }
 
-    /** Requester, any support admin, or an assignee of the request's ticket — and only while the zip is kept. */
-    public function canDownload(SupportRequest $request, User $user): bool
+    /**
+     * Support team only (owner 03-10): any `UTL_SUPP_ADMIN`, or the ticket's owner, assignees or snoopers. The requester
+     * (and followers) never — unless they also hold one of those roles.
+     */
+    public function canViewDiagnostics(?Ticket $ticket, User $user): bool
     {
-        if ((int) $request->requester_id === (int) $user->id || $user->can('UTL_SUPP_ADMIN')) {
+        if ($ticket === null) {
+            return false;
+        }
+        if ($user->can('UTL_SUPP_ADMIN')) {
             return true;
         }
 
-        return $request->ticket_id !== null && TicketPerson::query()->where('ticket_id', $request->ticket_id)
-            ->where('user_id', $user->id)->where('role', TicketService::ASSIGNEE)->exists();
+        return TicketPerson::query()->where('ticket_id', $ticket->id)->where('user_id', $user->id)
+            ->whereIn('role', [TicketService::OWNER, TicketService::ASSIGNEE, TicketService::SNOOPER])->exists();
     }
 
     /** Absolute path of the stored zip, or null when there is none / it was purged. */

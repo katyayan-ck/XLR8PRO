@@ -120,12 +120,16 @@
                         @foreach (['assignees' => 'Assignees', 'followers' => 'Followers', 'snoopers' => 'Snoopers'] as $key => $label)
                             <div class="col-12">
                                 <label class="form-label small">{{ $label }}</label>
-                                <x-ui.select :name="$key.'[]'" :options="$team" :selected="$ids($key)" multiple class="form-select-sm" />
+                                <x-ui.select :name="$key.'[]'" :options="$key === 'assignees' ? $assigneeOptions : $team" :selected="$ids($key)" multiple class="form-select-sm" />
                             </div>
                         @endforeach
                     </div>
                     <div class="card-footer text-end"><button class="btn btn-sm btn-primary">Save</button></div>
                 </form>
+            @endif
+
+            @if ($supportRequest)
+                @include('admin.utils.platform.support._diagnostics')
             @endif
 
             <x-docs.uploader :model="$model" title="Attachments" />

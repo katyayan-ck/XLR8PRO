@@ -222,8 +222,9 @@ it. Run workers with `--timeout` at or below the job timeouts (pricing worker: `
 Record access (who may read a record's chat and attached files) is **not** a `UTL_*` permission. It comes from the
 entity's `permission` in `config/platform.php`, or from the model's `chatCanView()`.
 
-**Support requests (DEC-094, W16e):** `UTL_SUPP_ADMIN` (receives new support tickets, assigns executives, sees all
-requests and bundles), `UTL_SUPP_EXEC` (assignable; downloads the bundles of tickets assigned to them) — minted by
+**Support requests (DEC-094, W16e):** `UTL_SUPP_ADMIN` (receives new support tickets; sees and manages every `SUP_*`
+ticket like the desk; sees all diagnostics), `UTL_SUPP_EXEC` (the only assignees a support ticket takes). Diagnostics
+are for the support team only (owner, assignees, snoopers, support admins) — never the requester — minted by
 `2026_10_03_004646_create_support_requests_dec094`, superadmin only. Settings `support.bundle_retention_days` (90),
 `support.max_screenshot_kb` (4096).
 
