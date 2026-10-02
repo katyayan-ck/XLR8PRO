@@ -6,8 +6,13 @@
 @section('content')
 <div class="container-xl">
     <div class="page-header d-print-none mb-3">
-        <h2 class="page-title">{{ $title }}</h2>
-        <div class="text-body-secondary small">{{ __('utils.help.shortcut') }}</div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h2 class="page-title">{{ $title }}</h2>
+                <div class="text-body-secondary small">{{ __('utils.help.shortcut') }}</div>
+            </div>
+            <a href="{{ route('utils.support.index') }}" class="btn btn-outline-primary"><i class="la la-life-ring me-1" aria-hidden="true"></i>{{ __('utils.support.my_requests') }}</a>
+        </div>
     </div>
 
     <div class="card mb-3">

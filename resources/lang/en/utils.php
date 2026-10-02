@@ -66,6 +66,42 @@ return [
         'tour_empty' => 'None of the tour steps are on this page right now.',
     ],
 
+    // "Still need help?" support requests (DEC-094, W16e).
+    'support' => [
+        'still_need_help' => 'Still need help?',
+        'title' => 'Support request',
+        'my_requests' => 'Support requests',
+        'what' => 'What do you need?',
+        'categories' => [
+            'SUP_HOWTO' => 'How do I…?',
+            'SUP_NOT_WORKING' => 'Something is not working',
+            'SUP_WRONG_DATA' => 'Wrong data',
+            'SUP_ACCESS' => 'Access or permission',
+            'SUP_SUGGESTION' => 'Suggestion',
+        ],
+        'urgent' => 'Urgent — I cannot work',
+        'subject' => 'Subject',
+        'description' => 'Describe the problem',
+        'diagnostics' => 'Attach diagnostics (this page, your recent actions and errors — never what you typed)',
+        'screenshot' => 'Include this screenshot',
+        'send' => 'Send',
+        'cancel' => 'Cancel',
+        'sending' => 'Sending…',
+        'sent' => 'Support request :number sent. You can follow it under Help → Support requests.',
+        'failed' => 'The request could not be sent. Please try again.',
+        'invalid_category' => 'Choose what you need.',
+        'bundle_remark' => 'Diagnostics attached (support request #:id) — download from Help → Support requests.',
+        'owner_notification' => 'New support request :number',
+        'only_admin_assigns' => 'Only a support admin can assign executives.',
+        'not_executive' => 'Only support executives can be assigned.',
+        'ticket_missing' => 'The ticket of this request no longer exists.',
+        'assigned' => 'Executives assigned.',
+        'bundle_gone' => 'The diagnostics were deleted after the retention period.',
+        'none' => 'No support requests yet.',
+        'download' => 'Diagnostics',
+        'assign' => 'Assign',
+    ],
+
     // "Coming soon" page for menu items whose screen is not built yet (DEC-095 #8, D13).
     'coming_soon' => [
         'title' => 'Coming soon',

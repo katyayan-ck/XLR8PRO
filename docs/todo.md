@@ -412,7 +412,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W16b | Help engine: Markdown articles in `resources/help/`, route → article, `::: can CODE` sections, cache, search, coverage; F1 / `?` right-side pane; Help centre screen — ✅ 03-10 | ✅ |
 | W16c | On-demand page tour (Driver.js via Basset): steps from the article / `data-xl-tour`, skip missing elements, "new" dot — ✅ 03-10 | ✅ |
 | W16d | Diagnostics collector: actions / AJAX / JS errors ring buffer (no typed values), server request trail, html2canvas screenshot with sensitive-field blanking + preview — ✅ 03-10 (preview UI comes with the W16e form) | ✅ |
-| W16e | Support request: permissions `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`, categories + settings, `SupportRequestService` (masked zip → ticket, least-loaded admin as owner, executive-only assignment), screens, bundle rights, retention purge | 🔴 |
+| W16e | Support request: permissions `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`, categories + settings, `SupportRequestService` (masked zip → ticket, least-loaded admin as owner, executive-only assignment), screens, bundle rights, retention purge — ✅ 03-10 (grant the two permissions to designations: owner) | ✅ |
 | W16f | Developer guide `tech-guides/platform/17-help-support.md` (+ reference) with the build; the **user-facing** help texts / "Getting help" articles move to §13 (last) | 🔴 |
 | W18 | **Owner decisions 02-10 (DEC-095)** — build every item with a definitive answer; booking items as numbered, revertable BT changes | 🟡 in progress |
 | W18a | Security: D2 `random_int` OTP (BUG-188), D3 entity allowlist for `docs/upload` / `history` (BUG-182), D1 OTP login from the person record (BUG-187) | ✅ 02-10 (+ BUG-227 fixed; BUG-228 SMS placeholder logged) |
@@ -1447,3 +1447,19 @@ server requests with any error reference. Personal data (Aadhaar, PAN, mobile, e
 user types is recorded. A screenshot of the page can be taken with sensitive fields blanked.
 **Verified:** new `DiagnosticsTest`; 116 related tests; page smoke for superadmin and user 40.
 **Left:** W16e — the support-request form that shows this, builds the zip and opens the ticket.
+
+### W16e — "Still need help?" support requests (DEC-094)
+
+**Delivered:** from the F1 pane a user can send a support request: what they need, how urgent, a description and, by
+default, the page's diagnostics with a screenshot preview they can drop.
+- **Ticket:** it becomes a ticket owned by the least-busy support admin.
+- **Diagnostics zip:** masked, kept privately and readable only by the requester, support admins and the
+  executives they assign. Deleted after 90 days.
+- **Screen:** Help → Support requests lists them; support admins assign executives there.
+- **Permissions:** two new ones, `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`, held only by superadmin until the owner grants
+  them to designations.
+
+**Verified:** `SupportRequestTest`; 123 related tests; pages checked for superadmin and a scoped user.
+**Left:**
+- The owner grants the two support permissions to designations.
+- W16f guide wrap-up; help articles last (§13).

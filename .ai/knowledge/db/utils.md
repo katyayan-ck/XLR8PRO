@@ -67,6 +67,10 @@ Indexes: (created_at), (created_by), (deleted_by), (is_read), (priority), (refer
 id bigint unsigned PK, setting_key varchar(191), scope_type varchar(20), scope_code varchar(50), value text?, created_by bigint unsigned?, updated_by bigint unsigned?, created_at timestamp?, updated_at timestamp?
 Indexes: UNIQUE (setting_key,scope_type,scope_code)
 
+## `xlr8_utils_support_request` · ~0 rows · model: App\Models\Utilities\Support\SupportRequest
+id bigint unsigned PK, ticket_id bigint unsigned?, requester_id bigint unsigned, category varchar(40), route varchar(190)?, bundle_path varchar(255)?, bundle_bytes int unsigned?, purged_at timestamp?, created_at timestamp?, updated_at timestamp?
+Indexes: (requester_id), (ticket_id)
+
 ## `xlr8_utils_synonyms` · ~30 rows · model: App\Models\Utilities\Synonym
 id bigint unsigned PK, entity_type varchar(64), canonical varchar(128), synonym varchar(128), is_active tinyint(1), created_at timestamp?, created_by bigint unsigned?, updated_at timestamp?, updated_by bigint unsigned?, deleted_at timestamp?, deleted_by bigint unsigned?
 Indexes: (entity_type,is_active), (entity_type,canonical), UNIQUE (entity_type,synonym)

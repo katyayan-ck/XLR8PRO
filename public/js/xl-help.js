@@ -60,9 +60,13 @@
             ' data-url="' + esc(cfg.search) + '" data-empty="' + esc(t.no_results) + '" aria-label="' + esc(t.search) + '">' +
             '<div class="list-group list-group-flush" data-xl-help-results></div></div>' +
             '<div class="xl-help-body" aria-live="polite"><div class="text-body-secondary">…</div></div>' +
-            '<div class="xl-help-foot"><a href="' + esc(cfg.centre) + '">' + esc(t.centre) + '</a></div>';
+            '<div class="xl-help-foot d-flex justify-content-between align-items-center gap-2"><a href="' + esc(cfg.centre) + '">' + esc(t.centre) + '</a>' +
+            (cfg.support ? '<button type="button" class="btn btn-sm btn-primary" data-xl-support-open><i class="la la-life-ring me-1" aria-hidden="true"></i>' + esc(cfg.support.labels.still_need_help) + '</button>' : '') +
+            '</div>';
         document.body.appendChild(pane);
         pane.querySelector('[data-xl-help-close]').addEventListener('click', close);
+        var supportBtn = pane.querySelector('[data-xl-support-open]');
+        if (supportBtn) { supportBtn.addEventListener('click', supportForm); }
         bindSearch(pane.querySelector('.xl-help-search input'));
     }
 
@@ -133,6 +137,82 @@
         });
     }
 
+    // ---------------- "Still need help?" support request (W16e)
+    var shot = null;
+
+    function supportForm() {
+        var L = cfg.support.labels;
+        var body = pane.querySelector('.xl-help-body');
+        var cats = Object.keys(L.categories || {}).map(function (code) {
+            return '<option value="' + esc(code) + '">' + esc(L.categories[code]) + '</option>';
+        }).join('');
+        body.innerHTML =
+            '<form data-xl-support-form novalidate>' +
+            '<h3 class="h4">' + esc(L.title) + '</h3>' +
+            '<div class="mb-2"><label class="form-label" for="xl-sup-cat">' + esc(L.what) + '</label><select id="xl-sup-cat" name="category" class="form-select" required>' + cats + '</select></div>' +
+            '<div class="mb-2"><label class="form-check"><input type="checkbox" class="form-check-input" name="urgent"> <span class="form-check-label">' + esc(L.urgent) + '</span></label></div>' +
+            '<div class="mb-2"><label class="form-label" for="xl-sup-subj">' + esc(L.subject) + '</label><input id="xl-sup-subj" name="subject" class="form-control" maxlength="200" required value="' + esc(document.title) + '"></div>' +
+            '<div class="mb-2"><label class="form-label" for="xl-sup-desc">' + esc(L.description) + '</label><textarea id="xl-sup-desc" name="description" class="form-control" rows="4" maxlength="5000" required></textarea></div>' +
+            '<div class="mb-2"><label class="form-check"><input type="checkbox" class="form-check-input" name="diagnostics" checked> <span class="form-check-label small">' + esc(L.diagnostics) + '</span></label></div>' +
+            '<div class="mb-2" data-xl-shot hidden><label class="form-check"><input type="checkbox" class="form-check-input" name="with_screenshot" checked> <span class="form-check-label small">' + esc(L.screenshot) + '</span></label>' +
+            '<img alt="" class="img-fluid border rounded mt-1" data-xl-shot-img></div>' +
+            '<div class="small mb-2" data-xl-support-msg aria-live="polite"></div>' +
+            '<div class="d-flex gap-2"><button type="submit" class="btn btn-primary">' + esc(L.send) + '</button>' +
+            '<button type="button" class="btn btn-outline-secondary" data-xl-support-cancel>' + esc(L.cancel) + '</button></div>' +
+            '</form>';
+        var form = body.querySelector('form');
+        form.querySelector('[data-xl-support-cancel]').addEventListener('click', function () { loaded = false; load(); });
+        form.addEventListener('submit', function (e) { e.preventDefault(); sendSupport(form); });
+        form.querySelector('[name=description]').focus();
+        if (window.XL && window.XL.diag && window.XL.diag.screenshot) {
+            window.XL.diag.screenshot().then(function (dataUrl) {
+                shot = dataUrl;
+                var box = form.querySelector('[data-xl-shot]');
+                box.querySelector('[data-xl-shot-img]').src = dataUrl;
+                box.hidden = false;
+            }).catch(function () { shot = null; });
+        }
+    }
+
+    function sendSupport(form) {
+        var L = cfg.support.labels;
+        var msg = form.querySelector('[data-xl-support-msg]');
+        var submit = form.querySelector('[type=submit]');
+        if (!form.description.value.trim() || !form.subject.value.trim()) { msg.className = 'small mb-2 text-danger'; msg.textContent = L.description; return; }
+        var withDiag = form.diagnostics.checked;
+        var payload = {
+            category: form.category.value, urgent: form.urgent.checked, subject: form.subject.value, description: form.description.value,
+            route: cfg.route || null, diagnostics: withDiag,
+            snapshot: withDiag && window.XL && window.XL.diag ? window.XL.diag.snapshot() : null,
+            screenshot: withDiag && shot && form.with_screenshot && form.with_screenshot.checked ? shot : null,
+        };
+        submit.disabled = true;
+        msg.className = 'small mb-2 text-body-secondary';
+        msg.textContent = L.sending;
+        var csrf = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+        fetch(cfg.support.store, {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf, 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify(payload),
+        }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); }).then(function (res) {
+            if (res.ok && res.body.ok) {
+                form.innerHTML = '<div class="alert alert-success">' + esc(res.body.message) + '</div>' +
+                    '<a class="btn btn-sm btn-outline-primary" href="' + esc(res.body.data.url) + '">' + esc(res.body.data.number) + '</a> ' +
+                    '<a class="btn btn-sm btn-link" href="' + esc(cfg.support.list) + '">' + esc(L.my_requests) + '</a>';
+                shot = null;
+                return;
+            }
+            var errors = res.body && res.body.errors ? Object.keys(res.body.errors).map(function (k) { return res.body.errors[k][0]; }) : [];
+            msg.className = 'small mb-2 text-danger';
+            msg.textContent = errors[0] || (res.body && res.body.message) || L.failed;
+            submit.disabled = false;
+        }).catch(function () {
+            msg.className = 'small mb-2 text-danger';
+            msg.textContent = L.failed;
+            submit.disabled = false;
+        });
+    }
+
     function open() {
         if (!cfg.pane) { return; }
         if (!pane) { build(); }
@@ -186,5 +266,5 @@
     });
 
     window.XL = window.XL || {};
-    window.XL.help = { open: open, close: close, tourSteps: tourSteps };
+    window.XL.help = { open: open, close: close, tourSteps: tourSteps, support: function () { open(); supportForm(); } };
 })();

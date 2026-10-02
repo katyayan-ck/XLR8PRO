@@ -10551,3 +10551,36 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
   the sign-in page, then sign in → dashboard → bookings list → coming-soon page with no error page.
 - Windows cmd usage: `set "E2E_USER=…" && set "E2E_PASSWORD=…" && npm run e2e` (quotes keep the trailing space out of
   the value); bash: `E2E_USER=… E2E_PASSWORD=… npm run e2e`.
+
+### W16e — "Still need help?" support requests (DEC-094)
+- **Files (new):**
+  - Migration `2026_10_03_004646_create_support_requests_dec094.php`: permissions `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`
+    (UTL / SUPP, superadmin only), table `xlr8_utils_support_request`, `TICKET_CATEGORY` `SUP_*` ×5. Run on `xlrm` +
+    `xlrm_testing`.
+  - `app/Models/Utilities/Support/SupportRequest.php`.
+  - `app/Services/Platform/Help/SupportRequestService.php`.
+  - `app/Http/Controllers/Admin/Utils/Platform/SupportController.php`.
+  - `app/Jobs/Platform/PurgeSupportBundles.php`.
+  - View `admin/utils/platform/support/index.blade.php`.
+  - `tests/Feature/Platform/SupportRequestTest.php`.
+- **Changed:**
+  - `routes/backpack/utils.php`: `utils.support.{index,store,download,assign}`.
+  - `routes/console.php`: purge daily 02:45.
+  - `config/platform.php`: `support.*` settings.
+  - `resources/lang/en/utils.php`: `support.*`.
+  - `header_metas.blade.php`: support endpoints / labels.
+  - `public/js/xl-help.js`: pane form.
+  - `public/js/xl-diag.js`: JPEG screenshot.
+  - Help centre link.
+  - Guides `17-help-support.md`, `16-reference.md`; `.ai/rules/admin-backpack.md` (UTL `SUPP`).
+- **Behaviour:**
+  - The pane's "Still need help?" form opens a `SUP_*` ticket (P2 when urgent). Its owner is the support admin with
+    the fewest open support tickets, who is notified.
+  - The masked diagnostic zip goes to private storage. Only the requester, support admins and assigned executives
+    may download it (not the ticket desk).
+  - Admins assign only support executives. The zip is deleted after 90 days (setting).
+- **Checked:**
+  - `SupportRequestTest` (3 tests: owner choice, zip files + masking, download rights, executive-only assignment,
+    purge → 410, bad category → 422).
+  - Platform / IAM / architecture / lang / menu suites: 123 passed.
+  - Pages 200 for superadmin and user 40. PHPStan clean; JS syntax checked.

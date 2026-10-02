@@ -88,15 +88,12 @@ nothing local is unpushed. Next push only when the owner asks.
   account (ask the owner for it; never store it; cmd: `set "E2E_USER=…" && set "E2E_PASSWORD=…" && npm run e2e`). KYC masking run
   on the servers by the owner; local DBs show 0 left.
   **Owner deals later:** W18f report definitions (R1–R8), BUG-229 Reject rule, `users:reset` account list.
-- **W16 help & support (DEC-094):** W16b, W16c, W16d ✅ 03-10 (pane, Help centre, tours, diagnostics collector
-  `xl-diag.js` + `RecordRequestTrail` + `DiagnosticsService`; guide `tech-guides/platform/17-help-support.md`).
-  **Next step: W16e** — support requests (FRS §5): migration minting `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC` (superadmin
-  only), KeyValue support categories (`SUPPORT_CATEGORY`) via `KeyvalueService`, settings `support.*` (retention
-  days, max bundle size); `SupportRequestService` (bundle zip on the server from client snapshot + screenshot + trail
-  + user / access facts, all masked; `Ticket::open` with owner = least-loaded `UTL_SUPP_ADMIN`; executive-only
-  assignee picker); "Still need help?" form in the pane (preview, untick diagnostics / screenshot) + My support
-  requests; bundle download only for owner / assignee / admins; daily retention purge job; notifications; tests.
-  Read `TicketService` (`open/transition/update/inbox`) and `DocsService` first.
+- **W16 help & support (DEC-094):** W16b–W16e ✅ 03-10 (pane, Help centre, tours, diagnostics, support requests;
+  guide `tech-guides/platform/17-help-support.md`). Owner to grant `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC` to designations.
+  **Next step: W16f** — finish the developer guide (article-writing guide section, a "Support requests" user-flow
+  summary, README / 16-reference cross-links are in) and the help usage log (FRS §7: who opened which article,
+  searches with no result, tours finished, requests sent — a small `help.usage` log channel or table + report); then
+  the W17 manual / articles stay last (§13).
 
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;

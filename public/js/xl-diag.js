@@ -161,7 +161,7 @@
         });
     }
 
-    /** PNG data URL of the visible page; sensitive fields and the help pane are blanked in the copy only. */
+    /** JPEG data URL of the visible page; sensitive fields and the help pane are blanked in the copy only. */
     function screenshot() {
         return loadHtml2canvas().then(function (h2c) {
             return h2c(document.body, {
@@ -175,7 +175,7 @@
                         el.style.color = 'transparent';
                     });
                 },
-            }).then(function (canvas) { return canvas.toDataURL('image/png'); });
+            }).then(function (canvas) { return canvas.toDataURL('image/jpeg', 0.8); });   // JPEG keeps the upload small
         });
     }
 

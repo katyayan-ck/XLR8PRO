@@ -1,7 +1,7 @@
 # 17 — Help & support (F1 help, tours, support requests)
 
 > DEC-094, to-do W16. FRS: [help-and-support-frs.md](../frs-and-workflows/frs/help-and-support-frs.md).
-> Built so far: **W16b help engine**, **W16c page tours**, **W16d diagnostics** (03-10-2026). Support requests (W16e) follow;
+> Built: **W16b help engine**, **W16c page tours**, **W16d diagnostics**, **W16e support requests** (03-10-2026);
 > this guide grows with them (W16f). Help **content** (the articles themselves) is written last (§13).
 
 ## F1 help pane — how it works
@@ -50,6 +50,34 @@ Gathered for a support request (W16e builds the zip; FRS §5.2). **Never records
   | `trail(int $userId): array` | newest first |
   | `static mask(string $text): string` | Aadhaar → `XXXXXXXX1234` (spaces / dashes too), PAN → `XXXXXX234F`, mobile → `XXXXXX3210` (+91 too), e-mail → `r***@domain`, 32+ char tokens → `[token]` |
   | `static cleanUrl(string $url): string` | path + query with `token / _token / password / otp / signature / code / key / secret / api_key / access_token` values → `[removed]`, then `mask()` |
+
+## Support requests — "Still need help?" (W16e)
+- **Pane:** the footer button opens a form in the pane: what you need (5 categories), urgent (→ P2, else P3), subject
+  (default: page title), description, "Attach diagnostics" (on), and a screenshot preview that can be left out. It
+  posts JSON to `utils.support.store`. `XL.help.support()` opens it from code.
+- **`App\Services\Platform\Help\SupportRequestService`:**
+
+  | Method | Does |
+  |---|---|
+  | `submit(User $user, array $input): Result` | `Ticket::open` (category `SUP_*`, P2 / P3, title + masked description, `ref_type = SUPPORT`, owner = `supportAdmin()`), a `SupportRequest` row, the zip (when diagnostics are on), a ticket remark, Notify to the owner; ok data `{id, ticket_id, number}`; `SUPPORT_CATEGORY` on an unknown category |
+  | `supportAdmin(): ?int` | active `UTL_SUPP_ADMIN` holder with the fewest open `SUP_*` tickets; ties → the one without a new support ticket longest; null when nobody holds it |
+  | `assign(SupportRequest $r, array $executiveIds, User $actor): Result` | support admins only; every id must hold `UTL_SUPP_EXEC` (`SUPPORT_NOT_EXECUTIVE`); then `TicketService::update` (owner / desk rights) |
+  | `canDownload(SupportRequest $r, User $u): bool` | requester, any `UTL_SUPP_ADMIN`, or an ASSIGNEE of the ticket (not the ticket desk, not followers) |
+  | `bundleFile(SupportRequest $r): ?string` | absolute path of the zip, null when none / purged |
+  | `purge(): int` | deletes zips older than `support.bundle_retention_days` (the request and ticket stay); daily job `PurgeSupportBundles` 02:45 |
+  | `holders(string $permission): array` | active user ids holding a permission (role or direct) |
+- **Zip** (`storage/app/private/support/{id}/diagnostics-{id}.zip`, disk `local`, never public): `page.json`,
+  `actions.json`, `network.json`, `errors.json` (from `XL.diag.snapshot()`), `server.json` (the user's trail + the
+  log lines of its error references, last 2 MB of `laravel.log`), `user.json` (roles, permissions, data scopes, last
+  login), `screenshot.png|jpg` (PNG / JPEG only, signature-checked, ≤ `support.max_screenshot_kb`). Every text file
+  passes `DiagnosticsService::mask()`.
+- **Screens / routes** (`routes/backpack/utils.php`): `utils.support.index` (own requests; admins: all, with an executive
+  picker; executives: also assigned ones), `utils.support.store` (POST JSON → 201 / 422), `utils.support.download`
+  (403 without rights, 410 once purged), `utils.support.assign` (POST, admins).
+- **Permissions:** `UTL_SUPP_ADMIN`, `UTL_SUPP_EXEC` (process UTL / SUPP), granted to superadmin only — attach them to
+  designations on Org → Designation. Ticket categories `SUP_HOWTO`, `SUP_NOT_WORKING`, `SUP_WRONG_DATA`,
+  `SUP_ACCESS`, `SUP_SUGGESTION` (KeyValue `TICKET_CATEGORY`).
+- Tests: `tests/Feature/Platform/SupportRequestTest.php`.
 
 ## Writing an article
 Files under `resources/help/` (`config('platform.help.path')`), versioned with the code — change a screen and its help in

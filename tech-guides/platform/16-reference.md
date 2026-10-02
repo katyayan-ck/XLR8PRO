@@ -120,6 +120,7 @@ still writes (the row just has no `action_id`); the timeline label is always der
 | `AutoCloseResolvedTickets` | daily 03:00 | closes RESOLVED tickets after `ticket.autoclose_days` when enabled |
 | `FlagMissingCallRecordings` | every 15 min | flags calls without a recording after `telephony.recording_grace_minutes` and alerts `UTL_COMM_VIEW` |
 | `PurgeDeletedDocuments` | daily 02:30 | permanently removes documents soft-deleted more than `docs.purge_after_days` ago |
+| `PurgeSupportBundles` | daily 02:45 | deletes support-request diagnostic zips older than `support.bundle_retention_days` (DEC-094) |
 
 Workers: `php artisan queue:work` must run for sends and push outside tests. The scheduler needs the usual
 `php artisan schedule:run` cron.
@@ -220,6 +221,11 @@ it. Run workers with `--timeout` at or below the job timeouts (pricing worker: `
 
 Record access (who may read a record's chat and attached files) is **not** a `UTL_*` permission. It comes from the
 entity's `permission` in `config/platform.php`, or from the model's `chatCanView()`.
+
+**Support requests (DEC-094, W16e):** `UTL_SUPP_ADMIN` (receives new support tickets, assigns executives, sees all
+requests and bundles), `UTL_SUPP_EXEC` (assignable; downloads the bundles of tickets assigned to them) — minted by
+`2026_10_03_004646_create_support_requests_dec094`, superadmin only. Settings `support.bundle_retention_days` (90),
+`support.max_screenshot_kb` (4096).
 
 ## 7. Webhooks (`POST /api/webhooks/comms/{channel}`)
 HMAC-SHA256 of the raw body with `comms.webhook_secret` in header `X-Signature`. Idempotent on `event_id` (and on the

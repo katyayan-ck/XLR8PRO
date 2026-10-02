@@ -52,3 +52,19 @@ server requests with any error reference. Personal data (Aadhaar, PAN, mobile, e
 user types is recorded. A screenshot of the page can be taken with sensitive fields blanked.
 **Verified:** new `DiagnosticsTest`; 116 related tests; page smoke for superadmin and user 40.
 **Left:** W16e — the support-request form that shows this, builds the zip and opens the ticket.
+
+### W16e — "Still need help?" support requests (DEC-094)
+
+**Delivered:** from the F1 pane a user can send a support request: what they need, how urgent, a description and, by
+default, the page's diagnostics with a screenshot preview they can drop.
+- **Ticket:** it becomes a ticket owned by the least-busy support admin.
+- **Diagnostics zip:** masked, kept privately and readable only by the requester, support admins and the
+  executives they assign. Deleted after 90 days.
+- **Screen:** Help → Support requests lists them; support admins assign executives there.
+- **Permissions:** two new ones, `UTL_SUPP_ADMIN` / `UTL_SUPP_EXEC`, held only by superadmin until the owner grants
+  them to designations.
+
+**Verified:** `SupportRequestTest`; 123 related tests; pages checked for superadmin and a scoped user.
+**Left:**
+- The owner grants the two support permissions to designations.
+- W16f guide wrap-up; help articles last (§13).

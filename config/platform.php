@@ -77,6 +77,9 @@ return [
         'docs.max_upload_kb' => ['value' => 10240, 'type' => 'int', 'label' => 'Max upload size (KB)'],
         'docs.allowed_mimes' => ['value' => 'jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx,csv,txt,mp3,mp4,wav', 'type' => 'string', 'label' => 'Allowed file types'],
         'docs.purge_after_days' => ['value' => 30, 'type' => 'int', 'label' => 'Purge deleted documents after (days)'],
+        // Support requests (DEC-094, W16e)
+        'support.bundle_retention_days' => ['value' => 90, 'type' => 'int', 'label' => 'Support requests: delete the diagnostic zip after (days)'],
+        'support.max_screenshot_kb' => ['value' => 4096, 'type' => 'int', 'label' => 'Support requests: largest screenshot accepted (KB)'],
         'notify.quiet_hours' => ['value' => '', 'type' => 'string', 'label' => 'Quiet hours (HH:MM-HH:MM, blank = none)'],
         'sla.ticket.p1_hours' => ['value' => 4, 'type' => 'int', 'label' => 'Ticket SLA P1 (hours)'],
         'sla.ticket.p2_hours' => ['value' => 8, 'type' => 'int', 'label' => 'Ticket SLA P2 (hours)'],
