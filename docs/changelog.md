@@ -10729,3 +10729,11 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
   - `SupportRequestTest` (+SUPPORT event).
   - Platform / lang / architecture / menu suites: 97 passed.
   - Pages 200 for superadmin and user 40. PHPStan clean.
+
+### To-do rows brought up to date (03-10)
+- `docs/todo.md`:
+  - "Tests" row → 614 tests (613 pass, 1 skip) + E2E smoke.
+  - Q1 → 🟡: the Sales feature files and the 10 booking-service unit files exist. What's left is the reports after
+    W18f.
+  - Q3 → 🟡: Playwright smoke done. Write-path E2E needs the web server on a test database, never `xlrm`; owner to
+    decide.

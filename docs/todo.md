@@ -57,7 +57,7 @@ why with the to-do / DEC / BUG ids, files / routes / settings / migrations, how 
 | My Account + dashboard | ✅ | DEC-072 |
 | Pricing redesign | ✅ 🧪 | 11-step process, snapshots, getPricing API, Price List, quotation on published prices, masters with CRUD / import / export, auto recalculation, sync stamp, logo (DEC-073…083) |
 | Bug sprint | 🟡 | Wave 1 done (DEC-070); **27 bugs open**, most waiting on D1–D29 |
-| Tests | 🟡 | 449 tests (448 pass, 1 known skip). Sales / booking are thin: 1 unit file (see §9). |
+| Tests | 🟡 | 614 tests (613 pass, 1 known skip, 03-10) + browser E2E smoke (`npm run e2e`). Sales: 7 feature + 10 booking-service unit files (see §9). |
 | Track B (Laravel 13 / Filament rebuild) | ⏸ | Paused since DEC-033 |
 
 ---
@@ -262,9 +262,9 @@ The booking team owns it (DEC-034); these are the items we know of.
 
 | # | Item | Status | Priority | Notes |
 |---|---|---|---|---|
-| Q1 | Sales / booking test coverage | 🔴 | P1 | 1 unit file for booking OTF; no feature tests for enquiry / quotation / booking flows |
+| Q1 | Sales / booking test coverage | 🟡 | P1 | 03-10: feature tests for enquiry, quotation, booking flow, booking bug fixes (BT-008…014), grids, accounts numbering, follow-up writes + unit tests for all 10 booking services. Left: the 5 booking reports (after W18f) |
 | Q2 | Org / HR / IAM coverage | 🟡 | P2 | 3 Org + 2 IAM feature files |
-| Q3 | Browser E2E (critical paths: login, enquiry → quote → booking, pricing process) | 🔴 | P2 | Dusk / Playwright not installed (package approval) |
+| Q3 | Browser E2E (critical paths: login, enquiry → quote → booking, pricing process) | 🟡 | P2 | 03-10: Playwright installed (owner), `npm run e2e` sign-in + main screens pass. Write-path E2E (enquiry → quote → booking) needs the web server on a test database first — never write test data to `xlrm` (rule 7); owner to decide (e.g. a `.env.e2e` vhost on `xlrm_testing`) |
 | Q4 | Full-screen smoke sweep before each merge | ✅ | — | `--group=smoke` |
 | Q5 | PHPStan baseline for legacy controllers (booking 441, quotation 123 errors) | 🔴 | P2 | New code is clean |
 | Q6 | Accessibility + phone-width check of the main screens | 🟡 | P2 | UI kit enforces it; legacy views not all |
