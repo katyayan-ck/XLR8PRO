@@ -39,7 +39,10 @@ Gathered for a support request (W16e builds the zip; FRS §5.2). **Never records
   - `XL.diag.screenshot()` → JPEG data URL of the visible page via **html2canvas-pro 1.5.11** (MIT fork of html2canvas;
     the original 1.4.1 cannot parse Tabler 1.4's `color()` / `oklch()` / `color-mix()` and failed on every page —
     BUG-232; owner approved the swap 03-10). Cached by Basset, loaded only when called. When a capture fails the pane
-    says so and the reason lands in `errors.json`. In the copy only, password / OTP inputs and anything marked
+    says so and the reason lands in `errors.json`. The capture is of the **base page only**: the help pane, backdrops,
+    open dropdowns, tooltips and anything marked `data-xl-capture-hide` are hidden for the instant of the synchronous
+    page copy and removed from the copy, and the copy runs without animations / transitions and waits for its fonts
+    (BUG-233 — the theme's fade-in made captures look washed out). In the copy only, password / OTP inputs and anything marked
     `data-xl-sensitive` (mark Aadhaar, PAN and bank-account fields with it) are blanked; the help pane is left out.
   - `XL.diag.mask(text)` / `XL.diag.cleanUrl(url)` mirror the server helpers.
 - **Server — `App\Http\Middleware\RecordRequestTrail`** (admin middleware stack): each request of the signed-in user

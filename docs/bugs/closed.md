@@ -230,6 +230,7 @@ added at the top of each entry (from the maintained index) is authoritative.
 | BUG-062 | 5 Booking menu links (dummy, ready-to-invoice, pending-incomplete-votfs, rto-agent-tracker, brokerage) point at URLs with no route ever registered | Low | FIXED 02-10 — coming-soon page (W18e, BT-015) | 20-09-2026 07:20 | 02-10-2026 |
 | BUG-230 | Queue `retry_after` (90 s) was shorter than the pricing jobs' timeout (1800 s): with more than one worker a running import is handed to a second worker and runs twice | Medium | FIXED 03-10 — retry_after 1900 s (W18m) | 03-10-2026 | 03-10-2026 |
 | BUG-232 | Support-request screenshot is never captured: html2canvas 1.4.1 throws on modern CSS colours (`Attempting to parse an unsupported color function "color"`, Tabler 1.4), and the pane sent the request without it silently | Medium | FIXED 03-10 — html2canvas-pro | 03-10-2026 | 03-10-2026 |
+| BUG-233 | Support screenshot looked washed out behind a "lightbox": the page copy re-ran the theme's fade-in animation from near-transparent (and a fallback font) while the help pane stayed open | Medium | FIXED 03-10 — copy without animations / overlays | 03-10-2026 | 03-10-2026 |
 
 ## Audit of 06-09-2026 (`docs/bugs/closed.md`) — verified 29-09-2026
 
@@ -2903,3 +2904,10 @@ guessed at.
 - **Done 03-10:** the failure is no longer silent — the pane says "A screenshot of this page could not be taken…" and the reason goes to `console.error`, which `xl-diag.js` records in `errors.json`.
 - **Fix:** swap to **html2canvas-pro** (MIT, drop-in fork, same API) — verified on the same page: `OK`, an 84 KB JPEG. Needs the owner's approval (library change; DEC-094 approved html2canvas).
 - **Fixed 03-10-2026:** owner approved 03-10: `html2canvas-pro` 1.5.11 (MIT drop-in fork) replaces html2canvas 1.4.1 in `header_metas.blade.php` (Basset-cached, loaded on demand). Verified in Chromium with `XL.diag.screenshot()`: My Account 82 KB, dashboard 66 KB, bookings 131 KB, tickets 47 KB — all JPEG. Failures are no longer silent (pane note + `errors.json`).
+
+### BUG-233 — Support screenshot looked washed out behind a "lightbox": the page copy re-ran the theme's fade-in animation from near-transparent (and a fallback font) while the help pane stayed open
+
+- **Found:** 03-10-2026, owner: ticket TCK/…/00002 (Firefox, dashboard) — top bar sharp, the whole content area faded with a monospace fallback font.
+- **Cause:** html2canvas copies the page into a hidden frame where CSS animations restart; the theme fades page content in, so the copy was captured mid-fade. The help pane itself was already excluded (`ignoreElements`), but only after the async library load.
+- **Fix (`public/js/xl-diag.js`):** the copy gets `animation: none; transition: none` on everything and waits for its fonts (`onclone` returns `document.fonts.ready`). The help pane, backdrops, open dropdowns, tooltips and `[data-xl-capture-hide]` are hidden for the instant of the synchronous page copy (html2canvas-pro clones before its first await — checked in its source) and restored straight after, and they are removed from the copy as well. Also `public/js/xl-help.js`: an article that arrives late no longer overwrites a support form opened meanwhile, and Cancel still returns to the article.
+- **Verified:** Playwright (Chromium) through the real pane flow (F1 → Still need help?) on the dashboard and My Account, light and dark — the preview image is the base page only, full opacity, normal font.

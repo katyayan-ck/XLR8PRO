@@ -116,6 +116,7 @@
         loaded = true;
         var body = pane.querySelector('.xl-help-body');
         fetchPane().then(function (data) {
+            if (body.querySelector('[data-xl-support-form]')) { return; }   // the support form was opened meanwhile — keep it
             pane.querySelector('#xl-help-title').textContent = data.title || t.title;
             if (data.missing) {
                 body.innerHTML = '<div class="alert alert-info mb-0">' + esc(data.message) + '</div>';
@@ -161,7 +162,7 @@
             '<button type="button" class="btn btn-outline-secondary" data-xl-support-cancel>' + esc(L.cancel) + '</button></div>' +
             '</form>';
         var form = body.querySelector('form');
-        form.querySelector('[data-xl-support-cancel]').addEventListener('click', function () { loaded = false; load(); });
+        form.querySelector('[data-xl-support-cancel]').addEventListener('click', function () { form.remove(); loaded = false; load(); });
         form.addEventListener('submit', function (e) { e.preventDefault(); sendSupport(form); });
         form.querySelector('[name=description]').focus();
         if (window.XL && window.XL.diag && window.XL.diag.screenshot) {

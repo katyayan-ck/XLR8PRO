@@ -10676,3 +10676,17 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
     priority / no zip; the list shows own tickets only; the requester opens their ticket.
   - Platform / IAM / menu / lang / architecture suites: 126 passed.
   - Pages 200 for superadmin and user 40. PHPStan clean.
+
+### BUG-233 — support screenshot captures only the base page, sharp (owner 03-10)
+- **Owner:** the capture looked washed out, "behind a semi-transparent lightbox of the help pane" (ticket #2, Firefox).
+- **Cause:** html2canvas's page copy re-ran the theme's fade-in animation from near-transparent and used a fallback
+  font before the web font loaded. The pane itself was already excluded.
+- **Fix:**
+  - `public/js/xl-diag.js` `capture()`: the copy has animations / transitions off and waits for fonts. The help pane,
+    backdrops, open dropdowns, tooltips and `[data-xl-capture-hide]` are hidden only for the instant of the synchronous
+    copy (no visible flicker) and removed from the copy.
+  - `public/js/xl-help.js`: a late article no longer overwrites an open support form; Cancel still returns to the
+    article.
+  - Guide `17-help-support.md`.
+- **Verified:** Chromium through the real pane flow, dashboard + My Account, light + dark → clean base-page images.
+  Ticket #2 keeps its old washed-out image; new requests are sharp.

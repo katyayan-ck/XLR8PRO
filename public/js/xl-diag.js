@@ -161,22 +161,58 @@
         });
     }
 
-    /** JPEG data URL of the visible page; sensitive fields and the help pane are blanked in the copy only. */
-    function screenshot() {
-        return loadHtml2canvas().then(function (h2c) {
-            return h2c(document.body, {
+    /** Overlays that must never be in a support screenshot: the help pane and any backdrop / lightbox. */
+    var OVERLAYS = '.xl-help-pane, .modal-backdrop, .offcanvas-backdrop, .dropdown-menu.show, .tooltip, .popover, [data-xl-capture-hide]';
+
+    /**
+     * JPEG data URL of the base page as it looks without the help pane (owner 03-10). html2canvas copies the page
+     * synchronously when it is called, so the overlays are hidden only for that call and restored straight after — the
+     * user never sees a flicker, and the copy holds neither the pane nor a backdrop. In the copy only, password / OTP
+     * inputs and `data-xl-sensitive` fields are blanked.
+     */
+    function capture(h2c) {
+        var root = document.documentElement;
+        var hidden = Array.prototype.map.call(document.querySelectorAll(OVERLAYS), function (el) {
+            var before = el.style.getPropertyValue('display');
+            var priority = el.style.getPropertyPriority('display');
+            el.style.setProperty('display', 'none', 'important');
+            return [el, before, priority];
+        });
+        var hadOpen = root.classList.contains('xl-help-open');
+        root.classList.remove('xl-help-open');
+        var job;
+        try {
+            job = h2c(document.body, {
                 logging: false, useCORS: true, scale: Math.min(window.devicePixelRatio || 1, 1.5),
                 x: window.scrollX, y: window.scrollY, width: window.innerWidth, height: window.innerHeight,
-                ignoreElements: function (el) { return el.classList && el.classList.contains('xl-help-pane'); },
+                ignoreElements: function (el) { return !!(el.matches && el.matches(OVERLAYS)); },
                 onclone: function (doc) {
+                    // The copy re-runs the theme's fade-in animations from near-transparent (a washed-out page in the
+                    // owner's Firefox capture, 03-10): show everything at its final state, then wait for the fonts.
+                    var still = doc.createElement('style');
+                    still.textContent = '*, *::before, *::after { animation: none !important; transition: none !important; }';
+                    doc.head.appendChild(still);
+                    doc.documentElement.classList.remove('xl-help-open');
+                    Array.prototype.forEach.call(doc.querySelectorAll(OVERLAYS), function (el) { el.remove(); });
                     Array.prototype.forEach.call(doc.querySelectorAll('input[type=password], input[name*=otp i], input[autocomplete=one-time-code], [data-xl-sensitive], [data-xl-sensitive] input'), function (el) {
                         if ('value' in el) { el.value = ''; el.setAttribute('value', ''); }
                         el.style.background = '#999';
                         el.style.color = 'transparent';
                     });
+                    return doc.fonts && doc.fonts.ready ? doc.fonts.ready.then(function () { return undefined; }) : undefined;   // html2canvas awaits this
                 },
-            }).then(function (canvas) { return canvas.toDataURL('image/jpeg', 0.8); });   // JPEG keeps the upload small
-        });
+            });
+        } finally {
+            hidden.forEach(function (h) {
+                if (h[1]) { h[0].style.setProperty('display', h[1], h[2]); } else { h[0].style.removeProperty('display'); }
+            });
+            if (hadOpen) { root.classList.add('xl-help-open'); }
+        }
+        return job.then(function (canvas) { return canvas.toDataURL('image/jpeg', 0.8); });   // JPEG keeps the upload small
+    }
+
+    function screenshot() {
+        return loadHtml2canvas().then(capture);
     }
 
     window.XL = window.XL || {};
