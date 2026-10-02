@@ -424,7 +424,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W18g | DEC-093 #21 — schema tooling exemption in the guard (`ai:refresh-context`) — ✅ 02-10 | ✅ |
 | W18h | D26 — mask Aadhaar / PAN in old KYC rows (reversible: encrypted backup) — ✅ 02-10 local (`privacy:mask-kyc-history`); UAT / prod run needs approval | ✅ |
 | W18i | D25 / BUG-173 — booking reads / writes variant codes with the colour suffix; vehicle master purge + re-import (V7 / DA2, with the pricing run) — ⏸ goes with the pricing run (owner: pricing decided later) | ⏸ |
-| W18j | #18 — local-only user reset command (keep a given list of accounts; dry run, backup) — run on the owner's list | 🔴 |
+| W18j | #18 — local-only user reset command (keep a given list of accounts; dry run, backup) — run on the owner's list — ✅ built 02-10 (`users:reset`); run when the owner sends the list | ✅ |
 | W18k | N4 — session / password / lockout / self-service values as Settings (S3 / S4 / S5 / S7) | 🔴 |
 | W18l | BUG-206 — generated `person_code`; PAN / Aadhaar only masked (14 tables) | 🔴 |
 | W18m | #33 Redis for cache + queue (UAT / production config, with IT); #34 Playwright E2E (with Q3) | 🔴 |
@@ -1354,3 +1354,15 @@ numbers are never touched, and keeps every original encrypted. Run on local `xlr
 **Left:**
 - Running it on UAT / production needs the owner's approval (non-local data change).
 - Encrypting Aadhaar / PAN at rest and the other DPDP items stay under S12.
+
+### W18j — user reset command ready (owner #18, DEC-095)
+
+**Delivered:** `php artisan users:reset --keep=… [--apply]` (local only). It keeps the listed login accounts with their
+roles, scopes and employee record, and removes every other user, employee and person permanently. Customer persons
+used by enquiries are kept. It reports first, refuses unsafe lists (no superadmin, unknown names), and dumps the 22
+affected tables before removing anything.
+**Verified:** feature tests; local dry run; backup dump (22 tables); PHPStan clean.
+**Left:**
+- Run it when the owner sends the account list (1 super admin, 5 dev, 1 app dev). Pass
+  `--bin-dir=D:\laragon\bin\mysql\mysql-8.4.3-winx64\bin` (`MYSQL_BIN_DIR` is not in the local `.env`).
+- Then the new user import (W10 workbook).

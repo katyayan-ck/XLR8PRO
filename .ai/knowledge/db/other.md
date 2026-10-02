@@ -123,5 +123,5 @@ Indexes: (master,created_at)
 id bigint unsigned PK, source_table varchar(64), source_id bigint unsigned, source_column varchar(64), original_encrypted longtext, created_at timestamp?
 Indexes: UNIQUE (source_table,source_id,source_column)
 
-## `xlr8_user_branches` · ~279 rows · model: —
+## `xlr8_user_branches` · ~279 rows · model: App\Models\IAM\LegacyUserBranch
 user_id bigint unsigned PK, branch_id bigint unsigned PK

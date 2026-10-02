@@ -77,10 +77,12 @@ nothing local is unpushed. Next push only when the owner asks.
   W18g ✅ (guard `EXEMPT` list: `RefreshAiContext`; baseline 7 files).
   W18h ✅ (`privacy:mask-kyc-history`, applied locally on both DBs: 25 cells; UAT / prod run needs approval).
   W18i ⏸ (D25 variant codes + purge / re-import go with the pricing run — owner: pricing later).
-  **Next step: W18j** — #18: local-only user reset command — keep a given list of accounts (by username), remove the
-  rest permanently; dry run by default, `--apply` after a backup (mysqldump of the user / person / employee / scope /
-  role tables to `storage/app/backups/`), refuses outside `local`; run only when the owner sends the list (1 super
-  admin, 5 dev, 1 app dev). First map every table that references `users.id` / `person_code`.
+  W18j ✅ built (`users:reset`, local only; run when the owner sends the account list; use
+  `--bin-dir=D:\laragon\bin\mysql\mysql-8.4.3-winx64\bin`).
+  **Next step: W18k** — N4: session / password / lockout / self-service values as Settings (S3 / S4 / S5 / S7): find
+  where each value is hard-coded today (`config/session.php` lifetime, `AuthService` lockout / OTP limits, password
+  rules, My Account self-service), add dotted keys to `config/platform.php` settings seeds (defaults = today's values),
+  read them through `setting()`; no behaviour change at the defaults.
 
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;

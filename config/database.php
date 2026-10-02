@@ -18,6 +18,9 @@ return [
 
     'default' => env('DB_CONNECTION', 'sqlite'),
 
+    // Directory holding mysqldump / mysql for the local backup / copy commands (users:reset, testing:refresh-db); empty = PATH.
+    'mysql_bin_dir' => env('MYSQL_BIN_DIR', ''),
+
     /*
     |--------------------------------------------------------------------------
     | Database Connections

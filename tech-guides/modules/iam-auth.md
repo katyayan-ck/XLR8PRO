@@ -223,6 +223,25 @@ fields; only switched-on fields are written — person fields via `PersonRecordS
 Route `backpack.account.personal` (POST `edit-account-info/personal`, error bag `personal`); the Profile tab shows the
 form only when a field is on. `ui.appearance_enabled` hides the Appearance button, user-menu entry and panel.
 
+## User reset before the new user import (owner #18, DEC-095 — W18j)
+`App\Services\IAM\UserResetService` + command `users:reset` (**local only**).
+- `plan(array $keepUsernames): array{ok, error, keep, remove_user_ids, remove_person_codes, counts, media_left}` —
+  nothing written. Refuses an empty list, unknown usernames, or a list without an active superadmin.
+- `apply(array $keepUsernames): array` (same shape) — in one transaction, permanently (base-query deletes, no events):
+  - every user not kept, and its roles, direct permissions, legacy role pivot, denials, data scopes, reporting lines,
+    person user types, API tokens, device sessions / tokens, OTP tokens / attempts, account locks, legacy
+    `xlr8_user_branches`, chat subscriptions;
+  - every employee and employee-history row except the kept users';
+  - every person (with contacts, addresses, banking) not belonging to a kept user and not used by an enquiry.
+  History / business rows naming a user (enquiries, audits, timeline, tasks, documents) and media files stay.
+- `backupTables(): list<string>` — the 22 tables the command dumps first.
+- Command: `php artisan users:reset --keep=<username> … | --keep-file=<file>` reports; add `--apply` to remove. Before
+  removing it dumps those tables to `storage/app/backups/users-reset-<timestamp>.sql` (restore: `mysql <db> < file`).
+  `mysqldump` comes from `--bin-dir`, else `config('database.mysql_bin_dir')` (`MYSQL_BIN_DIR`, not set in the local
+  `.env` — pass `--bin-dir=D:\laragon\bin\mysql\mysql-8.4.3-winx64\bin`), else PATH.
+- Local dry run 02-10 keeping `SUP001`: 200 users, 200 employees, 214 persons, 1,501 scopes, 166 role rows would go.
+- Test: `tests/Feature/IAM/UserResetServiceTest`.
+
 ## UserRbacExportService (DEC-040 workbook)
 `permissionRows()`, `roleRows()`, `userRows()` (editable importer columns + read-only info), `scopeRows()` (one row per
 user × type × code, compacted to `ALL`), `lists()` (dropdowns, scope lists start with `ALL`), `userHeaders()`,

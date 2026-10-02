@@ -182,3 +182,25 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
   - Booking 10 view as superadmin and user 40 → 200.
 - **Other environments:** run `php artisan privacy:mask-kyc-history --apply` on UAT / production only with the owner's
   approval.
+
+### W18j — `users:reset`: keep only the listed accounts, remove the rest permanently (owner #18, DEC-095)
+- **Files (new):**
+  - `app/Services/IAM/UserResetService.php`.
+  - `app/Console/Commands/ResetUsers.php` (`users:reset --keep=… | --keep-file=… [--apply] [--bin-dir=…]`).
+  - `app/Models/IAM/LegacyUserBranch.php` (model for the unused legacy `xlr8_user_branches`, DEC-093).
+  - `tests/Feature/IAM/UserResetServiceTest.php`.
+- **Changed:** `config/database.php` adds `mysql_bin_dir` (`MYSQL_BIN_DIR`); guide `tech-guides/modules/iam-auth.md`.
+- **Behaviour:**
+  - Report only by default; refuses outside `local`, on an empty list, on unknown names, or on a list without an
+    active superadmin.
+  - `--apply` dumps the 22 affected tables to `storage/app/backups/users-reset-<ts>.sql` first.
+  - It then removes, in one transaction: the other users and all their access rows, all other employees / employee
+    history, and every person not kept and not used by an enquiry.
+  - History rows and media files stay.
+- **Checked:**
+  - Tests: refusal without superadmin; kept users keep roles / scopes / employee; others gone; an enquiry's person
+    stays.
+  - Local dry run keeping `SUP001`.
+  - The dump of the 22 tables succeeded (with `--bin-dir`).
+  - PHPStan and the architecture guard are clean.
+- **Not run:** waiting for the owner's account list (1 super admin, 5 dev, 1 app dev).
