@@ -10584,3 +10584,8 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
     purge → 410, bad category → 422).
   - Platform / IAM / architecture / lang / menu suites: 123 passed.
   - Pages 200 for superadmin and user 40. PHPStan clean; JS syntax checked.
+
+### BUG-231 logged — intermittent local 500s from the threaded Apache `.env` race
+- Found by the E2E smoke (1 of 3 runs): a request ran without `.env` (SQLite session store / `production` without
+  APP_KEY). Not an app bug; local fix = `php artisan config:cache` (owner's call — local environment change). Entry in
+  `docs/bugs/open.md`.

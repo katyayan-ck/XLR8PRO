@@ -63,6 +63,8 @@ nothing local is unpushed. Next push only when the owner asks.
   `docs/daily/30-09-2026/`.
 
 ## In progress / next
+- **Local env (BUG-231):** the E2E smoke is flaky (1 / 3) because threaded Apache sometimes runs a request without
+  `.env`; owner to run `php artisan config:cache` locally (or NTS PHP). Not a code issue.
 - **W18 (DEC-095) — building the owner's 02-10 answers, in order W18a → W18m.** Booking items are numbered BT changes
   (`docs/booking-team-changes.md`), each checked with `dev:route-snapshot` / tests before and after, each revertable.
   Done: W18a, W18b, W18c (BT-008 … BT-013), W18d (BT-014: `SLS_BKNG_ORDER_APPROVE`, granted to no designation yet;

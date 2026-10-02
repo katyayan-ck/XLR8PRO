@@ -43,6 +43,7 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 | BUG-221 | Code referencing classes that do not exist (found by the PHPStan baseline, W4): Booking helper, accessory export, spare master, production RBAC seeder | Low | PARTLY FIXED 01-10 — accessory export repaired; dead Booking helpers / spare master / RBAC seeder await the owner's deletion OK | 30-09-2026 | — |
 | BUG-228 | App OTP SMS is never sent: `OtpNotificationService::sendViaSms()` is a placeholder that only logs | High | OPEN — found 02-10 (W18a) | 02-10-2026 | — |
 | BUG-229 | Order Verification's Accept / Reject do not match `orderUpdate()`: Accept links status 2 but only 0 / 1 are accepted ("invalid status"); Reject links 0, which `orderUpdate()` records as "Hold released, booking activated" | Medium | OPEN — owner question (what Reject sets) | 02-10-2026 | — |
+| BUG-231 | Local web server intermittently runs a request without `.env` (Laragon / threaded Apache on Windows): the request falls back to the SQLite session store or `production` with no APP_KEY and answers 500 | Low | OPEN — local environment (owner: run `php artisan config:cache` locally, or switch Laragon to NTS PHP / FastCGI) | 03-10-2026 | — |
 
 ## Entries
 
@@ -386,3 +387,12 @@ Verified against the code and the local data on 29-09-2026 (each entry has a **V
 - **Where:** `BookingCrudController::orderVerification()` (buttons) and `orderUpdate()` (`$allowedStatuses = [0, 1]`, hold / resume wording).
 - **Description:** the grid offers Accept → `order-update/{id}/2` (order 1 → 2, "verified" per the booking guide) and Reject → `…/0`. `orderUpdate()` was written for the older hold (1) / resume (0) meaning: Accept is refused as an invalid status; Reject sets `order = 0` and records "Hold released, booking activated".
 - **Needs:** owner — what Reject should do (order 0 = rejected? cancel the booking? back to the requester?) and whether hold / resume is still wanted. Then fix `orderUpdate()` to accept 2 and record the right events.
+
+### BUG-231 — Local web server intermittently runs a request without `.env` (Laragon / threaded Apache on Windows): the request falls back to the SQLite session store or `production` with no APP_KEY and answers 500
+
+- **Status:** OPEN — local environment, not app code
+- **Severity:** Low (local only; UAT / production run under cPanel, a different server setup)
+- **Found:** 03-10-2026, E2E smoke (`npm run e2e`): 1 of 3 runs got a 500 on `admin/sales/booking`.
+- **Evidence (log, 03-10 00:54):** `Database file at path [...database.sqlite] does not exist` while reading `xlr8_system_sessions` (default `sqlite` connection = `DB_CONNECTION` unset), then `production.ERROR: No application encryption key has been specified` — the same seconds that other requests ran normally on `local` with MySQL.
+- **Cause:** Laravel reads `.env` with `putenv` / `$_ENV`, which are not thread-safe under thread-safe PHP in threaded Apache on Windows (Laragon's default); concurrent requests (the browser loads several at once) can see an empty environment. No config cache exists (`bootstrap/cache/config.php` absent), so every request depends on `.env`.
+- **Fix (owner's choice, local machine change):** `php artisan config:cache` (re-run after any `.env` / config change; `config:clear` undoes it), or run PHP through FastCGI / NTS in Laragon. Tests are unaffected (phpunit sets its own env).
