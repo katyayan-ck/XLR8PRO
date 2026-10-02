@@ -48,8 +48,14 @@
 ## In progress / next
 - **W16 help & support is complete** (W16b–f + owner rework DEC-096; guide `tech-guides/platform/17-help-support.md`).
   W17 (help articles + user manual) stays last (§13, after bugs are fixed and QA has vetted).
-- **Next step:** pick the next unblocked row in `docs/todo.md` Part 1 (🔴 / 🟡 not marked ⏸ or waiting on the owner);
-  record it 🟡 here first.
+- **Next step: W19 (DEC-097, owner standards; answers recorded 03-10)** — build order:
+  - **W19b** code registry: `config/response_codes.php` (or a table via a model) with module / process / activity
+    numbers (2 + 2 + 2 digits; reuse the IAM module / process codes), result digit 1–9, lang messages per module;
+  - **W19a** `/api/v2` with the new format `{api, method, http_response_code, status, project_response_code,
+    project_response_message, data, time_taken, sync_timestamp}` via a v2 base controller + a response macro; v1
+    untouched;
+  - **W19c** route files per module / process with gates in the route file;
+  - **W19f** RBAC + data-scope coverage audit.
 - **Blocked / waiting (do not start without the owner):**
   - W18f — the 5 booking reports (questions R1–R8 in `docs/owner-decisions-2026-10-01.md`, W18f section).
   - BUG-229 — what Order Verification's Reject should set.

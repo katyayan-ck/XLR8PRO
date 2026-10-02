@@ -1581,8 +1581,12 @@ Risk: LOW (reversible, local, no behaviour change) · MED (behaviour change, rev
   `ErrorCodeEnum`); 3 in part (route files per area, gates inside actions).
 - **To build:** to-do W19 (W19a response format, W19b code registry, W19c route files + route gates, W19d
   service / model gaps = W15, W19e view gaps = U2 / Q7, W19f RBAC + scope coverage audit).
-- **Open (owner):** how the mobile app moves to the new format (it reads `{http_status, success, code, message, data}`
-  today — DEC-004 / DEC-085 say "no breaking change in v1"); the numbering of `project_response_code`; the meaning of
-  `Timeout`; the form of `api`.
+- **Owner answers (03-10):**
+  - **App migration:** a new `/api/v2` carries the new format beside v1; the app moves when ready, then v1 is retired —
+    v1 stays unchanged meanwhile.
+  - **`project_response_code` = MMPPAAR** (7 digits): module 2 + process 2 + activity 2 + result 1, e.g. `1203051` =
+    Sales / Booking / KYC / success. Module / process / activity numbers come from one registry (W19b).
+  - **`status`:** Success, Failed, or **Timeout** when the request hit a server time limit or an outside service (SMS,
+    payment, …) timed out. **`api`:** the route path without the `/api/v2` prefix, e.g. `users/get`.
 - **Approved-by:** owner (03-10) · **Risk:** high for item 1 (mobile app contract), medium for item 3 (every route
   touched) · **Reversal:** per W19 commit.

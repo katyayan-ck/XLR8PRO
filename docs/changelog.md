@@ -10757,3 +10757,11 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
   - `docs/todo.md`: W19, W19a–f.
 - **Open owner questions before W19a:** the app migration path (in place vs. v2), `project_response_code` numbering,
   when `Timeout` applies, the form of `api`.
+
+### DEC-097 answers recorded (owner 03-10)
+- **API format change:** served under a new `/api/v2` beside v1; v1 stays unchanged until the app has moved, then it is
+  retired.
+- **`project_response_code` = MMPPAAR:** module 2 + process 2 + activity 2 + result 1 digits.
+- **`status` / `api`:** Timeout = a server time limit or an outside service timed out; `api` = the route path without
+  `/api/v2`.
+- **Files:** decision log, `.ai/rules/api.md`, `docs/todo.md` W19 / W19a. Build order W19b → W19a → W19c → W19f.

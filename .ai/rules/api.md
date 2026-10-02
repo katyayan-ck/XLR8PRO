@@ -23,8 +23,9 @@ paths:
 - **Target format (DEC-097, owner 03-10, to-do W19a):** every endpoint answers
   `{api, method, http_response_code, status (Success / Failed / Timeout), project_response_code,
   project_response_message, data, time_taken (ms), sync_timestamp}` with codes from the Module → Process → Activity
-  registry (W19b). How the app moves over (in place vs. v2) is an open owner question — until it is answered, keep v1
-  as it is.
+  registry (W19b). **Owner 03-10:** the new format is served under a new `/api/v2` beside v1 (v1 unchanged until the app
+  has moved, then retired); `project_response_code` = **MMPPAAR** (module 2 + process 2 + activity 2 + result 1 digits);
+  `status` Timeout = a server time limit or an outside service timed out; `api` = the route path without `/api/v2`.
 - Never log OTPs, tokens or full phone numbers.
 - Errors: every API error is the envelope with a registered `ErrorCodeEnum` code and its HTTP status; unhandled
   exceptions go through the central handler (never a raw HTML page or stack trace to the app).
