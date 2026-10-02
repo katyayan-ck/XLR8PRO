@@ -4,9 +4,11 @@ namespace App\Services\Platform\Privacy;
 
 use App\Models\Utilities\CommHistory\CommThread;
 use App\Models\Utilities\Privacy\KycMaskBackup;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use OwenIt\Auditing\Models\Audit;
 
 /**
@@ -78,33 +80,42 @@ class KycHistoryMaskingService
     }
 
     /**
-     * Puts every backed-up original back and removes its backup row.
+     * Puts every backed-up original back and removes its backup row. A backup that cannot be decrypted (written under a
+     * different `APP_KEY`) is left in place and counted as failed — the rest are still restored.
      *
-     * @return int cells restored
+     * @return array{restored: int, failed: int}
      */
-    public function restore(): int
+    public function restore(): array
     {
         $models = [];
         foreach ($this->sources() as [$model]) {
             $models[$model->getTable()] = $model;
         }
-        $restored = 0;
-        KycMaskBackup::query()->orderBy('id')->chunkById(500, function ($backups) use ($models, &$restored) {
+        $result = ['restored' => 0, 'failed' => 0];
+        KycMaskBackup::query()->orderBy('id')->chunkById(500, function ($backups) use ($models, &$result) {
             foreach ($backups as $backup) {
                 $model = $models[$backup->source_table] ?? null;
                 if ($model === null) {
                     continue;
                 }
-                DB::transaction(function () use ($model, $backup) {
+                try {
+                    $original = Crypt::decryptString($backup->original_encrypted);
+                } catch (DecryptException) {
+                    $result['failed']++;
+                    Log::warning('KYC mask backup not restorable with this APP_KEY', ['backup_id' => $backup->id]);
+
+                    continue;
+                }
+                DB::transaction(function () use ($model, $backup, $original) {
                     $model->newQuery()->withoutGlobalScopes()->toBase()->where('id', $backup->source_id)
-                        ->update([$backup->source_column => Crypt::decryptString($backup->original_encrypted)]);
+                        ->update([$backup->source_column => $original]);
                     $backup->delete();
                 });
-                $restored++;
+                $result['restored']++;
             }
         });
 
-        return $restored;
+        return $result;
     }
 
     /**

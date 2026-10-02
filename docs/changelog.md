@@ -10447,3 +10447,17 @@ sandbox — storage/basset not writable — and passes alone); full PHPStan clea
      production at their next deploy.
 - **Owner later (unchanged):** booking report definitions R1–R8, the Reject rule (BUG-229), the account list for
   `users:reset`.
+
+### Full-suite checkpoint fixes (03-10): person CRUD test, KYC restore robustness (W18l / W18h follow-up)
+- **Full suite (02-10 → 03-10 run):** 598 passed, 1 skipped, 2 failed — both from this session's changes.
+  - `tests/Feature/Admin/Org/PersonCrudTest.php`: the old "Aadhaar takes priority when deriving the person code" test
+    asserted the behaviour W18l removed (BUG-206). It now asserts a generated `PERS-` code with the Aadhaar / PAN
+    stored on the person.
+  - `KycHistoryMaskingService::restore()` crashed (`DecryptException`) on the backups the real `--apply` left in
+    `xlrm_testing`: tests run with phpunit's `APP_KEY`. It now returns `array{restored, failed}`; a backup it cannot
+    decrypt is left in place and logged, and the rest are restored. `--restore` exits 1 when any failed. The test owns
+    its backup rows and covers the skip.
+- **Files:** `app/Services/Platform/Privacy/KycHistoryMaskingService.php`, `app/Console/Commands/MaskKycHistory.php`,
+  `tests/Feature/Platform/KycHistoryMaskingTest.php`, `tests/Feature/Admin/Org/PersonCrudTest.php`, guide
+  `16-reference.md` §8.
+- **Checked:** both tests pass (9 tests); PHPStan clean.

@@ -66,7 +66,8 @@ class PersonCrudTest extends TestCase
         $this->assertDatabaseMissing('xlr8_admin_person', ['display_name' => 'No Mobile Person']);
     }
 
-    public function test_aadhaar_takes_priority_over_pan_when_deriving_the_person_code(): void
+    /** BUG-206 (DEC-095 #15): the screen creates a generated code; the Aadhaar / PAN are stored, never used as the key. */
+    public function test_a_person_created_on_the_screen_gets_a_generated_code_not_a_government_id(): void
     {
         $user = $this->userWithPersonPermissions();
 
@@ -82,7 +83,8 @@ class PersonCrudTest extends TestCase
 
         $person = Person::where('display_name', 'Aadhaar Priority Person')->first();
 
-        $this->assertSame('234567890123', $person->person_code);
+        $this->assertMatchesRegularExpression('/^PERS-\d{6,}$/', $person->person_code);
+        $this->assertSame(['234567890123', 'ABCDE1234F'], [$person->aadhaar_no, $person->pan_no]);
     }
 
     public function test_updating_a_person_cannot_change_its_person_code(): void

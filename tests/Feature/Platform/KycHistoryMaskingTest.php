@@ -35,6 +35,7 @@ class KycHistoryMaskingTest extends TestCase
     public function test_history_copies_are_masked_reversibly_and_other_numbers_stay(): void
     {
         $service = app(KycHistoryMaskingService::class);
+        KycMaskBackup::query()->delete();   // the copy may hold real backups encrypted with another APP_KEY (rolled back)
         $flat = $this->auditRow(['adhar_no' => '1234-5678-9012', 'pan_no' => 'ABCDE1234F', 'trc_number' => '123456789012', 'gstn' => '08ABCDE1234F1Z5']);
         $nested = $this->auditRow(['extra_data' => json_encode(['adhar_no' => '432143214321', 'application_no' => '111122223333'])]);
         $originalFlat = Audit::query()->toBase()->where('id', $flat->id)->value('new_values');
@@ -54,5 +55,8 @@ class KycHistoryMaskingTest extends TestCase
         $this->assertSame($originalFlat, Audit::query()->toBase()->where('id', $flat->id)->value('new_values'));
         $this->assertSame('432143214321', json_decode($this->newValues($nested)['extra_data'], true)['adhar_no']);
         $this->assertFalse(KycMaskBackup::query()->where('source_id', $flat->id)->exists());
+
+        KycMaskBackup::query()->create(['source_table' => 'audits', 'source_id' => $flat->id, 'source_column' => 'new_values', 'original_encrypted' => 'not-decryptable']);
+        $this->assertSame(['restored' => 0, 'failed' => 1], $service->restore(), 'a backup under another APP_KEY is skipped, not fatal');
     }
 }

@@ -25,7 +25,13 @@ class MaskKycHistory extends Command
     public function handle(KycHistoryMaskingService $service): int
     {
         if ($this->option('restore')) {
-            $this->info($service->restore().' cell(s) restored.');
+            $result = $service->restore();
+            $this->info("{$result['restored']} cell(s) restored.");
+            if ($result['failed'] > 0) {
+                $this->error("{$result['failed']} backup(s) could not be decrypted with this APP_KEY and were left in place.");
+
+                return self::FAILURE;
+            }
 
             return self::SUCCESS;
         }

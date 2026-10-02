@@ -234,7 +234,9 @@ message. Payload shapes: email in guide 10, SMS in 11, WhatsApp in 12, telephony
   Other numbers (TRC, application, account, GSTIN) are never touched; malformed values are counted as `other`.
 - `--apply` keeps each changed cell's original in `xlr8_privacy_kyc_mask_backup` (`KycMaskBackup`), encrypted with
   the app key (restore needs the same `APP_KEY`), then writes with base-query updates (no events, no new audit rows).
-- `restore(): int` / `--restore` puts every original back and removes its backup row. A second `--apply` finds nothing.
+- `restore(): array{restored, failed}` / `--restore` puts every original back and removes its backup row; a backup that
+  cannot be decrypted (other `APP_KEY`) stays and is counted as failed (the command then exits 1). A second `--apply`
+  finds nothing.
 - The KYC record itself (booking `adhar_no` / `pan_no`) is not masked. New timeline entries are masked at source
   (BUG-195). Run on UAT / production only with the owner's approval.
 - Local 02-10: 25 cells (24 Aadhaar, 20 PAN values) masked on `xlrm` and `xlrm_testing`. Test `KycHistoryMaskingTest`.
