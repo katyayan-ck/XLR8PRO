@@ -64,6 +64,7 @@ class User extends Authenticatable
         'is_active' => 'boolean',
         'bypass_data_scoping' => 'boolean',
         'last_login_at' => 'datetime',
+        'password_changed_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',

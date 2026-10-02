@@ -40,7 +40,7 @@ id bigint unsigned PK, tokenable_type varchar(255), tokenable_id bigint unsigned
 Indexes: (expires_at), UNIQUE (token), (tokenable_type,tokenable_id)
 
 ## `users` · ~201 rows · model: App\Models\User
-id bigint unsigned PK, username varchar(60), password varchar(255), user_type enum('Emp','Cust','DSA','Insurer','Associate'), person_code varchar(20)?, employee_code varchar(20)?, user_type_id bigint unsigned?, avatar varchar(200)?, is_active tinyint(1), bypass_data_scoping tinyint(1), last_login_at timestamp?, remember_token varchar(100)?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
+id bigint unsigned PK, username varchar(60), password varchar(255), password_changed_at timestamp?, user_type enum('Emp','Cust','DSA','Insurer','Associate'), person_code varchar(20)?, employee_code varchar(20)?, user_type_id bigint unsigned?, avatar varchar(200)?, is_active tinyint(1), bypass_data_scoping tinyint(1), last_login_at timestamp?, remember_token varchar(100)?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (employee_code), (person_code), (bypass_data_scoping), (employee_code), (is_active), (person_code), (user_type), UNIQUE (username)
 
 ## `variant_colors` · ~5886 rows · model: —

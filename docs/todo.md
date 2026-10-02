@@ -425,7 +425,7 @@ Worked top to bottom; each finished item moves to Part 2 (Accomplishments) under
 | W18h | D26 — mask Aadhaar / PAN in old KYC rows (reversible: encrypted backup) — ✅ 02-10 local (`privacy:mask-kyc-history`); UAT / prod run needs approval | ✅ |
 | W18i | D25 / BUG-173 — booking reads / writes variant codes with the colour suffix; vehicle master purge + re-import (V7 / DA2, with the pricing run) — ⏸ goes with the pricing run (owner: pricing decided later) | ⏸ |
 | W18j | #18 — local-only user reset command (keep a given list of accounts; dry run, backup) — run on the owner's list — ✅ built 02-10 (`users:reset`); run when the owner sends the list | ✅ |
-| W18k | N4 — session / password / lockout / self-service values as Settings (S3 / S4 / S5 / S7) — part 1 ✅ 02-10 (sign-in / OTP / lockout / device limits); part 2: password expiry + history (off by default) | 🟡 |
+| W18k | N4 — session / password / lockout / self-service values as Settings (S3 / S4 / S5 / S7) — ✅ 02-10 (part 1 sign-in / OTP / lockout / device limits; part 2 password expiry + history, off by default) | ✅ |
 | W18l | BUG-206 — generated `person_code`; PAN / Aadhaar only masked (14 tables) | 🔴 |
 | W18m | #33 Redis for cache + queue (UAT / production config, with IT); #34 Playwright E2E (with Q3) | 🔴 |
 
@@ -1376,3 +1376,14 @@ settings.
 **Verified:** new lockout / OTP tests; 76 API / IAM / Utils / admin-auth tests pass; PHPStan clean.
 **Left (part 2):** password expiry and password history do not exist yet. They will be added switched off by default
 (0 = off), as settings.
+
+### W18k part 2 — password expiry and history (N4, DEC-095 #28)
+
+**Delivered:** two new Security / Account settings, both off by default:
+- "passwords expire after N days": the user is sent to My Account to choose a new one;
+- "a new password may not repeat the last N".
+Each password change is now dated and kept, hashed, in a history table. With W18k part 1, every value in the owner's
+N4 list (idle logout, lockout, password rules / expiry / history, self-service changes) is now a site setting.
+**Verified:** `PasswordPolicyTest`; 36 IAM / Lang / architecture tests; smoke of dashboard, My Account and bookings for
+superadmin and user 40.
+**Left:** the owner chooses the values in Settings.

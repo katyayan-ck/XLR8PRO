@@ -28,6 +28,10 @@ Indexes: (mobile,created_at), (user_id,action), (created_by), (deleted_by), (upd
 id bigint unsigned PK, user_id bigint unsigned, mobile varchar(10), otp_hash text, expires_at timestamp, used_at timestamp?, created_by bigint unsigned?, updated_by bigint unsigned?, created_at timestamp?, updated_at timestamp?, deleted_at timestamp?
 Indexes: (expires_at), (mobile), (used_at), (user_id)
 
+## `xlr8_iam_password_history` · ~0 rows · model: App\Models\IAM\PasswordHistory
+id bigint unsigned PK, user_id bigint unsigned, password varchar(255), created_at timestamp?
+Indexes: (user_id)
+
 ## `xlr8_iam_permissions` · ~239 rows · model: —
 id bigint unsigned PK, name varchar(255), guard_name varchar(255), module_code varchar(255)?, process_code varchar(255)?, created_at timestamp?, updated_at timestamp?, created_by bigint unsigned?, updated_by bigint unsigned?, deleted_by bigint unsigned?, deleted_at timestamp?
 Indexes: (guard_name), UNIQUE (name,guard_name)

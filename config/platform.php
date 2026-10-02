@@ -115,6 +115,8 @@ return [
         'account.password_min_length' => ['value' => 8, 'type' => 'int', 'label' => 'Minimum password length (8 or more)'],
         'account.password_require_mixed_case' => ['value' => false, 'type' => 'bool', 'label' => 'Passwords need upper- and lower-case letters'],
         'account.password_require_symbols' => ['value' => false, 'type' => 'bool', 'label' => 'Passwords need a symbol'],
+        'account.password_expiry_days' => ['value' => 0, 'type' => 'int', 'label' => 'Passwords expire after this many days (0 = never); the user must then choose a new one'],
+        'account.password_history_count' => ['value' => 0, 'type' => 'int', 'label' => 'A new password may not repeat any of the last this-many passwords (0 = no check)'],
         'security.idle_logout_minutes' => ['value' => 0, 'type' => 'int', 'label' => 'Sign out after this many minutes of inactivity (0 = off); a warning shows first'],
         'security.idle_lock_minutes' => ['value' => 0, 'type' => 'int', 'label' => 'Lock the screen after this many minutes of inactivity (0 = off); unlock with the password'],
         'security.idle_warning_seconds' => ['value' => 60, 'type' => 'int', 'label' => 'Warning shown this many seconds before the automatic sign-out'],

@@ -27,12 +27,18 @@ return [
         'module_created_successfully' => 'Module created successfully!',
         'module_updated_successfully' => 'Module updated successfully!',
         'password_changed_other_sessions_were_signed' => 'Your password was changed. Other sessions were signed out.',
+        'password_expired' => 'Your password has expired. Please choose a new one to continue.',
         'permission_created_successfully' => 'Permission created successfully!',
         'permission_updated_successfully' => 'Permission updated successfully!',
         'process_created_successfully' => 'Process created successfully!',
         'process_updated_successfully' => 'Process updated successfully!',
         'role_created_successfully' => 'Role created successfully!',
         'role_updated_successfully' => 'Role updated successfully!',
+    ],
+
+    // Password rules from Settings (N4, DEC-095 #28)
+    'validation' => [
+        'password_recently_used' => 'Choose a password you have not used for your last :count password changes.',
     ],
 
 ];

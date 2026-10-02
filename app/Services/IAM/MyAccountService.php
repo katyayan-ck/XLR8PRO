@@ -7,6 +7,7 @@ namespace App\Services\IAM;
 use App\Models\Admin\Employee;
 use App\Models\Admin\EmployeeHistory;
 use App\Models\Admin\Person;
+use App\Models\IAM\PasswordHistory;
 use App\Models\User;
 use App\Services\HR\EmployeeJourneyService;
 use App\Services\HR\UserReportingService;
@@ -173,9 +174,11 @@ class MyAccountService
     }
 
     /**
-     * Change the password after checking the current one; other sessions of this user are signed out.
+     * Change the password after checking the current one; other sessions of this user are signed out. With
+     * `account.password_history_count` = N (> 0), none of the last N passwords may be reused (N4, DEC-095 #28); the
+     * change date (`password_changed_at`) drives `account.password_expiry_days`.
      *
-     * @throws ValidationException on a wrong current password or a new one equal to it
+     * @throws ValidationException on a wrong current password, a new one equal to it, or a recently used one
      */
     public function changePassword(User $user, string $current, string $new): void
     {
@@ -185,13 +188,37 @@ class MyAccountService
         if (Hash::check($new, (string) $user->password)) {
             throw ValidationException::withMessages(['new_password' => 'The new password must be different from the current one.']);
         }
+        $keep = max(0, (int) setting('account.password_history_count', 0));
+        if ($keep > 0) {
+            $recent = PasswordHistory::query()->where('user_id', $user->id)->latest('id')->limit($keep)->pluck('password');
+            if ($recent->contains(fn (string $hash) => Hash::check($new, $hash))) {
+                throw ValidationException::withMessages(['new_password' => __('iam.validation.password_recently_used', ['count' => $keep])]);
+            }
+        }
 
-        $user->forceFill(['password' => Hash::make($new)])->save();
+        $hash = Hash::make($new);
+        $user->forceFill(['password' => $hash, 'password_changed_at' => now()])->save();
+        PasswordHistory::query()->create(['user_id' => $user->id, 'password' => $hash]);
 
         $guard = Auth::guard(backpack_guard_name());
         if ($guard->check() && (int) $guard->id() === (int) $user->id && method_exists($guard, 'logoutOtherDevices')) {
             $guard->logoutOtherDevices($new);
         }
+    }
+
+    /**
+     * Whether the user's password is older than `account.password_expiry_days` (0 = never). The age counts from
+     * `password_changed_at`, else from the account's creation. Never expired when users may not change their password.
+     */
+    public function passwordExpired(User $user): bool
+    {
+        $days = (int) setting('account.password_expiry_days', 0);
+        if ($days <= 0 || ! setting('account.can_change_password', true)) {
+            return false;
+        }
+        $since = $user->getAttribute('password_changed_at') ?? $user->getAttribute('created_at');
+
+        return $since === null || now()->subDays($days)->greaterThan($since);
     }
 
     public function photoUrl(?Person $person): ?string

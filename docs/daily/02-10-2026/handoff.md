@@ -81,15 +81,13 @@ nothing local is unpushed. Next push only when the owner asks.
   `--bin-dir=D:\laragon\bin\mysql\mysql-8.4.3-winx64\bin`).
   W18k part 1 ✅ (sign-in / OTP / lockout / device limits as `security.*` settings; admin login via
   `AdminLoginController` bound over Backpack's).
-  **Next step: W18k part 2** — password expiry + history, both **off by default**:
-  - settings `account.password_expiry_days` (0 = off) and `account.password_history_count` (0 = off);
-  - migration: `users.password_changed_at` (nullable) + `xlr8_iam_password_history` (user_id, password hash,
-    created_at), with a model;
-  - My Account password change (`MyAccountController`) refuses a reuse of the last N and records history /
-    `password_changed_at`;
-  - after login, an expired password redirects to the change-password page (middleware on the admin group, skipped
-    for the account routes);
-  - tests for both; then W18l (BUG-206 generated `person_code`).
+  W18k ✅ (part 2: `account.password_expiry_days` / `account.password_history_count`, off by default;
+  `EnforcePasswordExpiry` middleware; `xlr8_iam_password_history`).
+  **Next step: W18l** — BUG-206: generated `person_code` (surrogate) instead of PAN / Aadhaar, remapped across the 14
+  referencing tables. This is a mass data remap (stop-and-ask list), so first write the plan: the code format, the
+  mapping table (old → new, kept for rollback), the tables / columns, and whether to run before or after the user reset
+  (W18j). Then ask the owner to approve the run; the code (generator in `PersonRecordService`, migration with the
+  mapping table, artisan remap command with dry run + `--restore`) can be built and tested on `xlrm_testing` first.
 
 - **W15 (DEC-093) — `DB::` → Eloquent, now including the booking team's code** (126 uses / 8 files left).
   Done: rule + guard; pricing, vehicle content, platform, Org / data scope, RBAC export, dashboard, booking services;

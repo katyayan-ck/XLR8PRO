@@ -223,3 +223,26 @@ Today's changes only (the date-wise copy). The same entries are in the cumulativ
   - New tests: the admin login locks after the configured count; the OTP validity and request limit follow the
     settings.
   - API, IAM, Utils and admin-auth suites: 76 passed. PHPStan clean.
+
+### W18k part 2 — password expiry and history as settings, off by default (N4, DEC-095 #28)
+- **Files:**
+  - Migration `2026_10_02_235247_add_password_expiry_and_history_n4.php`: `users.password_changed_at` and
+    `xlr8_iam_password_history`; run on `xlrm` + `xlrm_testing`.
+  - New `app/Models/IAM/PasswordHistory.php`.
+  - `app/Services/IAM/MyAccountService.php`: `changePassword()` checks history and stamps the date; new
+    `passwordExpired()`.
+  - New `app/Http/Middleware/EnforcePasswordExpiry.php`, added to `config/backpack/base.php` `middleware_class`.
+  - `app/Models/User.php`: cast.
+  - `config/platform.php`: 2 seeds.
+  - `resources/lang/en/iam.php`: `flash.password_expired`, `validation.password_recently_used`.
+  - Guides `16-reference.md`, `iam-auth.md`.
+  - New test `tests/Feature/IAM/PasswordPolicyTest.php`.
+- **Behaviour:** both settings are 0 (off), so nothing changes until set.
+  - History N refuses a password from the last N changes.
+  - Expiry D days sends every admin screen to My Account (AJAX: 403 `PASSWORD_EXPIRED`) until the password is
+    changed. Age counts from `password_changed_at`, else the account's creation. Never enforced when users may not
+    change their password.
+- **Checked:**
+  - `PasswordPolicyTest` (history on / off, expiry redirect / JSON / account page open / cleared by a change).
+  - IAM + Lang + architecture suites: 36 passed.
+  - Dashboard, My Account and booking list → 200 as superadmin and user 40. PHPStan clean.

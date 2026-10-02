@@ -148,3 +148,14 @@ settings.
 **Verified:** new lockout / OTP tests; 76 API / IAM / Utils / admin-auth tests pass; PHPStan clean.
 **Left (part 2):** password expiry and password history do not exist yet. They will be added switched off by default
 (0 = off), as settings.
+
+### W18k part 2 — password expiry and history (N4, DEC-095 #28)
+
+**Delivered:** two new Security / Account settings, both off by default:
+- "passwords expire after N days": the user is sent to My Account to choose a new one;
+- "a new password may not repeat the last N".
+Each password change is now dated and kept, hashed, in a history table. With W18k part 1, every value in the owner's
+N4 list (idle logout, lockout, password rules / expiry / history, self-service changes) is now a site setting.
+**Verified:** `PasswordPolicyTest`; 36 IAM / Lang / architecture tests; smoke of dashboard, My Account and bookings for
+superadmin and user 40.
+**Left:** the owner chooses the values in Settings.

@@ -2,6 +2,8 @@
 
 use App\Http\Middleware\ApplyUiPreferences;
 use App\Http\Middleware\CheckIfAdmin;
+use App\Http\Middleware\EnforceIdleSession;
+use App\Http\Middleware\EnforcePasswordExpiry;
 use Backpack\CRUD\app\Http\Middleware\AuthenticateSession;
 use Backpack\CRUD\app\Http\Middleware\UseBackpackAuthGuardInsteadOfDefaultAuthGuard;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
@@ -124,7 +126,9 @@ return [
         // Applies the per-browser menu layout chosen in the Appearance panel (DEC-067).
         ApplyUiPreferences::class,
         // Idle auto-logout + screen lock, driven by the security.* settings (go-live to-do S1 / S2).
-        \App\Http\Middleware\EnforceIdleSession::class,
+        EnforceIdleSession::class,
+        // Expired password → My Account until it is changed (N4, DEC-095 #28; off by default).
+        EnforcePasswordExpiry::class,
     ],
 
     // Alias for that middleware

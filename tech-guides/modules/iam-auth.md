@@ -158,6 +158,10 @@ Profile, Contact and Security.
 
 **Self-service (S5 / S7):**
 - `MyAccountController::passwordRule()` is the settings-driven password rule (`account.password_*`).
+- Password expiry / history (N4, DEC-095 #28; both off by default): `MyAccountService::changePassword()` refuses a
+  password from the last `account.password_history_count` changes (`PasswordHistory` model, `xlr8_iam_password_history`)
+  and stamps `users.password_changed_at`; `MyAccountService::passwordExpired(User $user): bool` drives the admin
+  middleware `EnforcePasswordExpiry` (redirect to My Account; account / session / sign-out routes stay open).
 - Sign-in limits are settings (N4, DEC-095 #28): the app OTP / lockout / device limits in `AuthService::limit()` read
   `security.app_*`; the admin login lockout reads `security.admin_login_*` through `AdminLoginController` (bound in
   `AppServiceProvider::register()` in place of Backpack's `LoginController`). Defaults are the previous fixed values.

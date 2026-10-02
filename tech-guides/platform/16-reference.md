@@ -157,6 +157,8 @@ Workers: `php artisan queue:work` must run for sends and push outside tests. The
 | `account.can_change_display_name` / `account.can_change_photo` / `account.can_change_password` | true | bool | My Account self-service switches (403 + "managed by your administrator" when off) |
 | `account.password_min_length` | 8 | int | minimum password length (never below 8; letters + numbers always) |
 | `account.password_require_mixed_case` / `account.password_require_symbols` | false | bool | extra password rules |
+| `account.password_expiry_days` | 0 | int | password expires after N days (0 = never); `EnforcePasswordExpiry` sends every admin screen to My Account (JSON 403 `PASSWORD_EXPIRED`); age from `users.password_changed_at`, else the account's creation; off when users may not change passwords (N4) |
+| `account.password_history_count` | 0 | int | a new password may not repeat the last N (`xlr8_iam_password_history`; N4) |
 | `security.idle_logout_minutes` | 0 | int | sign out after this many idle minutes (0 = off); server-enforced (`EnforceIdleSession`), warning first (DEC-084) |
 | `security.idle_lock_minutes` | 0 | int | lock the screen after this many idle minutes (0 = off) |
 | `security.idle_warning_seconds` | 60 | int | warning before the automatic sign-out |
